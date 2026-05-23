@@ -627,20 +627,21 @@ export default function Home() {
 
   const goToSlide = (index) => {
     if (swiperRef.current && swiperRef.current.swiper) {
-      swiperRef.current.swiper.slideTo(index);
+      swiperRef.current.swiper.slideToLoop(index);
     }
   };
 
-  // Get all images from offer listings for the slider
-  const allSliderImages = Array.isArray(offerListings) ? offerListings.flatMap(listing =>
-    (listing.imageUrls || []).map((img, idx) => ({
-      url: img,
+  // Get one slide per listing (first image) — ensures each dot = one property
+  const allSliderImages = Array.isArray(offerListings) ? offerListings
+    .filter(listing => listing.imageUrls && listing.imageUrls.length > 0)
+    .map(listing => ({
+      url: listing.imageUrls[0],
       listingId: listing._id,
       title: listing.name || 'Featured Property',
       price: listing.offer && listing.discountPrice ? listing.discountPrice : listing.regularPrice,
       type: listing.type
     }))
-  ) : [];
+  : [];
 
   if (loading) {
     return <HomeSkeleton />;
@@ -838,7 +839,7 @@ export default function Home() {
                 <p className="text-gray-600 dark:text-gray-400">Handpicked premium properties just for you</p>
               </div>
               <div className="flex gap-2">
-                {allSliderImages.slice(0, 5).map((_, idx) => (
+                {allSliderImages.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => goToSlide(idx)}
@@ -1332,7 +1333,9 @@ export default function Home() {
                         >
                           {listing.isLiveMatch && (
                             <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                              {Math.round(listing.sentinelScore * 100)}% MATCH
+                              {Number.isFinite(listing.sentinelScore) && listing.sentinelScore > 0
+                                ? `${Math.round(listing.sentinelScore * 100)}% MATCH`
+                                : 'TOP PICK'}
                             </div>
                           )}
                           <ListingItem listing={listing} />

@@ -1835,7 +1835,9 @@ export default function Listing() {
                       <div key={`rec-${recListing._id}`} className="relative group overflow-visible">
                         {recListing.isLiveMatch && (
                           <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                            {Math.round(recListing.sentinelScore * 100)}% MATCH
+                            {Number.isFinite(recListing.sentinelScore) && recListing.sentinelScore > 0
+                              ? `${Math.round(recListing.sentinelScore * 100)}% MATCH`
+                              : 'TOP PICK'}
                           </div>
                         )}
                         <ListingItem listing={recListing} />

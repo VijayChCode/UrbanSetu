@@ -275,17 +275,25 @@ const getAmenityScore = (listing) => {
  * Expanded from 5 dims to capture richer preference patterns
  */
 const vectorize = (listing, maxPrice, maxBeds, maxBaths, maxArea) => {
+    // Guard every value to be a finite number — prevents NaN from propagating through TF tensors
+    const rawPrice = Number(listing.price) || Number(listing.offer ? listing.discountPrice : listing.regularPrice) || 0;
+    const price = Number.isFinite(rawPrice) ? rawPrice : 0;
+    const beds = Number(listing.bedrooms) || 0;
+    const baths = Number(listing.bathrooms) || 0;
+    const area = Number(listing.area) || 0;
+    const age = Number(listing.propertyAge) || 0;
+
     return [
-        normalize(listing.price || (listing.offer ? listing.discountPrice : listing.regularPrice), maxPrice),
-        normalize(Number(listing.bedrooms) || 0, maxBeds),
-        normalize(Number(listing.bathrooms) || 0, maxBaths),
-        normalize(Number(listing.area) || 0, maxArea),
+        normalize(price, maxPrice),
+        normalize(beds, maxBeds),
+        normalize(baths, maxBaths),
+        normalize(area, maxArea),
         listing.furnished ? 1 : 0,
         listing.parking ? 1 : 0,
         listing.type === 'rent' ? 1 : 0,     // Type encoding (rent vs sale)
         listing.type === 'sale' ? 1 : 0,     // Type encoding (sale vs rent)
         getAmenityScore(listing),              // Composite amenity score
-        normalize(Number(listing.propertyAge) || 0, 50), // Property age (max 50 years)
+        normalize(age, 50),                    // Property age (max 50 years)
     ];
 };
 
@@ -439,7 +447,9 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
 
         // Score each candidate with categorical bonuses
         const finalResults = filteredCandidates.map((listing, idx) => {
-            let score = scores[idx];
+            let score = Number(scores[idx]) || 0;
+            // Guard against NaN from TF computation
+            if (!Number.isFinite(score)) score = 0;
 
             // Frequency-weighted city bonus (proportional to how often user browses that city)
             const cityKey = (listing.city || '').toLowerCase();
@@ -485,8 +495,9 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
         finalResults.sort((a, b) => b.sentinelScore - a.sentinelScore);
 
         // Cap previously-interacted items so they don't dominate fresh discoveries
+        // Phase 1: Strict caps for diversity
         const MAX_SAVED_IN_RECS = 2;   // Max wishlisted/watchlisted items
-        const MAX_VIEWED_IN_RECS = 1;  // Max previously viewed items (trust-building recall)
+        const MAX_VIEWED_IN_RECS = 2;  // Max previously viewed items (trust-building recall)
         let savedCount = 0;
         let viewedCount = 0;
         const cappedResults = finalResults.filter(item => {
@@ -500,6 +511,17 @@ export const getLiveRecommendations = async (allCandidates, limit = 4, additiona
             }
             return true;
         });
+
+        // Phase 2: If strict capping left us below `limit`, relax caps progressively
+        // This prevents the "vanishing recommendations" bug where active users
+        // (who've viewed/wishlisted most listings) end up with only 2 results
+        if (cappedResults.length < limit) {
+            const cappedIds = new Set(cappedResults.map(r => r._id));
+            const remaining = finalResults.filter(r => !cappedIds.has(r._id));
+            // Already sorted by score — just fill remaining slots
+            const fillCount = limit - cappedResults.length;
+            cappedResults.push(...remaining.slice(0, fillCount));
+        }
 
         return cappedResults.slice(0, limit);
 
