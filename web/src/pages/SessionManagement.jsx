@@ -360,13 +360,13 @@ const SessionManagement = () => {
                 </button>
               </div>
 
-              <div className="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
-                <span className="text-sm font-medium text-blue-700">Total Active</span>
+              <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Active</span>
                 <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
                   {totalSessions}
                 </span>
                 {lastUpdated && (
-                  <span className="text-xs text-blue-400 hidden sm:inline border-l border-blue-200 pl-3">
+                  <span className="text-xs text-blue-400 dark:text-blue-500 hidden sm:inline border-l border-blue-200 dark:border-blue-800/50 pl-3">
                     {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
@@ -486,13 +486,13 @@ const SessionManagement = () => {
 
           {sessions.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                <FaShieldAlt className="text-2xl text-gray-400" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4 shadow-inner">
+                <FaShieldAlt className="text-2xl text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="mt-2 text-lg font-bold text-gray-900">No active sessions found</h3>
-              <p className="mt-1 text-gray-500">Try adjusting your search or filters to find what you're looking for.</p>
+              <h3 className="mt-2 text-lg font-bold text-gray-900 dark:text-white">No active sessions found</h3>
+              <p className="mt-1 text-gray-500 dark:text-gray-400">Try adjusting your search or filters to find what you're looking for.</p>
               {hasActiveFilters && (
-                <button onClick={resetFilters} className="mt-4 text-blue-600 hover:text-blue-800 font-medium">Clear all filters</button>
+                <button onClick={resetFilters} className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors">Clear all filters</button>
               )}
             </div>
           ) : (
