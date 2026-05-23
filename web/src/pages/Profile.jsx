@@ -1906,7 +1906,7 @@ export default function Profile() {
               <div className="flex flex-col items-start mb-6 w-full">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center self-start">
                   <FaUser className="w-4 h-4 mr-2 text-blue-500" />
-                  Avatar Selection
+                  Select Avatar
                 </label>
                 <div className="flex flex-col items-center w-full">
                   <div className="mb-2 relative group">
@@ -2044,12 +2044,16 @@ export default function Profile() {
 
                       {/* Preview and Save Button */}
                       <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 border-t border-gray-200/60 dark:border-gray-700/60 w-full">
-                        <div className="relative">
+                        <div className="relative group">
                           <img
                             src={buildDicebearUrl()}
                             alt="DiceBear Avatar Preview"
                             className="w-24 h-24 rounded-full border-4 border-blue-200 dark:border-blue-900/50 shadow-md object-cover bg-white"
                           />
+                          {/* Tooltip */}
+                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 text-[10px] text-white bg-blue-600/90 dark:bg-blue-600/95 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-semibold tracking-wide">
+                            Custom Avatar
+                          </span>
                         </div>
                         <button
                           type="button"
