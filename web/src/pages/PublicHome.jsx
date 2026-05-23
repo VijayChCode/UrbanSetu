@@ -425,7 +425,19 @@ export default function PublicHome() {
               </div>
             </div>
 
-            <div className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900">
+            <div 
+              className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900"
+              onMouseEnter={() => {
+                if (swiperRef.current && swiperRef.current.swiper) {
+                  swiperRef.current.swiper.autoplay.stop();
+                }
+              }}
+              onMouseLeave={() => {
+                if (swiperRef.current && swiperRef.current.swiper) {
+                  swiperRef.current.swiper.autoplay.start();
+                }
+              }}
+            >
               <Swiper
                 key={allSliderImages.map(img => img.listingId).join(',')}
                 ref={swiperRef}
@@ -435,6 +447,7 @@ export default function PublicHome() {
                 autoplay={{ delay: 5000, disableOnInteraction: false }}
                 speed={1000}
                 loop={true}
+                lazyPreloadPrevNext={1}
                 onSlideChange={handleSlideChange}
                 className="h-[400px] md:h-[500px] lg:h-[600px] w-full"
               >
@@ -444,6 +457,7 @@ export default function PublicHome() {
                     <img
                       src={image.url}
                       alt={image.title}
+                      loading="lazy"
                       className="w-full h-full object-cover transform transition-transform duration-[10s] hover:scale-110"
                       style={{ animation: 'panImage 20s linear infinite alternate' }}
                       onError={(e) => {
