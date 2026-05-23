@@ -1903,74 +1903,83 @@ export default function Profile() {
               </span>
             </h2>
             <form onSubmit={onSubmitForm} className="space-y-6">
-              <div className="flex flex-col items-center mb-6">
-                <div className="mb-2 relative group">
-                  <UserAvatar
-                    user={{ ...currentUser, avatar: formData.avatar }}
-                    size="w-24 h-24"
-                    textSize="text-2xl"
-                  />
-                  {/* Tooltip */}
-                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 text-[10px] text-white bg-blue-600/90 dark:bg-blue-600/95 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-semibold tracking-wide">
-                    Avatar Preview
-                  </span>
-                </div>
-                {isEditing && (
-                  <>
-                    <div className="flex flex-wrap gap-2 justify-center mt-2">
-                      {defaultAvatars.map((url, idx) => (
-                        <div key={url} className="relative group">
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, avatar: url })}
-                            className={`w-12 h-12 rounded-full border-2 transition-all duration-300 transform hover:scale-110 hover:shadow-lg ${formData.avatar === url ? 'border-blue-500 shadow-lg scale-105' : 'border-gray-300 hover:border-blue-400'} focus:outline-none focus:ring-2 focus:ring-blue-400 ${animationClasses.bounceIn} animation-delay-${idx * 50}`}
-                          >
-                            <img
-                              src={url}
-                              alt={`Avatar ${idx + 1}`}
-                              className="w-full h-full rounded-full object-cover transition-all duration-300 hover:brightness-110"
+              <div className="flex flex-col items-start mb-6 w-full">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center self-start">
+                  <FaUser className="w-4 h-4 mr-2 text-blue-500" />
+                  Avatar Selection
+                </label>
+                <div className="flex flex-col items-center w-full">
+                  <div className="mb-2 relative group">
+                    <UserAvatar
+                      user={{ ...currentUser, avatar: formData.avatar }}
+                      size="w-24 h-24"
+                      textSize="text-2xl"
+                    />
+                    {/* Tooltip */}
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2.5 py-1 text-[10px] text-white bg-blue-600/90 dark:bg-blue-600/95 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-semibold tracking-wide">
+                      Avatar Preview
+                    </span>
+                  </div>
+                  {isEditing && (
+                    <>
+                      <div className="flex flex-wrap gap-2 justify-center mt-2">
+                        {defaultAvatars.map((url, idx) => (
+                          <div key={url} className="relative group">
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, avatar: url })}
+                              className={`w-12 h-12 rounded-full border-2 transition-all duration-300 transform hover:scale-110 hover:shadow-lg ${formData.avatar === url ? 'border-blue-500 shadow-lg scale-105' : 'border-gray-300 hover:border-blue-400'} focus:outline-none focus:ring-2 focus:ring-blue-400 ${animationClasses.bounceIn} animation-delay-${idx * 50}`}
+                            >
+                              <img
+                                src={url}
+                                alt={`Avatar ${idx + 1}`}
+                                className="w-full h-full rounded-full object-cover transition-all duration-300 hover:brightness-110"
+                              />
+                            </button>
+                            {/* Tooltip */}
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-gray-900/90 dark:bg-gray-700/90 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
+                              Use Avatar {idx + 1}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="relative group">
+                          <label className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-400 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50} ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleAvatarUpload}
+                              disabled={uploadingAvatar}
                             />
-                          </button>
+                            {uploadingAvatar ? (
+                              <UrbanSetuSpinner size="sm" />
+                            ) : (
+                              <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
+                            )}
+                          </label>
                           {/* Tooltip */}
                           <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-gray-900/90 dark:bg-gray-700/90 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
-                            Use Avatar {idx + 1}
+                            Upload Custom Image
                           </span>
                         </div>
-                      ))}
-                      <div className="relative group">
-                        <label className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-400 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50} ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleAvatarUpload}
-                            disabled={uploadingAvatar}
-                          />
-                          {uploadingAvatar ? (
-                            <UrbanSetuSpinner size="sm" />
-                          ) : (
-                            <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
-                          )}
-                        </label>
-                        {/* Tooltip */}
-                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-gray-900/90 dark:bg-gray-700/90 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
-                          Upload Custom Image
-                        </span>
+                        <div className="relative group">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, avatar: "" })}
+                            className={`w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-red-500 group ${animationClasses.bounceIn} animation-delay-${(defaultAvatars.length + 1) * 50}`}
+                          >
+                            <FaTrash className={`text-red-500 group-hover:text-red-600 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
+                          </button>
+                          {/* Tooltip */}
+                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-red-600/95 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
+                            Remove Avatar
+                          </span>
+                        </div>
                       </div>
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, avatar: "" })}
-                          className={`w-12 h-12 rounded-full border-2 border-red-400 flex items-center justify-center bg-red-50 hover:bg-red-100 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-red-500 group ${animationClasses.bounceIn} animation-delay-${(defaultAvatars.length + 1) * 50}`}
-                        >
-                          <FaTrash className={`text-red-500 group-hover:text-red-600 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
-                        </button>
-                        {/* Tooltip */}
-                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-red-600/95 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
-                          Remove Avatar
-                        </span>
-                      </div>
-                    </div>
+                    </>
+                  )}
+                </div>
+              </div>
                     {/* DiceBear Avatar Customization */}
                     <div className="mt-6 w-full flex flex-col items-center bg-gray-50 dark:bg-gray-800/40 p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 max-w-2xl mx-auto shadow-sm">
                       <div className="font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-1.5 self-start text-base">
