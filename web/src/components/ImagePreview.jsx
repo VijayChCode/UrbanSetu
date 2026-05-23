@@ -151,13 +151,21 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const handleToggleFavorite = async () => {
     if (!currentImageUrl) return;
 
+    const baseTitle = metadata.listingName || metadata.blogTitle || metadata.title || 'Image';
+    const generatedName = `${baseTitle} - Image ${currentIndex + 1}`;
+
     const imageMetadata = {
       listingId,
-      imageName: `image-${currentIndex + 1}`,
+      imageName: generatedName,
       imageType: 'property-image',
       addedFrom: metadata.addedFrom || 'preview',
       ...metadata
     };
+
+    // Prevent overriding with generic name if metadata is spread
+    if (!metadata.imageName) {
+      imageMetadata.imageName = generatedName;
+    }
 
     try {
       await toggleFavorite(currentImageUrl, imageMetadata);
