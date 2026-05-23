@@ -1556,8 +1556,10 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-6 ${isVisible ? animationClasses.fadeInUp : 'opacity-0 translate-y-8'}`}>
-          <div className="flex flex-col items-start justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full md:flex-1 text-center sm:text-left mb-4 md:mb-0">
+          <div className="flex flex-col gap-6 w-full">
+            {/* Row 1: Avatar + Name/Role Section */}
+            <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left">
+              {/* Avatar Section */}
               <div className={`relative flex-shrink-0 mx-auto sm:mx-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
                 <div className="transform transition-all duration-300 group-hover:scale-110">
                   <UserAvatar
@@ -1577,9 +1579,10 @@ export default function Profile() {
                   </div>
                 )}
               </div>
-              <div className={`mt-4 sm:mt-0 w-full ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
-                {/* Name and Role Section */}
-                <div className="text-center sm:text-left mb-4">
+
+              {/* Name and Role Section */}
+              <div className={`mt-4 sm:mt-0 flex-1 ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
+                <div className="text-center sm:text-left mb-2">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1 transition-colors duration-300 flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-2">
                     <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent break-all line-clamp-2">
                       <EncryptedText text={currentUser.username} />
@@ -1646,223 +1649,225 @@ export default function Profile() {
                     )}
                   </h1>
                 </div>
-
-                {/* Contact Information Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                  {/* Email - Show only if showEmail setting is true */}
-                  {(() => {
-                    // Use storageUpdateTrigger to force re-render when settings change
-                    const _ = storageUpdateTrigger;
-                    const showEmail = localStorage.getItem('showEmail') === 'true';
-                    return showEmail ? (
-                      <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
-                        <div className="flex items-center">
-                          <FaEnvelope className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Email</p>
-                            <p className="text-gray-700 dark:text-gray-200 text-sm break-all">{currentUser.email}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : null;
-                  })()}
-
-                  {/* Mobile - Show only if showPhone setting is true */}
-                  {(() => {
-                    // Use storageUpdateTrigger to force re-render when settings change
-                    const _ = storageUpdateTrigger;
-                    const showPhone = localStorage.getItem('showPhone') === 'true';
-                    return showPhone ? (
-                      <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-green-300 transition-all duration-300 hover:shadow-md">
-                        <div className="flex items-center">
-                          <FaPhone className="w-4 h-4 mr-3 text-green-500 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Mobile</p>
-                            <p className="text-gray-700 dark:text-gray-200 text-sm">
-                              {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000"
-                                ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
-                                : "Not provided"
-                              }
-                              {currentUser.isGeneratedMobile && (
-                                <span className="text-xs text-gray-400 block">(Generated for Google signup)</span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : null;
-                  })()}
-
-                  {/* Gender */}
-                  <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-purple-300 transition-all duration-300 hover:shadow-md">
-                    <div className="flex items-center">
-                      <FaUser className="w-4 h-4 mr-3 text-purple-500 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Gender</p>
-                        <p className="text-gray-700 dark:text-gray-200 text-sm capitalize">{currentUser.gender || "Not provided"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
-                    <div className="flex items-start">
-                      <FaHome className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Address</p>
-                        <p className="text-gray-700 dark:text-gray-200 text-sm break-words">{currentUser.address || "Not provided"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Referral Info */}
-                  {/* Referral Info - Hide for Admins */}
-                  {!isAdmin && (
-                    <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-3 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 hover:shadow-md sm:col-span-2">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center">
-                          <FaStar className="w-4 h-4 mr-3 text-indigo-500 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-indigo-500 font-bold mb-1 uppercase tracking-wider">Referral Program</p>
-                            <p className="text-gray-700 dark:text-gray-300 text-sm">Invite friends to <span className="font-bold">UrbanSetu</span> using your link or code and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> too.</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setShowReferralModal(true)}
-                          className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                        >
-                          Refer Now
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Referral Code Card - Gold Premium Design */}
-                  {!isAdmin && (coinData.loading || coinData.referralCode || coinData.error) && (
-                    <div
-                      className={`sm:col-span-2 relative overflow-hidden rounded-xl p-4 transition-all duration-300 ${(!coinData.loading && !coinData.error) ? 'cursor-pointer group hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]' : ''}`}
-                      style={{ background: coinData.error ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
-                      onClick={() => {
-                        if (coinData.error) {
-                          setCoinData(prev => ({ ...prev, loading: true, error: null }));
-                          setHistoryRefreshTrigger(prev => prev + 1); // Trigger retry
-                          return;
-                        }
-                        if (coinData.loading || !coinData.referralCode) return;
-                        navigator.clipboard.writeText(coinData.referralCode);
-                        setReferralCodeCopied(true);
-                        setTimeout(() => setReferralCodeCopied(false), 2000);
-                      }}
-                      title={coinData.loading ? "Loading referral code..." : coinData.error ? "Click to retry" : "Click to copy referral code"}
-                    >
-                      {/* Shimmer effect */}
-                      {!coinData.loading && !coinData.error && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                      )}
-                      <div className="relative flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 ${coinData.error ? 'bg-red-200' : 'bg-white/30'} backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner`}>
-                            {coinData.error ? <FaTimes className="text-red-700" /> : <FaUserFriends className="text-amber-800 text-lg" />}
-                          </div>
-                          <div>
-                            <p className={`text-[10px] uppercase tracking-[0.15em] ${coinData.error ? 'text-red-800' : 'text-amber-900/70'} font-bold`}>Your Referral Code</p>
-                            {coinData.loading ? (
-                              <div className="flex items-center gap-2 mt-1">
-                                <UrbanSetuSpinner size="sm" isBright={false} />
-                                <p className="text-xs sm:text-sm font-bold text-amber-900 animate-pulse">
-                                  {(!currentUser?.gamification?.referralCode && new Date(currentUser?.createdAt) < new Date('2026-04-12'))
-                                    ? 'Generating Your Referral code...'
-                                    : 'Fetching Your referral code...'}
-                                </p>
-                              </div>
-                            ) : coinData.error ? (
-                              <p className="text-xs sm:text-sm font-bold text-red-700 mt-1">
-                                {coinData.error}. <span className="underline cursor-pointer">Tap to retry</span>
-                              </p>
-                            ) : (
-                              <p className="text-xl font-black tracking-[0.3em] text-amber-900 font-mono">{coinData.referralCode}</p>
-                            )}
-                          </div>
-                        </div>
-                        {!coinData.loading && !coinData.error && (
-                          <div className="flex items-center gap-2">
-                            {referralCodeCopied ? (
-                              <span className="text-xs font-bold text-amber-900 bg-white/40 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all"><FaCheck className="text-green-700" /> Copied!</span>
-                            ) : (
-                              <span className="text-xs font-bold text-amber-900/80 bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 group-hover:bg-white/50 transition-colors"><FaCopy /> Tap to copy</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Profile Completion Status */}
-                {isProfileIncomplete && (
-                  <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3">
-                    <p className="text-sm text-amber-700 dark:text-amber-400 font-medium text-center sm:text-left">
-                      ⚠️ Complete your profile & earn 20 SetuCoins to unlock rewards!
-                    </p>
-                  </div>
-                )}
-
-                {/* Blockchain Trust Layer */}
-                <div className={`bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm sm:col-span-2 ${isVisible ? animationClasses.fadeInUp + ' animation-delay-600' : 'opacity-0'}`}>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-indigo-200 dark:shadow-none shadow-lg">
-                        <FaShieldAlt />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Blockchain Trust Layer</p>
-                        <h4 className="text-sm font-black text-gray-800 dark:text-white">
-                          {currentUser.blockchain?.walletAddress
-                            ? `Linked: ${currentUser.blockchain.walletAddress.slice(0, 6)}...${currentUser.blockchain.walletAddress.slice(-4)}`
-                            : "Secure your identity on-chain"}
-                        </h4>
-                      </div>
-                    </div>
-
-                    {!currentUser.blockchain?.walletAddress ? (
-                      <button
-                        onClick={handleConnectWallet}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none w-full sm:w-auto justify-center"
-                      >
-                        <FaHandshake /> Connect Wallet
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold">
-                        <FaCheck /> Verified on Polygon
-                      </div>
-                    )}
-                  </div>
-
-                  {currentUser.blockchain?.walletAddress && (
-                    <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/50 flex justify-between items-center">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Trust Score:</span>
-                        <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{currentUser.blockchain.trustScore || 0}/100</span>
-                      </div>
-                      <div className="h-1.5 flex-1 mx-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-1000"
-                          style={{ width: `${currentUser.blockchain.trustScore || 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Member Since */}
+                {/* Member since (aligned next to name) */}
                 <div className="text-center sm:text-left">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono mb-2 transition-colors duration-300">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono transition-colors duration-300">
                     <FaCalendarAlt className="w-3 h-3 inline mr-1" />
                     Member since {formatDate(currentUser.createdAt)}
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* Row 2: All other details taking full width */}
+            <div className={`w-full ${isVisible ? animationClasses.fadeInUp + ' animation-delay-300' : 'opacity-0 translate-y-4'}`}>
+              {/* Contact Information Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                {/* Email - Show only if showEmail setting is true */}
+                {(() => {
+                  // Use storageUpdateTrigger to force re-render when settings change
+                  const _ = storageUpdateTrigger;
+                  const showEmail = localStorage.getItem('showEmail') === 'true';
+                  return showEmail ? (
+                    <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                      <div className="flex items-center">
+                        <FaEnvelope className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Email</p>
+                          <p className="text-gray-700 dark:text-gray-200 text-sm break-all">{currentUser.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Mobile - Show only if showPhone setting is true */}
+                {(() => {
+                  // Use storageUpdateTrigger to force re-render when settings change
+                  const _ = storageUpdateTrigger;
+                  const showPhone = localStorage.getItem('showPhone') === 'true';
+                  return showPhone ? (
+                    <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-green-300 transition-all duration-300 hover:shadow-md">
+                      <div className="flex items-center">
+                        <FaPhone className="w-4 h-4 mr-3 text-green-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Mobile</p>
+                          <p className="text-gray-700 dark:text-gray-200 text-sm">
+                            {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000"
+                              ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
+                              : "Not provided"
+                            }
+                            {currentUser.isGeneratedMobile && (
+                              <span className="text-xs text-gray-400 block">(Generated for Google signup)</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Gender */}
+                <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-purple-300 transition-all duration-300 hover:shadow-md">
+                  <div className="flex items-center">
+                    <FaUser className="w-4 h-4 mr-3 text-purple-500 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Gender</p>
+                      <p className="text-gray-700 dark:text-gray-200 text-sm capitalize">{currentUser.gender || "Not provided"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                  <div className="flex items-start">
+                    <FaHome className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Address</p>
+                      <p className="text-gray-700 dark:text-gray-200 text-sm break-words">{currentUser.address || "Not provided"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Referral Info */}
+                {!isAdmin && (
+                  <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-3 border border-indigo-200 dark:border-indigo-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 hover:shadow-md sm:col-span-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center">
+                        <FaStar className="w-4 h-4 mr-3 text-indigo-500 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-indigo-500 font-bold mb-1 uppercase tracking-wider">Referral Program</p>
+                          <p className="text-gray-700 dark:text-gray-300 text-sm">Invite friends to <span className="font-bold">UrbanSetu</span> using your link or code and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> too.</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowReferralModal(true)}
+                        className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                      >
+                        Refer Now
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Referral Code Card - Gold Premium Design */}
+                {!isAdmin && (coinData.loading || coinData.referralCode || coinData.error) && (
+                  <div
+                    className={`sm:col-span-2 relative overflow-hidden rounded-xl p-4 transition-all duration-300 ${(!coinData.loading && !coinData.error) ? 'cursor-pointer group hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]' : ''}`}
+                    style={{ background: coinData.error ? 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)' : 'linear-gradient(135deg, #f6d365 0%, #fda085 50%, #f6d365 100%)' }}
+                    onClick={() => {
+                      if (coinData.error) {
+                        setCoinData(prev => ({ ...prev, loading: true, error: null }));
+                        setHistoryRefreshTrigger(prev => prev + 1); // Trigger retry
+                        return;
+                      }
+                      if (coinData.loading || !coinData.referralCode) return;
+                      navigator.clipboard.writeText(coinData.referralCode);
+                      setReferralCodeCopied(true);
+                      setTimeout(() => setReferralCodeCopied(false), 2000);
+                    }}
+                    title={coinData.loading ? "Loading referral code..." : coinData.error ? "Click to retry" : "Click to copy referral code"}
+                  >
+                    {!coinData.loading && !coinData.error && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    )}
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 ${coinData.error ? 'bg-red-200' : 'bg-white/30'} backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner`}>
+                          {coinData.error ? <FaTimes className="text-red-700" /> : <FaUserFriends className="text-amber-800 text-lg" />}
+                        </div>
+                        <div>
+                          <p className={`text-[10px] uppercase tracking-[0.15em] ${coinData.error ? 'text-red-800' : 'text-amber-900/70'} font-bold`}>Your Referral Code</p>
+                          {coinData.loading ? (
+                            <div className="flex items-center gap-2 mt-1">
+                              <UrbanSetuSpinner size="sm" isBright={false} />
+                              <p className="text-xs sm:text-sm font-bold text-amber-900 animate-pulse">
+                                {(!currentUser?.gamification?.referralCode && new Date(currentUser?.createdAt) < new Date('2026-04-12'))
+                                  ? 'Generating Your Referral code...'
+                                  : 'Fetching Your referral code...'}
+                              </p>
+                            </div>
+                          ) : coinData.error ? (
+                            <p className="text-xs sm:text-sm font-bold text-red-700 mt-1">
+                              {coinData.error}. <span className="underline cursor-pointer">Tap to retry</span>
+                            </p>
+                          ) : (
+                            <p className="text-xl font-black tracking-[0.3em] text-amber-900 font-mono">{coinData.referralCode}</p>
+                          )}
+                        </div>
+                      </div>
+                      {!coinData.loading && !coinData.error && (
+                        <div className="flex items-center gap-2">
+                          {referralCodeCopied ? (
+                            <span className="text-xs font-bold text-amber-900 bg-white/40 px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-all"><FaCheck className="text-green-700" /> Copied!</span>
+                          ) : (
+                            <span className="text-xs font-bold text-amber-900/80 bg-white/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 group-hover:bg-white/50 transition-colors"><FaCopy /> Tap to copy</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Profile Completion Status */}
+              {isProfileIncomplete && (
+                <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3">
+                  <p className="text-sm text-amber-700 dark:text-amber-400 font-medium text-center sm:text-left">
+                    ⚠️ Complete your profile & earn 20 SetuCoins to unlock rewards!
+                  </p>
+                </div>
+              )}
+
+              {/* Blockchain Trust Layer */}
+              <div className={`bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm sm:col-span-2 ${isVisible ? animationClasses.fadeInUp + ' animation-delay-600' : 'opacity-0'}`}>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-indigo-200 dark:shadow-none shadow-lg">
+                      <FaShieldAlt />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Blockchain Trust Layer</p>
+                      <h4 className="text-sm font-black text-gray-800 dark:text-white">
+                        {currentUser.blockchain?.walletAddress
+                          ? `Linked: ${currentUser.blockchain.walletAddress.slice(0, 6)}...${currentUser.blockchain.walletAddress.slice(-4)}`
+                          : "Secure your identity on-chain"}
+                      </h4>
+                    </div>
+                  </div>
+
+                  {!currentUser.blockchain?.walletAddress ? (
+                    <button
+                      onClick={handleConnectWallet}
+                      className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none w-full sm:w-auto justify-center"
+                    >
+                      <FaHandshake /> Connect Wallet
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold">
+                      <FaCheck /> Verified on Polygon
+                    </div>
+                  )}
+                </div>
+
+                {currentUser.blockchain?.walletAddress && (
+                  <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800/50 flex justify-between items-center">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Trust Score:</span>
+                      <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{currentUser.blockchain.trustScore || 0}/100</span>
+                    </div>
+                    <div className="h-1.5 flex-1 mx-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 transition-all duration-1000"
+                        style={{ width: `${currentUser.blockchain.trustScore || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Edit Profile Button */}
             <div className="mt-3 flex justify-end w-full">
               <button
                 onClick={() => setIsEditing(!isEditing)}
