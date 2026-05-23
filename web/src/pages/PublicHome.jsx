@@ -197,7 +197,7 @@ export default function PublicHome() {
 
   const goToSlide = (index) => {
     if (swiperRef.current && swiperRef.current.swiper) {
-      swiperRef.current.swiper.slideToLoop(index);
+      swiperRef.current.swiper.slideTo(index);
     }
   };
 
@@ -427,12 +427,12 @@ export default function PublicHome() {
 
             <div className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900">
               <Swiper
-                key={allSliderImages.map(img => img.listingId).join(',')}
+                key={allSliderImages.length}
                 onSwiper={(swiper) => {
                   swiperRef.current = { swiper };
-                  swiper.autoplay.start();
+                  if (swiper.autoplay) swiper.autoplay.start();
                 }}
-                modules={[Autoplay, Pagination, EffectFade]}
+                modules={[Autoplay, EffectFade]}
                 effect="fade"
                 fadeEffect={{ crossFade: true }}
                 autoplay={{ 
@@ -441,11 +441,11 @@ export default function PublicHome() {
                   pauseOnMouseEnter: true
                 }}
                 speed={1000}
-                loop={true}
+                rewind={true}
                 observer={true}
                 observeParents={true}
                 lazyPreloadPrevNext={1}
-                onSlideChange={handleSlideChange}
+                onSlideChange={(swiper) => setCurrentSlideIndex(swiper.activeIndex)}
                 className="h-[400px] md:h-[500px] lg:h-[600px] w-full"
               >
                 {allSliderImages.map((image) => (
