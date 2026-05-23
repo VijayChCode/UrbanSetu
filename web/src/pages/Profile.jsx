@@ -1558,39 +1558,39 @@ export default function Profile() {
         <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-6 ${isVisible ? animationClasses.fadeInUp : 'opacity-0 translate-y-8'}`}>
           <div className="flex flex-col gap-6 w-full">
             {/* Row 1: Avatar + Name/Role Section */}
-            <div className="flex flex-col sm:flex-row items-center sm:space-x-6 w-full text-center sm:text-left">
+            <div className="flex flex-row items-center space-x-4 sm:space-x-6 w-full text-left">
               {/* Avatar Section */}
-              <div className={`relative flex-shrink-0 mx-auto sm:mx-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
+              <div className={`relative flex-shrink-0 group ${isVisible ? animationClasses.scaleIn + ' animation-delay-150' : 'opacity-0 scale-95'}`}>
                 <div className="transform transition-all duration-300 group-hover:scale-110">
                   <UserAvatar
                     user={currentUser}
-                    size="h-24 w-24"
-                    textSize="text-2xl"
+                    size="h-16 w-16 sm:h-24 sm:w-24"
+                    textSize="text-xl sm:text-2xl"
                   />
                 </div>
                 {currentUser.role === 'admin' && (
-                  <div className={`absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-3 shadow-xl z-20 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
-                    <FaCrown className="w-5 h-5" />
+                  <div className={`absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-blue-500 text-white rounded-full p-1.5 sm:p-3 shadow-xl z-20 ${animationClasses.bounceIn} animation-delay-300 ${animationClasses.float}`}>
+                    <FaCrown className="w-3 h-3 sm:w-5 sm:h-5" />
                   </div>
                 )}
                 {currentUser.isDefaultAdmin && (
-                  <div className={`absolute -bottom-2 -right-2 bg-red-500 text-white rounded-full p-3 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
-                    <FaCrown className="w-5 h-5" />
+                  <div className={`absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-red-500 text-white rounded-full p-1.5 sm:p-3 ${animationClasses.bounceIn} animation-delay-450 ${animationClasses.pulse}`}>
+                    <FaCrown className="w-3 h-3 sm:w-5 sm:h-5" />
                   </div>
                 )}
               </div>
 
               {/* Name and Role Section */}
-              <div className={`mt-4 sm:mt-0 flex-1 ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
-                <div className="text-center sm:text-left mb-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1 transition-colors duration-300 flex flex-col sm:flex-row sm:items-center justify-center sm:justify-start gap-2">
+              <div className={`flex-1 min-w-0 ${isVisible ? animationClasses.fadeInLeft + ' animation-delay-300' : 'opacity-0 -translate-x-8'}`}>
+                <div className="text-left mb-1.5">
+                  <h1 className="text-xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1 transition-colors duration-300 flex flex-col sm:flex-row sm:items-center justify-start gap-2">
                     <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent break-all line-clamp-2">
                       <EncryptedText text={currentUser.username} />
                     </span>
                     {/* Seasonal Animated Icon */}
                     {theme?.logoDecoration && THEME_DECORATIONS[theme.logoDecoration] && (
                       <span
-                        className={`text-3xl ml-2 filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform`}
+                        className={`text-2xl sm:text-3xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform`}
                         style={THEME_DECORATIONS[theme.logoDecoration].style || {}}
                         onClick={(e) => {
                           e.preventDefault();
@@ -1605,7 +1605,7 @@ export default function Profile() {
                     {/* Fallback */}
                     {theme?.icon && !theme?.logoDecoration && (
                       <span
-                        className="text-3xl ml-2 filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform"
+                        className="text-2xl sm:text-3xl filter drop-shadow-md cursor-pointer hover:scale-110 transition-transform"
                         title={theme.name}
                         onClick={(e) => {
                           e.preventDefault();
@@ -1617,8 +1617,8 @@ export default function Profile() {
                       </span>
                     )}
                     {currentUser.role === 'admin' && (
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
+                      <div className="flex flex-wrap items-center justify-start gap-2">
+                        <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center gap-1">
                           <FaCrown className="w-3 h-3 text-blue-500" />
                           Admin
                         </span>
@@ -1626,8 +1626,8 @@ export default function Profile() {
                       </div>
                     )}
                     {currentUser.isDefaultAdmin && (
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
+                      <div className="flex flex-wrap items-center justify-start gap-2">
+                        <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-red-200 dark:hover:bg-red-800 animate-pulse flex items-center gap-1">
                           <FaCrown className="w-3 h-3 text-red-500" />
                           Default Admin
                         </span>
@@ -1635,13 +1635,13 @@ export default function Profile() {
                       </div>
                     )}
                     {currentUser.role === 'user' && (
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                        <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
+                      <div className="flex flex-wrap items-center justify-start gap-2">
+                        <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-medium transform transition-all duration-300 hover:scale-110 hover:bg-blue-200">
                           User
                         </span>
                         {renderBadges(coinData.badges.length > 0 ? coinData.badges : currentUser.gamification?.badges)}
                         {currentUser.gamification?.currentStreak > 0 && !(coinData.badges.length > 0 || currentUser.gamification?.badges?.length > 0) && (
-                          <span className="flex items-center gap-1 text-[11px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-full border border-orange-100 dark:border-orange-800 shadow-sm animate-pulse">
+                          <span className="flex items-center gap-1 text-[10px] sm:text-[11px] text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-orange-100 dark:border-orange-800 shadow-sm animate-pulse">
                             <FaFire /> {currentUser.gamification.currentStreak} Mo Streak
                           </span>
                         )}
@@ -1650,7 +1650,7 @@ export default function Profile() {
                   </h1>
                 </div>
                 {/* Member since (aligned next to name) */}
-                <div className="text-center sm:text-left">
+                <div className="text-left">
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono transition-colors duration-300">
                     <FaCalendarAlt className="w-3 h-3 inline mr-1" />
                     Member since {formatDate(currentUser.createdAt)}
