@@ -2012,22 +2012,16 @@ export default function AdminManagement() {
                       </div>
                     </div>
                   ) : null}
-                </>
-              ) : (
-                <div className="text-center py-12 text-red-500 font-bold">
-                  Failed to load details.
                 </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="w-full py-16 text-center text-red-500 font-bold">
-            Failed to load details.
+              </>
+            ) : (
+              <div className="text-center py-12 text-red-500 font-bold">
+                Failed to load details.
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  )}
+        </div>
+      )}
 
   {/* Confirmation Modal */}
       {
