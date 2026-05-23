@@ -320,7 +320,12 @@ export const SignIn = async (req, res, next) => {
     const identifier = req.ip || req.connection.remoteAddress;
 
     try {
-        const validUser = await User.findOne({ email: emailLower })
+        // Fetch user and check lockout concurrently (Parallelizing DB checks)
+        const [validUser, isLocked] = await Promise.all([
+            User.findOne({ email: emailLower }),
+            PasswordLockout.isLocked({ email: emailLower })
+        ]);
+
         if (!validUser) {
             // Check if this email is softbanned/purged and communicate appropriately
             try {
@@ -352,7 +357,6 @@ export const SignIn = async (req, res, next) => {
                     }
 
                     // Case 4: Softbanned (General/User Requested) - Account is deleted but not purged
-                    // They should probably sign up, but since they are trying to sign in, we tell them it's deleted.
                     return next(errorHandler(403, "This account has been deactivated/deleted. Please sign up to create a new account."));
                 }
             } catch (_) { }
@@ -362,8 +366,8 @@ export const SignIn = async (req, res, next) => {
             return next(errorHandler(401, "Invalid email address or password"))
         }
 
-        // Check if account is locked
-        if (await isAccountLocked(validUser._id)) {
+        // Check pre-calculated lockout status
+        if (isLocked) {
             logSecurityEvent('account_locked_attempt', { email: emailLower, userId: validUser._id });
             const remainingMs = await getAccountLockRemainingMs(validUser._id, emailLower);
             const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
@@ -375,7 +379,7 @@ export const SignIn = async (req, res, next) => {
             return next(errorHandler(403, "This account is temporarily suspended. Please reach out to support for help."));
         }
 
-        const validPassword = await bcryptjs.compareSync(password, validUser.password)
+        const validPassword = await bcryptjs.compare(password, validUser.password)
         if (!validPassword) {
             // Track failed attempt
             trackFailedAttempt(identifier, validUser._id);
@@ -393,145 +397,31 @@ export const SignIn = async (req, res, next) => {
             return next(errorHandler(403, "Your admin account request has been rejected. Please contact support for more information."));
         }
 
-        // Clear failed attempts on successful login
+        // Clear failed attempts on successful login (non-blocking)
         clearFailedAttempts(identifier);
 
-        // Get device info and check for suspicious login
+        // Get device info and metadata synchronously
         const userAgent = req.get('User-Agent');
         const device = getDeviceInfo(userAgent, req.headers);
         const location = getLocationFromIP(identifier);
-
-        // Check for suspicious login patterns
-        const suspiciousCheck = await checkSuspiciousLogin(validUser._id, identifier, device);
-
-        // 🛡️ Sentinel AI Anomaly Check
-        try {
-            const sentinelCheck = await SentinelSecurityService.checkSecurityAnomalies(validUser._id, identifier, device.device);
-            if (!sentinelCheck.safe) {
-                console.log(`🚨 Sentinel AI flagged login for user ${validUser._id}: ${sentinelCheck.reason}`);
-            }
-        } catch (sentErr) {
-            console.error("Sentinel anomaly check failed during SignIn:", sentErr.message);
-        }
-
-        // Create enhanced session
-        const session = await createEnhancedSession(validUser._id, req);
-
-        // Enforce role-based session limits
-        await enforceSessionLimits(validUser._id, validUser.role, req.app.get('io'));
-
-        // Check for concurrent logins
-        const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
-
-        // Capture Source
         const source = req.get('Origin') || req.get('Referer') || 'Unknown';
 
-        // Log session action
-        await logSessionAction(
-            validUser._id,
-            'login',
-            session.sessionId,
-            identifier,
-            device,
-            location,
-            `Successful login with ${concurrentInfo.activeSessions} concurrent sessions`,
-            suspiciousCheck.isSuspicious,
-            suspiciousCheck.reason,
-            null,
-            { source }
-        );
-
-        // Log successful login
-        logSecurityEvent('successful_login', {
-            email: emailLower,
-            userId: validUser._id,
-            ip: identifier,
-            userAgent,
-            sessionId: session.sessionId,
-            concurrentLogins: concurrentInfo.activeSessions
-        });
-
-        // Update lastLogin timestamp and reset re-engagement email flag
-        if (validUser.gender && typeof validUser.gender === 'string') {
-            validUser.gender = validUser.gender.toLowerCase();
-        }
-        validUser.lastLogin = new Date();
-        validUser.lastLoginLocation = location;
-        validUser.lastReEngagementEmailSent = null;
-        await validUser.save();
+        // Create enhanced session (DB updates inside this are now non-blocking)
+        const session = await createEnhancedSession(validUser._id, req);
 
         // Generate token pair with sessionId
         const { accessToken, refreshToken } = generateTokenPair({ id: validUser._id, sessionId: session.sessionId });
 
         // Set secure cookies
         setSecureCookies(res, accessToken, refreshToken);
-        // Expose session id for client (non-httpOnly so client can identify current session)
         res.cookie('session_id', session.sessionId, {
             httpOnly: false,
-            // Use Secure + SameSite=None for cross-origin sockets and web app
             secure: true,
             sameSite: 'none',
             path: '/'
         });
 
-        // LOGIN SUCCESSFUL - Send email notifications AFTER login succeeds with retry logic
-        // This is intentionally async and non-blocking
-        (async () => {
-            try {
-                // Helper function to send email with 3 retry attempts
-                const sendEmailWithFallback = async (emailFn, maxAttempts = 3) => {
-                    let lastError = null;
-                    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                        try {
-                            await emailFn();
-                            console.log(`✅ Email sent successfully on attempt ${attempt}`);
-                            return true;
-                        } catch (error) {
-                            lastError = error;
-                            console.error(`❌ Email attempt ${attempt}/${maxAttempts} failed:`, error.message);
-                            // Wait before retrying (exponential backoff: 1s, 2s, 4s)
-                            if (attempt < maxAttempts) {
-                                await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
-                            }
-                        }
-                    }
-                    console.error(`❌ Failed to send email after ${maxAttempts} attempts`);
-                    return false;
-                };
-
-                // Send new login notification with retry
-                await sendEmailWithFallback(() =>
-                    sendNewLoginEmail(
-                        validUser.email,
-                        device,
-                        identifier,
-                        location,
-                        new Date()
-                    )
-                );
-
-                // Send suspicious login alert if detected, with retry
-                if (suspiciousCheck.isSuspicious) {
-                    await sendEmailWithFallback(() =>
-                        sendSuspiciousLoginEmail(
-                            validUser.email,
-                            device,
-                            identifier,
-                            location,
-                            suspiciousCheck.previousDevice,
-                            suspiciousCheck.previousIp,
-                            suspiciousCheck.previousLocation
-                        )
-                    );
-                }
-            } catch (error) {
-                console.error('Post-login email notification error (non-blocking):', error);
-                // Don't fail login - this is fire-and-forget
-            }
-        })().catch(error => {
-            console.error('Unhandled error in post-login email notification:', error);
-        });
-
+        // Respond immediately with JSON payload (unblocking frontend client)
         res.status(200).json({
             _id: validUser._id,
             username: validUser.username,
@@ -545,11 +435,113 @@ export const SignIn = async (req, res, next) => {
             address: validUser.address,
             gender: validUser.gender,
             settings: validUser.settings,
-            token: accessToken, // Keep for backward compatibility
-            refreshToken, // Send for cross-domain storage
+            token: accessToken,
+            refreshToken,
             sessionId: session.sessionId,
-            emailNotificationStatus: 'pending' // Inform client that email is being sent
+            emailNotificationStatus: 'pending'
         });
+
+        // Defer non-critical logging, session limits, anomaly scans, and DB save updates to background thread
+        (async () => {
+            try {
+                // Check for suspicious login patterns
+                const suspiciousCheck = await checkSuspiciousLogin(validUser._id, identifier, device);
+
+                // 🛡️ Sentinel AI Anomaly Check
+                try {
+                    const sentinelCheck = await SentinelSecurityService.checkSecurityAnomalies(validUser._id, identifier, device.device);
+                    if (!sentinelCheck.safe) {
+                        console.log(`🚨 Sentinel AI flagged login for user ${validUser._id}: ${sentinelCheck.reason}`);
+                    }
+                } catch (sentErr) {
+                    console.error("Sentinel anomaly check failed during SignIn:", sentErr.message);
+                }
+
+                // Enforce role-based session limits
+                await enforceSessionLimits(validUser._id, validUser.role, req.app.get('io'));
+
+                const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
+
+                // Log session action
+                await logSessionAction(
+                    validUser._id,
+                    'login',
+                    session.sessionId,
+                    identifier,
+                    device,
+                    location,
+                    `Successful login with ${concurrentInfo.activeSessions} concurrent sessions`,
+                    suspiciousCheck.isSuspicious,
+                    suspiciousCheck.reason,
+                    null,
+                    { source }
+                );
+
+                // Log successful login
+                logSecurityEvent('successful_login', {
+                    email: emailLower,
+                    userId: validUser._id,
+                    ip: identifier,
+                    userAgent,
+                    sessionId: session.sessionId,
+                    concurrentLogins: concurrentInfo.activeSessions
+                });
+
+                // Update lastLogin timestamp
+                if (validUser.gender && typeof validUser.gender === 'string') {
+                    validUser.gender = validUser.gender.toLowerCase();
+                }
+                validUser.lastLogin = new Date();
+                validUser.lastLoginLocation = location;
+                validUser.lastReEngagementEmailSent = null;
+                await validUser.save();
+
+                // Send email notifications with retry logic
+                try {
+                    const sendEmailWithFallback = async (emailFn, maxAttempts = 3) => {
+                        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                            try {
+                                await emailFn();
+                                return true;
+                            } catch (error) {
+                                if (attempt < maxAttempts) {
+                                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
+                                }
+                            }
+                        }
+                        return false;
+                    };
+
+                    await sendEmailWithFallback(() =>
+                        sendNewLoginEmail(
+                            validUser.email,
+                            device,
+                            identifier,
+                            location,
+                            new Date()
+                        )
+                    );
+
+                    if (suspiciousCheck.isSuspicious) {
+                        await sendEmailWithFallback(() =>
+                            sendSuspiciousLoginEmail(
+                                validUser.email,
+                                device,
+                                identifier,
+                                location,
+                                suspiciousCheck.previousDevice,
+                                suspiciousCheck.previousIp,
+                                suspiciousCheck.previousLocation
+                            )
+                        );
+                    }
+                } catch (emailError) {
+                    console.error('Post-login email notification error:', emailError);
+                }
+            } catch (bgError) {
+                console.error("SignIn background process error:", bgError);
+            }
+        })();
     }
     catch (error) {
         console.error(error);
@@ -573,18 +565,22 @@ export const Google = async (req, res, next) => {
             if (validUser.status === 'suspended') {
                 return next(errorHandler(403, "Your account is suspended. Please contact support."));
             }
-            // Create enhanced session for Google login as well
+
+            // Get session info and metadata synchronously
+            const userAgent = req.get('User-Agent');
+            const device = getDeviceInfo(userAgent, req.headers);
+            const ip = req.ip || req.connection.remoteAddress;
+            const location = getLocationFromIP(ip);
+            const source = req.get('Origin') || req.get('Referer') || 'Unknown';
+
+            // Create enhanced session (DB updates inside this are now non-blocking)
             const session = await createEnhancedSession(validUser._id, req);
 
             // Generate token pair with sessionId
             const { accessToken, refreshToken } = generateTokenPair({ id: validUser._id, sessionId: session.sessionId });
 
-            // Enforce role-based session limits
-            await enforceSessionLimits(validUser._id, validUser.role, req.app.get('io'));
-
             // Set secure cookies
             setSecureCookies(res, accessToken, refreshToken);
-            // Expose session id
             res.cookie('session_id', session.sessionId, {
                 httpOnly: false,
                 secure: true,
@@ -592,120 +588,7 @@ export const Google = async (req, res, next) => {
                 path: '/'
             });
 
-            // Get session info
-            const userAgent = req.get('User-Agent');
-            const device = getDeviceInfo(userAgent, req.headers);
-            const ip = req.ip || req.connection.remoteAddress;
-            const location = getLocationFromIP(ip);
-
-            // Check concurrency & suspicious login
-            const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
-            const suspiciousCheck = await checkSuspiciousLogin(validUser._id, ip, device);
-
-            // 🛡️ Sentinel AI Anomaly Check (Google)
-            try {
-                const sentinelCheck = await SentinelSecurityService.checkSecurityAnomalies(validUser._id, ip, device.device);
-                if (!sentinelCheck.safe) {
-                    console.log(`🚨 Sentinel AI flagged Google login for user ${validUser._id}: ${sentinelCheck.reason}`);
-                }
-            } catch (sentErr) {
-                console.error("Sentinel anomaly check failed during Google auth:", sentErr.message);
-            }
-
-            // Capture Source
-            const source = req.get('Origin') || req.get('Referer') || 'Unknown';
-
-            // Log session action (Audit Log)
-            await logSessionAction(
-                validUser._id,
-                'login',
-                session.sessionId,
-                ip,
-                device,
-                location,
-                `Successful Google login with ${concurrentInfo.activeSessions} concurrent sessions`,
-                suspiciousCheck.isSuspicious,
-                suspiciousCheck.reason,
-                null,
-                { source }
-            );
-
-            // Log security event
-            logSecurityEvent('successful_google_login', {
-                email: validUser.email,
-                userId: validUser._id,
-                ip,
-                userAgent,
-                sessionId: session.sessionId,
-                concurrentLogins: concurrentInfo.activeSessions
-            });
-
-            // Update lastLogin timestamp and reset re-engagement email flag
-            if (validUser.gender && typeof validUser.gender === 'string') {
-                validUser.gender = validUser.gender.toLowerCase();
-            }
-            validUser.lastLogin = new Date();
-            validUser.lastLoginLocation = location;
-            validUser.lastReEngagementEmailSent = null;
-            await validUser.save();
-
-            // LOGIN SUCCESSFUL - Send email notifications with retry logic
-
-            // Send emails AFTER login response (async, non-blocking)
-            (async () => {
-                try {
-                    // Helper function to send email with 3 retry attempts
-                    const sendEmailWithFallback = async (emailFn, maxAttempts = 3) => {
-                        let lastError = null;
-                        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                            try {
-                                await emailFn();
-                                console.log(`✅ Google login email sent successfully on attempt ${attempt}`);
-                                return true;
-                            } catch (error) {
-                                lastError = error;
-                                console.error(`❌ Google login email attempt ${attempt}/${maxAttempts} failed:`, error.message);
-                                if (attempt < maxAttempts) {
-                                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
-                                }
-                            }
-                        }
-                        console.error(`❌ Failed to send Google login email after ${maxAttempts} attempts`);
-                        return false;
-                    };
-
-                    // Send new login notification with retry
-                    await sendEmailWithFallback(() =>
-                        sendNewLoginEmail(
-                            validUser.email,
-                            device,
-                            req.ip,
-                            location,
-                            new Date()
-                        )
-                    );
-
-                    // Send suspicious login alert if detected
-                    if (suspiciousCheck.isSuspicious) {
-                        await sendEmailWithFallback(() =>
-                            sendSuspiciousLoginEmail(
-                                validUser.email,
-                                device,
-                                req.ip,
-                                location,
-                                suspiciousCheck.previousDevice,
-                                suspiciousCheck.previousIp,
-                                suspiciousCheck.previousLocation
-                            )
-                        );
-                    }
-                } catch (error) {
-                    console.error('Post-login email notification error (Google, non-blocking):', error);
-                }
-            })().catch(error => {
-                console.error('Unhandled error in Google login email notification:', error);
-            });
-
+            // Respond immediately with JSON payload (unblocking frontend client)
             res.status(200).json({
                 _id: validUser._id,
                 username: validUser.username,
@@ -719,11 +602,112 @@ export const Google = async (req, res, next) => {
                 address: validUser.address,
                 gender: validUser.gender,
                 settings: validUser.settings,
-                token: accessToken, // Keep for backward compatibility
-                refreshToken, // Send for cross-domain storage
+                token: accessToken,
+                refreshToken,
                 sessionId: session.sessionId,
                 isNewUser: false
             });
+
+            // Defer non-critical tracking, session limits, Sentinel check, auditing, and DB saves to background
+            (async () => {
+                try {
+                    // Check concurrency & suspicious login
+                    const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
+                    const suspiciousCheck = await checkSuspiciousLogin(validUser._id, ip, device);
+
+                    // 🛡️ Sentinel AI Anomaly Check (Google)
+                    try {
+                        const sentinelCheck = await SentinelSecurityService.checkSecurityAnomalies(validUser._id, ip, device.device);
+                        if (!sentinelCheck.safe) {
+                            console.log(`🚨 Sentinel AI flagged Google login for user ${validUser._id}: ${sentinelCheck.reason}`);
+                        }
+                    } catch (sentErr) {
+                        console.error("Sentinel anomaly check failed during Google auth:", sentErr.message);
+                    }
+
+                    // Enforce role-based session limits
+                    await enforceSessionLimits(validUser._id, validUser.role, req.app.get('io'));
+
+                    // Log session action (Audit Log)
+                    await logSessionAction(
+                        validUser._id,
+                        'login',
+                        session.sessionId,
+                        ip,
+                        device,
+                        location,
+                        `Successful Google login with ${concurrentInfo.activeSessions} concurrent sessions`,
+                        suspiciousCheck.isSuspicious,
+                        suspiciousCheck.reason,
+                        null,
+                        { source }
+                    );
+
+                    // Log security event
+                    logSecurityEvent('successful_google_login', {
+                        email: validUser.email,
+                        userId: validUser._id,
+                        ip,
+                        userAgent,
+                        sessionId: session.sessionId,
+                        concurrentLogins: concurrentInfo.activeSessions
+                    });
+
+                    // Update lastLogin timestamp
+                    if (validUser.gender && typeof validUser.gender === 'string') {
+                        validUser.gender = validUser.gender.toLowerCase();
+                    }
+                    validUser.lastLogin = new Date();
+                    validUser.lastLoginLocation = location;
+                    validUser.lastReEngagementEmailSent = null;
+                    await validUser.save();
+
+                    // Send email notifications
+                    try {
+                        const sendEmailWithFallback = async (emailFn, maxAttempts = 3) => {
+                            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                                try {
+                                    await emailFn();
+                                    return true;
+                                } catch (error) {
+                                    if (attempt < maxAttempts) {
+                                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000));
+                                    }
+                                }
+                            }
+                            return false;
+                        };
+
+                        await sendEmailWithFallback(() =>
+                            sendNewLoginEmail(
+                                validUser.email,
+                                device,
+                                ip,
+                                location,
+                                new Date()
+                            )
+                        );
+
+                        if (suspiciousCheck.isSuspicious) {
+                            await sendEmailWithFallback(() =>
+                                sendSuspiciousLoginEmail(
+                                    validUser.email,
+                                    device,
+                                    ip,
+                                    location,
+                                    suspiciousCheck.previousDevice,
+                                    suspiciousCheck.previousIp,
+                                    suspiciousCheck.previousLocation
+                                )
+                            );
+                        }
+                    } catch (emailError) {
+                        console.error('Post-login email notification error (Google):', emailError);
+                    }
+                } catch (bgError) {
+                    console.error("Google background process error:", bgError);
+                }
+            })();
         }
         else {
             // Check softban/purge policy before allowing signup via Google
@@ -1748,19 +1732,15 @@ export const verifyLoginOTP = async (req, res, next) => {
             });
         }
 
-        // Get device info and check for suspicious login
+        // Get device info and location info synchronously
         const userAgent = req.get('User-Agent');
         const device = getDeviceInfo(userAgent, req.headers);
-        const location = getLocationFromIP(req.ip);
+        const ip = req.ip || req.connection.remoteAddress;
+        const location = getLocationFromIP(ip);
+        const source = req.get('Origin') || req.get('Referer') || 'Unknown';
 
-        // Check for suspicious login patterns
-        const suspiciousCheck = await checkSuspiciousLogin(user._id, req.ip, device);
-
-        // Create enhanced session
+        // Create enhanced session (DB updates inside this are now non-blocking)
         const session = await createEnhancedSession(user._id, req);
-
-        // Enforce role-based session limits
-        await enforceSessionLimits(user._id, user.role);
 
         // Generate token pair with sessionId
         const { accessToken, refreshToken } = generateTokenPair({ id: user._id, sessionId: session.sessionId });
@@ -1768,68 +1748,15 @@ export const verifyLoginOTP = async (req, res, next) => {
         // Clear OTP from store
         loginOtpStore.delete(emailLower);
 
-        // Reset tracking on successful login
-        if (otpTracking) {
-            await otpTracking.resetTracking();
-            await otpTracking.clearLockout?.();
-        }
-
-        // Send email notifications
-        try {
-            // Always send new login notification
-            await sendNewLoginEmail(
-                user.email,
-                device,
-                req.ip,
-                location,
-                new Date()
-            );
-
-            // Send suspicious login alert if detected
-            if (suspiciousCheck.isSuspicious) {
-                await sendSuspiciousLoginEmail(
-                    user.email,
-                    device,
-                    req.ip,
-                    location,
-                    suspiciousCheck.previousDevice,
-                    suspiciousCheck.previousIp,
-                    'Unknown Location' // Previous location not stored
-                );
-            }
-        } catch (emailError) {
-            console.error('Email notification error:', emailError);
-            // Don't fail login if email fails
-        }
-
-        // Log session action
-        await logSessionAction(
-            user._id,
-            'login',
-            session.sessionId,
-            req.ip,
-            device,
-            location,
-            'OTP login successful',
-            suspiciousCheck.isSuspicious,
-            suspiciousCheck.reason
-        );
-
-        // Log successful OTP login
-        logSecurityEvent('otp_login_successful', {
-            email: emailLower,
-            userId: user._id,
-            ip: req.ip
-        });
-
         // Set secure cookies
         setSecureCookies(res, accessToken, refreshToken);
 
+        // Respond immediately with JSON payload (unblocking frontend client)
         res.status(200).json({
             success: true,
             message: "Login successful",
-            token: accessToken, // Keep for backward compatibility
-            refreshToken, // Send for cross-domain storage
+            token: accessToken,
+            refreshToken,
             role: user.role,
             isDefaultAdmin: user.isDefaultAdmin,
             adminApprovalStatus: user.adminApprovalStatus,
@@ -1842,6 +1769,70 @@ export const verifyLoginOTP = async (req, res, next) => {
             username: user.username,
             email: user.email
         });
+
+        // Defer non-critical logging, session limits, anomaly checks, OTP tracking reset, and email updates to background
+        (async () => {
+            try {
+                // Check for suspicious login patterns
+                const suspiciousCheck = await checkSuspiciousLogin(user._id, ip, device);
+
+                // Enforce role-based session limits
+                await enforceSessionLimits(user._id, user.role, req.app.get('io'));
+
+                // Reset tracking on successful login
+                if (otpTracking) {
+                    await otpTracking.resetTracking();
+                    await otpTracking.clearLockout?.();
+                }
+
+                // Send email notifications
+                try {
+                    await sendNewLoginEmail(
+                        user.email,
+                        device,
+                        ip,
+                        location,
+                        new Date()
+                    );
+
+                    if (suspiciousCheck.isSuspicious) {
+                        await sendSuspiciousLoginEmail(
+                            user.email,
+                            device,
+                            ip,
+                            location,
+                            suspiciousCheck.previousDevice,
+                            suspiciousCheck.previousIp,
+                            'Unknown Location'
+                        );
+                    }
+                } catch (emailError) {
+                    console.error('Post-login email notification error (OTP):', emailError);
+                }
+
+                // Log session action
+                await logSessionAction(
+                    user._id,
+                    'login',
+                    session.sessionId,
+                    ip,
+                    device,
+                    location,
+                    'OTP login successful',
+                    suspiciousCheck.isSuspicious,
+                    suspiciousCheck.reason
+                );
+
+                // Log successful OTP login
+                logSecurityEvent('otp_login_successful', {
+                    email: emailLower,
+                    userId: user._id,
+                    ip: ip
+                });
+            } catch (bgError) {
+                console.error("verifyLoginOTP background process error:", bgError);
+            }
+        })();
 
     } catch (error) {
         console.error('Verify login OTP error:', error);

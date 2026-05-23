@@ -394,8 +394,8 @@ export const createEnhancedSession = async (userId, req) => {
 
     activeSessions.set(sessionId, session);
 
-    // Update user's active sessions in database
-    await User.findByIdAndUpdate(userId, {
+    // Update user's active sessions in database in background (non-blocking)
+    User.findByIdAndUpdate(userId, {
         $push: {
             activeSessions: {
                 sessionId,
@@ -411,7 +411,7 @@ export const createEnhancedSession = async (userId, req) => {
             lastKnownIp: ip,
             lastKnownDevice: device
         }
-    });
+    }).catch(err => console.error("❌ Session DB update error:", err));
 
     return session;
 };
