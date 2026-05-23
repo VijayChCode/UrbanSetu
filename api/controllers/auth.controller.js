@@ -1758,8 +1758,10 @@ export const verifyLoginOTP = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "Login successful",
+            _id: user._id,
             token: accessToken,
             refreshToken,
+            sessionId: session.sessionId,
             role: user.role,
             isDefaultAdmin: user.isDefaultAdmin,
             adminApprovalStatus: user.adminApprovalStatus,
@@ -1769,6 +1771,7 @@ export const verifyLoginOTP = async (req, res, next) => {
             isGeneratedMobile: user.isGeneratedMobile,
             address: user.address,
             gender: user.gender,
+            settings: user.settings,
             username: user.username,
             email: user.email
         });
