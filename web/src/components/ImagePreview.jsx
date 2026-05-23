@@ -1649,58 +1649,60 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
               </p>
             </div>
           ) : (
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto pb-12 pr-1">
-              {favoritesData.map((fav, idx) => (
-                <div
-                  key={fav.imageId || fav._id || idx}
-                  onClick={() => {
-                    setIsFavoritesMode(true);
-                    setCurrentIndex(idx);
-                    setShowFavoritesGallery(false);
-                    setScale(1);
-                    setRotation(0);
-                    setPosition({ x: 0, y: 0 });
-                  }}
-                  className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-white/5 cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
-                >
-                  <img
-                    src={fav.imageUrl}
-                    alt={fav.metadata?.imageName || `Favorite ${idx + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  {/* Hover Information overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 pointer-events-none">
-                    <p className="text-white font-medium text-xs truncate">
-                      {fav.metadata?.imageName || `Favorite #${idx + 1}`}
-                    </p>
-                    {fav.metadata?.imageType && (
-                      <p className="text-white/50 text-[10px] uppercase tracking-wider font-semibold">
-                        {fav.metadata.imageType}
-                      </p>
-                    )}
-                    {(fav.addedAt || fav.createdAt) && (
-                      <p className="text-white/40 text-[9px] mt-0.5 font-medium">
-                        {new Date(fav.addedAt || fav.createdAt).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    )}
-                  </div>
-                  {/* Unfavorite overlay button */}
-                  <button
-                    onClick={(e) => handleRemoveFavoriteFromGrid(e, fav)}
-                    className="absolute top-2 right-2 p-2 rounded-lg bg-black/70 border border-white/10 text-red-500 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-200 z-10"
-                    title="Remove from Favorites"
+            <div className="flex-1 overflow-y-auto pb-12 pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 sm:gap-8">
+                {favoritesData.map((fav, idx) => (
+                  <div
+                    key={fav.imageId || fav._id || idx}
+                    onClick={() => {
+                      setIsFavoritesMode(true);
+                      setCurrentIndex(idx);
+                      setShowFavoritesGallery(false);
+                      setScale(1);
+                      setRotation(0);
+                      setPosition({ x: 0, y: 0 });
+                    }}
+                    className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-white/5 cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
                   >
-                    <FaHeart size={14} />
-                  </button>
-                </div>
-              ))}
+                    <img
+                      src={fav.imageUrl}
+                      alt={fav.metadata?.imageName || `Favorite ${idx + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    {/* Hover Information overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 pointer-events-none">
+                      <p className="text-white font-medium text-xs truncate">
+                        {fav.metadata?.imageName || `Favorite #${idx + 1}`}
+                      </p>
+                      {fav.metadata?.imageType && (
+                        <p className="text-white/50 text-[10px] uppercase tracking-wider font-semibold">
+                          {fav.metadata.imageType}
+                        </p>
+                      )}
+                      {(fav.addedAt || fav.createdAt) && (
+                        <p className="text-white/40 text-[9px] mt-0.5 font-medium">
+                          {new Date(fav.addedAt || fav.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    {/* Unfavorite overlay button */}
+                    <button
+                      onClick={(e) => handleRemoveFavoriteFromGrid(e, fav)}
+                      className="absolute top-2 right-2 p-2 rounded-lg bg-black/70 border border-white/10 text-red-500 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-200 z-10"
+                      title="Remove from Favorites"
+                    >
+                      <FaHeart size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
