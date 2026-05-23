@@ -852,23 +852,29 @@ export default function Home() {
 
             <div className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900">
               <Swiper
+                key={allSliderImages.map(img => img.listingId).join(',')}
                 ref={swiperRef}
                 modules={[Autoplay, Pagination, EffectFade]}
                 effect="fade"
+                fadeEffect={{ crossFade: true }}
                 autoplay={{ delay: 5000, disableOnInteraction: false }}
                 speed={1000}
                 loop={true}
                 onSlideChange={handleSlideChange}
                 className="h-[400px] md:h-[500px] lg:h-[600px] w-full"
               >
-                {allSliderImages.map((image, idx) => (
-                  <SwiperSlide key={idx} className="relative">
+                {allSliderImages.map((image) => (
+                  <SwiperSlide key={image.listingId} className="relative">
                     <div className="absolute inset-0 bg-black/40 z-10" />
                     <img
                       src={image.url}
                       alt={image.title}
                       className="w-full h-full object-cover transform transition-transform duration-[10s] hover:scale-110"
                       style={{ animation: 'panImage 20s linear infinite alternate' }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80';
+                      }}
                     />
                     <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                       <div className="max-w-3xl animate-fade-in-up text-left">
