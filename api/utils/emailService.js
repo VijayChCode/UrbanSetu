@@ -17281,7 +17281,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                   <span style="color: white; font-size: 18px;">📧</span>
                 </div>
                 <div>
-                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Authentication & Account Issues</p>
+                  <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 500;">Authentication & Account Related Issues</p>
                   <a href="mailto:auth.urbansetu@gmail.com" style="color: #059669; text-decoration: none; font-size: 14px; font-weight: 600;">auth.urbansetu@gmail.com</a>
                 </div>
               </div>
