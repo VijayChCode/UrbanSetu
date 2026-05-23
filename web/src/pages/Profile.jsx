@@ -1951,77 +1951,82 @@ export default function Profile() {
                       </button>
                     </div>
                     {/* DiceBear Avatar Customization */}
-                    <div className="mt-4 w-full flex flex-col items-center">
-                      <div className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Or create a custom DiceBear avatar:</div>
-                      <div className="flex flex-col sm:flex-row gap-2 items-center w-full">
-                        <label className="font-medium text-sm dark:text-gray-300">Style:</label>
-                        <select
-                          className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          value={dicebearAvatar.style}
-                          onChange={e => {
-                            setDicebearAvatar({ style: e.target.value, filters: {} });
-                          }}
-                        >
-                          {dicebearStyles.map(style => (
-                            <option key={style.key} value={style.key}>{style.label}</option>
-                          ))}
-                        </select>
+                    <div className="mt-6 w-full flex flex-col items-center bg-gray-50 dark:bg-gray-800/40 p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 max-w-2xl mx-auto shadow-sm">
+                      <div className="font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-1.5 self-start text-base">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        Or create a custom DiceBear avatar:
                       </div>
-                      {/* Render all filters from Avataaars schema as dropdowns/multiselects/inputs */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 w-full max-w-2xl">
-                        {/* Style and Seed as before */}
-                        {allowedFilters.map(key => {
-                          const prop = avataaarsSchema.properties[key];
-                          if (!prop) return null;
-                          if (key === 'style') return null;
-                          if (key === 'seed') {
-                            return (
-                              <div key={key} className="flex flex-col mb-2">
-                                <label className="text-xs font-medium mb-1">{key}</label>
-                                <input
-                                  type="text"
-                                  className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                                  value={dicebearAvatar.filters[key] || ''}
-                                  onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, [key]: e.target.value } }))}
-                                  placeholder="Enter a name or keyword (e.g. John, robot, flower...)"
-                                />
-                              </div>
-                            );
-                          }
-                          return null;
-                        })}
-                        {/* Flip and Rotate side by side */}
-                        <div className="flex items-end gap-6 mb-2">
-                          <div className="flex items-center gap-2">
-                            <label className="text-xs font-medium">flip</label>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                        {/* Style Selector */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 capitalize">Style</label>
+                          <select
+                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            value={dicebearAvatar.style}
+                            onChange={e => {
+                              setDicebearAvatar({ style: e.target.value, filters: {} });
+                            }}
+                          >
+                            {dicebearStyles.map(style => (
+                              <option key={style.key} value={style.key}>{style.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Seed Input */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 capitalize">Seed (Name/Word)</label>
+                          <input
+                            type="text"
+                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            value={dicebearAvatar.filters.seed || ''}
+                            onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, seed: e.target.value } }))}
+                            placeholder="e.g. John, robot, flower..."
+                          />
+                        </div>
+
+                        {/* Rotate Input */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 capitalize">Rotate (Degrees)</label>
+                          <input
+                            type="number"
+                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            value={dicebearAvatar.filters.rotate ?? avataaarsSchema.properties.rotate.default ?? ''}
+                            min={avataaarsSchema.properties.rotate.minimum}
+                            max={avataaarsSchema.properties.rotate.maximum}
+                            onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, rotate: e.target.value === '' ? undefined : Number(e.target.value) } }))}
+                            placeholder="0-360"
+                          />
+                        </div>
+
+                        {/* Flip Card / Checkbox */}
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 capitalize">Mirror Image</label>
+                          <label className="flex items-center justify-between border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white p-2.5 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-650 transition-all select-none h-[46px]">
+                            <span className="text-sm text-gray-600 dark:text-gray-300">Flip horizontally</span>
                             <input
                               type="checkbox"
                               checked={!!dicebearAvatar.filters.flip}
                               onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, flip: e.target.checked } }))}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                             />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="text-xs font-medium mb-1">rotate</label>
-                            <input
-                              type="number"
-                              className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white p-2 rounded-lg w-24 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                              value={dicebearAvatar.filters.rotate ?? avataaarsSchema.properties.rotate.default ?? ''}
-                              min={avataaarsSchema.properties.rotate.minimum}
-                              max={avataaarsSchema.properties.rotate.maximum}
-                              onChange={e => setDicebearAvatar(prev => ({ ...prev, filters: { ...prev.filters, rotate: e.target.value === '' ? undefined : Number(e.target.value) } }))}
-                            />
-                          </div>
+                          </label>
                         </div>
                       </div>
-                      <div className="mt-4 flex flex-col items-center">
-                        <img
-                          src={buildDicebearUrl()}
-                          alt="DiceBear Avatar Preview"
-                          className="w-24 h-24 rounded-full border-2 border-blue-300 shadow"
-                        />
+
+                      {/* Preview and Save Button */}
+                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 border-t border-gray-200/60 dark:border-gray-700/60 w-full">
+                        <div className="relative">
+                          <img
+                            src={buildDicebearUrl()}
+                            alt="DiceBear Avatar Preview"
+                            className="w-24 h-24 rounded-full border-4 border-blue-200 dark:border-blue-900/50 shadow-md object-cover bg-white"
+                          />
+                        </div>
                         <button
                           type="button"
-                          className="mt-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-semibold"
+                          className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-md font-semibold flex items-center justify-center gap-2"
                           onClick={async () => {
                             const url = buildDicebearUrl();
                             setFormData({ ...formData, avatar: url });
@@ -2037,14 +2042,12 @@ export default function Profile() {
                               } else if (data.status === 'error') {
                                 toast.error(data.message || 'Failed to update avatar.');
                               }
-                              // Do not show error for other status values
                             } catch (err) {
-                              // Only show error toast if avatar did not update
                               toast.error('Failed to update avatar.');
                             }
                           }}
                         >
-                          Use this avatar
+                          <FaCheck className="w-4 h-4" /> Use this avatar
                         </button>
                       </div>
                     </div>
