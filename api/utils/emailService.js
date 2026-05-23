@@ -17150,7 +17150,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               <p style="color: #e0e7ff; margin: 12px 0 0; font-size: 15px; font-style: italic;">Built with passion, shaped by your feedback</p>
               <!-- Platform Version Badge -->
               <div style="display: inline-block; margin-top: 12px; background: rgba(255,255,255,0.15); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
-                <span style="color: #e0e7ff; font-size: 11px; font-weight: 500;">Platform v2.0 • MERN + AI • Launched 2026</span>
+                <span style="color: #e0e7ff; font-size: 11px; font-weight: 500;">Platform v2.0 • MERN + AI • Launched 2025</span>
               </div>
             </div>
           </div>
