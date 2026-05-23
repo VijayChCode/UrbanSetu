@@ -1106,7 +1106,7 @@ export default function AdminManagement() {
         } else {
           // Keep modal open and show remaining attempts
           const remaining = 3 - next;
-          setManagementPasswordError(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} left before logout.`);
+          setManagementPasswordError(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} left before auto-logout.`);
           toast.error(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} left.`);
           return;
         }
