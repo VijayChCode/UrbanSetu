@@ -27,7 +27,7 @@ const imageFavoriteSchema = new mongoose.Schema({
         imageSize: Number,
         addedFrom: {
             type: String,
-            enum: ['listing', 'appointment', 'chat', 'other'],
+            enum: ['listing', 'appointment', 'chat', 'blog', 'preview', 'bulk', 'other'],
             default: 'other'
         }
     },

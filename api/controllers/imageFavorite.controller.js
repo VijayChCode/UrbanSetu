@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { errorHandler } from "../utils/error.js";
 import ImageFavorite from "../models/imageFavorite.model.js";
 import Listing from "../models/listing.model.js";
@@ -37,11 +38,16 @@ export const addImageToFavorites = async (req, res, next) => {
             return next(errorHandler(400, "Image URL and Image ID are required"));
         }
 
-        // Check if listing exists (if provided)
-        if (listingId) {
-            const listing = await Listing.findById(listingId);
-            if (!listing) {
-                return next(errorHandler(404, "Listing not found"));
+        // Validate and check if listing exists (if provided)
+        let finalListingId = null;
+        if (listingId && mongoose.Types.ObjectId.isValid(listingId)) {
+            try {
+                const listing = await Listing.findById(listingId);
+                if (listing) {
+                    finalListingId = listingId;
+                }
+            } catch (err) {
+                // Ignore finding/casting errors to remain independent of listing status
             }
         }
 
@@ -56,7 +62,7 @@ export const addImageToFavorites = async (req, res, next) => {
             userId,
             imageUrl,
             imageId,
-            listingId: listingId || null,
+            listingId: finalListingId,
             metadata: {
                 imageName: metadata?.imageName || `image-${Date.now()}`,
                 imageType: metadata?.imageType || 'unknown',
@@ -67,8 +73,8 @@ export const addImageToFavorites = async (req, res, next) => {
 
         await imageFavorite.save();
 
-        // Populate listing details if available
-        if (listingId) {
+        // Populate listing details if available and valid
+        if (finalListingId) {
             await imageFavorite.populate('listingId', 'name type address');
         }
 
@@ -182,11 +188,13 @@ export const bulkAddToFavorites = async (req, res, next) => {
             const existing = await ImageFavorite.findOne({ userId, imageId });
             if (existing) return null;
 
+            const finalListingId = (listingId && mongoose.Types.ObjectId.isValid(listingId)) ? listingId : null;
+
             return new ImageFavorite({
                 userId,
                 imageUrl,
                 imageId,
-                listingId: listingId || null,
+                listingId: finalListingId,
                 metadata: {
                     imageName: metadata?.imageName || `image-${Date.now()}`,
                     imageType: metadata?.imageType || 'unknown',
