@@ -101,9 +101,9 @@ export default function AdminManagement() {
 
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser?._id) return;
     fetchData();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   // Add useEffect to listen for socket events and update users/admins state
   useEffect(() => {
