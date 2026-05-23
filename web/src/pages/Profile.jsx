@@ -2080,13 +2080,13 @@ export default function Profile() {
                     </div>
                   </>
                 )}
-                </div>
-                <div className="text-xs text-gray-500 mt-2 text-center">Note: Please upload a profile image below 5MB for best performance.</div>
+                <div className="text-xs text-gray-500 mt-4 text-center">Note: Please upload a profile image below 5MB for best performance.</div>
                 {avatarError && (
                   <div className="text-red-500 text-sm mt-2 text-center bg-red-50 p-2 rounded-lg border border-red-200">
                     {avatarError}
                   </div>
                 )}
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
