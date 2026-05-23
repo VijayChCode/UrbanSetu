@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { authenticatedFetch } from '../utils/auth';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope, FaUser, FaFileAlt, FaClock, FaTrash, FaImage, FaPaperclip, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+import { FaHeadset, FaTimes, FaPaperPlane, FaEnvelope,FaShieldAlt, FaUser, FaFileAlt, FaClock, FaTrash, FaImage, FaPaperclip, FaSearch, FaFilter, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
