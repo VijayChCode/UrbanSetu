@@ -18,6 +18,7 @@ export default function AdminManagement() {
   usePageTitle("Account Management - User & Admin Control");
 
   const { currentUser } = useSelector((state) => state.user);
+  const isRootOrDefault = currentUser?.isDefaultAdmin || currentUser?.role === 'rootadmin';
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [users, setUsers] = useState([]);
@@ -154,7 +155,7 @@ export default function AdminManagement() {
       const userData = await userRes.json();
       setUsers(userData);
       // Fetch admins if default admin
-      if (currentUser.isDefaultAdmin) {
+      if (isRootOrDefault) {
         const adminRes = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/admins`);
         const adminData = await adminRes.json();
         setAdmins(adminData);
@@ -1042,7 +1043,7 @@ export default function AdminManagement() {
   }, [showAccountModal, showConfirmModal, showDeleteReasonModal]);
 
   // Guard: If users/admins are not arrays, show session expired/unauthorized message
-  if (!Array.isArray(users) || (tab === 'admins' && !Array.isArray(admins) && currentUser.isDefaultAdmin)) {
+  if (!Array.isArray(users) || (tab === 'admins' && !Array.isArray(admins) && isRootOrDefault)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
@@ -1170,25 +1171,20 @@ export default function AdminManagement() {
           >
             Users ({users.length})
           </button>
-          <button
-            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "admins" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700"}`}
-            onClick={() => {
-              if (!currentUser.isDefaultAdmin) {
-                setShowRestriction(true);
-                setTab("admins");
-                setSearchTerm("");
-                setStatusFilter("all");
-              } else {
+          {isRootOrDefault && (
+            <button
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "admins" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700"}`}
+              onClick={() => {
                 setShowRestriction(false);
                 setTab("admins");
                 setSearchTerm("");
                 setStatusFilter("all");
                 setAdminApprovalFilter("all");
-              }
-            }}
-          >
-            Admins ({admins.length})
-          </button>
+              }}
+            >
+              Admins ({admins.length})
+            </button>
+          )}
           <button
             className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "softbanned" ? "bg-gradient-to-r from-red-500 to-red-600 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-rose-50 dark:hover:bg-gray-700"}`}
             onClick={() => {
@@ -1311,7 +1307,7 @@ export default function AdminManagement() {
               <select value={softbannedFilters.role} onChange={e => setSoftbannedFilters(f => ({ ...f, role: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="all">All Roles</option>
                 <option value="user">User</option>
-                {currentUser.isDefaultAdmin && <option value="admin">Admin</option>}
+                {isRootOrDefault && <option value="admin">Admin</option>}
               </select>
               <input type="date" value={softbannedFilters.from} onChange={e => setSoftbannedFilters(f => ({ ...f, from: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <input type="date" value={softbannedFilters.to} onChange={e => setSoftbannedFilters(f => ({ ...f, to: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -1321,7 +1317,7 @@ export default function AdminManagement() {
                 <button onClick={() => { setSoftbannedFilters({ q: '', role: 'all', softbannedBy: '', from: '', to: '' }); setTimeout(fetchSoftbannedAccounts, 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
               </div>
               <div className="col-span-full text-sm text-gray-600">
-                {currentUser.isDefaultAdmin ? 'You are viewing all softbanned accounts (users + admins).' : 'You are viewing only softbanned user accounts.'}
+                {isRootOrDefault ? 'You are viewing all softbanned accounts (users + admins).' : 'You are viewing only softbanned user accounts.'}
               </div>
             </div>
           ) : (
@@ -1330,7 +1326,7 @@ export default function AdminManagement() {
               <select value={purgedFilters.role} onChange={e => setPurgedFilters(f => ({ ...f, role: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="all">All Roles</option>
                 <option value="user">User</option>
-                {currentUser.isDefaultAdmin && <option value="admin">Admin</option>}
+                {isRootOrDefault && <option value="admin">Admin</option>}
               </select>
               <input type="date" value={purgedFilters.from} onChange={e => setPurgedFilters(f => ({ ...f, from: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <input type="date" value={purgedFilters.to} onChange={e => setPurgedFilters(f => ({ ...f, to: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -1340,7 +1336,7 @@ export default function AdminManagement() {
                 <button onClick={() => { setPurgedFilters({ q: '', role: 'all', purgedBy: '', from: '', to: '' }); setTimeout(fetchPurgedAccounts, 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
               </div>
               <div className="col-span-full text-sm text-gray-600">
-                {currentUser.isDefaultAdmin ? 'You are viewing all purged accounts (users + admins). These accounts are permanently removed.' : 'You are viewing only purged user accounts. These accounts are permanently removed.'}
+                {isRootOrDefault ? 'You are viewing all purged accounts (users + admins). These accounts are permanently removed.' : 'You are viewing only purged user accounts. These accounts are permanently removed.'}
               </div>
             </div>
           )}
@@ -1462,7 +1458,7 @@ export default function AdminManagement() {
                           >
                             <FaTrash /> Softban
                           </button>
-                          {currentUser.isDefaultAdmin && (
+                          {isRootOrDefault && (
                             <button
                               className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-purple-500 text-white hover:bg-purple-600 transition-all duration-200 flex items-center justify-center gap-2"
                               onClick={e => { e.stopPropagation(); handlePromote(user._id); }}
@@ -1489,13 +1485,13 @@ export default function AdminManagement() {
                 )}
               </div>
             )}
-            {tab === "admins" && !currentUser.isDefaultAdmin && showRestriction && (
+            {tab === "admins" && !isRootOrDefault && showRestriction && (
               <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                 <div className="text-6xl mb-4">🚫</div>
-                <p className="text-red-500 text-lg font-medium">Only the current default admin can access admin account management.</p>
+                <p className="text-red-500 text-lg font-medium">Only default admins or root admins can access admin account management.</p>
               </div>
             )}
-            {tab === "admins" && currentUser.isDefaultAdmin && !showRestriction && (
+            {tab === "admins" && isRootOrDefault && !showRestriction && (
               <div className="mt-10">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2 animate-fadeIn">
                   <FaUserShield className="text-purple-500" /> Admins ({admins.length})
@@ -1601,7 +1597,7 @@ export default function AdminManagement() {
                               </>
                             )}
                           </button>
-                          {currentUser.isDefaultAdmin && admin.adminApprovalStatus === 'rejected' && (
+                          {isRootOrDefault && admin.adminApprovalStatus === 'rejected' && (
                             <button
                               className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
                               onClick={e => { e.stopPropagation(); handleReapprove(admin._id); }}
@@ -1662,7 +1658,7 @@ export default function AdminManagement() {
                               ) : '-'}
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap">
-                              {currentUser.isDefaultAdmin ? (
+                              {isRootOrDefault ? (
                                 <div className="flex gap-2">
                                   <button onClick={() => handleRestore(acc._id)} className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">Restore</button>
                                   <button onClick={() => handlePurge(acc._id)} className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700">Purge</button>

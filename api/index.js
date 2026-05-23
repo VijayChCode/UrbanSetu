@@ -136,6 +136,9 @@ const connectToMongoDB = async (retries = 3) => {
       // Run migration to fix refundId index
       await fixRefundIdIndex();
 
+      // Run migration to seed default fields for legacy accounts
+      await migrateUserDefaultFields();
+
       return;
     } catch (error) {
       if (i === retries - 1) {
@@ -173,6 +176,107 @@ const fixRefundIdIndex = async () => {
   } catch (error) {
     console.error("Error during refundId index migration:", error.message);
     // Don't exit the process, just log the error
+  }
+};
+
+// Migration function to migrate user default schema fields
+const migrateUserDefaultFields = async () => {
+  try {
+    const User = (await import('./models/user.model.js')).default;
+    
+    // Update any user document where "role" does not exist, setting it to "user"
+    const resultRole = await User.updateMany(
+      { role: { $exists: false } },
+      { $set: { role: 'user' } }
+    );
+    if (resultRole.modifiedCount > 0) {
+      console.log(`✅ Seeded missing role for ${resultRole.modifiedCount} users`);
+    }
+
+    // Update status
+    const resultStatus = await User.updateMany(
+      { status: { $exists: false } },
+      { $set: { status: 'active' } }
+    );
+    if (resultStatus.modifiedCount > 0) {
+      console.log(`✅ Seeded missing status for ${resultStatus.modifiedCount} users`);
+    }
+
+    // Update isDefaultAdmin
+    const resultDefaultAdmin = await User.updateMany(
+      { isDefaultAdmin: { $exists: false } },
+      { $set: { isDefaultAdmin: false } }
+    );
+    if (resultDefaultAdmin.modifiedCount > 0) {
+      console.log(`✅ Seeded missing isDefaultAdmin for ${resultDefaultAdmin.modifiedCount} users`);
+    }
+
+    // Update isSubscribed
+    const resultSubscribed = await User.updateMany(
+      { isSubscribed: { $exists: false } },
+      { $set: { isSubscribed: true } }
+    );
+    if (resultSubscribed.modifiedCount > 0) {
+      console.log(`✅ Seeded missing isSubscribed for ${resultSubscribed.modifiedCount} users`);
+    }
+
+    // Update isLocked
+    const resultLocked = await User.updateMany(
+      { isLocked: { $exists: false } },
+      { $set: { isLocked: false } }
+    );
+    if (resultLocked.modifiedCount > 0) {
+      console.log(`✅ Seeded missing isLocked for ${resultLocked.modifiedCount} users`);
+    }
+
+    // Update policyViolations
+    const resultViolations = await User.updateMany(
+      { policyViolations: { $exists: false } },
+      { $set: { policyViolations: 0 } }
+    );
+
+    // Update activeSessions
+    const resultSessions = await User.updateMany(
+      { activeSessions: { $exists: false } },
+      { $set: { activeSessions: [] } }
+    );
+
+    // Update settings if not present
+    const resultSettings = await User.updateMany(
+      { settings: { $exists: false } },
+      { $set: {
+        settings: {
+          emailNotifications: true,
+          inAppNotifications: true,
+          pushNotifications: true,
+          marketingNotifications: true,
+          propertyAlerts: true,
+          bookingUpdates: true,
+          communitySocial: true,
+          securityAlerts: true,
+          chatMessages: true,
+          notificationSound: 'default',
+          showEmail: false,
+          showPhone: false,
+          dataSharing: true,
+          allowLocationAccess: false,
+          language: 'en',
+          timezone: 'Asia/Kolkata',
+          dateFormat: 'MM/DD/YYYY',
+          theme: 'light',
+          fontSize: 'medium',
+          pushTokens: [],
+          biometricAuth: false,
+          biometricLockPeriod: 0,
+          batteryOptimization: false
+        }
+      }}
+    );
+    if (resultSettings.modifiedCount > 0) {
+      console.log(`✅ Seeded default settings for ${resultSettings.modifiedCount} users`);
+    }
+  } catch (error) {
+    console.error("❌ Failed running User schema migration:", error.message);
   }
 };
 

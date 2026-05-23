@@ -20,7 +20,7 @@ export const getManagementUsers = async (req, res, next) => {
 
     // Use aggregation to fetch users with counts of their listings and appointments
     const users = await User.aggregate([
-      { $match: { role: 'user' } },
+      { $match: { $or: [ { role: 'user' }, { role: { $exists: false } } ] } },
       // Lookup listings count
       {
         $lookup: {
@@ -134,13 +134,14 @@ export const getManagementAdmins = async (req, res, next) => {
     // Include all admins regardless of approval status (pending, approved, rejected)
     // Regular admins: only see other admins (not rootadmin/default admin)
     // Rootadmin: see all admins (not rootadmin/default admin)
+    const isRoot = currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin;
     const query = {
-      role: 'admin',
       _id: { $ne: currentUser._id }
-      // Removed adminApprovalStatus filter to include pending and rejected admins
     };
-    if (currentUser.role === 'admin') {
-      // Regular admins cannot see rootadmin or default admin
+    if (isRoot) {
+      query.role = { $in: ['admin', 'rootadmin'] };
+    } else {
+      query.role = 'admin';
       query.isDefaultAdmin = { $ne: true };
     }
     // Use aggregation to fetch admins with counts
@@ -322,9 +323,10 @@ export const suspendUserOrAdmin = async (req, res, next) => {
 
       return res.status(200).json({ message: 'User status updated', status: user.status });
     } else if (type === 'admin') {
-      // Only the current default admin can suspend admins
-      if (!currentUser.isDefaultAdmin) {
-        return next(errorHandler(403, 'Access denied. Only the current default admin can suspend admins.'));
+      // Only the default admin or root admin can suspend admins
+      const isRootOrDefault = currentUser.isDefaultAdmin || currentUser.role === 'rootadmin';
+      if (!isRootOrDefault) {
+        return next(errorHandler(403, 'Access denied. Only default admin or root admin can suspend admins.'));
       }
       const admin = await User.findById(id);
       if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
@@ -661,8 +663,9 @@ export const demoteAdminToUser = async (req, res, next) => {
     const { id } = req.params;
     const { reason } = req.body; // Get demotion reason from request body
     const currentUser = await User.findById(req.user.id);
-    if (!currentUser || !currentUser.isDefaultAdmin) {
-      return next(errorHandler(403, 'Access denied. Only the current default admin can demote admins.'));
+    const isRootOrDefault = currentUser && (currentUser.isDefaultAdmin || currentUser.role === 'rootadmin');
+    if (!isRootOrDefault) {
+      return next(errorHandler(403, 'Access denied. Only default admin or root admin can demote admins.'));
     }
     const admin = await User.findById(id);
     if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
@@ -708,8 +711,9 @@ export const promoteUserToAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
     const currentUser = await User.findById(req.user.id);
-    if (!currentUser || !currentUser.isDefaultAdmin) {
-      return next(errorHandler(403, 'Access denied. Only the current default admin can promote users.'));
+    const isRootOrDefault = currentUser && (currentUser.isDefaultAdmin || currentUser.role === 'rootadmin');
+    if (!isRootOrDefault) {
+      return next(errorHandler(403, 'Access denied. Only default admin or root admin can promote users.'));
     }
     const user = await User.findById(id);
     if (!user || user.role !== 'user') return next(errorHandler(404, 'User not found'));
@@ -745,8 +749,9 @@ export const reapproveRejectedAdmin = async (req, res, next) => {
   try {
     const { adminId } = req.params;
     const currentUser = await User.findById(req.user.id);
-    if (!currentUser || !currentUser.isDefaultAdmin) {
-      return next(errorHandler(403, 'Access denied. Only the current default admin can re-approve admins.'));
+    const isRootOrDefault = currentUser && (currentUser.isDefaultAdmin || currentUser.role === 'rootadmin');
+    if (!isRootOrDefault) {
+      return next(errorHandler(403, 'Access denied. Only default admin or root admin can re-approve admins.'));
     }
     const admin = await User.findById(adminId);
     if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
