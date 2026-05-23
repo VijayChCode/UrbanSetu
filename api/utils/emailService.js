@@ -17164,7 +17164,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                 Hey ${username || 'there'}, 👋
               </p>
               <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 15px;">
-                We're <strong style="color: #6366f1;">Vijay Chalendra & the UrbanSetu team</strong>. We noticed you recently signed up and explored our platform — and we genuinely want to say <strong>thank you</strong> for giving UrbanSetu a chance!
+                I'm <strong style="color: #6366f1;">Vijay Chalendra</strong>, and we are the <strong style="color: #6366f1;">UrbanSetu team</strong>. We noticed you recently signed up and explored our platform — and we genuinely want to say <strong>thank you</strong> for giving UrbanSetu a chance!
               </p>
               <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0;">
                 UrbanSetu started as a passion project to simplify real estate for everyone — whether you're searching for your dream home, listing a property, or building meaningful connections in the market. Every feature you see was crafted with care, and it's users like you who make this journey worthwhile.
