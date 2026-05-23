@@ -1749,101 +1749,105 @@ export default function AdminManagement() {
               <FaTimes className="w-4 h-4" />
             </button>
 
-            {/* Left Panel: Profile Summary */}
-            <div className="w-full md:w-80 md:flex-shrink-0 bg-gradient-to-b from-blue-50/50 via-indigo-50/10 to-transparent dark:from-gray-900/60 dark:via-gray-800/10 dark:to-transparent border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center p-6 sm:p-8 text-center">
-              <div className="flex flex-col items-center gap-4 text-center">
-                <div className="relative">
-                  <img
-                    src={selectedAccount?.avatar || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'}
-                    alt="avatar"
-                    className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-xl"
-                    onError={e => { e.target.onerror = null; e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
-                  />
-                  <div className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 shadow-md ${selectedAccount?.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-xl font-extrabold text-gray-800 dark:text-white line-clamp-1">
-                    {selectedAccount?.username}
-                  </h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{selectedAccount?.email}</p>
-                </div>
-                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm ${selectedAccount?.type === 'admin' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'}`}>
-                  {selectedAccount?.type === 'admin' ? <FaUserShield className="text-xs" /> : <FaUser className="text-xs" />}
-                  {selectedAccount?.type === 'admin' ? 'Admin' : 'User'}
-                </span>
+            {accountLoading ? (
+              /* Centered loading container covering the whole modal */
+              <div className="w-full min-h-[380px] flex flex-col justify-center items-center gap-4 p-8 animate-fadeIn">
+                <UrbanSetuSpinner size="lg" />
+                <p className="text-gray-500 dark:text-gray-400 font-bold text-base tracking-wide animate-pulse">
+                  {selectedAccount?.type === 'admin' ? 'Fetching Admin details...' : 'Fetching User details...'}
+                </p>
               </div>
-
-              {/* Status and Subscription summary on left panel */}
-              <div className="w-full mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/60 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium">Account Status:</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${selectedAccount?.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
-                    {(selectedAccount?.status || 'active').toUpperCase()}
-                  </span>
-                </div>
-
-                {/* Subscription Toggle */}
-                <div className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700/40">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 justify-center">
-                    <FaEnvelope className={selectedAccount?.isSubscribed !== false ? "text-green-500" : "text-gray-400"} />
-                    <span>Promo Emails: {selectedAccount?.isSubscribed !== false ? 'Subscribed' : 'Unsubscribed'}</span>
+            ) : selectedAccount ? (
+              <>
+                {/* Left Panel: Profile Summary */}
+                <div className="w-full md:w-80 md:flex-shrink-0 bg-gradient-to-b from-blue-50/50 via-indigo-50/10 to-transparent dark:from-gray-900/60 dark:via-gray-800/10 dark:to-transparent border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 flex flex-col items-center md:justify-center p-5 md:p-8 text-center">
+                  <div className="flex flex-col items-center gap-3 md:gap-4 text-center mt-4 md:mt-0">
+                    <div className="relative">
+                      <img
+                        src={selectedAccount?.avatar || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'}
+                        alt="avatar"
+                        className="w-20 h-20 md:w-28 md:h-28 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-xl"
+                        onError={e => { e.target.onerror = null; e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
+                      />
+                      <div className={`absolute bottom-1 right-1 w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-white dark:border-gray-800 shadow-md ${selectedAccount?.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-lg md:text-xl font-extrabold text-gray-800 dark:text-white line-clamp-1">
+                        {selectedAccount?.username}
+                      </h2>
+                      <p className="text-[11px] md:text-xs text-gray-500 dark:text-gray-400 break-all">{selectedAccount?.email}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] md:text-xs font-bold shadow-sm ${selectedAccount?.type === 'admin' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'}`}>
+                      {selectedAccount?.type === 'admin' ? <FaUserShield className="text-[10px] md:text-xs" /> : <FaUser className="text-[10px] md:text-xs" />}
+                      {selectedAccount?.type === 'admin' ? 'Admin' : 'User'}
+                    </span>
                   </div>
-                  <button
-                    onClick={() => handleToggleSubscription(selectedAccount?._id, selectedAccount?.isSubscribed !== false)}
-                    disabled={subscriptionLoading}
-                    className={`text-xs w-full py-1.5 rounded-lg font-bold transition-all shadow-sm ${selectedAccount?.isSubscribed !== false ? "bg-red-500 text-white hover:bg-red-600" : "bg-green-500 text-white hover:bg-green-600"}`}
-                  >
-                    {subscriptionLoading ? '...' : (selectedAccount?.isSubscribed !== false ? 'Unsubscribe' : 'Subscribe')}
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            {/* Right Panel: Detailed Metrics & Stats */}
-            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
-              {accountLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <UrbanSetuSpinner size="md" />
+                  {/* Status and Subscription summary on left panel */}
+                  <div className="w-full mt-5 md:mt-8 pt-4 md:pt-6 border-t border-gray-100 dark:border-gray-700/60 space-y-3 md:space-y-4">
+                    <div className="flex items-center justify-between text-xs md:text-sm">
+                      <span className="text-gray-500 dark:text-gray-400 font-medium">Account Status:</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${selectedAccount?.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                        {(selectedAccount?.status || 'active').toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Subscription Toggle */}
+                    <div className="flex flex-col gap-1.5 p-2.5 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700/40">
+                      <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-semibold text-gray-700 dark:text-gray-300 justify-center">
+                        <FaEnvelope className={selectedAccount?.isSubscribed !== false ? "text-green-500" : "text-gray-400"} />
+                        <span>Promo Emails: {selectedAccount?.isSubscribed !== false ? 'Subscribed' : 'Unsubscribed'}</span>
+                      </div>
+                      <button
+                        onClick={() => handleToggleSubscription(selectedAccount?._id, selectedAccount?.isSubscribed !== false)}
+                        disabled={subscriptionLoading}
+                        className={`text-[10px] md:text-xs w-full py-1.5 rounded-lg font-bold transition-all shadow-sm ${selectedAccount?.isSubscribed !== false ? "bg-red-500 text-white hover:bg-red-600" : "bg-green-500 text-white hover:bg-green-600"}`}
+                      >
+                        {subscriptionLoading ? '...' : (selectedAccount?.isSubscribed !== false ? 'Unsubscribe' : 'Subscribe')}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              ) : selectedAccount ? (
-                <>
+
+                {/* Right Panel: Detailed Metrics & Stats */}
+                <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 space-y-5 md:space-y-6">
                   {/* Section 1: Profile Details */}
                   <div>
-                    <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Profile Information</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-900/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/60">
-                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                    <h3 className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 md:mb-3">Profile Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 bg-gray-50/50 dark:bg-gray-900/30 p-4 md:p-5 rounded-2xl border border-gray-100 dark:border-gray-700/60">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-xs md:text-sm">
                         <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg"><FaPhone className="text-blue-500" /></div>
                         <div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Mobile Number</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">Mobile Number</p>
                           <p className="font-semibold">{selectedAccount.mobileNumber || 'Not provided'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-xs md:text-sm">
                         <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><FaUser className="text-purple-500" /></div>
                         <div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Gender</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">Gender</p>
                           <p className="font-semibold">{selectedAccount.gender ? selectedAccount.gender.charAt(0).toUpperCase() + selectedAccount.gender.slice(1) : 'Not provided'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm sm:col-span-2">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-xs md:text-sm sm:col-span-2">
                         <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg"><FaHome className="text-green-500" /></div>
                         <div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Address</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">Address</p>
                           <p className="font-semibold text-wrap">{selectedAccount.address || 'Not provided'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-xs md:text-sm">
                         <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg"><FaCalendarAlt className="text-indigo-500" /></div>
                         <div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Member Since</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">Member Since</p>
                           <p className="font-semibold">{selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-xs md:text-sm">
                         <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg"><FaCalendarAlt className="text-amber-500" /></div>
                         <div>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Last Profile Update</p>
-                          <p className="font-semibold">{selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date(selectedAccount.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'Never'}</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">Last Profile Update</p>
+                          <p className="font-semibold text-wrap">{selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date(selectedAccount.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'Never'}</p>
                         </div>
                       </div>
                     </div>
@@ -1851,102 +1855,102 @@ export default function AdminManagement() {
 
                   {/* Section 2: Statistics Activity Grid */}
                   <div>
-                    <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Activity & Statistics</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
+                    <h3 className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 md:mb-3">Activity & Statistics</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 md:gap-4">
                       {/* Listings */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-blue-200 dark:hover:border-blue-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-xl"><FaList className="text-blue-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-blue-200 dark:hover:border-blue-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-blue-50 dark:bg-blue-950/40 p-2 md:p-2.5 rounded-xl"><FaList className="text-blue-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Listings</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.listings}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Listings</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.listings}</p>
                         </div>
                       </div>
                       {/* Appointments */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-rose-200 dark:hover:border-rose-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl"><FaCalendar className="text-rose-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-rose-200 dark:hover:border-rose-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-rose-50 dark:bg-rose-950/40 p-2 md:p-2.5 rounded-xl"><FaCalendar className="text-rose-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Appts</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.appointments}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Appts</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.appointments}</p>
                         </div>
                       </div>
                       {/* Wishlist */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-red-200 dark:hover:border-red-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-red-50 dark:bg-red-950/40 p-2.5 rounded-xl"><FaHeart className="text-red-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-red-200 dark:hover:border-red-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-red-50 dark:bg-red-950/40 p-2 md:p-2.5 rounded-xl"><FaHeart className="text-red-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Wishlist</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.wishlist}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Wishlist</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.wishlist}</p>
                         </div>
                       </div>
                       {/* Watchlist */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-orange-200 dark:hover:border-orange-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-orange-50 dark:bg-orange-950/40 p-2.5 rounded-xl"><FaEye className="text-orange-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-orange-200 dark:hover:border-orange-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-orange-50 dark:bg-orange-950/40 p-2 md:p-2.5 rounded-xl"><FaEye className="text-orange-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Watchlist</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.watchlist}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Watchlist</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.watchlist}</p>
                         </div>
                       </div>
                       {/* SetuCoins */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-yellow-200 dark:hover:border-yellow-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-yellow-50 dark:bg-yellow-950/40 p-2.5 rounded-xl"><FaCoins className="text-yellow-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-yellow-200 dark:hover:border-yellow-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-yellow-50 dark:bg-yellow-950/40 p-2 md:p-2.5 rounded-xl"><FaCoins className="text-yellow-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">SetuCoins</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.coinBalance}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">SetuCoins</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.coinBalance}</p>
                         </div>
                       </div>
                       {/* Referrals */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-green-200 dark:hover:border-green-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-green-50 dark:bg-green-950/40 p-2.5 rounded-xl"><FaUser className="text-green-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-green-200 dark:hover:border-green-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-green-50 dark:bg-green-950/40 p-2 md:p-2.5 rounded-xl"><FaUser className="text-green-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Referrals</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.referrals}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Referrals</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.referrals}</p>
                         </div>
                       </div>
                       {/* Conversations */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-indigo-200 dark:hover:border-indigo-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-indigo-50 dark:bg-indigo-950/40 p-2.5 rounded-xl"><FaComments className="text-indigo-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-indigo-200 dark:hover:border-indigo-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-indigo-50 dark:bg-indigo-950/40 p-2 md:p-2.5 rounded-xl"><FaComments className="text-indigo-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Chats</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.conversations}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Chats</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.conversations}</p>
                         </div>
                       </div>
                       {/* Calls */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-purple-200 dark:hover:border-purple-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-purple-50 dark:bg-purple-950/40 p-2.5 rounded-xl"><FaPhone className="text-purple-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-purple-200 dark:hover:border-purple-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-purple-50 dark:bg-purple-950/40 p-2 md:p-2.5 rounded-xl"><FaPhone className="text-purple-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Calls</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.calls}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Calls</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.calls}</p>
                         </div>
                       </div>
                       {/* Saved Routes */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-cyan-200 dark:hover:border-cyan-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-cyan-50 dark:bg-cyan-950/40 p-2.5 rounded-xl"><FaMapMarkedAlt className="text-cyan-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-cyan-200 dark:hover:border-cyan-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-cyan-50 dark:bg-cyan-950/40 p-2 md:p-2.5 rounded-xl"><FaMapMarkedAlt className="text-cyan-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Routes</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.routes}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Routes</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.routes}</p>
                         </div>
                       </div>
                       {/* Investments */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-emerald-200 dark:hover:border-emerald-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl"><FaChartLine className="text-emerald-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-emerald-200 dark:hover:border-emerald-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2 md:p-2.5 rounded-xl"><FaChartLine className="text-emerald-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Investments</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.calculations}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Investments</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.calculations}</p>
                         </div>
                       </div>
                       {/* Payments */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-amber-200 dark:hover:border-amber-900/40 p-3.5 rounded-2xl transition-all duration-200">
-                        <div className="bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl"><FaCreditCard className="text-amber-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-amber-200 dark:hover:border-amber-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-amber-50 dark:bg-amber-950/40 p-2 md:p-2.5 rounded-xl"><FaCreditCard className="text-amber-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Payments</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.payments}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Payments</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.payments}</p>
                         </div>
                       </div>
                       {/* Reviews Written */}
-                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-teal-200 dark:hover:border-teal-900/40 p-3.5 rounded-2xl transition-all duration-200 col-span-1">
-                        <div className="bg-teal-50 dark:bg-teal-950/40 p-2.5 rounded-xl"><FaComments className="text-teal-500 text-lg" /></div>
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-teal-200 dark:hover:border-teal-900/40 p-2.5 md:p-3.5 rounded-2xl transition-all duration-200 col-span-1">
+                        <div className="bg-teal-50 dark:bg-teal-950/40 p-2 md:p-2.5 rounded-xl"><FaComments className="text-teal-500 text-sm md:text-lg" /></div>
                         <div>
-                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Reviews Out</p>
-                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.reviews}</p>
+                          <p className="text-[9px] md:text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Reviews Out</p>
+                          <p className="text-base md:text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.reviews}</p>
                         </div>
                       </div>
                     </div>
@@ -1955,13 +1959,13 @@ export default function AdminManagement() {
                   {/* Section 3: Administrative / Access Details (if applicable) */}
                   {(selectedAccount.isSubscribed === false && selectedAccount.unsubscribeReason) || selectedAccount.status === 'suspended' || selectedAccount.type === 'admin' || (passwordLockouts && passwordLockouts.some(l => (l.email || '').toLowerCase() === (selectedAccount.email || '').toLowerCase() && new Date(l.unlockAt) > new Date())) ? (
                     <div>
-                      <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Security & Administrative Actions</h3>
-                      <div className="space-y-3 bg-red-50/30 dark:bg-gray-900/40 p-5 rounded-2xl border border-red-100/40 dark:border-gray-700/60 text-sm">
+                      <h3 className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 md:mb-3">Security & Administrative Actions</h3>
+                      <div className="space-y-3 bg-red-50/30 dark:bg-gray-900/40 p-4 md:p-5 rounded-2xl border border-red-100/40 dark:border-gray-700/60 text-xs md:text-sm">
                         {/* Unsubscribe Details */}
                         {selectedAccount.isSubscribed === false && selectedAccount.unsubscribeReason && (
                           <div className="flex flex-col gap-1 border-b border-gray-100 dark:border-gray-700/60 pb-3 last:border-b-0 last:pb-0">
                             <span className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                              <FaExclamationCircle className="text-xs" /> Unsubscribed Reason:
+                              <FaExclamationCircle className="text-[10px] md:text-xs" /> Unsubscribed Reason:
                             </span>
                             <p className="italic text-gray-600 dark:text-gray-400">"{selectedAccount.unsubscribeReason}"</p>
                           </div>
@@ -1975,7 +1979,7 @@ export default function AdminManagement() {
                           const remainingMin = Math.max(1, Math.ceil(remainingMs / 60000));
                           return (
                             <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold border-b border-gray-100 dark:border-gray-700/60 pb-3 last:border-b-0 last:pb-0">
-                              <FaLock className="text-xs" />
+                              <FaLock className="text-[10px] md:text-xs" />
                               <span>Temporary Password Lockout: about {remainingMin} minute{remainingMin > 1 ? 's' : ''} left</span>
                             </div>
                           );
@@ -1984,10 +1988,10 @@ export default function AdminManagement() {
                         {selectedAccount.status === 'suspended' && (
                           <div className="space-y-1.5 border-b border-gray-100 dark:border-gray-700/60 pb-3 last:border-b-0 last:pb-0 text-red-600 dark:text-red-400">
                             <div className="flex items-center gap-2 font-semibold">
-                              <FaBan className="text-xs" />
+                              <FaBan className="text-[10px] md:text-xs" />
                               <span>Suspended Account details</span>
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 pl-5">
+                            <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 space-y-1 pl-5">
                               <p><strong>Date:</strong> {selectedAccount.suspendedAt ? new Date(selectedAccount.suspendedAt).toLocaleString('en-GB') : 'N/A'}</p>
                               {selectedAccount.suspendedBy && (
                                 <p><strong>Action by:</strong> {selectedAccount.suspendedBy?.username || selectedAccount.suspendedBy?.email || selectedAccount.suspendedBy}</p>
@@ -1997,7 +2001,7 @@ export default function AdminManagement() {
                         )}
                         {/* Admin Specifics */}
                         {selectedAccount.type === 'admin' && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600 dark:text-gray-400 pt-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px] md:text-xs text-gray-600 dark:text-gray-400 pt-1">
                             <div><strong>Admin Status:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.adminApprovalStatus}</span></div>
                             <div><strong>Approved By:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.approvedBy ? selectedAccount.approvedBy.username || selectedAccount.approvedBy.email || selectedAccount.approvedBy : 'N/A'}</span></div>
                             <div><strong>Approval Date:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString('en-GB') : 'N/A'}</span></div>
@@ -2015,11 +2019,17 @@ export default function AdminManagement() {
                 </div>
               )}
             </div>
+          </>
+        ) : (
+          <div className="w-full py-16 text-center text-red-500 font-bold">
+            Failed to load details.
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    </div>
+  )}
 
-      {/* Confirmation Modal */}
+  {/* Confirmation Modal */}
       {
         showConfirmModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
