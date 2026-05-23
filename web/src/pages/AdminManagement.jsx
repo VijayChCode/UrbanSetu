@@ -107,6 +107,7 @@ export default function AdminManagement() {
 
   // Add useEffect to listen for socket events and update users/admins state
   useEffect(() => {
+    localStorage.removeItem('adminMgmtPwAttempts');
     function handleUserUpdate({ type, user }) {
       setUsers(prev => {
         if (type === 'delete') return prev.filter(u => u._id !== user._id);
@@ -1069,6 +1070,7 @@ export default function AdminManagement() {
         body: JSON.stringify({ password: managementPassword })
       });
       if (res.ok) {
+        localStorage.removeItem('adminMgmtPwAttempts');
         setShowPasswordModal(false);
         setManagementPassword("");
         setManagementPasswordError("");
@@ -1082,6 +1084,7 @@ export default function AdminManagement() {
         localStorage.setItem(key, String(next));
 
         if (next >= 3) {
+          localStorage.removeItem('adminMgmtPwAttempts');
           // Sign out and redirect on third wrong attempt
           toast.error("Too many incorrect attempts. You've been signed out for security.");
           dispatch(signoutUserStart());
