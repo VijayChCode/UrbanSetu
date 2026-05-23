@@ -17144,7 +17144,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
             <div style="position: relative; z-index: 1;">
               <!-- Creator Avatar -->
               <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px; border: 3px solid rgba(255,255,255,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                <span style="font-size: 28px; font-weight: 800; color: #6366f1; letter-spacing: -1px;">VC</span>
+                <span style="font-size: 28px; font-weight: 800; color: #6366f1; letter-spacing: -1px;">👋</span>
               </div>
               <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; line-height: 1.3;">A Personal Note from<br/>the Creator of UrbanSetu</h1>
               <p style="color: #e0e7ff; margin: 12px 0 0; font-size: 15px; font-style: italic;">Built with passion, shaped by your feedback</p>
@@ -17171,23 +17171,6 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               </p>
             </div>
 
-            <!-- SetuCoins Reward Incentive -->
-            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%); border: 2px dashed #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 28px; text-align: center;">
-              <span style="font-size: 32px;">🪙</span>
-              <h3 style="color: #92400e; margin: 8px 0 6px; font-size: 17px; font-weight: 700;">Share Feedback & Earn 10 SetuCoins!</h3>
-              <p style="color: #78350f; font-size: 13px; line-height: 1.6; margin: 0;">
-                Fill out our quick feedback survey and we'll reward you with <strong>10 SetuCoins</strong> — use them for premium features, badges, and leaderboard rankings!
-              </p>
-            </div>
-
-            <!-- Quick Survey CTA -->
-            <div style="text-align: center; margin-bottom: 28px;">
-              <a href="https://docs.google.com/forms/d/e/1FAIpQLSfczXodXme_kSsff2XNktDp6y9r0DyXm_abV9VIqK3PcBKhVg/viewform" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: #ffffff; text-decoration: none; padding: 16px 36px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); letter-spacing: 0.3px;">
-                📋 Take the 2-Min Survey
-              </a>
-              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0;">Takes ~2 minutes • Completely anonymous • Earns you 10 SetuCoins</p>
-            </div>
-
             <!-- Feedback Request Section -->
             <div style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #e9d5ff; border-radius: 12px; padding: 25px; margin-bottom: 28px;">
               <div style="display: flex; align-items: flex-start; gap: 12px;">
@@ -17210,6 +17193,23 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
                   </ul>
                 </div>
               </div>
+            </div>
+
+            <!-- SetuCoins Reward Incentive -->
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%); border: 2px dashed #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 28px; text-align: center;">
+              <span style="font-size: 32px;">🪙</span>
+              <h3 style="color: #92400e; margin: 8px 0 6px; font-size: 17px; font-weight: 700;">Share Feedback & Earn 10 SetuCoins!</h3>
+              <p style="color: #78350f; font-size: 13px; line-height: 1.6; margin: 0;">
+                Fill out our quick feedback survey and we'll reward you with <strong>10 SetuCoins</strong> — use them for premium features, badges, and leaderboard rankings!
+              </p>
+            </div>
+
+            <!-- Quick Survey CTA -->
+            <div style="text-align: center; margin-bottom: 28px;">
+              <a href="https://docs.google.com/forms/d/e/1FAIpQLSfczXodXme_kSsff2XNktDp6y9r0DyXm_abV9VIqK3PcBKhVg/viewform" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: #ffffff; text-decoration: none; padding: 16px 36px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); letter-spacing: 0.3px;">
+                📋 Take the 2-Min Survey
+              </a>
+              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0;">Takes ~2 minutes • Completely anonymous • Earns you 10 SetuCoins</p>
             </div>
 
             <!-- Bug Reports & Issues Section -->
@@ -17336,7 +17336,7 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               <div style="margin-top: 20px; display: flex; align-items: center; gap: 15px;">
                 <!-- Creator Signature Avatar -->
                 <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);">
-                  <span style="color: white; font-size: 18px; font-weight: 800;">VC</span>
+                  <span style="color: white; font-size: 18px; font-weight: 800;">🙏</span>
                 </div>
                 <div>
                   <p style="color: #1f2937; font-size: 16px; margin: 0; font-weight: 600;">
@@ -17381,8 +17381,8 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
               <p style="color: #9ca3af; margin: 0 0 8px; font-size: 12px;">
                 © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
               </p>
-              <p style="margin: 0;">
-                <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline; font-size: 11px;">Unsubscribe from promotional emails</a>
+              <p style="margin: 0; color: #9ca3af; font-size: 11px;">
+                <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a> from promotional emails
               </p>
             </div>
           </div>
