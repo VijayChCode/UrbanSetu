@@ -850,28 +850,25 @@ export default function Home() {
               </div>
             </div>
 
-            <div 
-              className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900"
-              onMouseEnter={() => {
-                if (swiperRef.current && swiperRef.current.swiper) {
-                  swiperRef.current.swiper.autoplay.stop();
-                }
-              }}
-              onMouseLeave={() => {
-                if (swiperRef.current && swiperRef.current.swiper) {
-                  swiperRef.current.swiper.autoplay.start();
-                }
-              }}
-            >
+            <div className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900">
               <Swiper
                 key={allSliderImages.map(img => img.listingId).join(',')}
-                ref={swiperRef}
+                onSwiper={(swiper) => {
+                  swiperRef.current = { swiper };
+                  swiper.autoplay.start();
+                }}
                 modules={[Autoplay, Pagination, EffectFade]}
                 effect="fade"
                 fadeEffect={{ crossFade: true }}
-                autoplay={{ delay: 5000, disableOnInteraction: false }}
+                autoplay={{ 
+                  delay: 5000, 
+                  disableOnInteraction: false,
+                  pauseOnMouseEnter: true
+                }}
                 speed={1000}
                 loop={true}
+                observer={true}
+                observeParents={true}
                 lazyPreloadPrevNext={1}
                 onSlideChange={handleSlideChange}
                 className="h-[400px] md:h-[500px] lg:h-[600px] w-full"
