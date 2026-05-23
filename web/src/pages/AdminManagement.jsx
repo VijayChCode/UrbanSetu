@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle } from "react-icons/fa";
+import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle, FaCoins, FaComments, FaMapMarkedAlt, FaChartLine, FaCreditCard, FaHeart, FaEye } from "react-icons/fa";
 import { socket } from "../utils/socket";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import { authenticatedFetch } from "../utils/auth";
@@ -1738,230 +1738,286 @@ export default function AdminManagement() {
       {/* Account Details Modal */}
       {showAccountModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-sm mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto p-0 relative animate-scale-in border border-white/20 dark:border-gray-700">
-            {/* Close button top right */}
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl mx-2 sm:mx-4 max-h-[90vh] flex flex-col md:flex-row overflow-hidden relative animate-scale-in border border-white/20 dark:border-gray-700">
+            {/* Close button */}
             <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 transition-colors z-10 shadow"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full p-2 transition-colors z-10 shadow"
               onClick={() => setShowAccountModal(false)}
               title="Close"
               aria-label="Close"
             >
               <FaTimes className="w-4 h-4" />
             </button>
-            {/* Header */}
-            <div className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-t-3xl px-6 py-8 border-b border-gray-100 dark:border-gray-700">
+
+            {/* Left Panel: Profile Summary */}
+            <div className="w-full md:w-80 md:flex-shrink-0 bg-gradient-to-b from-blue-50/50 via-indigo-50/10 to-transparent dark:from-gray-900/60 dark:via-gray-800/10 dark:to-transparent border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center p-6 sm:p-8 text-center">
               <div className="flex flex-col items-center gap-4 text-center">
                 <div className="relative">
                   <img
                     src={selectedAccount?.avatar || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'}
                     alt="avatar"
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-xl"
+                    className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-xl"
                     onError={e => { e.target.onerror = null; e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
                   />
-                  <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-full border-2 border-white dark:border-gray-800 ${selectedAccount?.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <div className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 shadow-md ${selectedAccount?.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-extrabold text-gray-800 dark:text-white line-clamp-1">
                     {selectedAccount?.username}
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedAccount?.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{selectedAccount?.email}</p>
                 </div>
-              </div>
-              <div className="mt-4 flex flex-col items-center">
-                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${selectedAccount?.type === 'admin' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'}`}>
-                  {selectedAccount?.type === 'admin' ? <FaUserShield /> : <FaUser />}
+                <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm ${selectedAccount?.type === 'admin' ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400'}`}>
+                  {selectedAccount?.type === 'admin' ? <FaUserShield className="text-xs" /> : <FaUser className="text-xs" />}
                   {selectedAccount?.type === 'admin' ? 'Admin' : 'User'}
                 </span>
               </div>
+
+              {/* Status and Subscription summary on left panel */}
+              <div className="w-full mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/60 space-y-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400 font-medium">Account Status:</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${selectedAccount?.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                    {(selectedAccount?.status || 'active').toUpperCase()}
+                  </span>
+                </div>
+
+                {/* Subscription Toggle */}
+                <div className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700/40">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 justify-center">
+                    <FaEnvelope className={selectedAccount?.isSubscribed !== false ? "text-green-500" : "text-gray-400"} />
+                    <span>Promo Emails: {selectedAccount?.isSubscribed !== false ? 'Subscribed' : 'Unsubscribed'}</span>
+                  </div>
+                  <button
+                    onClick={() => handleToggleSubscription(selectedAccount?._id, selectedAccount?.isSubscribed !== false)}
+                    disabled={subscriptionLoading}
+                    className={`text-xs w-full py-1.5 rounded-lg font-bold transition-all shadow-sm ${selectedAccount?.isSubscribed !== false ? "bg-red-500 text-white hover:bg-red-600" : "bg-green-500 text-white hover:bg-green-600"}`}
+                  >
+                    {subscriptionLoading ? '...' : (selectedAccount?.isSubscribed !== false ? 'Unsubscribe' : 'Subscribe')}
+                  </button>
+                </div>
+              </div>
             </div>
-            {/* Body */}
-            <div className="px-4 sm:px-8 py-4 space-y-4">
+
+            {/* Right Panel: Detailed Metrics & Stats */}
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
               {accountLoading ? (
-                <div className="flex justify-center items-center h-32">
+                <div className="flex justify-center items-center h-64">
                   <UrbanSetuSpinner size="md" />
                 </div>
               ) : selectedAccount ? (
                 <>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                      <FaPhone className="text-blue-400" />
-                      <span><strong>Mobile:</strong> {selectedAccount.mobileNumber || 'Not provided'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                      <FaUser className="text-purple-400" />
-                      <span><strong>Gender:</strong> {selectedAccount.gender ? selectedAccount.gender.charAt(0).toUpperCase() + selectedAccount.gender.slice(1) : 'Not provided'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                      <FaHome className="text-green-400" />
-                      <span><strong>Address:</strong> {selectedAccount.address || 'Not provided'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                      <FaCalendarAlt className="text-purple-400" />
-                      <span><strong>Member Since:</strong> {selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      }) : ''}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                      <FaCalendarAlt className="text-blue-400" />
-                      <span><strong>Last Updated Profile:</strong> {selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      }) + ' ' + new Date(selectedAccount.updatedAt).toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }) : 'Never'}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-4 bg-gray-50/50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Listings:</span>
-                        <span className="text-blue-600 dark:text-blue-400 font-bold">{accountStats.listings}</span>
+                  {/* Section 1: Profile Details */}
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Profile Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/50 dark:bg-gray-900/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/60">
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                        <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg"><FaPhone className="text-blue-500" /></div>
+                        <div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Mobile Number</p>
+                          <p className="font-semibold">{selectedAccount.mobileNumber || 'Not provided'}</p>
+                        </div>
                       </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Appointments:</span>
-                        <span className="text-pink-600 dark:text-pink-400 font-bold">{accountStats.appointments}</span>
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                        <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><FaUser className="text-purple-500" /></div>
+                        <div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Gender</p>
+                          <p className="font-semibold">{selectedAccount.gender ? selectedAccount.gender.charAt(0).toUpperCase() + selectedAccount.gender.slice(1) : 'Not provided'}</p>
+                        </div>
                       </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Wishlist:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.wishlist}</span>
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm sm:col-span-2">
+                        <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg"><FaHome className="text-green-500" /></div>
+                        <div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Address</p>
+                          <p className="font-semibold text-wrap">{selectedAccount.address || 'Not provided'}</p>
+                        </div>
                       </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Watchlist:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.watchlist}</span>
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                        <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg"><FaCalendarAlt className="text-indigo-500" /></div>
+                        <div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Member Since</p>
+                          <p className="font-semibold">{selectedAccount.createdAt ? new Date(selectedAccount.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}</p>
+                        </div>
                       </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Reviews Written:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.reviews}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Reviews Received:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.receivedReviews}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">SetuCoins:</span>
-                        <span className="text-yellow-600 dark:text-yellow-400 font-bold">{accountStats.coinBalance}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Referrals:</span>
-                        <span className="text-green-600 dark:text-green-400 font-bold">{accountStats.referrals}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Conversations:</span>
-                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">{accountStats.conversations}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Call History:</span>
-                        <span className="text-purple-600 dark:text-purple-400 font-bold">{accountStats.calls}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">forum Posts:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.forumPosts}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Saved Routes:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.routes}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Investments:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.calculations}</span>
-                      </div>
-                      <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm flex flex-col">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">Payments:</span>
-                        <span className="text-gray-700 dark:text-gray-200 font-bold">{accountStats.payments}</span>
+                      <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm">
+                        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg"><FaCalendarAlt className="text-amber-500" /></div>
+                        <div>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Last Profile Update</p>
+                          <p className="font-semibold">{selectedAccount.updatedAt ? new Date(selectedAccount.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date(selectedAccount.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'Never'}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-2 mt-2">
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                      <span><strong>Status:</strong> {selectedAccount.status || 'active'}</span>
-                    </div>
-                    {/* Subscription Status Toggle for Admin */}
-                    <div className="flex items-center justify-between gap-2 text-gray-700 dark:text-gray-300 text-sm bg-gray-100/50 dark:bg-gray-800/50 p-2 rounded-lg mt-2 font-medium">
-                      <div className="flex items-center gap-2">
-                        <FaEnvelope className={selectedAccount.isSubscribed !== false ? "text-green-500" : "text-gray-400"} />
-                        <span><strong>Promotional Emails:</strong> {selectedAccount.isSubscribed !== false ? 'Subscribed' : 'Unsubscribed'}</span>
-                      </div>
-                      <button
-                        onClick={() => handleToggleSubscription(selectedAccount._id, selectedAccount.isSubscribed !== false)}
-                        disabled={subscriptionLoading}
-                        className={`text-xs px-3 py-1 rounded-md font-bold transition-all ${selectedAccount.isSubscribed !== false ? "bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white" : "bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white"}`}
-                      >
-                        {subscriptionLoading ? '...' : (selectedAccount.isSubscribed !== false ? 'Unsubscribe' : 'Subscribe')}
-                      </button>
-                    </div>
-                    {selectedAccount.isSubscribed === false && selectedAccount.unsubscribeReason && (
-                      <div className="flex flex-col gap-1 text-gray-700 dark:text-gray-300 text-sm bg-red-50/50 dark:bg-red-900/10 p-2 rounded-lg mt-1 border border-red-100/50 dark:border-red-900/20">
-                        <span className="font-bold flex items-center gap-2">
-                          <FaExclamationCircle className="text-red-500 text-xs" /> Unsubscribe Reason:
-                        </span>
-                        <p className="italic text-gray-600 dark:text-gray-400 ml-5">"{selectedAccount.unsubscribeReason}"</p>
-                      </div>
-                    )}
-                    {/* Lockout remaining time (password lockout) */}
-                    {(() => {
-                      if (!passwordLockouts || !Array.isArray(passwordLockouts)) return null;
-                      const entry = passwordLockouts.find(l => (l.email || '').toLowerCase() === (selectedAccount.email || '').toLowerCase() && new Date(l.unlockAt) > new Date());
-                      if (!entry) return null;
-                      const remainingMs = new Date(entry.unlockAt).getTime() - Date.now();
-                      const remainingMin = Math.max(1, Math.ceil(remainingMs / 60000));
-                      return (
-                        <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400 text-sm">
-                          <span><strong>Time left to unlock:</strong> about {remainingMin} minute{remainingMin > 1 ? 's' : ''}</span>
+
+                  {/* Section 2: Statistics Activity Grid */}
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Activity & Statistics</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
+                      {/* Listings */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-blue-200 dark:hover:border-blue-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-xl"><FaList className="text-blue-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Listings</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.listings}</p>
                         </div>
-                      );
-                    })()}
-                    {/* Suspension details */}
-                    {selectedAccount.status === 'suspended' && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                          <span><strong>Suspended on:</strong> {selectedAccount.suspendedAt ? new Date(selectedAccount.suspendedAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}</span>
+                      </div>
+                      {/* Appointments */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-rose-200 dark:hover:border-rose-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl"><FaCalendar className="text-rose-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Appts</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.appointments}</p>
                         </div>
-                        {selectedAccount.suspendedBy && (
-                          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                            <span><strong>Suspended by:</strong> {selectedAccount.suspendedBy?.username || selectedAccount.suspendedBy?.email || selectedAccount.suspendedBy}</span>
+                      </div>
+                      {/* Wishlist */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-red-200 dark:hover:border-red-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-red-50 dark:bg-red-950/40 p-2.5 rounded-xl"><FaHeart className="text-red-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Wishlist</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.wishlist}</p>
+                        </div>
+                      </div>
+                      {/* Watchlist */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-orange-200 dark:hover:border-orange-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-orange-50 dark:bg-orange-950/40 p-2.5 rounded-xl"><FaEye className="text-orange-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Watchlist</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.watchlist}</p>
+                        </div>
+                      </div>
+                      {/* SetuCoins */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-yellow-200 dark:hover:border-yellow-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-yellow-50 dark:bg-yellow-950/40 p-2.5 rounded-xl"><FaCoins className="text-yellow-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">SetuCoins</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.coinBalance}</p>
+                        </div>
+                      </div>
+                      {/* Referrals */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-green-200 dark:hover:border-green-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-green-50 dark:bg-green-950/40 p-2.5 rounded-xl"><FaUser className="text-green-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Referrals</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.referrals}</p>
+                        </div>
+                      </div>
+                      {/* Conversations */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-indigo-200 dark:hover:border-indigo-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-indigo-50 dark:bg-indigo-950/40 p-2.5 rounded-xl"><FaComments className="text-indigo-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Chats</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.conversations}</p>
+                        </div>
+                      </div>
+                      {/* Calls */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-purple-200 dark:hover:border-purple-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-purple-50 dark:bg-purple-950/40 p-2.5 rounded-xl"><FaPhone className="text-purple-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Calls</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.calls}</p>
+                        </div>
+                      </div>
+                      {/* Saved Routes */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-cyan-200 dark:hover:border-cyan-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-cyan-50 dark:bg-cyan-950/40 p-2.5 rounded-xl"><FaMapMarkedAlt className="text-cyan-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Routes</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.routes}</p>
+                        </div>
+                      </div>
+                      {/* Investments */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-emerald-200 dark:hover:border-emerald-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl"><FaChartLine className="text-emerald-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Investments</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.calculations}</p>
+                        </div>
+                      </div>
+                      {/* Payments */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-amber-200 dark:hover:border-amber-900/40 p-3.5 rounded-2xl transition-all duration-200">
+                        <div className="bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl"><FaCreditCard className="text-amber-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Payments</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.payments}</p>
+                        </div>
+                      </div>
+                      {/* Reviews Written */}
+                      <div className="flex items-center gap-3 bg-gray-50/50 dark:bg-gray-900/30 hover:bg-white dark:hover:bg-gray-800 hover:shadow-md border border-gray-100 dark:border-gray-700/60 hover:border-teal-200 dark:hover:border-teal-900/40 p-3.5 rounded-2xl transition-all duration-200 col-span-1">
+                        <div className="bg-teal-50 dark:bg-teal-950/40 p-2.5 rounded-xl"><FaComments className="text-teal-500 text-lg" /></div>
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Reviews Out</p>
+                          <p className="text-lg font-black text-gray-800 dark:text-gray-100">{accountStats.reviews}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Administrative / Access Details (if applicable) */}
+                  {(selectedAccount.isSubscribed === false && selectedAccount.unsubscribeReason) || selectedAccount.status === 'suspended' || selectedAccount.type === 'admin' || (passwordLockouts && passwordLockouts.some(l => (l.email || '').toLowerCase() === (selectedAccount.email || '').toLowerCase() && new Date(l.unlockAt) > new Date())) ? (
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Security & Administrative Actions</h3>
+                      <div className="space-y-3 bg-red-50/30 dark:bg-gray-900/40 p-5 rounded-2xl border border-red-100/40 dark:border-gray-700/60 text-sm">
+                        {/* Unsubscribe Details */}
+                        {selectedAccount.isSubscribed === false && selectedAccount.unsubscribeReason && (
+                          <div className="flex flex-col gap-1 border-b border-gray-100 dark:border-gray-700/60 pb-3 last:border-b-0 last:pb-0">
+                            <span className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                              <FaExclamationCircle className="text-xs" /> Unsubscribed Reason:
+                            </span>
+                            <p className="italic text-gray-600 dark:text-gray-400">"{selectedAccount.unsubscribeReason}"</p>
+                          </div>
+                        )}
+                        {/* Lockout remaining time */}
+                        {(() => {
+                          if (!passwordLockouts || !Array.isArray(passwordLockouts)) return null;
+                          const entry = passwordLockouts.find(l => (l.email || '').toLowerCase() === (selectedAccount.email || '').toLowerCase() && new Date(l.unlockAt) > new Date());
+                          if (!entry) return null;
+                          const remainingMs = new Date(entry.unlockAt).getTime() - Date.now();
+                          const remainingMin = Math.max(1, Math.ceil(remainingMs / 60000));
+                          return (
+                            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold border-b border-gray-100 dark:border-gray-700/60 pb-3 last:border-b-0 last:pb-0">
+                              <FaLock className="text-xs" />
+                              <span>Temporary Password Lockout: about {remainingMin} minute{remainingMin > 1 ? 's' : ''} left</span>
+                            </div>
+                          );
+                        })()}
+                        {/* Suspension details */}
+                        {selectedAccount.status === 'suspended' && (
+                          <div className="space-y-1.5 border-b border-gray-100 dark:border-gray-700/60 pb-3 last:border-b-0 last:pb-0 text-red-600 dark:text-red-400">
+                            <div className="flex items-center gap-2 font-semibold">
+                              <FaBan className="text-xs" />
+                              <span>Suspended Account details</span>
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1 pl-5">
+                              <p><strong>Date:</strong> {selectedAccount.suspendedAt ? new Date(selectedAccount.suspendedAt).toLocaleString('en-GB') : 'N/A'}</p>
+                              {selectedAccount.suspendedBy && (
+                                <p><strong>Action by:</strong> {selectedAccount.suspendedBy?.username || selectedAccount.suspendedBy?.email || selectedAccount.suspendedBy}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {/* Admin Specifics */}
+                        {selectedAccount.type === 'admin' && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-gray-600 dark:text-gray-400 pt-1">
+                            <div><strong>Admin Status:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.adminApprovalStatus}</span></div>
+                            <div><strong>Approved By:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.approvedBy ? selectedAccount.approvedBy.username || selectedAccount.approvedBy.email || selectedAccount.approvedBy : 'N/A'}</span></div>
+                            <div><strong>Approval Date:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString('en-GB') : 'N/A'}</span></div>
+                            <div><strong>Request Date:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.adminRequestDate ? new Date(selectedAccount.adminRequestDate).toLocaleDateString('en-GB') : 'N/A'}</span></div>
+                            <div className="sm:col-span-2"><strong>Is Default Admin:</strong> <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedAccount.isDefaultAdmin ? 'Yes' : 'No'}</span></div>
                           </div>
                         )}
                       </div>
-                    )}
-                    {selectedAccount.type === 'admin' && (
-                      <>
-                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                          <span><strong>Admin Status:</strong> {selectedAccount.adminApprovalStatus}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                          <span><strong>Admin Approval Date:</strong> {selectedAccount.adminApprovalDate ? new Date(selectedAccount.adminApprovalDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          }) : 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                          <span><strong>Approved By:</strong> {selectedAccount.approvedBy ? selectedAccount.approvedBy.username || selectedAccount.approvedBy.email || selectedAccount.approvedBy : 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                          <span><strong>Admin Request Date:</strong> {selectedAccount.adminRequestDate ? new Date(selectedAccount.adminRequestDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          }) : 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-                          <span><strong>Is Default Admin:</strong> {selectedAccount.isDefaultAdmin ? 'Yes' : 'No'}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                    </div>
+                  ) : null}
                 </>
               ) : (
-                <p className="text-red-500">Failed to load details.</p>
+                <div className="text-center py-12 text-red-500 font-bold">
+                  Failed to load details.
+                </div>
               )}
             </div>
           </div>
         </div>
-      )
-      }
+      )}
 
       {/* Confirmation Modal */}
       {
