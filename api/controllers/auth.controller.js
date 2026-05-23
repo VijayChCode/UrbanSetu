@@ -405,6 +405,7 @@ export const SignIn = async (req, res, next) => {
         const device = getDeviceInfo(userAgent, req.headers);
         const location = getLocationFromIP(identifier);
         const source = req.get('Origin') || req.get('Referer') || 'Unknown';
+        const io = req.app.get('io');
 
         // Create enhanced session (DB updates inside this are now non-blocking)
         const session = await createEnhancedSession(validUser._id, req);
@@ -458,7 +459,7 @@ export const SignIn = async (req, res, next) => {
                 }
 
                 // Enforce role-based session limits
-                await enforceSessionLimits(validUser._id, validUser.role, req.app.get('io'));
+                await enforceSessionLimits(validUser._id, validUser.role, io);
 
                 const concurrentInfo = detectConcurrentLogins(validUser._id, session.sessionId);
 
@@ -572,6 +573,7 @@ export const Google = async (req, res, next) => {
             const ip = req.ip || req.connection.remoteAddress;
             const location = getLocationFromIP(ip);
             const source = req.get('Origin') || req.get('Referer') || 'Unknown';
+            const io = req.app.get('io');
 
             // Create enhanced session (DB updates inside this are now non-blocking)
             const session = await createEnhancedSession(validUser._id, req);
@@ -626,7 +628,7 @@ export const Google = async (req, res, next) => {
                     }
 
                     // Enforce role-based session limits
-                    await enforceSessionLimits(validUser._id, validUser.role, req.app.get('io'));
+                    await enforceSessionLimits(validUser._id, validUser.role, io);
 
                     // Log session action (Audit Log)
                     await logSessionAction(
@@ -1738,6 +1740,7 @@ export const verifyLoginOTP = async (req, res, next) => {
         const ip = req.ip || req.connection.remoteAddress;
         const location = getLocationFromIP(ip);
         const source = req.get('Origin') || req.get('Referer') || 'Unknown';
+        const io = req.app.get('io');
 
         // Create enhanced session (DB updates inside this are now non-blocking)
         const session = await createEnhancedSession(user._id, req);
@@ -1777,7 +1780,7 @@ export const verifyLoginOTP = async (req, res, next) => {
                 const suspiciousCheck = await checkSuspiciousLogin(user._id, ip, device);
 
                 // Enforce role-based session limits
-                await enforceSessionLimits(user._id, user.role, req.app.get('io'));
+                await enforceSessionLimits(user._id, user.role, io);
 
                 // Reset tracking on successful login
                 if (otpTracking) {
