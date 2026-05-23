@@ -573,7 +573,32 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           showFeedback("100%");
         } else {
           // Double tap to Zoom In
-          setScale(2.5);
+          const targetScale = 2.5;
+
+          if (containerRef.current && e.changedTouches && e.changedTouches.length > 0) {
+            const touch = e.changedTouches[0];
+            const rect = containerRef.current.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const dx = touch.clientX - centerX;
+            const dy = touch.clientY - centerY;
+
+            // Rotate the touch offset vector back by the rotation angle
+            // to get coordinates in the image's local space
+            const rad = -rotation * Math.PI / 180;
+            const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+            const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+            // Calculate and clamp new position so the clicked point aligns with the container center (0,0)
+            const clampedPos = getClampedPosition(-localX, -localY, targetScale);
+
+            setScale(targetScale);
+            setPosition(clampedPos);
+          } else {
+            setScale(targetScale);
+          }
+
           showFeedback("250%");
           setShowControls(false); // Hide controls for better view
         }
