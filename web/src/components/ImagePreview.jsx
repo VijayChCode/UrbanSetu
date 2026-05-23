@@ -1612,14 +1612,23 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           onClick={(e) => e.stopPropagation()} // Prevent closing/toggling controls
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-white tracking-wide">My Favorites</h2>
-              <span className="bg-red-500/20 text-red-400 text-xs px-2.5 py-1 rounded-full border border-red-500/30 font-semibold">
-                {favoritesData?.length || 0}
-              </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-4 mb-4 gap-3">
+            <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-wide">My Favorites</h2>
+                <span className="bg-red-500/20 text-red-400 text-xs px-2.5 py-0.5 sm:py-1 rounded-full border border-red-500/30 font-semibold">
+                  {favoritesData?.length || 0}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowFavoritesGallery(false)}
+                className="sm:hidden text-white/70 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-all duration-200"
+                title="Close Gallery"
+              >
+                <FaTimes size={16} />
+              </button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
               {isFavoritesMode && (
                 <button
                   onClick={() => {
@@ -1627,14 +1636,14 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                     setCurrentIndex(0);
                     showFeedback("Back to Listing");
                   }}
-                  className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-semibold transition-all duration-200"
+                  className="w-full sm:w-auto px-3 py-2 sm:py-1.5 bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-semibold transition-all duration-200 text-center"
                 >
                   Switch to Listing Images
                 </button>
               )}
               <button
                 onClick={() => setShowFavoritesGallery(false)}
-                className="text-white/70 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-all duration-200"
+                className="hidden sm:flex text-white/70 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-all duration-200"
                 title="Close Gallery"
               >
                 <FaTimes size={18} />
