@@ -1976,10 +1976,7 @@ export default function Profile() {
                           </span>
                         </div>
                       </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                    
                     {/* DiceBear Avatar Customization */}
                     <div className="mt-6 w-full flex flex-col items-center bg-gray-50 dark:bg-gray-800/40 p-6 rounded-2xl border border-gray-200/50 dark:border-gray-700/50 max-w-2xl mx-auto shadow-sm">
                       <div className="font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-1.5 self-start text-base">
@@ -2083,6 +2080,7 @@ export default function Profile() {
                     </div>
                   </>
                 )}
+                </div>
                 <div className="text-xs text-gray-500 mt-2 text-center">Note: Please upload a profile image below 5MB for best performance.</div>
                 {avatarError && (
                   <div className="text-red-500 text-sm mt-2 text-center bg-red-50 p-2 rounded-lg border border-red-200">
