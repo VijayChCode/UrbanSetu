@@ -319,7 +319,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     };
 
     const handleWheel = (e) => {
-      if (!isOpen) return;
+      if (!isOpen || showFavoritesGallery) return;
       e.preventDefault();
 
       if (!showControls) setShowControls(true);
@@ -1069,7 +1069,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       {/* Close Button */}
       <button
         onClick={handleCloseClick}
-        className={`absolute top-4 right-4 text-white hover:text-red-400 z-10 bg-black bg-opacity-70 rounded-full p-3 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+        className={`absolute top-4 right-4 text-white hover:text-red-400 z-10 bg-black bg-opacity-70 rounded-full p-3 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
           }`}
       >
         <FaTimes size={20} />
@@ -1143,7 +1143,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       </div>
 
       {/* Enhanced Controls - Desktop */}
-      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex items-center gap-2 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-3 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex items-center gap-2 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-3 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}>
         <button
           onClick={handleZoomIn}
@@ -1257,7 +1257,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       </div>
 
       {/* Mobile Controls - Compact */}
-      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 md:hidden flex items-center gap-1 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-2 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 md:hidden flex items-center gap-1 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-2 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}>
         <button
           onClick={handleZoomIn}
@@ -1547,7 +1547,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       )}
 
       {/* Image Counter & Favorites Back Button */}
-      <div className={`absolute top-4 left-4 flex items-center gap-2 z-10 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+      <div className={`absolute top-4 left-4 flex items-center gap-2 z-10 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
         {imagesArray.length > 1 && (
           <div className="text-white bg-black bg-opacity-70 backdrop-blur-sm rounded-lg px-3 py-2">
             <span className="font-medium">{currentIndex + 1}</span>
@@ -1600,7 +1600,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       {/* Favorites Gallery Overlay */}
       {showFavoritesGallery && (
         <div 
-          className="absolute inset-0 bg-[#0c0c0c]/98 backdrop-blur-md z-50 flex flex-col p-4 sm:p-6 transition-all duration-300 animate-fadeIn overflow-y-auto pointer-events-auto"
+          className="absolute inset-0 bg-[#0c0c0c]/98 backdrop-blur-md z-50 flex flex-col p-4 sm:p-6 transition-all duration-300 animate-fadeIn overflow-hidden pointer-events-auto"
           onClick={(e) => e.stopPropagation()} // Prevent closing/toggling controls
         >
           {/* Header */}
@@ -1649,7 +1649,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto pb-8 pr-1">
+            <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto pb-12 pr-1">
               {favoritesData.map((fav, idx) => (
                 <div
                   key={fav.imageId || fav._id || idx}
