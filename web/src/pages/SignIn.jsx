@@ -268,6 +268,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     const handleRecaptchaVerify = (token) => {
         setRecaptchaToken(token);
         setRecaptchaError("");
+        // Hide after a brief delay to show the tick
+        setTimeout(() => setShowRecaptcha(false), 1000);
     };
 
     const handleRecaptchaExpire = () => {
@@ -298,6 +300,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     const handleOtpRecaptchaVerify = (token) => {
         setOtpRecaptchaToken(token);
         setOtpRecaptchaError("");
+        // Hide after a brief delay to show the tick
+        setTimeout(() => setShowOtpRecaptcha(false), 1000);
     };
 
     const handleOtpRecaptchaExpire = () => {
@@ -1180,4 +1184,3 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         </>
     );
 }
-
