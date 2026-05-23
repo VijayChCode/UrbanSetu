@@ -627,7 +627,7 @@ export default function Home() {
 
   const goToSlide = (index) => {
     if (swiperRef.current && swiperRef.current.swiper) {
-      swiperRef.current.swiper.slideTo(index);
+      swiperRef.current.swiper.slideToLoop(index);
     }
   };
 
@@ -850,27 +850,30 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900">
+            <div 
+              className="rounded-3xl overflow-hidden shadow-2xl relative group bg-gray-900"
+              onMouseEnter={() => {
+                if (swiperRef.current && swiperRef.current.swiper) {
+                  swiperRef.current.swiper.autoplay.stop();
+                }
+              }}
+              onMouseLeave={() => {
+                if (swiperRef.current && swiperRef.current.swiper) {
+                  swiperRef.current.swiper.autoplay.start();
+                }
+              }}
+            >
               <Swiper
-                key={allSliderImages.length}
-                onSwiper={(swiper) => {
-                  swiperRef.current = { swiper };
-                  if (swiper.autoplay) swiper.autoplay.start();
-                }}
-                modules={[Autoplay, EffectFade]}
+                key={allSliderImages.map(img => img.listingId).join(',')}
+                ref={swiperRef}
+                modules={[Autoplay, Pagination, EffectFade]}
                 effect="fade"
                 fadeEffect={{ crossFade: true }}
-                autoplay={{ 
-                  delay: 5000, 
-                  disableOnInteraction: false,
-                  pauseOnMouseEnter: true
-                }}
+                autoplay={{ delay: 5000, disableOnInteraction: false }}
                 speed={1000}
-                rewind={true}
-                observer={true}
-                observeParents={true}
+                loop={true}
                 lazyPreloadPrevNext={1}
-                onSlideChange={(swiper) => setCurrentSlideIndex(swiper.activeIndex)}
+                onSlideChange={handleSlideChange}
                 className="h-[400px] md:h-[500px] lg:h-[600px] w-full"
               >
                 {allSliderImages.map((image) => (
