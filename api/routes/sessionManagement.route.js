@@ -147,13 +147,12 @@ router.get('/admin/all-sessions', verifyToken, async (req, res, next) => {
       userFilter.role = role;
     }
 
-    // Add search filter for username/email
-    if (search) {
-      userFilter.$or = [
-        { username: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
-      ];
-    }
+    // NOTE: Search is NOT applied at the MongoDB level because the search
+    // also targets session-level fields (device, IP, location) that live
+    // inside each user's activeSessions subdocument. Filtering users by
+    // username/email here would silently exclude users whose sessions
+    // match by device/IP/location. The session-level filter below (line ~188)
+    // handles all searchable fields correctly.
 
     // Get all users first (we'll filter sessions after)
     const users = await User.find(userFilter)
@@ -199,11 +198,14 @@ router.get('/admin/all-sessions', verifyToken, async (req, res, next) => {
     if (device !== 'all') {
       sessionsWithUserInfo = sessionsWithUserInfo.filter(session => {
         const deviceLower = session.device.toLowerCase();
+        const isAppSession = deviceLower.includes('urbansetu app') || deviceLower.includes('urban setu mobile app');
         switch (device) {
+          case 'urban setu mobile app':
+            return isAppSession;
           case 'mobile':
-            return deviceLower.includes('mobile') || deviceLower.includes('android') || deviceLower.includes('iphone');
+            return !isAppSession && (deviceLower.includes('mobile') || deviceLower.includes('android') || deviceLower.includes('iphone'));
           case 'desktop':
-            return deviceLower.includes('windows') || deviceLower.includes('mac') || deviceLower.includes('linux');
+            return !isAppSession && (deviceLower.includes('windows') || deviceLower.includes('mac') || deviceLower.includes('linux') || deviceLower.includes('desktop'));
           case 'tablet':
             return deviceLower.includes('tablet') || deviceLower.includes('ipad');
           default:
