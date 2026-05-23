@@ -17,7 +17,9 @@ import {
   FaRegHeart,
   FaCog,
   FaEye,
-  FaInfoCircle
+  FaInfoCircle,
+  FaTh,
+  FaArrowLeft
 } from 'react-icons/fa';
 import { useImageFavorites } from '../contexts/ImageFavoritesContext';
 import SocialSharePanel from './SocialSharePanel';
@@ -79,6 +81,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const [showAboutViewer, setShowAboutViewer] = useState(false);
   const [autoScale, setAutoScale] = useState(1);
 
+  // Favorites Panel State
+  const [showFavoritesGallery, setShowFavoritesGallery] = useState(false);
+  const [isFavoritesMode, setIsFavoritesMode] = useState(false);
+
   // Sharing State
   const [shareUrl, setShareUrl] = useState(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
@@ -112,15 +118,27 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   // Use image favorites context
-  const { isFavorite, toggleFavorite } = useImageFavorites();
+  const { isFavorite, toggleFavorite, favoritesData, loadFavorites } = useImageFavorites();
+
+  const favoritesUrls = (favoritesData || []).map(fav => fav.imageUrl);
 
   // Ensure images is an array and handle undefined/null
-  const imagesArray = Array.isArray(images) ? images : (images ? [images] : []);
+  const imagesArray = isFavoritesMode 
+    ? favoritesUrls 
+    : (Array.isArray(images) ? images : (images ? [images] : []));
 
   // Ensure currentIndex is within bounds
   const safeIndex = Math.max(0, Math.min(currentIndex || 0, imagesArray.length - 1));
   const currentImageUrl = imagesArray[safeIndex] || imagesArray[0] || null;
   const isCurrentImageFavorited = currentImageUrl ? isFavorite(currentImageUrl) : false;
+
+  // If in favorites mode and favorites list becomes empty, exit favorites mode
+  useEffect(() => {
+    if (isFavoritesMode && favoritesUrls.length === 0) {
+      setIsFavoritesMode(false);
+      setCurrentIndex(0);
+    }
+  }, [isFavoritesMode, favoritesUrls.length]);
 
   // Update currentIndex if it's out of bounds
   useEffect(() => {
@@ -149,6 +167,16 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     }
   };
 
+  const handleRemoveFavoriteFromGrid = async (e, fav) => {
+    e.stopPropagation();
+    try {
+      await toggleFavorite(fav.imageUrl, fav.metadata);
+      showFeedback("Removed from Favorites");
+    } catch (error) {
+      console.error('Failed to remove favorite from grid:', error);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
@@ -161,6 +189,14 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       setShowInfo(false);
       setShowSettings(false);
       setShowAboutViewer(false);
+      setShowFavoritesGallery(false);
+      setIsFavoritesMode(false);
+      if (typeof loadFavorites === 'function') {
+        loadFavorites();
+      }
+    } else {
+      setShowFavoritesGallery(false);
+      setIsFavoritesMode(false);
     }
   }, [isOpen, initialIndex]);
 
@@ -229,7 +265,9 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       switch (e.key) {
         case 'Escape':
           e.preventDefault();
-          if (document.fullscreenElement || isFullscreen) {
+          if (showFavoritesGallery) {
+            setShowFavoritesGallery(false);
+          } else if (document.fullscreenElement || isFullscreen) {
             toggleFullscreen();
           } else {
             onClose();
@@ -324,7 +362,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isOpen, imagesArray.length, onClose, showControls, showSettings, showInfo, isFullscreen]);
+  }, [isOpen, imagesArray.length, onClose, showControls, showSettings, showInfo, isFullscreen, showFavoritesGallery]);
 
   useEffect(() => {
     if (isOpen) {
@@ -1007,7 +1045,9 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleCloseClick = () => {
-    if (document.fullscreenElement || isFullscreen) {
+    if (showFavoritesGallery) {
+      setShowFavoritesGallery(false);
+    } else if (document.fullscreenElement || isFullscreen) {
       toggleFullscreen();
     } else {
       onClose();
@@ -1162,6 +1202,16 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           {isCurrentImageFavorited ? <FaHeart size={16} /> : <FaRegHeart size={16} />}
         </button>
         <button
+          onClick={() => setShowFavoritesGallery(prev => !prev)}
+          className={`p-2 rounded-lg transition-all duration-200 ${showFavoritesGallery
+            ? 'text-red-400 bg-red-400 bg-opacity-20'
+            : 'text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20'
+            }`}
+          title={`View Favorites (${favoritesData?.length || 0})`}
+        >
+          <FaTh size={16} />
+        </button>
+        <button
           onClick={handleDownload}
           disabled={isDownloading}
           className={`text-white p-2 rounded-lg transition-all duration-200 ${isDownloading
@@ -1252,6 +1302,16 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           {isCurrentImageFavorited ? <FaHeart size={14} /> : <FaRegHeart size={14} />}
         </button>
         <button
+          onClick={() => setShowFavoritesGallery(prev => !prev)}
+          className={`p-1.5 rounded-lg transition-all duration-200 ${showFavoritesGallery
+            ? 'text-red-400 bg-red-400 bg-opacity-20'
+            : 'text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20'
+            }`}
+          title="Favorites Grid"
+        >
+          <FaTh size={14} />
+        </button>
+        <button
           onClick={handleDownload}
           disabled={isDownloading}
           className={`text-white p-1.5 rounded-lg transition-all duration-200 ${isDownloading
@@ -1328,6 +1388,18 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
             {/* Desktop-only options */}
             <div className="hidden md:block space-y-2 pt-2 border-t border-gray-600">
               <button
+                onClick={() => {
+                  setShowFavoritesGallery(true);
+                  setShowSettings(false);
+                }}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FaHeart size={14} className="text-red-400" />
+                  <span>My Favorites ({favoritesData?.length || 0})</span>
+                </div>
+              </button>
+              <button
                 onClick={() => setShowInfo(prev => !prev)}
                 className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${showInfo
                   ? 'text-blue-400 bg-blue-400 bg-opacity-20'
@@ -1379,6 +1451,18 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
             {/* Mobile-only options */}
             <div className="md:hidden space-y-2 pt-2 border-t border-gray-600">
+              <button
+                onClick={() => {
+                  setShowFavoritesGallery(true);
+                  setShowSettings(false);
+                }}
+                className="w-full text-left p-2 rounded-lg text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <FaHeart size={14} className="text-red-400" />
+                  <span>My Favorites ({favoritesData?.length || 0})</span>
+                </div>
+              </button>
               <button
                 onClick={() => { setShowInfo(prev => !prev); setShowSettings(false); }}
                 className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${showInfo
@@ -1462,14 +1546,29 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </div>
       )}
 
-      {/* Image Counter */}
-      {imagesArray.length > 1 && (
-        <div className={`absolute top-4 left-4 text-white bg-black bg-opacity-70 backdrop-blur-sm rounded-lg px-3 py-2 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-          }`}>
-          <span className="font-medium">{currentIndex + 1}</span>
-          <span className="text-gray-300"> / {imagesArray.length}</span>
-        </div>
-      )}
+      {/* Image Counter & Favorites Back Button */}
+      <div className={`absolute top-4 left-4 flex items-center gap-2 z-10 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+        {imagesArray.length > 1 && (
+          <div className="text-white bg-black bg-opacity-70 backdrop-blur-sm rounded-lg px-3 py-2">
+            <span className="font-medium">{currentIndex + 1}</span>
+            <span className="text-gray-300"> / {imagesArray.length}</span>
+          </div>
+        )}
+        {isFavoritesMode && (
+          <button
+            onClick={() => {
+              setShowFavoritesGallery(true);
+              setScale(1);
+              setPosition({ x: 0, y: 0 });
+            }}
+            className="text-white hover:text-blue-300 bg-black bg-opacity-70 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 transition-all duration-300 hover:bg-opacity-90 hover:scale-105 pointer-events-auto"
+            title="Back to Favorites Grid"
+          >
+            <FaArrowLeft size={14} />
+            <span className="text-sm font-semibold">Favorites Grid</span>
+          </button>
+        )}
+      </div>
 
       {/* Central Feedback Toast */}
       <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none transition-opacity duration-300 ${feedbackMessage ? 'opacity-100' : 'opacity-0'}`}>
@@ -1497,6 +1596,104 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         description="Amazing property image from our listing"
         isLoading={isGeneratingShare}
       />
+
+      {/* Favorites Gallery Overlay */}
+      {showFavoritesGallery && (
+        <div 
+          className="absolute inset-0 bg-[#0c0c0c]/98 backdrop-blur-md z-50 flex flex-col p-4 sm:p-6 transition-all duration-300 animate-fadeIn overflow-y-auto pointer-events-auto"
+          onClick={(e) => e.stopPropagation()} // Prevent closing/toggling controls
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold text-white tracking-wide">My Favorites</h2>
+              <span className="bg-red-500/20 text-red-400 text-xs px-2.5 py-1 rounded-full border border-red-500/30 font-semibold">
+                {favoritesData?.length || 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {isFavoritesMode && (
+                <button
+                  onClick={() => {
+                    setIsFavoritesMode(false);
+                    setCurrentIndex(0);
+                    showFeedback("Back to Listing");
+                  }}
+                  className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-semibold transition-all duration-200"
+                >
+                  Switch to Listing Images
+                </button>
+              )}
+              <button
+                onClick={() => setShowFavoritesGallery(false)}
+                className="text-white/70 hover:text-white bg-white/5 hover:bg-white/10 p-2.5 rounded-full transition-all duration-200"
+                title="Close Gallery"
+              >
+                <FaTimes size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Grid Content */}
+          {(!favoritesData || favoritesData.length === 0) ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+              <div className="relative mb-4">
+                <div className="absolute -inset-2 bg-red-500/20 rounded-full blur animate-pulse"></div>
+                <div className="relative w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center">
+                  <FaHeart className="text-red-500 animate-bounce" size={24} />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">No favorites saved yet</h3>
+              <p className="text-white/40 text-sm max-w-xs">
+                Heart images while browsing listings to view them here in your favorites gallery.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto pb-8 pr-1">
+              {favoritesData.map((fav, idx) => (
+                <div
+                  key={fav.imageId || fav._id || idx}
+                  onClick={() => {
+                    setIsFavoritesMode(true);
+                    setCurrentIndex(idx);
+                    setShowFavoritesGallery(false);
+                    setScale(1);
+                    setRotation(0);
+                    setPosition({ x: 0, y: 0 });
+                  }}
+                  className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-white/5 cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
+                >
+                  <img
+                    src={fav.imageUrl}
+                    alt={fav.metadata?.imageName || `Favorite ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  {/* Hover Information overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 pointer-events-none">
+                    <p className="text-white font-medium text-xs truncate">
+                      {fav.metadata?.imageName || `Favorite #${idx + 1}`}
+                    </p>
+                    {fav.metadata?.imageType && (
+                      <p className="text-white/50 text-[10px] uppercase tracking-wider font-semibold">
+                        {fav.metadata.imageType}
+                      </p>
+                    )}
+                  </div>
+                  {/* Unfavorite overlay button */}
+                  <button
+                    onClick={(e) => handleRemoveFavoriteFromGrid(e, fav)}
+                    className="absolute top-2 right-2 p-2 rounded-lg bg-black/70 border border-white/10 text-red-500 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-200 z-10"
+                    title="Remove from Favorites"
+                  >
+                    <FaHeart size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* About Viewer Modal */}
       {showAboutViewer && (
