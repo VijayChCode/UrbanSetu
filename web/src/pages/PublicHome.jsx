@@ -197,20 +197,21 @@ export default function PublicHome() {
 
   const goToSlide = (index) => {
     if (swiperRef.current && swiperRef.current.swiper) {
-      swiperRef.current.swiper.slideTo(index);
+      swiperRef.current.swiper.slideToLoop(index);
     }
   };
 
-  // Get all images from offer listings for the slider
-  const allSliderImages = Array.isArray(offerListings) ? offerListings.flatMap(listing =>
-    (listing.imageUrls || []).map((img, idx) => ({
-      url: img,
+  // Get one slide per listing (first image) — ensures each dot = one property
+  const allSliderImages = Array.isArray(offerListings) ? offerListings
+    .filter(listing => listing.imageUrls && listing.imageUrls.length > 0)
+    .map(listing => ({
+      url: listing.imageUrls[0],
       listingId: listing._id,
       title: listing.name || 'Featured Property',
       price: listing.offer && listing.discountPrice ? listing.discountPrice : listing.regularPrice,
       type: listing.type
     }))
-  ) : [];
+  : [];
 
   // Slider logic...
 
@@ -413,7 +414,7 @@ export default function PublicHome() {
                 <p className="text-gray-600 dark:text-gray-400 transition-colors">Handpicked premium properties just for you</p>
               </div>
               <div className="flex gap-2">
-                {allSliderImages.slice(0, 5).map((_, idx) => (
+                {allSliderImages.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => goToSlide(idx)}
