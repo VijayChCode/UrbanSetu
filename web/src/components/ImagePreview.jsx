@@ -1548,12 +1548,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       {/* Image Counter & Favorites Back Button */}
       <div className={`absolute top-4 left-4 flex items-center gap-2 z-10 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-        {imagesArray.length > 1 && (
-          <div className="text-white bg-black bg-opacity-70 backdrop-blur-sm rounded-lg px-3 py-2">
-            <span className="font-medium">{currentIndex + 1}</span>
-            <span className="text-gray-300"> / {imagesArray.length}</span>
-          </div>
-        )}
         {isFavoritesMode && (
           <button
             onClick={() => {
@@ -1567,6 +1561,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
             <FaArrowLeft size={14} />
             <span className="text-sm font-semibold">Favorites Grid</span>
           </button>
+        )}
+        {imagesArray.length > 1 && (
+          <div className="text-white bg-black bg-opacity-70 backdrop-blur-sm rounded-lg px-3 py-2">
+            <span className="font-medium">{currentIndex + 1}</span>
+            <span className="text-gray-300"> / {imagesArray.length}</span>
+          </div>
         )}
       </div>
 
@@ -1677,6 +1677,17 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                     {fav.metadata?.imageType && (
                       <p className="text-white/50 text-[10px] uppercase tracking-wider font-semibold">
                         {fav.metadata.imageType}
+                      </p>
+                    )}
+                    {(fav.addedAt || fav.createdAt) && (
+                      <p className="text-white/40 text-[9px] mt-0.5 font-medium">
+                        {new Date(fav.addedAt || fav.createdAt).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     )}
                   </div>
