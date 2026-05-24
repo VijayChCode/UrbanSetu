@@ -81,7 +81,7 @@ const Footer = () => {
             <div className="space-y-2 text-xs md:text-sm text-gray-700 dark:text-gray-300 transition-colors">
               <div className="flex items-center gap-2">
                 <FaPhone className="text-yellow-400" />
-                <span>+1 (555) 123-4567</span>
+                <span>+1 (970) 446-3758</span>
               </div>
               <div className="flex items-center gap-2">
                 <FaEnvelope className="text-yellow-400" />

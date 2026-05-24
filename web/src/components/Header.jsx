@@ -259,7 +259,7 @@ export default function Header() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex items-center gap-4">
-                  <span>📞 +1 (555) 123-4567</span>
+                  <span>📞 +1 (970) 446-3758</span>
                   <span>✉️ info.urbansetu@gmail.com</span>
                   {/* Android App Download Button */}
                   <Link
