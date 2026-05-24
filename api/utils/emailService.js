@@ -4177,7 +4177,7 @@ export const sendOutdatedAppointmentEmail = async (email, appointmentDetails, us
               </p>
               <p style="margin: 0;">
                 Visit our website: 
-                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}" style="color: #3b82f6; text-decoration: none;">UrbanSetu.com</a>
+                <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}" style="color: #3b82f6; text-decoration: none;">UrbanSetu</a>
               </p>
             </div>
           </div>
