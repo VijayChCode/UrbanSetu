@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
@@ -9,7 +9,7 @@ import VideoPreview from '../components/VideoPreview';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import { useImageAuditor } from '../hooks/useImageAuditor';
-import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
+import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb, FaShieldAlt } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from '../components/ConfirmationModal';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
@@ -98,6 +98,7 @@ export default function EditListing() {
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
+  const isOwner = currentUser && (formData.userRef === currentUser._id || formData.userRef?._id === currentUser._id);
   const [consent, setConsent] = useState(false);
   const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
   const [previewVideo, setPreviewVideo] = useState(null);
@@ -750,6 +751,29 @@ export default function EditListing() {
         <h3 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-6 text-center drop-shadow transition-colors">
           Edit Listing
         </h3>
+        {isOwner && !formData.isVerified && (
+          <div className="mb-6 bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-400 p-4 rounded-lg shadow-md">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-1">
+                <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-450 mb-2">⚠️ Property Not Published</h3>
+                <p className="text-sm text-yellow-700 dark:text-gray-300 mb-3">
+                  Your property is currently <strong>not visible to buyers</strong>. Complete the verification process to make it public and start receiving inquiries.
+                </p>
+                <Link
+                  to={`/user/property-verification?listingId=${params.listingId}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition-all transform hover:scale-105 shadow-md animate-pulse"
+                >
+                  <FaShieldAlt /> Verify Property Now
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
         {isLocked && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-6 rounded shadow-sm transition-colors">
             <div className="flex items-start">

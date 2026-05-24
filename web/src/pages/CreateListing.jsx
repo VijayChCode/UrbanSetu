@@ -734,6 +734,23 @@ export default function CreateListing() {
         <h3 className="text-3xl font-extrabold text-blue-700 dark:text-blue-500 mb-6 text-center drop-shadow">
           Create a Listing
         </h3>
+        
+        {/* Verification Notice Banner - Compulsory for all creators */}
+        <div className="mb-6 bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-400 p-4 rounded-lg shadow-md transition-colors">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-1">
+              <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-yellow-800 dark:text-yellow-450 mb-1">⚠️ Property Verification Notice</h4>
+              <p className="text-sm text-yellow-700 dark:text-gray-300">
+                Upon creation, your property will be saved as <strong>unverified</strong> and <strong>will not be visible to buyers/tenants</strong>. You must complete the verification process after creation to publish it and start receiving inquiries.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={onSubmitForm} className="space-y-6">
           {/* Basic Information */}
