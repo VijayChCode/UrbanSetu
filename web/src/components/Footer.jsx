@@ -89,7 +89,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-2">
                 <FaMapMarkerAlt className="text-yellow-400" />
-                <span>123 Real Estate Ave, City, State 12345</span>
+                <span>917 Real Estate Ave, Bengaluru, Karnataka 560002</span>
               </div>
             </div>
             {/* Social Media Links */}
