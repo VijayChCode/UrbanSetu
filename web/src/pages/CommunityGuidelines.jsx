@@ -4,7 +4,7 @@ import {
     FaShieldAlt, FaHandshake, FaComments, FaPhone, FaHome,
     FaStar, FaUserShield, FaExclamationTriangle, FaCheckCircle,
     FaChevronDown, FaChevronUp, FaVideo, FaFileAlt, FaUsers,
-    FaGavel, FaEye, FaBullhorn, FaLock, FaHeart
+    FaGavel, FaEye, FaBullhorn, FaLock, FaHeart, FaArrowRight, FaEnvelope
 } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
@@ -330,6 +330,30 @@ export default function CommunityGuidelines() {
                             className="px-6 py-3 bg-transparent border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-200"
                         >
                             Read Terms & Conditions
+                        </a>
+                    </div>
+                </div>
+
+                {/* Guidelines Contact Block */}
+                <div className="mt-8 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-gray-900/50 dark:to-blue-950/20 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-blue-100/50 dark:border-gray-800 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.005]">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
+                            <div className="p-3.5 bg-blue-100 dark:bg-blue-900/40 rounded-2xl text-blue-600 dark:text-blue-400 shadow-inner">
+                                <FaShieldAlt className="text-2xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Guideline Questions & Moderation Appeals</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 max-w-xl">
+                                    Have questions about our community guidelines, need to report a policy violation, or want to appeal a moderation decision? Contact our team.
+                                </p>
+                            </div>
+                        </div>
+                        <a 
+                            href="mailto:urbansetu.noreply@gmail.com"
+                            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-white dark:bg-gray-850 text-blue-600 dark:text-blue-400 font-bold border border-blue-100 dark:border-gray-700/60 hover:bg-blue-50 dark:hover:bg-gray-800 hover:border-blue-200 shadow-sm hover:shadow transition-all duration-200 group whitespace-nowrap text-sm"
+                        >
+                            <span>urbansetu.noreply@gmail.com</span>
+                            <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
                         </a>
                     </div>
                 </div>
