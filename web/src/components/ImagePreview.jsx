@@ -19,7 +19,8 @@ import {
   FaEye,
   FaInfoCircle,
   FaTh,
-  FaArrowLeft
+  FaArrowLeft,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { useImageFavorites } from '../contexts/ImageFavoritesContext';
@@ -85,6 +86,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   // Favorites Panel State
   const [showFavoritesGallery, setShowFavoritesGallery] = useState(false);
   const [isFavoritesMode, setIsFavoritesMode] = useState(false);
+  const [failedImages, setFailedImages] = useState({});
 
   // Sharing State
   const [shareUrl, setShareUrl] = useState(null);
@@ -206,12 +208,14 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       setShowAboutViewer(false);
       setShowFavoritesGallery(false);
       setIsFavoritesMode(false);
+      setFailedImages({});
       if (typeof loadFavorites === 'function') {
         loadFavorites();
       }
     } else {
       setShowFavoritesGallery(false);
       setIsFavoritesMode(false);
+      setFailedImages({});
     }
   }, [isOpen, initialIndex]);
 
@@ -1732,12 +1736,22 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                     }}
                     className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/10 bg-white/5 cursor-pointer group transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
                   >
-                    <img
-                      src={fav.imageUrl}
-                      alt={fav.metadata?.imageName || `Favorite ${idx + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                    {failedImages[fav.imageUrl] ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-[#151515] dark:bg-[#0d0d0d] p-4 text-center border border-white/5 rounded-xl">
+                        <FaExclamationTriangle className="text-amber-500/80 mb-1.5" size={22} />
+                        <span className="text-[9px] text-white/50 font-bold uppercase tracking-wider">Image Unavailable</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={fav.imageUrl}
+                        alt={fav.metadata?.imageName || `Favorite ${idx + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                        onError={() => {
+                          setFailedImages(prev => ({ ...prev, [fav.imageUrl]: true }));
+                        }}
+                      />
+                    )}
                     {/* Hover Information overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 pointer-events-none">
                       <p className="text-white font-medium text-xs truncate">
