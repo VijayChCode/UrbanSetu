@@ -1025,6 +1025,24 @@ export default function AdminManagement() {
     };
   }, [showPasswordModal]);
 
+  // Alert/Prompt user before reload/refresh if the page is open and unlocked
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!showPasswordModal) {
+        e.preventDefault();
+        // Modern browsers show standard message but still require setting returnValue
+        const confirmationMessage = "Warning: You are currently logged into the secure Admin Management panel. Refreshing or navigating away will lock your session, requiring you to re-enter your password to regain access. Are you sure you want to continue?";
+        e.returnValue = confirmationMessage;
+        return confirmationMessage;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [showPasswordModal]);
+
   // Add scroll lock for modals
   useEffect(() => {
     if (showAccountModal || showConfirmModal || showDeleteReasonModal) {
