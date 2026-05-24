@@ -315,23 +315,9 @@ export default function CommunityGuidelines() {
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 rounded-xl shadow-xl p-8 mt-8 text-center text-white transition-colors">
                     <FaUsers className="text-5xl mx-auto mb-4 opacity-90" />
                     <h2 className="text-3xl font-bold mb-4">Together We Build Trust</h2>
-                    <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
+                    <p className="text-lg opacity-90 max-w-2xl mx-auto">
                         By following these guidelines, you help create a safe and positive experience for everyone in the UrbanSetu community. Thank you for being a responsible member!
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a
-                            href="/contact"
-                            className="px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-200 shadow-md"
-                        >
-                            Contact Support
-                        </a>
-                        <a
-                            href="/terms"
-                            className="px-6 py-3 bg-transparent border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-all duration-200"
-                        >
-                            Read Terms & Conditions
-                        </a>
-                    </div>
                 </div>
 
                 {/* Guidelines Contact Block */}
