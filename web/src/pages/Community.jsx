@@ -2008,30 +2008,70 @@ export default function Community() {
                                 View Guidelines <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
+
+                        {/* Community Support & Feedback card in Sidebar */}
+                        <div className="bg-gradient-to-br from-blue-50/40 to-indigo-50/40 dark:from-gray-900/60 dark:to-blue-950/20 rounded-xl shadow-sm border border-blue-100/30 dark:border-gray-800 p-6 transition-all duration-300 hover:scale-[1.01]">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-full text-blue-600 dark:text-blue-400">
+                                    <FaEnvelope />
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white">Community Support</h3>
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+                                Have questions about our community guidelines, need moderation assistance, or want to share feedback? Our team is here to support you.
+                            </p>
+                            <a 
+                                href="mailto:urbansetu.noreply@gmail.com"
+                                className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline group"
+                            >
+                                urbansetu.noreply@gmail.com <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                {/* Community Contact Block */}
-                <div className="mt-12 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-gray-900/50 dark:to-blue-950/20 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-blue-100/50 dark:border-gray-800 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.005]">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-                            <div className="p-3.5 bg-blue-100 dark:bg-blue-900/40 rounded-2xl text-blue-600 dark:text-blue-400 shadow-inner">
-                                <FaEnvelope className="text-2xl" />
+                {/* Mobile-only Guidelines & Support Block */}
+                <div className="block lg:hidden mt-8 space-y-6">
+                    {/* Guidelines Card */}
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 transition-colors duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-full text-amber-600 dark:text-amber-400">
+                                <FaShieldAlt />
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Community Support & Feedback</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 max-w-xl">
-                                    Have questions about our community guidelines, need moderation assistance, or want to share feedback? Our team is here to support you.
-                                </p>
-                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Guidelines</h3>
                         </div>
-                        <a 
-                            href="mailto:urbansetu.noreply@gmail.com"
-                            className="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-white dark:bg-gray-850 text-blue-600 dark:text-blue-400 font-bold border border-blue-100 dark:border-gray-700/60 hover:bg-blue-50 dark:hover:bg-gray-800 hover:border-blue-200 shadow-sm hover:shadow transition-all duration-200 group whitespace-nowrap text-sm"
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Our community is built on respect. Please review our guidelines to keep UrbanSetu a safe place for everyone.
+                        </p>
+                        <Link
+                            to={currentUser?.role === 'admin' || currentUser?.role === 'rootadmin' ? '/admin/community-guidelines' : currentUser ? '/user/community-guidelines' : '/community-guidelines'}
+                            className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:underline group"
                         >
-                            <span>urbansetu.noreply@gmail.com</span>
-                            <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
-                        </a>
+                            View Guidelines <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                    </div>
+
+                    {/* Support Block */}
+                    <div className="bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-gray-900/50 dark:to-blue-950/20 rounded-2xl p-6 border border-blue-100/50 dark:border-gray-800 shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                                <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
+                                    <FaEnvelope className="text-lg" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Community Support & Feedback</h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                        Have guidelines questions or need moderation support? Reach us out.
+                                    </p>
+                                </div>
+                            </div>
+                            <a 
+                                href="mailto:urbansetu.noreply@gmail.com"
+                                className="w-full sm:w-auto text-center px-4 py-2 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 text-sm font-bold border border-blue-100 dark:border-gray-700/60 rounded-xl shadow-sm hover:bg-blue-50"
+                            >
+                                urbansetu.noreply@gmail.com
+                            </a>
+                        </div>
                     </div>
                 </div>
 
