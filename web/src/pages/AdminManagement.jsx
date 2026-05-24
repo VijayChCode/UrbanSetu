@@ -27,6 +27,7 @@ export default function AdminManagement() {
   const [tab, setTab] = useState("users");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const passwordInputRef = useRef(null);
+  const isProgrammaticReloadRef = useRef(false);
   const [softbannedAccounts, setSoftbannedAccounts] = useState([]);
   const [softbannedFilters, setSoftbannedFilters] = useState({ q: '', role: 'all', softbannedBy: '', from: '', to: '' });
   const [softbannedLoading, setSoftbannedLoading] = useState(false);
@@ -132,9 +133,10 @@ export default function AdminManagement() {
     };
   }, []);
 
-  // Keyboard shortcut for search (Ctrl+F)
+  // Keyboard shortcut for search (Ctrl+F) and secure refresh interceptor
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // 1. Search shortcut (Ctrl+F)
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         const searchInput = document.getElementById('admin-management-search');
@@ -142,11 +144,32 @@ export default function AdminManagement() {
           searchInput.focus();
         }
       }
+
+      // 2. Intercept keyboard refresh shortcuts (F5, Ctrl+R, Cmd+R) if unlocked
+      const isF5 = e.key === 'F5' || e.keyCode === 116;
+      const isCtrlR = (e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R' || e.keyCode === 82);
+      if ((isF5 || isCtrlR) && !showPasswordModal) {
+        e.preventDefault();
+        showConfirmation(
+          "Confirm Reload Session?",
+          "You are currently logged into the secure Admin Management panel. If you reload this page, your session will be locked immediately and you will need to re-enter your password to regain access. Are you sure you want to continue?",
+          () => {
+            isProgrammaticReloadRef.current = true;
+            setShowConfirmModal(false);
+            window.location.reload();
+          },
+          {
+            confirmText: "Yes, Reload",
+            cancelText: "No, Stay",
+            confirmButtonClass: "bg-yellow-500 hover:bg-yellow-600"
+          }
+        );
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showPasswordModal]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -1028,9 +1051,13 @@ export default function AdminManagement() {
   // Alert/Prompt user before reload/refresh if the page is open and unlocked
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (!showPasswordModal) {
+      // If we are doing a programmatic reload (confirmed by the user via our custom React modal),
+      // we bypass the browser's native beforeunload prompt to avoid confusing double-confirmation dialogs.
+      if (!showPasswordModal && !isProgrammaticReloadRef.current) {
         e.preventDefault();
-        // Modern browsers show standard message but still require setting returnValue
+        // Modern browsers strictly hardcode the alert message displayed in beforeunload prompts
+        // (e.g. "Reload site? Changes you made may not be saved.") for security reasons (preventing phishing).
+        // However, we still set and return the custom string as a standard/fallback requirement.
         const confirmationMessage = "Warning: You are currently logged into the secure Admin Management panel. Refreshing or navigating away will lock your session, requiring you to re-enter your password to regain access. Are you sure you want to continue?";
         e.returnValue = confirmationMessage;
         return confirmationMessage;
