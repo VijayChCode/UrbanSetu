@@ -1134,6 +1134,91 @@ export default function AdminDeploymentManagement() {
 
           </div>
         </div>
+
+        {/* Trust & Legal Documents Section */}
+        <div className="mt-12 bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-700 p-8 transition-colors">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-650 dark:text-indigo-400">
+                <FaFileCode className="text-2xl" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Trust & Security Documents</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Manage official security and user protection legal files deployed alongside packages.</p>
+              </div>
+            </div>
+            
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Package Safe Standard Compliance
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                title: "README & Installation Guide",
+                file: "README.md",
+                desc: "Step-by-step guidance on how users can securely install the APK, handle permissions, and bypass Play Protect safely.",
+                color: "blue",
+                icon: FaInfoCircle,
+              },
+              {
+                title: "Safety & Clean Declaration",
+                file: "SAFETY_DECLARATION.md",
+                desc: "Official statement detailing signature authenticity, clean build processes, and VirusTotal 0/70 clean scanning guarantees.",
+                color: "green",
+                icon: FaCheck,
+              },
+              {
+                title: "Privacy Policy",
+                file: "PRIVACY_POLICY.md",
+                desc: "Covers standard location, camera, and network device permissions required by our smart real estate ecosystem.",
+                color: "purple",
+                icon: FaInfoCircle,
+              },
+              {
+                title: "Terms of Service",
+                file: "TERMS_OF_SERVICE.md",
+                desc: "Defines acceptable usage bounds, verification protocols, Sentinel AI scanner rules, and platform service liability limits.",
+                color: "amber",
+                icon: FaFileCode,
+              },
+              {
+                title: "Digital Checksum File",
+                file: "CHECKSUM.md",
+                desc: "Provides SHA-256 and MD5 fingerprint values of active binary releases to verify exact package integrity.",
+                color: "indigo",
+                icon: FaRocket,
+              }
+            ].map((doc) => (
+              <div key={doc.file} className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-6 border border-gray-150/50 dark:border-gray-700 flex flex-col justify-between hover:shadow-md transition-shadow group">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-wider uppercase">TRUST COMPONENT</span>
+                    <div className={`p-2 rounded-xl bg-${doc.color}-50 dark:bg-${doc.color}-950/20 text-${doc.color}-600 dark:text-${doc.color}-400`}>
+                      <doc.icon className="text-sm" />
+                    </div>
+                  </div>
+                  <h4 className="font-bold text-gray-800 dark:text-white text-lg mb-2">{doc.title}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">{doc.desc}</p>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{doc.file}</span>
+                  <a
+                    href={`/admin/view/${doc.file.toLowerCase()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  >
+                    View Document
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       {/* Premium Release Notes Modal (Matches Downloads.jsx) */}
       {showDescriptionModal && descriptionModalData && (

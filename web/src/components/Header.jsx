@@ -802,7 +802,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
           <Link to="/user/wishlist" onClick={onNavigate}>
             <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-2' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
               <FaHeart className={`${mobile ? 'text-lg text-red-500' : 'text-base text-red-500'}`} />
-              <span>Wish List</span>
+              <span>My Wishlist</span>
             </li>
           </Link>
 
@@ -823,7 +823,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
 
       {currentUser ? (
         <>
-          <li className={`${mobile ? 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium' : 'flex items-center relative'}`}>
+          <li className={`${mobile ? 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium' : 'flex items-center relative md:mx-1.5'}`}>
             <NotificationBell mobile={mobile} />
           </li>
 
@@ -873,7 +873,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
 
           {/* Profile avatar for desktop/tablet */}
           {!mobile && (
-            <li className="relative" ref={dropdownRef}>
+            <li className="relative md:ml-2" ref={dropdownRef}>
               <div
                 className="cursor-pointer transition-transform duration-300 hover:scale-105 flex items-center"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -913,9 +913,26 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
                         <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {currentUser.email}
                         </span>
-                        <span className="text-[10px] w-fit font-semibold px-2 py-0.5 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400 rounded-full mt-1 border border-yellow-400/30">
-                          {currentUser.role === 'rootadmin' ? 'Super Admin' : currentUser.role === 'admin' ? 'Admin' : 'Member'}
-                        </span>
+                        {currentUser.isDefaultAdmin ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] w-fit font-semibold px-2 py-0.5 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full mt-1 border border-red-200 dark:border-red-800/50 animate-pulse">
+                            <FaCrown className="w-2.5 h-2.5 text-red-500" />
+                            Default Admin
+                          </span>
+                        ) : currentUser.role === 'rootadmin' ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] w-fit font-semibold px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full mt-1 border border-purple-200 dark:border-purple-800/50">
+                            <FaCrown className="w-2.5 h-2.5 text-blue-500" />
+                            Super Admin
+                          </span>
+                        ) : currentUser.role === 'admin' ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] w-fit font-semibold px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full mt-1 border border-purple-200 dark:border-purple-800/50">
+                            <FaCrown className="w-2.5 h-2.5 text-blue-500" />
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] w-fit font-semibold px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full mt-1 border border-blue-200 dark:border-blue-800/50">
+                            User
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -930,7 +947,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
                             navigate('/user/profile');
                           }
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-850 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50"
                       >
                         <User className="text-blue-500 w-4 h-4 group-hover:scale-110 transition-transform" />
                         <span>My Profile</span>
@@ -945,7 +962,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
                             navigate('/user/settings');
                           }
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-855 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50"
                       >
                         <Settings className="text-emerald-500 w-4 h-4 group-hover:rotate-45 transition-transform" />
                         <span>Settings</span>
@@ -959,7 +976,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
                           setDropdownOpen(false);
                           handleSignout();
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-red-650 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors duration-200 font-semibold group"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/25 transition-colors duration-200 font-semibold group border border-transparent hover:border-red-200/50 dark:hover:border-red-900/30"
                       >
                         <LogOut className="text-red-500 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         <span>Sign Out</span>
