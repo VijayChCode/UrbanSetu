@@ -37,6 +37,13 @@ export default function Downloads() {
 
     const handleDownload = async (file) => {
         try {
+            // Redirect active/latest files to Google Drive to establish trust
+            if (file.isActive) {
+                window.open('https://drive.google.com/file/d/1_v_K77USAFHYUv865yY8AeqcZLDkD_q-/view?usp=drive_link', '_blank');
+                toast.success('Redirecting to Google Drive to download the secure package');
+                return;
+            }
+
             // Check if the URL is a Cloudinary URL (publicly accessible)
             const isCloudinary = file.url && (file.url.includes('cloudinary.com') || file.url.includes('res.cloudinary.com'));
 
@@ -170,6 +177,14 @@ export default function Downloads() {
 
                                         {latest ? (
                                             <div className="mt-auto space-y-4">
+                                                {latest.isActive && (
+                                                    <div className="flex justify-center mb-1">
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-850 shadow-sm">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-550 animate-pulse"></span>
+                                                            Verified Google Drive Mirror
+                                                        </span>
+                                                    </div>
+                                                )}
                                                 <button
                                                     onClick={() => handleDownload(latest)}
                                                     className={`w-full py-4 bg-${platform.color === 'gray' ? 'gray-900' : platform.color + '-600'} hover:opacity-90 text-white rounded-2xl font-bold text-lg shadow-lg shadow-${platform.color}-500/20 transition-all flex items-center justify-center gap-2`}
@@ -264,7 +279,10 @@ export default function Downloads() {
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-bold text-gray-900 dark:text-white capitalize">{file.platform}</h4>
                                                 {file.isActive && (
-                                                    <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-widest">LATEST</span>
+                                                    <>
+                                                        <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-widest">LATEST</span>
+                                                        <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 text-[10px] font-bold rounded-full border border-indigo-100 dark:border-indigo-850">GOOGLE DRIVE</span>
+                                                    </>
                                                 )}
                                             </div>
                                             <p className="text-xs text-gray-500 font-mono tracking-tighter">v{file.version} • {formatDate(file.createdAt)}</p>
@@ -333,7 +351,10 @@ export default function Downloads() {
                                                 <div>
                                                     <span className="font-bold text-gray-900 dark:text-white capitalize block">{file.platform}</span>
                                                     {file.isActive && (
-                                                        <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-widest">LATEST</span>
+                                                        <div className="flex gap-1.5 mt-1">
+                                                            <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase tracking-widest">LATEST</span>
+                                                            <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 text-[10px] font-bold rounded-full border border-indigo-100 dark:border-indigo-850">GOOGLE DRIVE</span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>

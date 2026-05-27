@@ -9,7 +9,7 @@ import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
 import { reconnectSocket } from "../utils/socket";
 import { toast } from 'react-toastify';
-import { LogOut } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
 import { useSignout } from '../hooks/useSignout';
 import { authenticatedFetch } from '../utils/auth';
 import SearchSuggestions from './SearchSuggestions';
@@ -369,16 +369,7 @@ export default function AdminHeader() {
                   <span>🛡️ Secure Admin Access</span>
                   <span>📊 Real-time Analytics</span>
                 </div>
-                {/* Mobile signout button for admin users */}
-                {currentUser && (
-                  <button
-                    onClick={handleSignout}
-                    className="md:hidden flex items-center gap-1 text-white/80 hover:text-white transition-colors text-sm"
-                    title="Sign Out"
-                  >
-                    <LogOut className="text-xs" />
-                  </button>
-                )}
+
               </div>
             </div>
           </div>
@@ -654,6 +645,23 @@ export default function AdminHeader() {
 
 function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout, currentUser }) {
   const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   return (
     <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center space-x-1'}`}>
       {/* Admin Navigation Links */}
@@ -726,52 +734,137 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
 
       {/* Profile for mobile */}
       {currentUser && mobile && (
-        <li>
-          <div
-            className="cursor-pointer transition-transform duration-300 hover:scale-110 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-3 text-gray-700 dark:text-gray-200 font-medium"
-            onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
-            title="Profile"
+        <>
+          <li>
+            <div
+              className="cursor-pointer transition-transform duration-300 hover:scale-110 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-3 text-gray-700 dark:text-gray-200 font-medium"
+              onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
+              title="Profile"
+            >
+              <UserAvatar
+                user={currentUser}
+                size="h-7 w-7"
+                textSize="text-xs"
+                showBorder={true}
+              />
+              <span>
+                {currentUser.firstName
+                  ? (currentUser.firstName.length > 15 ? currentUser.firstName.substring(0, 15) + '...' : currentUser.firstName)
+                  : (currentUser.username
+                    ? (currentUser.username.length > 15 ? currentUser.username.substring(0, 15) + '...' : currentUser.username)
+                    : 'Profile')}
+              </span>
+            </div>
+          </li>
+          <li>
+            <div
+              className="cursor-pointer transition-transform duration-300 hover:scale-110 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-3 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in"
+              onClick={() => { navigate("/admin/settings"); if (onNavigate) onNavigate(); }}
+              title="Settings"
+            >
+              <Settings className="text-lg text-emerald-500 animate-spin-slow" style={{ animationDuration: '10s' }} />
+              <span>Settings</span>
+            </div>
+          </li>
+          <li
+            className="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium cursor-pointer animate-mobile-item-in"
+            onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}
           >
-            <UserAvatar
-              user={currentUser}
-              size="h-7 w-7"
-              textSize="text-xs"
-              showBorder={true}
-            />
-            <span>
-              {currentUser.firstName
-                ? (currentUser.firstName.length > 15 ? currentUser.firstName.substring(0, 15) + '...' : currentUser.firstName)
-                : (currentUser.username
-                  ? (currentUser.username.length > 15 ? currentUser.username.substring(0, 15) + '...' : currentUser.username)
-                  : 'Profile')}
-            </span>
-          </div>
-        </li>
+            <LogOut className="text-lg text-red-500" />
+            <span>Sign Out</span>
+          </li>
+        </>
       )}
-
-      <li
-        className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium cursor-pointer animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base cursor-pointer flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}
-        onClick={() => { handleSignout(); if (onNavigate) onNavigate(); }}
-      >
-        <LogOut className={`${mobile ? 'text-lg text-red-500' : 'text-base text-red-500'}`} />
-        {mobile && <span>Sign Out</span>}
-      </li>
 
       {/* Profile avatar for desktop/tablet */}
       {currentUser && !mobile && (
-        <li>
+        <li className="relative" ref={dropdownRef}>
           <div
-            className="cursor-pointer transition-transform duration-300 hover:scale-110"
-            onClick={() => { navigate("/admin/profile"); if (onNavigate) onNavigate(); }}
-            title="Profile"
+            className="cursor-pointer transition-transform duration-300 hover:scale-105 flex items-center"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            title="Profile Menu"
           >
             <UserAvatar
               user={currentUser}
-              size="h-7 w-7"
+              size="h-8 w-8"
               textSize="text-xs"
               showBorder={true}
             />
           </div>
+
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute right-0 mt-3 w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-800/50 overflow-hidden z-50 origin-top-right text-gray-800 dark:text-gray-200"
+              >
+                {/* User Info Header */}
+                <div className="p-4 bg-gradient-to-br from-yellow-400/10 via-orange-400/5 to-transparent dark:from-yellow-400/5 dark:via-orange-400/2 dark:to-transparent border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <UserAvatar
+                    user={currentUser}
+                    size="h-10 w-10"
+                    textSize="text-sm"
+                    showBorder={true}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold truncate text-sm text-gray-900 dark:text-white">
+                      {currentUser.firstName && currentUser.lastName
+                        ? `${currentUser.firstName} ${currentUser.lastName}`
+                        : currentUser.username || "User"}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {currentUser.email}
+                    </span>
+                    <span className="text-[10px] w-fit font-semibold px-2 py-0.5 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400 rounded-full mt-1 border border-yellow-400/30">
+                      {currentUser.role === 'rootadmin' ? 'Super Admin' : currentUser.role === 'admin' ? 'Admin' : 'Member'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Navigation Items */}
+                <div className="p-2 flex flex-col gap-1">
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate('/admin/profile');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-850 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300"
+                  >
+                    <User className="text-blue-500 w-4 h-4 group-hover:scale-110 transition-transform" />
+                    <span>My Profile</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate('/admin/settings');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-855 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300"
+                  >
+                    <Settings className="text-emerald-500 w-4 h-4 group-hover:rotate-45 transition-transform" />
+                    <span>Settings</span>
+                  </button>
+                </div>
+
+                {/* Sign Out Action */}
+                <div className="p-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/20">
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      handleSignout();
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm text-red-655 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors duration-200 font-semibold group"
+                  >
+                    <LogOut className="text-red-500 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </li>
       )}
 

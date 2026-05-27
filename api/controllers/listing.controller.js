@@ -160,11 +160,15 @@ export const getUserListings = async (req, res, next) => {
       listings = await Listing.find().sort({ createdAt: -1 });
     } else {
       // Regular admin or user: show only their own listings
-      const userIdStr = req.user.id?.toString();
+      // Use _id (ObjectId) directly for reliable matching
+      // Also match string representation for any legacy data
+      const userId = req.user._id;
+      const userIdStr = req.user._id.toString();
+      
       listings = await Listing.find({
         $or: [
-          { userRef: req.user.id },               // ObjectId match
-          { userRef: userIdStr }                   // legacy string match (if any)
+          { userRef: userId },                   // ObjectId match
+          { userRef: userIdStr }                  // legacy string match (if any)
         ]
       }).sort({ createdAt: -1 });
     }
@@ -197,6 +201,7 @@ export const getUserListings = async (req, res, next) => {
     next(error)
   }
 }
+
 
 export const deleteListing = async (req, res, next) => {
   const listing = await Listing.findById(req.params.id)
