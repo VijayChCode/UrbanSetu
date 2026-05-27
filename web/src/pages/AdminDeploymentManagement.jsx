@@ -314,6 +314,14 @@ export default function AdminDeploymentManagement() {
 
   const handleDownloadFile = async (fileId) => {
     try {
+      // Find the file object in our state arrays to check if it's active
+      const file = files.find(f => f.id === fileId) || activeFiles.find(f => f.id === fileId);
+      if (file && file.isActive) {
+        window.open('https://drive.google.com/drive/folders/1Hl8P93mnWPSCmoetuQn48jvWkwZGYFla?usp=sharing', '_blank');
+        toast.success('Redirecting to Google Drive to download the secure package');
+        return;
+      }
+
       const encodedId = encodeURIComponent(fileId);
       const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/download-url?id=${encodedId}`);
       const data = await res.json();
