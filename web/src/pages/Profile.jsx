@@ -1542,6 +1542,12 @@ export default function Profile() {
     }
   };
 
+  const showEmail = localStorage.getItem('showEmail') === 'true';
+  const showPhone = localStorage.getItem('showPhone') === 'true';
+  let visibleCount = 2; // Gender and Address are always visible
+  if (showEmail) visibleCount++;
+  if (showPhone) visibleCount++;
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-950 min-h-screen py-10 px-2 md:px-8 transition-colors duration-300">
       {/* Signout Loading Modal */}
@@ -1677,51 +1683,41 @@ export default function Profile() {
               {/* Contact Information Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 {/* Email - Show only if showEmail setting is true */}
-                {(() => {
-                  // Use storageUpdateTrigger to force re-render when settings change
-                  const _ = storageUpdateTrigger;
-                  const showEmail = localStorage.getItem('showEmail') === 'true';
-                  return showEmail ? (
-                    <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
-                      <div className="flex items-center">
-                        <FaEnvelope className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Email</p>
-                          <p className="text-gray-700 dark:text-gray-200 text-sm break-all">{currentUser.email}</p>
-                        </div>
+                {showEmail && (
+                  <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center">
+                      <FaEnvelope className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Email</p>
+                        <p className="text-gray-700 dark:text-gray-200 text-sm break-all">{currentUser.email}</p>
                       </div>
                     </div>
-                  ) : null;
-                })()}
+                  </div>
+                )}
 
                 {/* Mobile - Show only if showPhone setting is true */}
-                {(() => {
-                  // Use storageUpdateTrigger to force re-render when settings change
-                  const _ = storageUpdateTrigger;
-                  const showPhone = localStorage.getItem('showPhone') === 'true';
-                  return showPhone ? (
-                    <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-green-300 transition-all duration-300 hover:shadow-md">
-                      <div className="flex items-center">
-                        <FaPhone className="w-4 h-4 mr-3 text-green-500 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Mobile</p>
-                          <p className="text-gray-700 dark:text-gray-200 text-sm">
-                            {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000"
-                              ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
-                              : "Not provided"
-                            }
-                            {currentUser.isGeneratedMobile && (
-                              <span className="text-xs text-gray-400 block">(Generated for Google signup)</span>
-                            )}
-                          </p>
-                        </div>
+                {showPhone && (
+                  <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-green-300 transition-all duration-300 hover:shadow-md">
+                    <div className="flex items-center">
+                      <FaPhone className="w-4 h-4 mr-3 text-green-500 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Mobile</p>
+                        <p className="text-gray-700 dark:text-gray-200 text-sm">
+                          {currentUser.mobileNumber && currentUser.mobileNumber !== "0000000000"
+                            ? `+91 ${currentUser.mobileNumber.slice(0, 5)} ${currentUser.mobileNumber.slice(5)}`
+                            : "Not provided"
+                          }
+                          {currentUser.isGeneratedMobile && (
+                            <span className="text-xs text-gray-400 block">(Generated for Google signup)</span>
+                          )}
+                        </p>
                       </div>
                     </div>
-                  ) : null;
-                })()}
+                  </div>
+                )}
 
                 {/* Gender */}
-                <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-purple-300 transition-all duration-300 hover:shadow-md">
+                <div className={`bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-purple-300 transition-all duration-300 hover:shadow-md ${visibleCount === 2 ? 'sm:col-span-2' : ''}`}>
                   <div className="flex items-center">
                     <FaUser className="w-4 h-4 mr-3 text-purple-500 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
@@ -1732,7 +1728,7 @@ export default function Profile() {
                 </div>
 
                 {/* Address */}
-                <div className="bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md">
+                <div className={`bg-gray-50 dark:bg-gray-700 dark:border-gray-600 rounded-lg p-3 border border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-md ${visibleCount <= 3 ? 'sm:col-span-2' : ''}`}>
                   <div className="flex items-start">
                     <FaHome className="w-4 h-4 mr-3 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div className="min-w-0 flex-1">
