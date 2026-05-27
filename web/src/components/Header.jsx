@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaEye, FaMapSigns, FaList, FaHeart, FaMoneyCheckAlt, FaCalendarAlt, FaSignOutAlt, FaStar, FaBars, FaTimes, FaTrash, FaTools, FaRoute, FaDownload, FaMobile, FaBookOpen, FaQuestionCircle, FaUsers } from "react-icons/fa";
+import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaFileContract, FaEye, FaMapSigns, FaList, FaHeart, FaMoneyCheckAlt, FaCalendarAlt, FaSignOutAlt, FaStar, FaBars, FaTimes, FaTrash, FaTools, FaRoute, FaDownload, FaMobile, FaBookOpen, FaQuestionCircle, FaUsers } from "react-icons/fa";
 import UserAvatar from "./UserAvatar";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -34,7 +34,7 @@ const USER_HEADER_OPTIONS = [
   { path: '/user/blogs', icon: FaBookOpen, label: 'Blogs' },
   { path: '/user/guides', icon: FaMapSigns, label: 'Guides' },
   { path: '/user/faqs', icon: FaQuestionCircle, label: 'FAQs' },
-  { path: '/user/rent-wallet', icon: FaMoneyCheckAlt, label: 'Rent Wallet' }
+  { path: '/user/rental-contracts', icon: FaFileContract, label: 'Rental Contracts' }
 ];
 
 export default function Header() {
