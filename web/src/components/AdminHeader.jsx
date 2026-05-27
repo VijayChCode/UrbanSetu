@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
-import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes, FaUser, FaTools, FaUsers, FaCrown, FaRoute, FaDownload, FaShieldAlt, FaMoneyCheckAlt, FaBookOpen, FaQuestionCircle, FaStar } from "react-icons/fa";
+import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaMapSigns, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes, FaUser, FaTools, FaUsers, FaCrown, FaRoute, FaDownload, FaShieldAlt, FaMoneyCheckAlt, FaBookOpen, FaQuestionCircle, FaStar } from "react-icons/fa";
 import UserAvatar from "./UserAvatar";
 import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
@@ -107,7 +107,9 @@ const ADMIN_HEADER_OPTIONS = [
   { path: '/admin/security-moderation', icon: FaShieldAlt, label: 'Security Moderation' },
   { path: '/admin/payments', icon: FaMoneyCheckAlt, label: 'Payments' },
   { path: '/admin/blogs', icon: FaBookOpen, label: 'Blogs' },
+  { path: '/admin/guides', icon: FaMapSigns, label: 'Guides' },
   { path: '/admin/faqs', icon: FaQuestionCircle, label: 'FAQs' },
+  { path: '/admin/reviews', icon: FaStar, label: 'Review' },
   { path: '/admin/deployment-management', icon: FaTools, label: 'Deployments' }
 ];
 
