@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
-import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes, FaUser, FaTools, FaUsers, FaCrown } from "react-icons/fa";
+import { FaHome, FaCalendarAlt, FaPlus, FaSignOutAlt, FaSearch, FaUserCheck, FaList, FaInfoCircle, FaCompass, FaBars, FaTimes, FaUser, FaTools, FaUsers, FaCrown, FaRoute, FaDownload, FaShieldAlt, FaMoneyCheckAlt, FaBookOpen, FaQuestionCircle, FaStar } from "react-icons/fa";
 import UserAvatar from "./UserAvatar";
 import NotificationBell from "./NotificationBell.jsx";
 import { persistor } from '../redux/store';
@@ -101,7 +101,14 @@ const ADMIN_HEADER_OPTIONS = [
   { path: '/admin/services', icon: FaTools, label: 'Services' },
   { path: '/admin/requests', icon: FaUserCheck, label: 'Requests', requiresRoot: true },
   { path: '/admin/community', icon: FaUsers, label: 'Community' },
-  { path: '/admin/explore', icon: FaCompass, label: 'Explore' }
+  { path: '/admin/explore', icon: FaCompass, label: 'Explore' },
+  { path: '/admin/route-planner', icon: FaRoute, label: 'Route Planner' },
+  { path: '/admin/download', icon: FaDownload, label: 'Downloads' },
+  { path: '/admin/security-moderation', icon: FaShieldAlt, label: 'Security Moderation' },
+  { path: '/admin/payments', icon: FaMoneyCheckAlt, label: 'Payments' },
+  { path: '/admin/blogs', icon: FaBookOpen, label: 'Blogs' },
+  { path: '/admin/faqs', icon: FaQuestionCircle, label: 'FAQs' },
+  { path: '/admin/deployment-management', icon: FaTools, label: 'Deployments' }
 ];
 
 export default function AdminHeader() {

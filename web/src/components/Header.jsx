@@ -26,7 +26,13 @@ const USER_HEADER_OPTIONS = [
   { path: '/user/create-listing', icon: FaPlus, label: 'Add Property' },
   { path: '/user/my-listings', icon: FaList, label: 'My Listings' },
   { path: '/user/wishlist', icon: FaHeart, label: 'Wish List' },
-  { path: '/user/my-appointments', icon: FaCalendarAlt, label: 'My Appointments' }
+  { path: '/user/my-appointments', icon: FaCalendarAlt, label: 'My Appointments' },
+  { path: '/user/route-planner', icon: FaRoute, label: 'Route Planner' },
+  { path: '/user/download', icon: FaDownload, label: 'Download App' },
+  { path: '/user/watchlist', icon: FaStar, label: 'Watchlist' },
+  { path: '/user/blogs', icon: FaBookOpen, label: 'Blogs' },
+  { path: '/user/faqs', icon: FaQuestionCircle, label: 'FAQs' },
+  { path: '/user/rent-wallet', icon: FaMoneyCheckAlt, label: 'Rent Wallet' }
 ];
 
 export default function Header() {
