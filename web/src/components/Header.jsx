@@ -823,7 +823,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
 
       {currentUser ? (
         <>
-          <li className={`${mobile ? 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium' : 'flex items-center relative md:mx-1.5'}`}>
+          <li className={`${mobile ? 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium' : 'flex items-center relative md:mr-4 md:ml-2'}`}>
             <NotificationBell mobile={mobile} />
           </li>
 
@@ -873,7 +873,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
 
           {/* Profile avatar for desktop/tablet */}
           {!mobile && (
-            <li className="relative md:ml-2" ref={dropdownRef}>
+            <li className="relative md:pl-2" ref={dropdownRef}>
               <div
                 className="cursor-pointer transition-transform duration-300 hover:scale-105 flex items-center"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
