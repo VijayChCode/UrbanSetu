@@ -647,6 +647,26 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [showEmailSetting, setShowEmailSetting] = useState(localStorage.getItem('showEmail') === 'true');
+
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'showEmail') {
+        setShowEmailSetting(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    const handleCustomStorageChange = () => {
+      setShowEmailSetting(localStorage.getItem('showEmail') === 'true');
+    };
+    window.addEventListener('settingsUpdated', handleCustomStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('settingsUpdated', handleCustomStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -815,9 +835,11 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
                         ? `${currentUser.firstName} ${currentUser.lastName}`
                         : currentUser.username || "User"}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {currentUser.email}
-                    </span>
+                    {showEmailSetting && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {currentUser.email}
+                      </span>
+                    )}
                     {currentUser.isDefaultAdmin ? (
                       <span className="inline-flex items-center gap-1 text-[10px] w-fit font-semibold px-2 py-0.5 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full mt-1 border border-red-200 dark:border-red-800/50 animate-pulse">
                         <FaCrown className="w-2.5 h-2.5 text-red-500" />
