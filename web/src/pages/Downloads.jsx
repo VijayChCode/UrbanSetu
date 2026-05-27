@@ -39,7 +39,7 @@ export default function Downloads() {
         try {
             // Redirect active/latest files to Google Drive to establish trust
             if (file.isActive) {
-                window.open('https://drive.google.com/file/d/1_v_K77USAFHYUv865yY8AeqcZLDkD_q-/view?usp=drive_link', '_blank');
+                window.open('https://drive.google.com/drive/folders/1Hl8P93mnWPSCmoetuQn48jvWkwZGYFla?usp=sharing', '_blank');
                 toast.success('Redirecting to Google Drive to download the secure package');
                 return;
             }
