@@ -94,6 +94,16 @@ const THEME_DECORATIONS = {
   'caduceus': { icon: '⚕️', animate: 'animate-pulse', size: 'text-xl', pos: '-top-3 -right-2' },
 };
 
+const ADMIN_HEADER_OPTIONS = [
+  { path: '/admin', icon: FaHome, label: 'Dashboard' },
+  { path: '/admin/create-listing', icon: FaPlus, label: 'Add Property' },
+  { path: '/admin/listings', icon: FaList, label: 'All Listings' },
+  { path: '/admin/services', icon: FaTools, label: 'Services' },
+  { path: '/admin/requests', icon: FaUserCheck, label: 'Requests', requiresRoot: true },
+  { path: '/admin/community', icon: FaUsers, label: 'Community' },
+  { path: '/admin/explore', icon: FaCompass, label: 'Explore' }
+];
+
 export default function AdminHeader() {
   const theme = useSeasonalTheme();
   const allThemes = useAllSeasonalThemes();
@@ -116,6 +126,20 @@ export default function AdminHeader() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showThemeInfo, setShowThemeInfo] = useState(false);
   const searchInputRef = useRef(null);
+  const [randomNavOption, setRandomNavOption] = useState(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      const allowedOptions = ADMIN_HEADER_OPTIONS.filter(opt => {
+        if (opt.requiresRoot) {
+          return currentUser.role === 'rootadmin' && currentUser.adminApprovalStatus === 'approved';
+        }
+        return true;
+      });
+      const randomIndex = Math.floor(Math.random() * allowedOptions.length);
+      setRandomNavOption(allowedOptions[randomIndex]);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     setFadeIn(true);
@@ -369,7 +393,15 @@ export default function AdminHeader() {
                   <span>🛡️ Secure Admin Access</span>
                   <span>📊 Real-time Analytics</span>
                 </div>
-
+                {currentUser && randomNavOption && (
+                  <Link
+                    to={randomNavOption.path}
+                    className="md:hidden flex items-center text-white/80 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                    title={`Quick Access: ${randomNavOption.label}`}
+                  >
+                    <randomNavOption.icon className="text-base text-yellow-400" />
+                  </Link>
+                )}
               </div>
             </div>
           </div>

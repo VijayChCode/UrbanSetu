@@ -19,10 +19,26 @@ import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalThem
 import ThemeDetailModal from "./ThemeDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
 
+const USER_HEADER_OPTIONS = [
+  { path: '/user', icon: FaHome, label: 'Home' },
+  { path: '/search', icon: FaCompass, label: 'Explore' },
+  { path: '/user/community', icon: FaUsers, label: 'Community' },
+  { path: '/user/create-listing', icon: FaPlus, label: 'Add Property' },
+  { path: '/user/my-listings', icon: FaList, label: 'My Listings' },
+  { path: '/user/wishlist', icon: FaHeart, label: 'Wish List' },
+  { path: '/user/my-appointments', icon: FaCalendarAlt, label: 'My Appointments' }
+];
+
 export default function Header() {
   const theme = useSeasonalTheme();
   const allThemes = useAllSeasonalThemes();
   const [showThemeInfo, setShowThemeInfo] = useState(false);
+  const [randomNavOption, setRandomNavOption] = useState(null);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * USER_HEADER_OPTIONS.length);
+    setRandomNavOption(USER_HEADER_OPTIONS[randomIndex]);
+  }, []);
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -289,6 +305,15 @@ export default function Header() {
                       </Link>
                     )}
                   </div>
+                )}
+                {currentUser && randomNavOption && (
+                  <Link
+                    to={randomNavOption.path}
+                    className="md:hidden flex items-center text-white/80 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
+                    title={`Quick Access: ${randomNavOption.label}`}
+                  >
+                    <randomNavOption.icon className="text-base text-yellow-400" />
+                  </Link>
                 )}
 
               </div>
