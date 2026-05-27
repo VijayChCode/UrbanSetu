@@ -2,6 +2,7 @@ import Listing from "../models/listing.model.js"
 import User from "../models/user.model.js"
 import Agent from "../models/agent.model.js"
 import { errorHandler } from "../utils/error.js"
+import { escapeRegex } from "../utils/regex.js"
 import mongoose from "mongoose"
 import DeletedAccount from '../models/deletedAccount.model.js';
 import AuditLog from '../models/auditLog.model.js';
@@ -1261,8 +1262,8 @@ export const searchUsers = async (req, res, next) => {
 
         const users = await User.find({
             $or: [
-                { username: { $regex: q, $options: 'i' } },
-                { email: { $regex: q, $options: 'i' } }
+                { username: { $regex: escapeRegex(q), $options: 'i' } },
+                { email: { $regex: escapeRegex(q), $options: 'i' } }
             ],
             role: { $nin: ['admin', 'rootadmin'] }
         })

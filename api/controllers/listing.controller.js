@@ -6,6 +6,7 @@ import { notifyWatchersOnChange } from "./propertyWatchlist.controller.js"
 import User from "../models/user.model.js"
 import Notification from "../models/notification.model.js"
 import { errorHandler } from "../utils/error.js"
+import { escapeRegex } from "../utils/regex.js"
 import { sendPropertyListingPublishedEmail, sendPropertyEditNotificationEmail, sendPropertyDeletionConfirmationEmail, sendOwnerDeassignedEmail, sendOwnerAssignedEmail, sendPropertyCreatedPendingVerificationEmail, sendPropertyVerificationReminderEmail, sendPropertyPublishedAfterVerificationEmail, sendListingUnpublishedEmail } from "../utils/emailService.js"
 import DeletedListing from "../models/deletedListing.model.js"
 import crypto from 'crypto'
@@ -950,16 +951,16 @@ export const getListings = async (req, res, next) => {
 
     if (searchTerm) {
       query.$or = [
-        { name: { $regex: searchTerm, $options: 'i' } },
-        { description: { $regex: searchTerm, $options: 'i' } },
-        { address: { $regex: searchTerm, $options: 'i' } },
-        { landmark: { $regex: searchTerm, $options: 'i' } },
-        { city: { $regex: searchTerm, $options: 'i' } },
-        { state: { $regex: searchTerm, $options: 'i' } },
+        { name: { $regex: escapeRegex(searchTerm), $options: 'i' } },
+        { description: { $regex: escapeRegex(searchTerm), $options: 'i' } },
+        { address: { $regex: escapeRegex(searchTerm), $options: 'i' } },
+        { landmark: { $regex: escapeRegex(searchTerm), $options: 'i' } },
+        { city: { $regex: escapeRegex(searchTerm), $options: 'i' } },
+        { state: { $regex: escapeRegex(searchTerm), $options: 'i' } },
       ];
     }
-    if (city) query.city = { $regex: city, $options: 'i' };
-    if (state) query.state = { $regex: state, $options: 'i' };
+    if (city) query.city = { $regex: escapeRegex(city), $options: 'i' };
+    if (state) query.state = { $regex: escapeRegex(state), $options: 'i' };
     if (bedrooms) query.bedrooms = bedrooms;
     if (bathrooms) query.bathrooms = bathrooms;
 
@@ -968,9 +969,9 @@ export const getListings = async (req, res, next) => {
     if (ownerSearch && ownerSearch.trim()) {
       const users = await User.find({
         $or: [
-          { username: { $regex: ownerSearch, $options: 'i' } },
-          { name: { $regex: ownerSearch, $options: 'i' } },
-          { email: { $regex: ownerSearch, $options: 'i' } }
+          { username: { $regex: escapeRegex(ownerSearch), $options: 'i' } },
+          { name: { $regex: escapeRegex(ownerSearch), $options: 'i' } },
+          { email: { $regex: escapeRegex(ownerSearch), $options: 'i' } }
         ]
       }).select('_id');
       const userIds = users.map(u => u._id);

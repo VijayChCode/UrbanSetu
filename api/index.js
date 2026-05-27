@@ -109,7 +109,7 @@ import bcryptjs from 'bcryptjs';
 
 dotenv.config();
 
-console.log("MongoDB URI:", process.env.MONGO);
+console.log("MongoDB URI:", process.env.MONGO ? "[SET - REDACTED]" : "[NOT SET]");
 
 if (!process.env.MONGO) {
   console.error("Error: MONGO URI is not defined in .env file!");
@@ -314,7 +314,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (
       allowedOrigins.indexOf(origin) !== -1 ||
-      /^https:\/\/urbansetu.*\.vercel\.app$/.test(origin)
+      /^https:\/\/urbansetu(-[a-z0-9\-]+)?\.vercel\.app$/.test(origin)
     ) {
       return callback(null, true);
     }
@@ -339,8 +339,8 @@ app.use((req, res, next) => {
 });
 
 // Configure body parsers with appropriate limits for large file uploads
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 
 
@@ -722,6 +722,7 @@ io.use(async (socket, next) => {
       const user = await User.findById(decoded.id);
       if (user) {
         socket.user = user;
+        socket.sessionId = decoded.sessionId; // Store session ID for verification
         socket.join(user._id.toString());
         socket.join(`user_${user._id.toString()}`);
       } else {
@@ -760,9 +761,13 @@ io.on('connection', (socket) => {
     }
   } catch (_) { }
 
-  // Allow clients to explicitly register their user room without JWT in socket auth
+  // Allow clients to explicitly register their user room with validation
   socket.on('registerUser', ({ userId }) => {
     if (userId) {
+      if (!socket.user || socket.user._id.toString() !== userId.toString()) {
+        console.warn(`[Socket Security] Unauthorized registerUser attempt by socket ${socket.id} for user ${userId}`);
+        return;
+      }
       const userIdStr = userId.toString();
       // Join both room formats for compatibility (userId and user_${userId})
       socket.join(userIdStr);
@@ -775,9 +780,13 @@ io.on('connection', (socket) => {
   });
 
   // Allow server to emit to a particular session room for immediate logout
-  // Clients should join a room named by their session id after login
+  // Clients should join a room named by their session id after login with validation
   socket.on('registerSession', ({ sessionId }) => {
     if (sessionId) {
+      if (!socket.user || socket.sessionId !== sessionId) {
+        console.warn(`[Socket Security] Unauthorized registerSession attempt by socket ${socket.id} for session ${sessionId}`);
+        return;
+      }
       socket.join(`session_${sessionId}`);
     }
   });
@@ -787,6 +796,11 @@ io.on('connection', (socket) => {
 
   // Listen for presence pings
   socket.on('userAppointmentsActive', async ({ userId }) => {
+    if (!userId) return;
+    if (!socket.user || socket.user._id.toString() !== userId.toString()) {
+      console.warn(`[Socket Security] Unauthorized userAppointmentsActive attempt by socket ${socket.id} for user ${userId}`);
+      return;
+    }
     thisUserId = userId;
     const wasOffline = !onlineUsers.has(userId);
     onlineUsers.add(userId);
@@ -948,6 +962,11 @@ io.on('connection', (socket) => {
 
   // Listen for admin appointments active
   socket.on('adminAppointmentsActive', async ({ adminId, role }) => {
+    if (!adminId) return;
+    if (!socket.user || socket.user._id.toString() !== adminId.toString() || (socket.user.role !== 'admin' && socket.user.role !== 'rootadmin')) {
+      console.warn(`[Socket Security] Unauthorized adminAppointmentsActive attempt by socket ${socket.id} for admin ${adminId}`);
+      return;
+    }
     thisUserId = adminId;
 
     // IMPORTANT: Join admin to their personal room for direct messaging
@@ -982,6 +1001,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('typing', ({ toUserId, fromUserId, appointmentId }) => {
+    if (!socket.user || socket.user._id.toString() !== fromUserId?.toString()) {
+      console.warn(`[Socket Security] Unauthorized typing attempt by socket ${socket.id}`);
+      return;
+    }
     io.to(toUserId).emit('typing', { fromUserId, appointmentId });
   });
 

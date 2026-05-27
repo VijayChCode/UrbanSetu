@@ -2,6 +2,7 @@ import VisitorLog from '../models/visitorLog.model.js';
 import User from '../models/user.model.js';
 import Notification from '../models/notification.model.js';
 import crypto from 'crypto';
+import { escapeRegex } from '../utils/regex.js';
 import { getDeviceInfo, getBrowserInfo, getOSInfo, getDeviceType, getLocationFromIP } from '../utils/sessionManager.js';
 
 // Generate fingerprint for visitor (IP + User-Agent + Source hash)
@@ -327,14 +328,15 @@ export const getVisitorStats = async (req, res, next) => {
 
     // 1. Build Base Filter (Non-Date)
     const baseFilter = {};
-    if (device !== 'all') baseFilter.device = { $regex: device, $options: 'i' };
-    if (location !== 'all') baseFilter.location = { $regex: location, $options: 'i' };
+    if (device !== 'all') baseFilter.device = { $regex: escapeRegex(device), $options: 'i' };
+    if (location !== 'all') baseFilter.location = { $regex: escapeRegex(location), $options: 'i' };
     if (search) {
+      const escapedSearch = escapeRegex(search);
       baseFilter.$or = [
-        { ip: { $regex: search, $options: 'i' } },
-        { fingerprint: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } },
-        { device: { $regex: search, $options: 'i' } }
+        { ip: { $regex: escapedSearch, $options: 'i' } },
+        { fingerprint: { $regex: escapedSearch, $options: 'i' } },
+        { location: { $regex: escapedSearch, $options: 'i' } },
+        { device: { $regex: escapedSearch, $options: 'i' } }
       ];
     }
     const consent = {};
@@ -515,44 +517,45 @@ export const getAllVisitors = async (req, res, next) => {
 
     // Device filter
     if (device !== 'all') {
-      filter.device = { $regex: device, $options: 'i' };
+      filter.device = { $regex: escapeRegex(device), $options: 'i' };
     }
 
     // Location filter
     if (location !== 'all') {
-      filter.location = { $regex: location, $options: 'i' };
+      filter.location = { $regex: escapeRegex(location), $options: 'i' };
     }
 
     // New acquisition filters
     if (referrer !== 'all') {
-      filter.referrer = { $regex: referrer, $options: 'i' };
+      filter.referrer = { $regex: escapeRegex(referrer), $options: 'i' };
     }
     if (source !== 'all') {
-      filter.source = { $regex: source, $options: 'i' };
+      filter.source = { $regex: escapeRegex(source), $options: 'i' };
     }
     if (utm_source !== 'all') {
-      filter["utm.source"] = { $regex: utm_source, $options: 'i' };
+      filter["utm.source"] = { $regex: escapeRegex(utm_source), $options: 'i' };
     }
     if (utm_campaign !== 'all') {
-      filter["utm.campaign"] = { $regex: utm_campaign, $options: 'i' };
+      filter["utm.campaign"] = { $regex: escapeRegex(utm_campaign), $options: 'i' };
     }
     if (utm_medium !== 'all') {
-      filter["utm.medium"] = { $regex: utm_medium, $options: 'i' };
+      filter["utm.medium"] = { $regex: escapeRegex(utm_medium), $options: 'i' };
     }
     if (utm_term !== 'all') {
-      filter["utm.term"] = { $regex: utm_term, $options: 'i' };
+      filter["utm.term"] = { $regex: escapeRegex(utm_term), $options: 'i' };
     }
 
     // Search filter
     if (search) {
+      const escapedSearch = escapeRegex(search);
       filter.$or = [
-        { ip: { $regex: search, $options: 'i' } },
-        { fingerprint: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } },
-        { device: { $regex: search, $options: 'i' } },
-        { referrer: { $regex: search, $options: 'i' } },
-        { source: { $regex: search, $options: 'i' } },
-        { "utm.source": { $regex: search, $options: 'i' } }
+        { ip: { $regex: escapedSearch, $options: 'i' } },
+        { fingerprint: { $regex: escapedSearch, $options: 'i' } },
+        { location: { $regex: escapedSearch, $options: 'i' } },
+        { device: { $regex: escapedSearch, $options: 'i' } },
+        { referrer: { $regex: escapedSearch, $options: 'i' } },
+        { source: { $regex: escapedSearch, $options: 'i' } },
+        { "utm.source": { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 
@@ -627,9 +630,9 @@ export const getClientErrors = async (req, res, next) => {
       }
     };
 
-    if (browser && browser !== 'all') matchStage.browser = { $regex: browser, $options: 'i' };
-    if (os && os !== 'all') matchStage.os = { $regex: os, $options: 'i' };
-    if (deviceType && deviceType !== 'all') matchStage.deviceType = { $regex: deviceType, $options: 'i' };
+    if (browser && browser !== 'all') matchStage.browser = { $regex: escapeRegex(browser), $options: 'i' };
+    if (os && os !== 'all') matchStage.os = { $regex: escapeRegex(os), $options: 'i' };
+    if (deviceType && deviceType !== 'all') matchStage.deviceType = { $regex: escapeRegex(deviceType), $options: 'i' };
 
     if (dateRange !== 'all') {
       const today = getStartOfDay();
@@ -682,17 +685,18 @@ export const getClientErrors = async (req, res, next) => {
 
     // Apply search if provided
     if (search) {
+      const escapedSearch = escapeRegex(search);
       pipeline.push({
         $match: {
           $or: [
-            { message: { $regex: search, $options: 'i' } },
-            { path: { $regex: search, $options: 'i' } },
-            { ip: { $regex: search, $options: 'i' } },
-            { source: { $regex: search, $options: 'i' } },
-            { browser: { $regex: search, $options: 'i' } },
-            { os: { $regex: search, $options: 'i' } },
-            { device: { $regex: search, $options: 'i' } },
-            { deviceType: { $regex: search, $options: 'i' } }
+            { message: { $regex: escapedSearch, $options: 'i' } },
+            { path: { $regex: escapedSearch, $options: 'i' } },
+            { ip: { $regex: escapedSearch, $options: 'i' } },
+            { source: { $regex: escapedSearch, $options: 'i' } },
+            { browser: { $regex: escapedSearch, $options: 'i' } },
+            { os: { $regex: escapedSearch, $options: 'i' } },
+            { device: { $regex: escapedSearch, $options: 'i' } },
+            { deviceType: { $regex: escapedSearch, $options: 'i' } }
           ]
         }
       });

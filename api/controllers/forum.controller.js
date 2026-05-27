@@ -1,6 +1,7 @@
-﻿import ForumPost from '../models/forumPost.model.js';
+import ForumPost from '../models/forumPost.model.js';
 import User from '../models/user.model.js';
 import { errorHandler } from '../utils/error.js';
+import { escapeRegex } from '../utils/regex.js';
 import { sendCommunityPostConfirmationEmail, sendCommunityReportAcknowledgementEmail, sendPostLockedEmail, sendPostDeletedEmail, sendPostEditedEmail, sendPostUnlockedEmail } from '../utils/emailService.js';
 import { notifyAdminsOfCommunityReport } from './notification.controller.js';
 
@@ -92,12 +93,12 @@ export const getPosts = async (req, res, next) => {
         if (postId) query._id = postId;
         if (userId) query.author = userId;
 
-        if (city) query['location.city'] = { $regex: city, $options: 'i' };
-        if (neighborhood) query['location.neighborhood'] = { $regex: neighborhood, $options: 'i' };
+        if (city) query['location.city'] = { $regex: escapeRegex(city), $options: 'i' };
+        if (neighborhood) query['location.neighborhood'] = { $regex: escapeRegex(neighborhood), $options: 'i' };
         if (req.query.searchTerm) {
             query.$or = [
-                { title: { $regex: req.query.searchTerm, $options: 'i' } },
-                { content: { $regex: req.query.searchTerm, $options: 'i' } }
+                { title: { $regex: escapeRegex(req.query.searchTerm), $options: 'i' } },
+                { content: { $regex: escapeRegex(req.query.searchTerm), $options: 'i' } }
             ];
         }
         if (category === 'Reported') {
@@ -846,7 +847,7 @@ export const getSuggestions = async (req, res, next) => {
         if (!q) return res.status(200).json([]);
 
         const posts = await ForumPost.find({
-            title: { $regex: q, $options: 'i' }
+            title: { $regex: escapeRegex(q), $options: 'i' }
         }).select('title').limit(5);
 
         res.status(200).json(posts);

@@ -60,20 +60,22 @@ export const verifyCSRFToken = (req, res, next) => {
         const isMobileApp = userAgent.includes('UrbanSetuMobile') || userAgent.includes('UrbanSetu/1.0');
 
         // Debug logging
-        console.log('CSRF Verification:', {
-            hasToken: !!token,
-            hasCookieToken: !!cookieToken,
-            tokenLength: token ? token.length : 0,
-            cookieTokenLength: cookieToken ? cookieToken.length : 0,
-            isMobileApp: isMobileApp,
-            userAgent: userAgent,
-            headers: {
-                'x-csrf-token': req.headers['x-csrf-token'] ? 'present' : 'missing',
-                'X-CSRF-Token': req.headers['X-CSRF-Token'] ? 'present' : 'missing'
-            },
-            endpoint: req.path,
-            method: req.method
-        });
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('CSRF Verification:', {
+                hasToken: !!token,
+                hasCookieToken: !!cookieToken,
+                tokenLength: token ? token.length : 0,
+                cookieTokenLength: cookieToken ? cookieToken.length : 0,
+                isMobileApp: isMobileApp,
+                userAgent: userAgent,
+                headers: {
+                    'x-csrf-token': req.headers['x-csrf-token'] ? 'present' : 'missing',
+                    'X-CSRF-Token': req.headers['X-CSRF-Token'] ? 'present' : 'missing'
+                },
+                endpoint: req.path,
+                method: req.method
+            });
+        }
 
         // Check if token exists in store and is not expired
         const tokenData = csrfTokenStore.get(token);

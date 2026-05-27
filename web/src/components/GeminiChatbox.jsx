@@ -31,6 +31,7 @@ import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-markdown';
+import DOMPurify from 'dompurify';
 
 const THINKING_TAGS = [
     "Thinking...",
@@ -6521,13 +6522,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 }
                                 return item;
                             }
-                            return <span key={i} dangerouslySetInnerHTML={{ __html: item }} />;
+                            return <span key={i} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />;
                         })}
                     </span>
                 );
             }
 
-            return <span key={index} className={isSentMessage ? "text-white" : ""} dangerouslySetInnerHTML={{ __html: restoredPart }} />;
+            return <span key={index} className={isSentMessage ? "text-white" : ""} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(restoredPart) }} />;
         });
     };
 

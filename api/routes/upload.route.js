@@ -3,6 +3,7 @@ import multer from 'multer';
 import cloudinary from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import dotenv from 'dotenv';
+import { verifyToken } from '../utils/verify.js';
 
 dotenv.config();
 
@@ -130,7 +131,7 @@ const uploadAudio = multer({
 });
 
 // Upload single image
-router.post('/image', uploadImage.single('image'), async (req, res) => {
+router.post('/image', verifyToken, uploadImage.single('image'), async (req, res) => {
   try {
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
     console.log('Cloudinary config:', {
@@ -206,7 +207,7 @@ router.use((error, req, res, next) => {
 });
 
 // Upload multiple images
-router.post('/images', uploadImage.array('images', 10), async (req, res) => {
+router.post('/images', verifyToken, uploadImage.array('images', 10), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'No image files provided' });
@@ -228,7 +229,7 @@ router.post('/images', uploadImage.array('images', 10), async (req, res) => {
 });
 
 // Delete image from Cloudinary
-router.delete('/image/:publicId', async (req, res) => {
+router.delete('/image/:publicId', verifyToken, async (req, res) => {
   try {
     const { publicId } = req.params;
 
@@ -246,7 +247,7 @@ router.delete('/image/:publicId', async (req, res) => {
 });
 
 // Upload single video
-router.post('/video', uploadVideo.single('video'), async (req, res) => {
+router.post('/video', verifyToken, uploadVideo.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No video file provided' });
@@ -264,7 +265,7 @@ router.post('/video', uploadVideo.single('video'), async (req, res) => {
 });
 
 // Upload single document
-router.post('/document', uploadDocument.single('document'), async (req, res) => {
+router.post('/document', verifyToken, uploadDocument.single('document'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No document file provided' });
@@ -283,7 +284,7 @@ router.post('/document', uploadDocument.single('document'), async (req, res) => 
 });
 
 // Upload single audio
-router.post('/audio', uploadAudio.single('audio'), async (req, res) => {
+router.post('/audio', verifyToken, uploadAudio.single('audio'), async (req, res) => {
   try {
     console.log('Audio upload request received:', {
       hasFile: !!req.file,

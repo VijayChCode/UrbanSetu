@@ -11,6 +11,7 @@ import { authenticatedFetch } from '../utils/auth';
 import ListingItem from '../components/ListingItem';
 import BlogGuideItem from '../components/BlogGuideItem';
 import ImagePreview from '../components/ImagePreview';
+import DOMPurify from 'dompurify';
 
 const TypewriterText = ({ text, delay = 35, className = "" }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -312,7 +313,7 @@ export default function SharedChatView() {
                             );
                         }
 
-                        return <span key={subIndex} dangerouslySetInnerHTML={{ __html: subPart }} />;
+                        return <span key={subIndex} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(subPart) }} />;
                     })}
                 </div>
             );

@@ -552,12 +552,14 @@ export const SignIn = async (req, res, next) => {
 
 export const Google = async (req, res, next) => {
     try {
-        console.log('🔍 Google auth request received:', {
-            body: req.body,
-            userAgent: req.get('User-Agent'),
-            ip: req.ip,
-            headers: req.headers
-        });
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('🔍 Google auth request received:', {
+                body: req.body,
+                userAgent: req.get('User-Agent'),
+                ip: req.ip,
+                headers: req.headers
+            });
+        }
 
         const { name, email, photo } = req.body
         const validUser = await User.findOne({ email })
