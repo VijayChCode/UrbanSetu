@@ -603,13 +603,15 @@ export default function Listing() {
     };
   }, [showReasonModal, showPasswordModal, showAssignOwnerModal, showDeassignModal, showReportModal, showCalculatorModal, showComparisonModal, showPropertySearch, showAIRecommendations]);
 
-  // Collapse VR button text after 4 seconds of page load
+  // Collapse VR button text after 5 seconds of listing load
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVrTextExpanded(false);
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!loading && listing) {
+      const timer = setTimeout(() => {
+        setVrTextExpanded(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, listing]);
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
