@@ -41,7 +41,7 @@ export default function RentalRatings() {
       fetchRatings();
     }
     fetchContracts();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   // Handle URL parameters - auto-open rating modal
   useEffect(() => {

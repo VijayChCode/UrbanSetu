@@ -72,7 +72,7 @@ export default function RentalLoans() {
       fetchLoans();
     }
     fetchContracts();
-  }, [currentUser, navigate]);
+  }, [currentUser?._id, navigate]);
 
   // Handle URL parameters
   useEffect(() => {

@@ -50,7 +50,7 @@ export default function PropertyVerification() {
       return;
     }
     fetchMyListings();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {

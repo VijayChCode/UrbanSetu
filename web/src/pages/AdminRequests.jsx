@@ -33,7 +33,7 @@ const AdminRequests = () => {
     }
 
     fetchAllRequests();
-  }, [currentUser, navigate]);
+  }, [currentUser?._id, navigate]);
 
   const fetchAllRequests = async () => {
     try {

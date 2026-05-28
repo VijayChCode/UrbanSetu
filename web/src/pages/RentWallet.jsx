@@ -19,6 +19,7 @@ export default function RentWallet() {
   usePageTitle("Rent Wallet - Manage Your Rent Payments");
 
   const { currentUser } = useSelector((state) => state.user);
+  const currentUserId = currentUser?._id;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,7 +50,7 @@ export default function RentWallet() {
       return;
     }
 
-    if (!currentUser) {
+    if (!currentUserId) {
       toast.error("Please sign in to access your rent wallet.");
       navigate("/sign-in");
       return;
@@ -81,9 +82,9 @@ export default function RentWallet() {
           setContract(contractData.contract);
           // Set role
           const c = contractData.contract;
-          if (currentUser) {
-            setIsTenant(c.tenantId?._id === currentUser._id || c.tenantId === currentUser._id);
-            setIsLandlord(c.landlordId?._id === currentUser._id || c.landlordId === currentUser._id);
+          if (currentUserId) {
+            setIsTenant(c.tenantId?._id === currentUserId || c.tenantId === currentUserId);
+            setIsLandlord(c.landlordId?._id === currentUserId || c.landlordId === currentUserId);
           }
         }
       }
@@ -96,7 +97,7 @@ export default function RentWallet() {
         setLoading(false);
       }
     }
-  }, [contractId, currentUser, navigate]);
+  }, [contractId, currentUserId, navigate]);
 
   const fetchGamification = useCallback(async () => {
     try {
