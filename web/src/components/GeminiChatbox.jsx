@@ -7809,7 +7809,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     try {
                                                                         console.log('Starting download for URL:', message.documentUrl);
 
-                                                                        const response = await authenticatedFetch(message.documentUrl, { mode: 'cors' });
+                                                                        const isCloudinary = message.documentUrl.includes('cloudinary.com');
+                                                                        const response = isCloudinary
+                                                                            ? await fetch(message.documentUrl, { mode: 'cors' })
+                                                                            : await authenticatedFetch(message.documentUrl, { mode: 'cors' });
+
                                                                         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                                                                         const blob = await response.blob();
