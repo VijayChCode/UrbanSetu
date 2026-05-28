@@ -7,6 +7,7 @@ import { authenticatedFetch } from '../utils/auth';
 import SEO from './SEO';
 import { BrowserRouter, Link } from 'react-router-dom';
 import WishlistProvider from '../WishlistContext';
+import ContactSupportWrapper from './ContactSupportWrapper';
 
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
@@ -545,6 +546,12 @@ class GlobalErrorBoundary extends React.Component {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {isPersistentError && (
+                        <BrowserRouter>
+                            <ContactSupportWrapper />
+                        </BrowserRouter>
                     )}
                 </div>
             );
