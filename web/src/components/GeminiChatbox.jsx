@@ -495,6 +495,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [showConsentModal, setShowConsentModal] = useState(false);
+    const [openedTermsFromConsent, setOpenedTermsFromConsent] = useState(false);
 
     // Safety Policy Violation & Cooldown State
     const VIOLATION_LIMIT = 3;
@@ -2408,6 +2409,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
         setShowConsentModal(false);
         toast.success("Terms accepted. Welcome to SetuAI!");
+    };
+
+    const handleCloseTermsModal = () => {
+        setShowTermsModal(false);
+        if (openedTermsFromConsent) {
+            setShowConsentModal(true);
+            setOpenedTermsFromConsent(false);
+        }
     };
 
     // Initialize session and load history when component mounts or user changes
@@ -11284,7 +11293,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showTermsModal && createPortal(
-                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowTermsModal(false)}>
+                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={handleCloseTermsModal}>
                         <div className="flex min-h-full items-center justify-center p-4">
                             <div
                                 onClick={e => e.stopPropagation()}
@@ -11297,7 +11306,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <h2 className="text-xl font-bold">Terms of Service</h2>
                                     </div>
                                     <button
-                                        onClick={() => setShowTermsModal(false)}
+                                        onClick={handleCloseTermsModal}
                                         className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
                                     >
                                         <FaTimes size={20} />
@@ -11372,11 +11381,42 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </section>
                                     </div>
 
-                                    {/* Footer Action (If viewing from consent modal, this effectively returns to it) */}
-                                    <div className={`p-4 border-t flex justify-center items-center ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                                        <p className={`text-xs sm:text-sm text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {/* Footer Action */}
+                                    <div className={`p-4 border-t flex flex-col sm:flex-row gap-4 justify-between items-center ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-100 bg-gray-50/50'}`}>
+                                        <p className={`text-xs text-center sm:text-left ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} max-w-sm`}>
                                             For comprehensive platform policies, please read our full <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 hover:underline font-medium transition-colors">Terms & Conditions</a>.
                                         </p>
+                                        {openedTermsFromConsent ? (
+                                            <div className="flex gap-2 w-full sm:w-auto">
+                                                <button
+                                                    onClick={() => {
+                                                        setShowTermsModal(false);
+                                                        setShowConsentModal(true);
+                                                        setOpenedTermsFromConsent(false);
+                                                    }}
+                                                    className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'}`}
+                                                >
+                                                    Back
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        acceptTerms(e);
+                                                        setShowTermsModal(false);
+                                                        setOpenedTermsFromConsent(false);
+                                                    }}
+                                                    className="flex-1 sm:flex-initial px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-95"
+                                                >
+                                                    Accept & Continue
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={handleCloseTermsModal}
+                                                className="w-full sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                                            >
+                                                Close
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -11419,7 +11459,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     Accept & Continue
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); setShowTermsModal(true); }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenedTermsFromConsent(true);
+                                        setShowConsentModal(false);
+                                        setShowTermsModal(true);
+                                    }}
                                     className={`w-full py-3 rounded-xl font-medium transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-600'}`}
                                 >
                                     Read Full Terms
