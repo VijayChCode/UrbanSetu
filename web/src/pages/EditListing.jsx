@@ -604,10 +604,26 @@ export default function EditListing() {
     if (["regularPrice", "discountPrice", "bedrooms", "bathrooms"].includes(id)) {
       newValue = Number(value);
     }
-    setFormData({
+
+    const updatedData = {
       ...formData,
       [name || id]: newValue,
-    });
+    };
+
+    // Auto-set discountPrice to monthlyRent when offer is enabled for rent type
+    if (id === 'offer' && checked && updatedData.type === 'rent' && updatedData.monthlyRent > 0) {
+      updatedData.discountPrice = updatedData.monthlyRent;
+    }
+    // When switching to rent type with offer already enabled, auto-set discountPrice
+    if (name === 'type' && value === 'rent' && updatedData.offer && updatedData.monthlyRent > 0) {
+      updatedData.discountPrice = updatedData.monthlyRent;
+    }
+    // Reset discountPrice when offer is unchecked
+    if (id === 'offer' && !checked) {
+      updatedData.discountPrice = 0;
+    }
+
+    setFormData(updatedData);
   };
 
   const onSubmitForm = async (e) => {
@@ -637,8 +653,10 @@ export default function EditListing() {
     }
 
     // Images are optional when editing as well
-    if (formData.regularPrice < formData.discountPrice)
+    if (formData.offer && formData.type === 'sale' && formData.regularPrice < formData.discountPrice)
       return setError("Discount price should be less than regular price");
+    if (formData.offer && formData.type === 'rent' && formData.monthlyRent < formData.discountPrice)
+      return setError("Discount price should be less than monthly rent");
     if (!formData.propertyNumber) return setError("Property number is required");
     if (!formData.city) return setError("City is required");
     if (!formData.state) return setError("State is required");
@@ -674,18 +692,29 @@ export default function EditListing() {
     try {
       const apiUrl = `${API_BASE_URL}/api/listing/update/${params.listingId}`;
 
+      // Clean up empty URLs before submission
+      const cleanedImageUrls = formData.imageUrls.filter(url => url && url.trim() !== '');
+      const cleanedVideoUrls = formData.videoUrls.filter(url => url && url.trim() !== '');
+      const cleanedVirtualTourImages = (formData.virtualTourImages || []).filter(url => url && url.trim() !== '');
+
       // Prepare request body - preserve original ownership for admin edits
       let requestBody = formData;
       if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
         // Admin editing - don't change ownership, just update the data
         requestBody = {
           ...formData,
+          imageUrls: cleanedImageUrls,
+          videoUrls: cleanedVideoUrls,
+          virtualTourImages: cleanedVirtualTourImages,
           aiAuditResults: auditResults // Save AI Audit results
         };
       } else {
         // Regular user editing their own listing - maintain ownership
         requestBody = {
           ...formData,
+          imageUrls: cleanedImageUrls,
+          videoUrls: cleanedVideoUrls,
+          virtualTourImages: cleanedVirtualTourImages,
           userRef: currentUser._id,
           aiAuditResults: auditResults // Save AI Audit results
         };
@@ -694,7 +723,9 @@ export default function EditListing() {
       // For rentals, sync regular price with monthly rent
       if (requestBody.type === 'rent') {
         requestBody.regularPrice = requestBody.monthlyRent;
-        requestBody.discountPrice = 0;
+        if (!requestBody.offer) {
+          requestBody.discountPrice = 0;
+        }
       }
 
       const options = {
@@ -1154,17 +1185,20 @@ export default function EditListing() {
               </div>
               <div className="flex flex-col">
                 <span className="text-gray-700 dark:text-gray-300 font-medium mb-1 transition-colors">Discount Price (₹)</span>
-                <fieldset disabled={isLocked || formData.type === 'rent'} className="contents">
+                <fieldset disabled={isLocked || !formData.offer} className="contents">
                   <input
                     type="number"
                     id="discountPrice"
-                    disabled={formData.type === 'rent' || isLocked}
+                    disabled={!formData.offer || isLocked}
                     onChange={onHandleChanges}
-                    value={formData.type === 'rent' ? 0 : formData.discountPrice}
+                    value={formData.offer ? formData.discountPrice : 0}
                     placeholder="Enter discount"
-                    className={`w-full p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${formData.type === 'rent' || isLocked ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : ''}`}
+                    className={`w-full p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${!formData.offer || isLocked ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : ''}`}
                   />
                 </fieldset>
+                {formData.type === 'rent' && formData.offer && (
+                  <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">Discounted rent price for offer. Auto-filled with monthly rent.</p>
+                )}
               </div>
             </div>
           </div>

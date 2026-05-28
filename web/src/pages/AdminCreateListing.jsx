@@ -606,10 +606,25 @@ export default function AdminCreateListing() {
       newValue = Number(value);
     }
 
-    setFormData({
+    const updatedData = {
       ...formData,
       [name || id]: newValue,
-    });
+    };
+
+    // Auto-set discountPrice to monthlyRent when offer is enabled for rent type
+    if (id === 'offer' && checked && updatedData.type === 'rent' && updatedData.monthlyRent > 0) {
+      updatedData.discountPrice = updatedData.monthlyRent;
+    }
+    // When switching to rent type with offer already enabled, auto-set discountPrice
+    if (name === 'type' && value === 'rent' && updatedData.offer && updatedData.monthlyRent > 0) {
+      updatedData.discountPrice = updatedData.monthlyRent;
+    }
+    // Reset discountPrice when offer is unchecked
+    if (id === 'offer' && !checked) {
+      updatedData.discountPrice = 0;
+    }
+
+    setFormData(updatedData);
 
     // Clear email error when user starts typing
     if (id === 'assignToEmail') {
@@ -673,8 +688,10 @@ export default function AdminCreateListing() {
     }
 
     // Images are optional
-    if (formData.regularPrice < formData.discountPrice)
+    if (formData.offer && formData.type === 'sale' && formData.regularPrice < formData.discountPrice)
       return setError("Discount price should be less than regular price");
+    if (formData.offer && formData.type === 'rent' && formData.monthlyRent < formData.discountPrice)
+      return setError("Discount price should be less than monthly rent");
 
     // Validate required address fields
     if (!formData.propertyNumber) return setError("Property number is required");
@@ -716,9 +733,17 @@ export default function AdminCreateListing() {
       console.log("Sending form data:", formData);
       console.log("ESG data being sent:", formData.esg);
 
+      // Clean up empty URLs before submission
+      const cleanedImageUrls = formData.imageUrls.filter(url => url && url.trim() !== '');
+      const cleanedVideoUrls = formData.videoUrls.filter(url => url && url.trim() !== '');
+      const cleanedVirtualTourImages = (formData.virtualTourImages || []).filter(url => url && url.trim() !== '');
+
       // Prepare submission data
       const submissionData = {
         ...formData,
+        imageUrls: cleanedImageUrls,
+        videoUrls: cleanedVideoUrls,
+        virtualTourImages: cleanedVirtualTourImages,
         userRef: currentUser._id,
         aiAuditResults: auditResults // Saving AI Audit results to database
       };
@@ -726,7 +751,9 @@ export default function AdminCreateListing() {
       // For rentals, sync regular price with monthly rent
       if (submissionData.type === 'rent') {
         submissionData.regularPrice = submissionData.monthlyRent;
-        submissionData.discountPrice = 0;
+        if (!submissionData.offer) {
+          submissionData.discountPrice = 0;
+        }
       }
 
       const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/create`, {
@@ -1181,7 +1208,7 @@ export default function AdminCreateListing() {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-gray-700 dark:text-gray-300 font-medium mb-1">Regular Price (₹)</span>
+                <span className="text-gray-700 dark:text-gray-300 font-medium mb-1">{formData.type === 'rent' ? 'Monthly Rent (₹)' : 'Regular Price (₹)'}</span>
                 <input
                   type="number"
                   id="regularPrice"
@@ -1197,12 +1224,15 @@ export default function AdminCreateListing() {
                 <input
                   type="number"
                   id="discountPrice"
-                  disabled={formData.type === 'rent'}
+                  disabled={!formData.offer}
                   onChange={onHandleChanges}
-                  value={formData.type === 'rent' ? 0 : formData.discountPrice}
+                  value={formData.offer ? formData.discountPrice : 0}
                   placeholder="Enter discount"
-                  className={`w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300 ${formData.type === 'rent' ? 'bg-gray-100 dark:bg-gray-900 cursor-not-allowed opacity-60' : ''}`}
+                  className={`w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-300 ${!formData.offer ? 'bg-gray-100 dark:bg-gray-900 cursor-not-allowed opacity-60' : ''}`}
                 />
+                {formData.type === 'rent' && formData.offer && (
+                  <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">Discounted rent price for offer. Auto-filled with monthly rent.</p>
+                )}
               </div>
             </div>
           </div>
