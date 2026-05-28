@@ -7745,119 +7745,100 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                 {message.documentUrl && (
                                                     <div className="mb-2">
-                                                        <button
-                                                            className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-gray-50"
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                try {
-                                                                    console.log('Starting download for URL:', message.documentUrl);
-
-                                                                    const response = await authenticatedFetch(message.documentUrl, { mode: 'cors' });
-                                                                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                                                                    // Get the actual file type from response headers
-                                                                    const contentType = response.headers.get('content-type') || 'application/octet-stream';
-                                                                    console.log('Response content-type:', contentType);
-
-                                                                    // Detect file type from URL if content-type is generic
-                                                                    const detectFileTypeFromUrl = (url) => {
-                                                                        const urlLower = url.toLowerCase();
-                                                                        if (urlLower.includes('.pdf')) return { mime: 'application/pdf', ext: 'pdf' };
-                                                                        if (urlLower.includes('.doc')) return { mime: 'application/msword', ext: 'doc' };
-                                                                        if (urlLower.includes('.docx')) return { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext: 'docx' };
-                                                                        if (urlLower.includes('.xls')) return { mime: 'application/vnd.ms-excel', ext: 'xls' };
-                                                                        if (urlLower.includes('.xlsx')) return { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext: 'xlsx' };
-                                                                        if (urlLower.includes('.ppt')) return { mime: 'application/vnd.ms-powerpoint', ext: 'ppt' };
-                                                                        if (urlLower.includes('.pptx')) return { mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', ext: 'pptx' };
-                                                                        if (urlLower.includes('.txt')) return { mime: 'text/plain', ext: 'txt' };
-                                                                        if (urlLower.includes('.csv')) return { mime: 'text/csv', ext: 'csv' };
-                                                                        if (urlLower.includes('.zip')) return { mime: 'application/zip', ext: 'zip' };
-                                                                        if (urlLower.includes('.rar')) return { mime: 'application/x-rar-compressed', ext: 'rar' };
-                                                                        return null;
-                                                                    };
-
-                                                                    // Use URL detection if content-type is generic
-                                                                    let finalContentType = contentType;
-                                                                    let fileExtension = 'bin';
-
-                                                                    if (contentType === 'application/octet-stream' || contentType === 'binary/octet-stream') {
-                                                                        const urlDetection = detectFileTypeFromUrl(message.documentUrl);
-                                                                        if (urlDetection) {
-                                                                            finalContentType = urlDetection.mime;
-                                                                            fileExtension = urlDetection.ext;
-                                                                            console.log('Detected from URL:', finalContentType, fileExtension);
-                                                                        }
-                                                                    } else {
-                                                                        // Use content-type mapping
-                                                                        const mimeToExt = {
-                                                                            'application/pdf': 'pdf',
-                                                                            'application/msword': 'doc',
-                                                                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-                                                                            'application/vnd.ms-excel': 'xls',
-                                                                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-                                                                            'application/vnd.ms-powerpoint': 'ppt',
-                                                                            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
-                                                                            'text/plain': 'txt',
-                                                                            'text/csv': 'csv',
-                                                                            'application/zip': 'zip',
-                                                                            'application/x-rar-compressed': 'rar'
-                                                                        };
-                                                                        fileExtension = mimeToExt[contentType] || 'bin';
-                                                                    }
-
-                                                                    const blob = await response.blob();
-                                                                    console.log('Blob size:', blob.size, 'Blob type:', blob.type);
-
-                                                                    // Create blob with correct MIME type
-                                                                    const correctedBlob = new Blob([blob], { type: finalContentType });
-                                                                    const blobUrl = window.URL.createObjectURL(correctedBlob);
-
-                                                                    // Extract filename from URL or use document name
-                                                                    let fileName = message.documentName;
-                                                                    if (!fileName) {
-                                                                        // Try to extract filename from URL
-                                                                        const urlParts = message.documentUrl.split('/');
-                                                                        const lastPart = urlParts[urlParts.length - 1];
-                                                                        if (lastPart && lastPart.includes('.')) {
-                                                                            fileName = lastPart;
-                                                                        } else {
-                                                                            // Generate filename with correct extension
-                                                                            fileName = `document-${Date.now()}.${fileExtension}`;
-                                                                        }
-                                                                    } else if (!fileName.includes('.')) {
-                                                                        // Add extension if filename doesn't have one
-                                                                        fileName = `${fileName}.${fileExtension}`;
-                                                                    }
-
-                                                                    console.log('Final filename:', fileName, 'Final MIME type:', finalContentType);
-
-                                                                    const a = document.createElement('a');
-                                                                    a.href = blobUrl;
-                                                                    a.download = fileName;
-                                                                    document.body.appendChild(a);
-                                                                    a.click();
-                                                                    document.body.removeChild(a);
-                                                                    window.URL.revokeObjectURL(blobUrl);
-
-                                                                    console.log('Download completed successfully');
-                                                                } catch (error) {
-                                                                    console.error('Download failed:', error);
-                                                                    // Fallback to direct link
-                                                                    const a = document.createElement('a');
-                                                                    a.href = message.documentUrl;
-                                                                    a.download = message.documentName || `document-${Date.now()}.pdf`;
-                                                                    a.target = '_blank';
-                                                                    document.body.appendChild(a);
-                                                                    a.click();
-                                                                    document.body.removeChild(a);
-                                                                }
-                                                            }}
+                                                        <div 
+                                                            className={`flex items-center rounded-lg border transition-all duration-200 ${
+                                                                message.role === 'user'
+                                                                    ? 'border-white/20 bg-white/10 text-white'
+                                                                    : isDarkMode
+                                                                        ? 'border-gray-700 bg-gray-900/40 text-gray-200'
+                                                                        : 'border-gray-200 bg-white text-gray-800'
+                                                            }`}
                                                         >
-                                                            <FaFileAlt className="text-blue-500" />
-                                                            <span className="text-sm">
-                                                                {message.documentName || 'Download Document'}
-                                                            </span>
-                                                        </button>
+                                                            {/* Clickable Area for Preview */}
+                                                            <div
+                                                                className={`flex items-center gap-2 px-3 py-2 flex-grow cursor-pointer transition-colors rounded-l-lg select-none min-w-0 ${
+                                                                    message.role === 'user'
+                                                                        ? 'hover:bg-white/10'
+                                                                        : isDarkMode
+                                                                            ? 'hover:bg-gray-800/80'
+                                                                            : 'hover:bg-gray-50'
+                                                                }`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const cleanUrl = message.documentUrl.split('?')[0];
+                                                                    const ext = cleanUrl.split('.').pop().toLowerCase();
+                                                                    let type = 'document';
+                                                                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+                                                                    else if (ext === 'pdf') type = 'pdf';
+
+                                                                    const pathPrefix = currentUser ? (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user') : '';
+                                                                    const previewUrl = `${pathPrefix}/view/preview?url=${encodeURIComponent(message.documentUrl)}&name=${encodeURIComponent(message.documentName || 'Document')}&type=${type}`;
+                                                                    window.open(previewUrl, '_blank');
+                                                                }}
+                                                                title="Click to view document"
+                                                            >
+                                                                <div className={`p-1.5 rounded flex-shrink-0 ${
+                                                                    message.role === 'user'
+                                                                        ? 'bg-white/20 text-white'
+                                                                        : 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
+                                                                }`}>
+                                                                    <FaFileAlt size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium truncate max-w-[180px] sm:max-w-[240px]">
+                                                                    {message.documentName || 'Document'}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Separator */}
+                                                            <div className={`w-[1px] self-stretch flex-shrink-0 ${
+                                                                message.role === 'user' ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'
+                                                            }`} />
+
+                                                            {/* Download Button */}
+                                                            <button
+                                                                className={`p-2.5 flex items-center justify-center flex-shrink-0 transition-colors rounded-r-lg ${
+                                                                    message.role === 'user'
+                                                                        ? 'text-white/80 hover:text-white hover:bg-white/10'
+                                                                        : isDarkMode
+                                                                            ? 'text-gray-400 hover:text-white hover:bg-gray-800/80'
+                                                                            : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                                                                }`}
+                                                                title="Download Document"
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        console.log('Starting download for URL:', message.documentUrl);
+
+                                                                        const response = await authenticatedFetch(message.documentUrl, { mode: 'cors' });
+                                                                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                                                                        const blob = await response.blob();
+                                                                        const blobUrl = window.URL.createObjectURL(blob);
+                                                                        const a = document.createElement('a');
+                                                                        a.href = blobUrl;
+                                                                        a.download = message.documentName || `document-${Date.now()}`;
+                                                                        document.body.appendChild(a);
+                                                                        a.click();
+                                                                        a.remove();
+                                                                        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+                                                                        toast.success('Document downloaded successfully');
+                                                                    } catch (error) {
+                                                                        console.error('Download failed:', error);
+                                                                        // Fallback to direct link
+                                                                        const a = document.createElement('a');
+                                                                        a.href = message.documentUrl;
+                                                                        a.download = message.documentName || `document-${Date.now()}`;
+                                                                        a.target = '_blank';
+                                                                        document.body.appendChild(a);
+                                                                        a.click();
+                                                                        a.remove();
+                                                                        toast.success('Document download started');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <FaDownload className="text-xs" />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 )}
 
