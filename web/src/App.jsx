@@ -502,6 +502,20 @@ function AppRoutes({ bootstrapped }) {
 
   // Persistent session check on app load — single source of truth for auth verification
   useEffect(() => {
+    const isTransfer = sessionStorage.getItem('transfer_pending') === 'true';
+    const isTransferFailed = sessionStorage.getItem('transfer_failed') === 'true';
+    const hasSessionConflict = sessionStorage.getItem('transfer_session_conflict') === 'true';
+
+    // Clean up transfer flags immediately so they don't persist across refreshes
+    sessionStorage.removeItem('transfer_pending');
+    sessionStorage.removeItem('transfer_failed');
+    sessionStorage.removeItem('transfer_session_conflict');
+
+    // If the transfer token was malformed/expired, show error immediately
+    if (isTransferFailed) {
+      toast.error('Session transfer failed — the token was invalid or expired. Please sign in again.', { autoClose: 6000 });
+    }
+
     const checkSession = async () => {
       // If no token exists at all, user is not logged in — skip server verification
       if (!localStorage.getItem('accessToken')) {
@@ -518,6 +532,15 @@ function AppRoutes({ bootstrapped }) {
         if (res.ok && data.authenticated !== false && data._id) {
           // Server confirmed session is valid — update Redux with fresh user data
           dispatch(verifyAuthSuccess(data));
+
+          // Show transfer-specific feedback
+          if (isTransfer) {
+            if (hasSessionConflict) {
+              toast.info('Session transferred from another server. Your previous session on this domain was replaced.', { autoClose: 5000 });
+            } else {
+              toast.success('Session transferred successfully from backup server.', { autoClose: 4000 });
+            }
+          }
         } else {
           // Server explicitly confirmed session is invalid — clean up completely
           localStorage.removeItem('accessToken');
@@ -526,10 +549,18 @@ function AppRoutes({ bootstrapped }) {
           await persistor.purge();
           dispatch(verifyAuthFailure(data.message || 'Session invalid'));
           dispatch(signoutUserSuccess());
+
+          // Show transfer-specific error
+          if (isTransfer) {
+            toast.error('Session transfer failed — the session is no longer valid. Please sign in again.', { autoClose: 6000 });
+          }
         }
       } catch (err) {
         console.warn('Session verification network error, keeping existing state:', err);
         // Do NOT sign out on network error — trust local persisted state for resilience
+        if (isTransfer) {
+          toast.warning('Session transferred but could not verify with server. You may need to sign in again if issues persist.', { autoClose: 5000 });
+        }
       } finally {
         setSessionChecked(true);
       }
@@ -1107,7 +1138,7 @@ export default function App({ bootstrapped }) {
   // Set this to true to halt all services and show the maintenance page
   const MAINTENANCE_MODE = false;
 
-  // Handle cross-domain auth transfer
+  // Handle cross-domain auth transfer with JWT validation
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const transferToken = params.get('transfer_token');
@@ -1115,11 +1146,45 @@ export default function App({ bootstrapped }) {
     const transferRefresh = params.get('transfer_refresh');
 
     if (transferToken) {
-      localStorage.setItem('accessToken', transferToken);
-      if (transferSession) localStorage.setItem('sessionId', transferSession);
-      if (transferRefresh) localStorage.setItem('refreshToken', transferRefresh);
+      // Validate JWT structure before storing (must be 3 dot-separated base64 parts with valid payload)
+      let isValid = false;
+      try {
+        const parts = transferToken.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          // Check that the token has an expiry and is not already expired
+          if (payload && payload.exp && payload.exp > Date.now() / 1000) {
+            isValid = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Transfer token validation failed:', e.message);
+      }
 
-      // Clean URL
+      if (isValid) {
+        // Check if there was an existing session for a different user
+        const existingToken = localStorage.getItem('accessToken');
+        if (existingToken) {
+          try {
+            const existingPayload = JSON.parse(atob(existingToken.split('.')[1]));
+            const transferPayload = JSON.parse(atob(transferToken.split('.')[1]));
+            if (existingPayload.id && transferPayload.id && existingPayload.id !== transferPayload.id) {
+              sessionStorage.setItem('transfer_session_conflict', 'true');
+            }
+          } catch (e) { /* ignore comparison errors */ }
+        }
+
+        localStorage.setItem('accessToken', transferToken);
+        if (transferSession) localStorage.setItem('sessionId', transferSession);
+        if (transferRefresh) localStorage.setItem('refreshToken', transferRefresh);
+        // Flag so AppRoutes checkSession can show transfer-specific feedback
+        sessionStorage.setItem('transfer_pending', 'true');
+      } else {
+        // Token is malformed or expired — don't store, flag for error toast
+        sessionStorage.setItem('transfer_failed', 'true');
+      }
+
+      // Always clean URL regardless of validation outcome
       params.delete('transfer_token');
       params.delete('transfer_session');
       params.delete('transfer_refresh');
