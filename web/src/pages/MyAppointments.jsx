@@ -286,7 +286,7 @@ export default function MyAppointments() {
     };
     fetchAppointments();
     fetchArchivedAppointments();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   // Separate useEffect for pagination and filtering
   useEffect(() => {
@@ -8903,7 +8903,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 {/* Messages Container */}
                 <div className="flex-1 flex flex-col min-h-0 relative">
                   {isDragOver && (
-                    <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white animate-fadeIn pointer-events-none">
+                    <div className="absolute inset-0 bg-transparent backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white animate-fadeIn pointer-events-none">
                       <div className="relative flex items-center justify-center w-40 h-40 mb-6">
                         {/* Terminal/Code Icon (Left) */}
                         <div className="absolute w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl shadow-lg flex items-center justify-center transform -rotate-12 -translate-x-12 translate-y-2 border border-white/20">
