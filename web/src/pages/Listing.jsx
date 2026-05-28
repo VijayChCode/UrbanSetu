@@ -2292,8 +2292,8 @@ export default function Listing() {
                         </div>
                       )}
 
-                      {/* 360 Tour Trigger Overlay - Only on the first image if tour exists or for demo */}
-                      {index === 0 && (listing.virtualTourImages?.length > 0 || true) && (
+                      {/* 360 Tour Trigger Overlay - Only on the first image if tour exists, user is logged in, and property is verified */}
+                      {index === 0 && currentUser && listing.isVerified && listing.virtualTourImages?.length > 0 && (
                         <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
