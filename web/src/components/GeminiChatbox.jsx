@@ -5342,6 +5342,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const handleImageLinkSubmit = async (e) => {
         if (e) e.preventDefault();
 
+        if (!currentUser) {
+            toast.info('Please login to use image link');
+            return;
+        }
+
         if (!imageLinkInput.trim()) {
             toast.error('Please enter a valid image URL');
             return;
@@ -8499,12 +8504,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </div>
                                                             <span className="text-sm font-medium">Voice Input</span>
                                                         </button>
-
                                                         <button
                                                             type="button"
                                                             onClick={() => {
                                                                 if (isBlockedByPolicy) {
                                                                     toast.warning('Image auditing is disabled during your policy cooldown.');
+                                                                    return;
+                                                                }
+                                                                if (!currentUser) {
+                                                                    toast.info('Please login to use image link');
                                                                     return;
                                                                 }
                                                                 setShowImageLinkModal(true);
