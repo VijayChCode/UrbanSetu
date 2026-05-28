@@ -146,7 +146,7 @@ export default function Appointment() {
       }
     }
     checkActiveAppointment();
-  }, [currentUser, listingId]);
+  }, [currentUser?._id, listingId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

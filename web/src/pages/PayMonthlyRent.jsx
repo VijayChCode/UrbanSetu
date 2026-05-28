@@ -63,7 +63,7 @@ export default function PayMonthlyRent() {
         })
         .catch(err => console.error("Error fetching coins:", err));
     }
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   useEffect(() => {
     if (!contractId) {
@@ -79,7 +79,7 @@ export default function PayMonthlyRent() {
     }
 
     fetchContractAndWallet();
-  }, [contractId, currentUser]);
+  }, [contractId, currentUser?._id]);
 
   const fetchContractAndWallet = async () => {
     try {

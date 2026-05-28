@@ -125,7 +125,7 @@ export default function RentProperty() {
     if (currentUser) {
       fetchGamification();
     }
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   // Listen for payment status updates from other tabs/modals
   useEffect(() => {
@@ -473,7 +473,7 @@ export default function RentProperty() {
     };
 
     fetchListingAndContract();
-  }, [listingId, contractIdParam, currentUser, navigate]);
+  }, [listingId, contractIdParam, currentUser?._id, navigate]);
 
   useEffect(() => {
     if (booking) {
