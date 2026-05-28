@@ -153,7 +153,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
   // Add scroll event listener for messages container
   useEffect(() => {
     const messagesContainer = messagesContainerRef.current;
-    if (messagesContainer && activeTab === 'messages') {
+    if (messagesContainer && activeTab === 'messages' && isModalOpen) {
       messagesContainer.addEventListener('scroll', checkIfAtBottom);
       // Check initial position
       checkIfAtBottom();
@@ -162,7 +162,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
         messagesContainer.removeEventListener('scroll', checkIfAtBottom);
       };
     }
-  }, [activeTab, checkIfAtBottom]);
+  }, [activeTab, isModalOpen, checkIfAtBottom]);
 
   // Filter messages logic
   const filteredMessages = React.useMemo(() => {
@@ -210,6 +210,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
+    setIsAtBottom(true);
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     } else if (messagesContainerRef.current) {
@@ -1010,7 +1011,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
             )}
 
             {/* Floating Scroll to bottom button - WhatsApp style */}
-            {!isAtBottom && userMessages.length > 0 && activeTab === 'messages' && (
+            {!isAtBottom && filteredMessages.length > 0 && activeTab === 'messages' && (
               <div className="absolute bottom-6 right-6 z-20">
                 <button
                   onClick={scrollToBottom}
