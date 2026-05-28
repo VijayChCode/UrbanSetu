@@ -1,33 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const AdvancedImage = ({ src, alt, className, ...props }) => {
-    const imgRef = React.useRef(null);
-    
     // Check if source is truly missing or invalid
     const isSourceEmpty = !src || 
                          (Array.isArray(src) && src.length === 0) || 
                          (typeof src === 'string' && (src.trim() === '' || src === 'undefined' || src === 'null'));
     
+    const [currentSrc, setCurrentSrc] = useState(src);
     const [isLoading, setIsLoading] = useState(!isSourceEmpty);
     const [hasError, setHasError] = useState(isSourceEmpty);
 
-    // Immediate check for cached images
-    React.useEffect(() => {
-        if (imgRef.current?.complete && !isSourceEmpty) {
-            setIsLoading(false);
-            setHasError(false);
-        }
-    }, [src, isSourceEmpty]);
-
-    React.useEffect(() => {
-        const sourceEmpty = !src || 
-                           (Array.isArray(src) && src.length === 0) || 
-                           (typeof src === 'string' && (src.trim() === '' || src === 'undefined' || src === 'null'));
-        
-        setIsLoading(!sourceEmpty);
-        setHasError(sourceEmpty);
-    }, [src]);
+    // Sync state synchronously during render when src changes
+    if (src !== currentSrc) {
+        setCurrentSrc(src);
+        setIsLoading(!isSourceEmpty);
+        setHasError(isSourceEmpty);
+    }
 
     const handleLoad = () => {
         setIsLoading(false);
@@ -38,6 +27,17 @@ const AdvancedImage = ({ src, alt, className, ...props }) => {
         setIsLoading(false);
         setHasError(true);
     };
+
+    // Callback ref to immediately detect if the image is already cached/completed by the browser
+    const imgRefCallback = useCallback((node) => {
+        if (node && node.complete && !isSourceEmpty) {
+            // Already loaded from cache, update state safely in next tick
+            setTimeout(() => {
+                setIsLoading(false);
+                setHasError(false);
+            }, 0);
+        }
+    }, [isSourceEmpty]);
 
     return (
         <div className={`relative overflow-hidden ${className}`}>
@@ -54,7 +54,7 @@ const AdvancedImage = ({ src, alt, className, ...props }) => {
                 </div>
             ) : (
                 <img
-                    ref={imgRef}
+                    ref={imgRefCallback}
                     src={src}
                     alt={alt}
                     onLoad={handleLoad}
