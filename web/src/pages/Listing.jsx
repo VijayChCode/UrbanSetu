@@ -222,6 +222,8 @@ export default function Listing() {
   const [recommendations, setRecommendations] = useState([]);
   const [recsLoading, setRecsLoading] = useState(true);
   const [visibleRecsCount, setVisibleRecsCount] = useState(4);
+  const [vrTextExpanded, setVrTextExpanded] = useState(true);
+  const [isVrHovered, setIsVrHovered] = useState(false);
 
   const listingAvailabilityStatus = listing?.availabilityStatus;
   const isListingUnavailable = listing && UNAVAILABLE_STATUSES.includes(listingAvailabilityStatus);
@@ -600,6 +602,14 @@ export default function Listing() {
       document.body.classList.remove('modal-open');
     };
   }, [showReasonModal, showPasswordModal, showAssignOwnerModal, showDeassignModal, showReportModal, showCalculatorModal, showComparisonModal, showPropertySearch, showAIRecommendations]);
+
+  // Collapse VR button text after 4 seconds of page load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVrTextExpanded(false);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Check if user is admin
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'rootadmin';
@@ -2292,26 +2302,38 @@ export default function Listing() {
                         </div>
                       )}
 
-                      {/* 360 Tour Trigger Overlay - Only on the first image if tour exists, user is logged in, and property is verified */}
+                      {/* 360 Tour Trigger Overlay - Floating action badge on the top-left */}
                       {index === 0 && currentUser && listing.isVerified && listing.virtualTourImages?.length > 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                        <div className="absolute top-4 left-4 z-30 pointer-events-auto">
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               setShowImmersiveTour(true);
                             }}
-                            className="pointer-events-auto bg-black/40 hover:bg-blue-600/80 backdrop-blur-xl text-white px-6 py-3 rounded-2xl border border-white/20 shadow-2xl flex items-center gap-3 transition-all group cursor-pointer"
+                            onMouseEnter={() => setIsVrHovered(true)}
+                            onMouseLeave={() => setIsVrHovered(false)}
+                            className="bg-black/60 hover:bg-blue-600/90 backdrop-blur-md text-white rounded-full flex items-center shadow-lg border border-white/20 transition-all cursor-pointer overflow-hidden p-2 gap-1.5"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
-                            <div className="p-2 bg-white/10 rounded-xl group-hover:bg-white/20 transition-colors">
-                              <FaVrCardboard className="text-xl md:text-2xl animate-pulse" />
+                            <div className="p-1 bg-white/10 rounded-full flex items-center justify-center">
+                              <FaVrCardboard className="text-sm sm:text-base animate-pulse text-blue-300" />
                             </div>
-                            <div className="text-left">
-                              <span className="block text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Experience in VR</span>
-                              <span className="block text-sm md:text-base font-black uppercase tracking-widest">Start 360° Tour</span>
-                            </div>
+                            <AnimatePresence>
+                              {(vrTextExpanded || isVrHovered) && (
+                                <motion.div
+                                  initial={{ width: 0, opacity: 0 }}
+                                  animate={{ width: "auto", opacity: 1 }}
+                                  exit={{ width: 0, opacity: 0 }}
+                                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                                  className="flex flex-col text-left pr-2.5 overflow-hidden whitespace-nowrap"
+                                >
+                                  <span className="block text-[8px] font-black uppercase tracking-[0.15em] opacity-75">Experience in VR</span>
+                                  <span className="block text-xs font-bold uppercase tracking-wider">Start 360° Tour</span>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </motion.button>
                         </div>
                       )}
