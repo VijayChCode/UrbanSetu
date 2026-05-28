@@ -106,7 +106,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isOpen, currentUser, isOwner, listingId]);
+    }, [isOpen, currentUser?._id, isOwner, listingId]);
 
     // 2. Fetch Owner's Inbox (All chats for this user)
     // Note: The controller `getUserChats` returns ALL chats for the user.
