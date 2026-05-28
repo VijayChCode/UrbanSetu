@@ -150,6 +150,16 @@ class GlobalErrorBoundary extends React.Component {
         return "/search";
     };
 
+    getHomePath = () => {
+        const currentUser = this.getCurrentUser();
+        if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) {
+            return "/admin";
+        } else if (currentUser) {
+            return "/user";
+        }
+        return "/";
+    };
+
     fetchRecommendations = async () => {
         const currentUser = this.getCurrentUser();
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -285,19 +295,19 @@ class GlobalErrorBoundary extends React.Component {
 
                     <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 text-center shadow-2xl relative z-10">
                         {/* Header logo */}
-                        <div className="flex flex-col items-center mb-8">
+                        <a href={this.getHomePath()} className="flex flex-col items-center mb-8 group cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]">
                             <div className="flex items-center gap-3">
                                 <img
                                     src="/favicon.png"
                                     alt="UrbanSetu Logo"
-                                    className="w-12 h-12 rounded-xl object-contain shadow-lg"
+                                    className="w-12 h-12 rounded-xl object-contain shadow-lg group-hover:shadow-blue-500/20 transition-all duration-300"
                                 />
                                 <div className="flex flex-col items-start leading-none text-left">
-                                    <span className="text-2xl font-black text-white tracking-tighter">UrbanSetu</span>
+                                    <span className="text-2xl font-black text-white tracking-tighter group-hover:text-blue-400 transition-colors">UrbanSetu</span>
                                     <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mt-1">Real Estate Excellence</span>
                                 </div>
                             </div>
-                        </div>
+                        </a>
 
                         {/* Pulse warning icon */}
                         <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
