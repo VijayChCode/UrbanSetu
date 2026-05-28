@@ -739,6 +739,26 @@ export default function EditListing() {
       if (res.ok) {
         setHasUnsavedChanges(false);
         toast.success(data.message || "Property Details Updated Successfully!!");
+        
+        if (!formData.isVerified) {
+          const verificationUrl = `/user/property-verification?listingId=${params.listingId}`;
+            
+          setTimeout(() => {
+            toast.info(
+              <div>
+                <p className="mb-2">Get your property verified to build trust!</p>
+                <button
+                  onClick={() => navigate(verificationUrl)}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                >
+                  Request Verification
+                </button>
+              </div>,
+              { autoClose: 8000 }
+            );
+          }, 1000);
+        }
+
         navigate(getPreviousPath());
       } else {
         const errorMessage = data.message || "Failed to update listing";
