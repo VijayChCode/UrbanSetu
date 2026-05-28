@@ -34,7 +34,7 @@ export default function MyDeletedListings() {
         if (currentUser) {
             fetchDeletedListings();
         }
-    }, [currentUser, filters]);
+    }, [currentUser?._id, filters]);
 
     // Reset pagination when filters change (already triggered by dependency above re-fetching, 
     // but if we want client-side pagination on fetched data, we reset page here)
