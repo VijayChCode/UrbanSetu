@@ -2943,7 +2943,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (imageFiles.length > 0) {
             e.preventDefault();
             if (!currentUser) {
-                toast.info('Please login to upload images');
+                toast.info('Please login to upload files');
                 return;
             }
             await uploadFilesAndSend(imageFiles);
@@ -2991,7 +2991,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         dragCounterRef.current = 0;
 
         if (!currentUser) {
-            toast.info('Please login to upload images');
+            toast.info('Please login to upload files');
             return;
         }
 
@@ -7425,31 +7425,46 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             {isDraggingOver && (
                                 <div className="absolute inset-0 bg-transparent backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white animate-fadeIn pointer-events-none">
                                     <div className="relative flex items-center justify-center w-40 h-40 mb-6">
-                                        {/* Terminal/Code Icon (Left) */}
-                                        <div className="absolute w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl shadow-lg flex items-center justify-center transform -rotate-12 -translate-x-12 translate-y-2 border border-white/20">
-                                            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
-                                        {/* Document Icon (Center/Back) */}
-                                        <div className="absolute w-16 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-xl flex flex-col justify-between p-3 transform -translate-y-4 border border-white/20">
-                                            <div className="w-6 h-1.5 bg-white/40 rounded"></div>
-                                            <div className="space-y-1.5 flex-1 mt-3">
-                                                <div className="w-full h-1 bg-white/70 rounded"></div>
-                                                <div className="w-full h-1 bg-white/70 rounded"></div>
-                                                <div className="w-3/4 h-1 bg-white/70 rounded"></div>
+                                        {/* File Card Group Container with optional opacity/blur */}
+                                        <div className={`relative flex items-center justify-center w-40 h-40 transition-all duration-300 ${!currentUser ? 'opacity-40 blur-[1px]' : ''}`}>
+                                            {/* Terminal/Code Icon (Left) */}
+                                            <div className="absolute w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl shadow-lg flex items-center justify-center transform -rotate-12 -translate-x-12 translate-y-2 border border-white/20">
+                                                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            {/* Document Icon (Center/Back) */}
+                                            <div className="absolute w-16 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-xl flex flex-col justify-between p-3 transform -translate-y-4 border border-white/20">
+                                                <div className="w-6 h-1.5 bg-white/40 rounded"></div>
+                                                <div className="space-y-1.5 flex-1 mt-3">
+                                                    <div className="w-full h-1 bg-white/70 rounded"></div>
+                                                    <div className="w-full h-1 bg-white/70 rounded"></div>
+                                                    <div className="w-3/4 h-1 bg-white/70 rounded"></div>
+                                                </div>
+                                            </div>
+                                            {/* Image Icon (Right/Front) */}
+                                            <div className="absolute w-16 h-16 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl shadow-2xl flex items-center justify-center transform rotate-12 translate-x-12 translate-y-2 border border-white/20">
+                                                <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
                                             </div>
                                         </div>
-                                        {/* Image Icon (Right/Front) */}
-                                        <div className="absolute w-16 h-16 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl shadow-2xl flex items-center justify-center transform rotate-12 translate-x-12 translate-y-2 border border-white/20">
-                                            <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
+                                        {/* Floating Lock Icon overlay for public view */}
+                                        {!currentUser && (
+                                            <div className="absolute w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/30 transform scale-110 animate-pulse z-10">
+                                                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                            </div>
+                                        )}
                                     </div>
-                                    <h3 className="text-2xl font-bold text-white mb-2">Add anything</h3>
+                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                        {currentUser ? 'Add anything' : 'Login Required'}
+                                    </h3>
                                     <p className="text-gray-300 text-sm max-w-xs text-center px-4">
-                                        Drop any file here to add it to the conversation
+                                        {currentUser 
+                                            ? 'Drop any file here to add it to the conversation' 
+                                            : 'Please log in to upload files and use attachments with SetuAI'}
                                     </p>
                                 </div>
                             )}
