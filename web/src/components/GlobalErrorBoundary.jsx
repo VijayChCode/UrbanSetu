@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight, FaRobot, FaRocket } from 'react-icons/fa';
+import { FaServer, FaExclamationTriangle, FaSync, FaArrowRight, FaEnvelope, FaRobot, FaRocket } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 import ListingItem from './ListingItem';
 import { getLiveRecommendations, restoreFromServer } from '../utils/sentinelLiveEngine';
