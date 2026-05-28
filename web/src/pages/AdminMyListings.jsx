@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEdit, FaTrash, FaEye, FaPlus, FaLock } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaPlus, FaLock, FaShieldAlt } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
@@ -35,6 +35,7 @@ export default function AdminMyListings() {
     offer: 'all',
     furnished: 'all',
     parking: 'all',
+    published: 'all',
     city: '',
     state: ''
   });
@@ -182,7 +183,8 @@ export default function AdminMyListings() {
     const matchesParking = filters.parking === 'all' ? true : (filters.parking === 'true' ? !!l.parking : !l.parking);
     const matchesCity = filters.city ? (l.city && l.city.toLowerCase().includes(filters.city.toLowerCase())) : true;
     const matchesState = filters.state ? (l.state && l.state.toLowerCase().includes(filters.state.toLowerCase())) : true;
-    return matchesSearch && matchesType && matchesOffer && matchesFurnished && matchesParking && matchesCity && matchesState;
+    const matchesPublished = filters.published === 'all' ? true : (filters.published === 'true' ? !!l.isVerified : !l.isVerified);
+    return matchesSearch && matchesType && matchesOffer && matchesFurnished && matchesParking && matchesCity && matchesState && matchesPublished;
   });
 
   if (loading) {
@@ -235,6 +237,11 @@ export default function AdminMyListings() {
                   <option value="all">Offer: Any</option>
                   <option value="true">Offer: Yes</option>
                   <option value="false">Offer: No</option>
+                </select>
+                <select className="border dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700" value={filters.published} onChange={(e) => setFilters({ ...filters, published: e.target.value })}>
+                  <option value="all">Status: Any</option>
+                  <option value="true">Verified (Published)</option>
+                  <option value="false">Pending (Unpublished)</option>
                 </select>
                 <div className="grid grid-cols-2 gap-2">
                   <select className="border dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700" value={filters.furnished} onChange={(e) => setFilters({ ...filters, furnished: e.target.value })}>
@@ -358,6 +365,36 @@ export default function AdminMyListings() {
                           <span>{listing.furnished ? 'Furnished' : 'Unfurnished'}</span>
                           <span>{listing.parking ? 'Parking' : 'No Parking'}</span>
                         </div>
+
+                        {/* Verification Status - For All Properties */}
+                        {!listing.isVerified ? (
+                          <div className="mb-3 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-600 p-3 rounded transition-colors">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-shrink-0 mt-0.5">
+                                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-200 mb-1 transition-colors">Not Published</p>
+                                <p className="text-xs text-yellow-700 dark:text-yellow-300 transition-colors">Complete verification to make this property visible to buyers</p>
+
+                                <button
+                                  onClick={() => navigate(`/admin/property-verification?listingId=${listing._id}`)}
+                                  className="mt-2 px-3 py-1.5 bg-yellow-600 text-white rounded text-xs font-semibold hover:bg-yellow-700 transition flex items-center gap-1"
+                                >
+                                  <FaShieldAlt /> Verify Property
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-3">
+                            <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs font-semibold flex items-center gap-1 w-fit transition-colors">
+                              <FaShieldAlt /> Verified
+                            </span>
+                          </div>
+                        )}
 
                         {/* Actions */}
                         <div className="flex gap-2">

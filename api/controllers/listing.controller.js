@@ -911,17 +911,23 @@ export const getListings = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10
     const startIndex = parseInt(req.query.startIndex) || 0
     let offer = req.query.offer
-    if (offer === undefined || offer === 'false') {
+    if (offer === undefined || offer === 'all') {
       offer = { $in: [false, true] }
+    } else {
+      offer = offer === 'true'
     }
 
     let furnished = req.query.furnished
-    if (furnished === undefined || furnished === 'false') {
+    if (furnished === undefined || furnished === 'all') {
       furnished = { $in: [false, true] }
+    } else {
+      furnished = furnished === 'true'
     }
     let parking = req.query.parking
-    if (parking === undefined || parking === 'false') {
+    if (parking === undefined || parking === 'all') {
       parking = { $in: [false, true] }
+    } else {
+      parking = parking === 'true'
     }
 
     let type = req.query.type
@@ -997,7 +1003,7 @@ export const getListings = async (req, res, next) => {
     if (published === 'true') {
       query.isVerified = true;
     } else if (published === 'false') {
-      query.isVerified = false;
+      query.isVerified = { $ne: true };
     }
 
     // Verification Filter: Only show verified and public properties to non-admin users

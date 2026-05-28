@@ -35,6 +35,7 @@ export default function MyListings() {
     offer: 'all',
     furnished: 'all',
     parking: 'all',
+    published: 'all',
     city: '',
     state: ''
   });
@@ -171,7 +172,8 @@ export default function MyListings() {
     const matchesParking = filters.parking === 'all' ? true : (filters.parking === 'true' ? !!l.parking : !l.parking);
     const matchesCity = filters.city ? (l.city && l.city.toLowerCase().includes(filters.city.toLowerCase())) : true;
     const matchesState = filters.state ? (l.state && l.state.toLowerCase().includes(filters.state.toLowerCase())) : true;
-    return matchesSearch && matchesType && matchesOffer && matchesFurnished && matchesParking && matchesCity && matchesState;
+    const matchesPublished = filters.published === 'all' ? true : (filters.published === 'true' ? !!l.isVerified : !l.isVerified);
+    return matchesSearch && matchesType && matchesOffer && matchesFurnished && matchesParking && matchesCity && matchesState && matchesPublished;
   });
 
   if (loading) {
@@ -244,6 +246,11 @@ export default function MyListings() {
                   <option value="false">No Parking</option>
                 </select>
               </div>
+              <select className="border dark:border-gray-700 rounded px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" value={filters.published} onChange={(e) => setFilters({ ...filters, published: e.target.value })}>
+                <option value="all">Status: Any</option>
+                <option value="true">Verified (Published)</option>
+                <option value="false">Pending (Unpublished)</option>
+              </select>
               <input
                 type="text"
                 value={filters.city}
