@@ -12,7 +12,26 @@ class GlobalErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
         const params = new URLSearchParams(window.location.search);
-        const urlSwitchCount = parseInt(params.get('err_switch_count') || '0');
+        const urlSwitchCountStr = params.get('err_switch_count');
+        let urlSwitchCount = 0;
+
+        if (urlSwitchCountStr !== null) {
+            urlSwitchCount = parseInt(urlSwitchCountStr || '0');
+            // Persist immediately on this origin's localStorage to handle URL overrides/cleanups safely
+            localStorage.setItem('err_switch_count_persistent', urlSwitchCount.toString());
+            
+            // Clean URL query parameter so the URL stays completely pristine
+            try {
+                params.delete('err_switch_count');
+                const newSearch = params.toString();
+                const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+                window.history.replaceState({}, '', newPath);
+            } catch (e) { }
+        } else {
+            // Fallback to the persistent localStorage value on this origin
+            urlSwitchCount = parseInt(localStorage.getItem('err_switch_count_persistent') || '0');
+        }
+
         this.state = {
             hasError: false,
             error: null,
@@ -243,10 +262,8 @@ class GlobalErrorBoundary extends React.Component {
 
     handleReset = () => {
         sessionStorage.removeItem('err_reload_count');
-        const params = new URLSearchParams(window.location.search);
-        params.delete('err_switch_count');
-        const newSearch = params.toString();
-        window.location.href = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+        localStorage.removeItem('err_switch_count_persistent');
+        window.location.href = window.location.pathname;
     };
 
     render() {
