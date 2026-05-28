@@ -507,6 +507,19 @@ export default function AdminListings() {
     );
   }
 
+  const isFilterActive = 
+    !!(filters.searchTerm ||
+    filters.type !== 'all' ||
+    filters.offer !== 'all' ||
+    filters.furnished !== 'all' ||
+    filters.parking !== 'all' ||
+    filters.minPrice ||
+    filters.maxPrice ||
+    filters.city ||
+    filters.state ||
+    filters.published !== 'all' ||
+    filters.ownerSearch);
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-950 py-10 px-2 md:px-8 transition-colors duration-300">
@@ -592,17 +605,43 @@ export default function AdminListings() {
             </div>
 
             {listings.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-6xl mb-4">🏠</div>
-                <h4 className="text-xl font-semibold text-gray-600 dark:text-gray-300 mb-2">No listings yet</h4>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">Start by creating your first property listing</p>
-                <Link
-                  to="/admin/create-listing"
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold inline-flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
-                >
-                  <FaPlus /> <span>Create Your First Listing</span>
-                </Link>
-              </div>
+              isFilterActive ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍</div>
+                  <h4 className="text-xl font-semibold text-gray-600 dark:text-gray-300 mb-2">No matching properties found</h4>
+                  <p className="text-gray-500 dark:text-gray-400 mb-6">Try resetting your filters or adjusting your search term.</p>
+                  <button
+                    onClick={() => setFilters({
+                      searchTerm: '',
+                      type: 'all',
+                      offer: 'all',
+                      furnished: 'all',
+                      parking: 'all',
+                      minPrice: '',
+                      maxPrice: '',
+                      city: '',
+                      state: '',
+                      published: 'all',
+                      ownerSearch: ''
+                    })}
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 font-semibold shadow-md transition-all hover:scale-105 active:scale-95"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 text-6xl mb-4">🏠</div>
+                  <h4 className="text-xl font-semibold text-gray-600 dark:text-gray-300 mb-2">No listings yet</h4>
+                  <p className="text-gray-500 dark:text-gray-400 mb-6">Start by creating your first property listing</p>
+                  <Link
+                    to="/admin/create-listing"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold inline-flex items-center gap-1 sm:gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+                  >
+                    <FaPlus /> <span>Create Your First Listing</span>
+                  </Link>
+                </div>
+              )
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
