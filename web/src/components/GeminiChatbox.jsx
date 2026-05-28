@@ -2943,6 +2943,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Drag and Drop handlers for the input area
     const handleDragOver = (e) => {
+        if (!enableDragAndDrop) return;
         if (isBlockedByPolicy) return;
         e.preventDefault();
         e.stopPropagation();
@@ -2951,6 +2952,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDragEnter = (e) => {
+        if (!enableDragAndDrop) return;
         if (isBlockedByPolicy) return;
         e.preventDefault();
         e.stopPropagation();
@@ -2962,6 +2964,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDragLeave = (e) => {
+        if (!enableDragAndDrop) return;
         e.preventDefault();
         e.stopPropagation();
         dragCounterRef.current -= 1;
@@ -2971,6 +2974,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDrop = async (e) => {
+        if (!enableDragAndDrop) return;
         if (isBlockedByPolicy) return;
         e.preventDefault();
         e.stopPropagation();
@@ -7403,13 +7407,49 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         </div>
 
                         {/* Messages with date dividers */}
-                        <div
-                            ref={messagesContainerRef}
-                            className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 relative"
-                            role="log"
-                            aria-live={screenReaderSupport ? "polite" : "off"}
-                            aria-label="Chat messages"
-                        >
+                        <div className="flex-1 flex flex-col min-h-0 relative">
+                            {isDraggingOver && (
+                                <div className="absolute inset-0 bg-transparent backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white animate-fadeIn pointer-events-none">
+                                    <div className="relative flex items-center justify-center w-40 h-40 mb-6">
+                                        {/* Terminal/Code Icon (Left) */}
+                                        <div className="absolute w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl shadow-lg flex items-center justify-center transform -rotate-12 -translate-x-12 translate-y-2 border border-white/20">
+                                            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        {/* Document Icon (Center/Back) */}
+                                        <div className="absolute w-16 h-20 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl shadow-xl flex flex-col justify-between p-3 transform -translate-y-4 border border-white/20">
+                                            <div className="w-6 h-1.5 bg-white/40 rounded"></div>
+                                            <div className="space-y-1.5 flex-1 mt-3">
+                                                <div className="w-full h-1 bg-white/70 rounded"></div>
+                                                <div className="w-full h-1 bg-white/70 rounded"></div>
+                                                <div className="w-3/4 h-1 bg-white/70 rounded"></div>
+                                            </div>
+                                        </div>
+                                        {/* Image Icon (Right/Front) */}
+                                        <div className="absolute w-16 h-16 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-xl shadow-2xl flex items-center justify-center transform rotate-12 translate-x-12 translate-y-2 border border-white/20">
+                                            <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">Add anything</h3>
+                                    <p className="text-gray-300 text-sm max-w-xs text-center px-4">
+                                        Drop any file here to add it to the conversation
+                                    </p>
+                                </div>
+                            )}
+                            <div
+                                ref={messagesContainerRef}
+                                className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 relative"
+                                role="log"
+                                aria-live={screenReaderSupport ? "polite" : "off"}
+                                aria-label="Chat messages"
+                                onDragOver={handleDragOver}
+                                onDragEnter={handleDragEnter}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
                             {/* Floating Date Indicator (sticky below header) */}
                             {floatingDateLabel && (
                                 <div className={`sticky top-0 left-0 right-0 z-30 pointer-events-none transition-all duration-500 ease-out ${isScrolling ? 'opacity-100 scale-100 translate-y-0 animate-floatingDateFadeIn' : 'opacity-0 scale-95 translate-y-2 animate-floatingDateFadeOut'
@@ -8175,6 +8215,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <div ref={messagesEndRef} />
                             {/* scroll button moved to container-level absolute positioning */}
                         </div>
+                    </div>
 
                         {/* Floating Scroll to bottom button - container-level absolute */}
                         {isScrolledUp && (
@@ -8369,23 +8410,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
-                            <form onSubmit={handleSubmit} className={`flex space-x-2 items-end relative`}
-                                onDragOver={handleDragOver}
-                                onDragEnter={handleDragEnter}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                            >
-                                {/* Drag and Drop Overlay */}
-                                {isDraggingOver && (
-                                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/20 border-2 border-dashed border-blue-400 rounded-xl backdrop-blur-[2px] animate-pulse pointer-events-none">
-                                        <div className="flex flex-col items-center gap-1">
-                                            <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                            </svg>
-                                            <span className="text-sm font-semibold text-blue-300">Drop files here to upload</span>
-                                        </div>
-                                    </div>
-                                )}
+                            <form onSubmit={handleSubmit} className={`flex space-x-2 items-end relative`}>
                                 <div className="flex-1 relative">
                                     {/* Voice Meter / Input Box Toggle */}
                                     {(isListening || isProcessingVoice) ? (
