@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { FaUsers, FaUser, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope, FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch, FaCalendarAlt, FaEllipsisH, FaImage, FaArrowRight, FaLock, FaFlag, FaLeaf, FaCamera, FaTrash, FaCheckCircle, FaExclamationTriangle, FaCalendar, FaTimesCircle, FaEdit, FaSmile, FaFire } from 'react-icons/fa';
+import { FaUsers, FaUser, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope, FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch, FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaLock, FaFlag, FaLeaf, FaCamera, FaTrash, FaCheckCircle, FaExclamationTriangle, FaCalendar, FaTimesCircle, FaEdit, FaSmile, FaFire } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { toast } from 'react-toastify';
 import CommunitySkeleton from '../components/skeletons/CommunitySkeleton';
