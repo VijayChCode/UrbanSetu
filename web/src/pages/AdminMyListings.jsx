@@ -73,7 +73,7 @@ export default function AdminMyListings() {
     };
 
     fetchMyListings();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   const handleDelete = (id) => {
     setPendingDeleteId(id);

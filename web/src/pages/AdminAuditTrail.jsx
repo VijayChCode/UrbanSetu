@@ -91,7 +91,7 @@ export default function AdminAuditTrail() {
     }
     fetchLogs(1);
     fetchTypes();
-  }, [fetchLogs, currentUser, navigate]);
+  }, [fetchLogs, currentUser?._id, navigate]);
 
   const handleRefresh = () => {
     fetchLogs(currentPage);
