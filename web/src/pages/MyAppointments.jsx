@@ -8901,50 +8901,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 )}
 
                 {/* Messages Container */}
-                <div
-                  ref={chatContainerRef}
-                  className={`flex-1 overflow-y-auto space-y-2 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30 dark:to-slate-900/50 ${isDragOver ? 'bg-blue-50/50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700' : ''}`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isChatSendBlocked) {
-                      setIsDragOver(true);
-                    }
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!isChatSendBlocked) {
-                      setIsDragOver(true);
-                    }
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!e.currentTarget.contains(e.relatedTarget)) {
-                      setIsDragOver(false);
-                    }
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsDragOver(false);
-
-                    if (isChatSendBlocked) {
-                      toast.info('Image sending disabled for this appointment status. You can view chat history.');
-                      return;
-                    }
-
-                    const files = Array.from(e.dataTransfer.files);
-                    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-
-                    if (imageFiles.length > 0) {
-                      handleImageFiles(imageFiles);
-                    } else if (files.length > 0) {
-                      toast.error('Only image files are supported');
-                    }
-                  }}
-                >
+                <div className="flex-1 flex flex-col min-h-0 relative">
                   {isDragOver && (
                     <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white animate-fadeIn pointer-events-none">
                       <div className="relative flex items-center justify-center w-40 h-40 mb-6">
@@ -8976,7 +8933,51 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       </p>
                     </div>
                   )}
-                  {/* Privacy Notice - First item in chat */}
+                  <div
+                    ref={chatContainerRef}
+                    className={`flex-1 overflow-y-auto space-y-2 px-4 pt-4 animate-fadeInChat relative bg-gradient-to-b from-transparent to-blue-50/30 dark:to-slate-900/50 ${isDragOver ? 'bg-blue-50/50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700' : ''}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!isChatSendBlocked) {
+                        setIsDragOver(true);
+                      }
+                    }}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!isChatSendBlocked) {
+                        setIsDragOver(true);
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!e.currentTarget.contains(e.relatedTarget)) {
+                        setIsDragOver(false);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragOver(false);
+
+                      if (isChatSendBlocked) {
+                        toast.info('Image sending disabled for this appointment status. You can view chat history.');
+                        return;
+                      }
+
+                      const files = Array.from(e.dataTransfer.files);
+                      const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+                      if (imageFiles.length > 0) {
+                        handleImageFiles(imageFiles);
+                      } else if (files.length > 0) {
+                        toast.error('Only image files are supported');
+                      }
+                    }}
+                  >
+                    {/* Privacy Notice - First item in chat */}
                   <div
                     className="px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-l-4 border-blue-400 rounded-r-lg mb-4 backdrop-blur-sm"
                   >
@@ -9933,6 +9934,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                   <div ref={chatEndRef} />
                 </div>
+              </div>
               </div>
 
               {/* Floating Reaction Bar for Bottom Positioning */}
