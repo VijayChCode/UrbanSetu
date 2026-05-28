@@ -2305,7 +2305,7 @@ export default function Listing() {
                       )}
 
                       {/* 360 Tour Trigger Overlay - Floating action badge on the top-left */}
-                      {currentUser && listing.isVerified && listing.virtualTourImages?.length > 0 && (
+                      {item.type === 'image' && currentUser && listing.isVerified && listing.virtualTourImages?.length > 0 && (
                         <div className="absolute top-4 left-4 z-30 pointer-events-auto">
                           <motion.button
                             onClick={(e) => {
