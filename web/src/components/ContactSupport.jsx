@@ -150,19 +150,17 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
     }
   }, []);
 
-  // Add scroll event listener for messages container
-  useEffect(() => {
-    const messagesContainer = messagesContainerRef.current;
-    if (messagesContainer && activeTab === 'messages' && isModalOpen) {
-      messagesContainer.addEventListener('scroll', checkIfAtBottom);
-      // Check initial position
-      checkIfAtBottom();
-
-      return () => {
-        messagesContainer.removeEventListener('scroll', checkIfAtBottom);
-      };
+  // Callback ref to attach scroll event listener dynamically when the container mounts
+  const setMessagesContainerRef = useCallback((node) => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.removeEventListener('scroll', checkIfAtBottom);
     }
-  }, [activeTab, isModalOpen, checkIfAtBottom]);
+    messagesContainerRef.current = node;
+    if (node) {
+      node.addEventListener('scroll', checkIfAtBottom);
+      checkIfAtBottom();
+    }
+  }, [checkIfAtBottom]);
 
   // Filter messages logic
   const filteredMessages = React.useMemo(() => {
@@ -922,7 +920,7 @@ export default function ContactSupport({ forceModalOpen = false, onModalClose = 
                       )}
                     </div>
 
-                    <div ref={messagesContainerRef} className="space-y-4 max-h-96 overflow-y-auto relative p-4 bg-white dark:bg-transparent">
+                    <div ref={setMessagesContainerRef} className="space-y-4 max-h-96 overflow-y-auto relative p-4 bg-white dark:bg-transparent">
                       {filteredMessages.length === 0 ? (
                         <div className="text-center py-10">
                           <FaSearch className="w-8 h-8 text-gray-300 mx-auto mb-2" />
