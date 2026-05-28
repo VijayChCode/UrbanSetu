@@ -69,7 +69,7 @@ export default function MyListings() {
     };
 
     fetchUserListings();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   const handleDelete = (id) => {
     setPendingDeleteId(id);
