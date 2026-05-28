@@ -288,6 +288,27 @@ export default function MyListings() {
                 </Link>
               </div>
             </div>
+          ) : filteredListings.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400 dark:text-gray-600 text-6xl mb-4">🔍</div>
+              <h4 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2 transition-colors">No matching properties found</h4>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 transition-colors">Try resetting your filters or adjusting your search term.</p>
+              <button
+                onClick={() => setFilters({
+                  searchTerm: '',
+                  type: 'all',
+                  offer: 'all',
+                  furnished: 'all',
+                  parking: 'all',
+                  published: 'all',
+                  city: '',
+                  state: ''
+                })}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 font-semibold shadow-md transition-all hover:scale-105 active:scale-95"
+              >
+                Clear Filters
+              </button>
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
