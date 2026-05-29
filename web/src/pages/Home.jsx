@@ -1025,6 +1025,34 @@ export default function Home() {
                 </div>
               )}
 
+              {/* ─── Unread Messages Quick Access ─── */}
+              {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && totalUnreadMessages > 0 && (
+                <Link
+                  to={`${linkPrefix}/my-appointments`}
+                  className="group block bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 animate-fade-in mt-6"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <FaCommentDots className="text-xl text-white" />
+                        </div>
+                        <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                          {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-lg">
+                          {totalUnreadMessages} Unread Message{totalUnreadMessages !== 1 ? 's' : ''}
+                        </p>
+                        <p className="text-white/70 text-xs font-medium">Tap to view your appointment chats</p>
+                      </div>
+                    </div>
+                    <FaArrowRight className="text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </div>
+                </Link>
+              )}
+
               {/* Recently Viewed Properties */}
               {recentlyViewedListings.length > 0 && (
                 <div className="mt-6">
@@ -1262,33 +1290,7 @@ export default function Home() {
             </section>
           )}
 
-          {/* ─── Unread Messages Quick Access ─── */}
-          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && totalUnreadMessages > 0 && (
-            <Link
-              to={`${linkPrefix}/my-appointments`}
-              className="group block bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 animate-fade-in"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <FaCommentDots className="text-xl text-white" />
-                    </div>
-                    <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                      {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-lg">
-                      {totalUnreadMessages} Unread Message{totalUnreadMessages !== 1 ? 's' : ''}
-                    </p>
-                    <p className="text-white/70 text-xs font-medium">Tap to view your appointment chats</p>
-                  </div>
-                </div>
-                <FaArrowRight className="text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
-              </div>
-            </Link>
-          )}
+
 
           {/* Sentinel Live Section (Real-time Session Based) - regular users only */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (
