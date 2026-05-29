@@ -42,6 +42,8 @@ export default function Community() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showMyPosts, setShowMyPosts] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     // Modal State
     const [confirmModal, setConfirmModal] = useState({
@@ -136,13 +138,54 @@ export default function Community() {
         { id: 'Marketplace', icon: FaStore, label: 'Marketplace' },
     ];
 
+    const fetchPosts = async (currentSkip = 0, isLoadMore = false) => {
+        try {
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
+
+            const limit = 5;
+            const params = new URLSearchParams();
+            if (activeTab !== 'All') params.append('category', activeTab);
+            if (searchTerm) params.append('searchTerm', searchTerm);
+            if (showMyPosts && currentUser) params.append('userId', currentUser._id);
+            if (postId) params.append('postId', postId);
+            params.append('limit', limit);
+            params.append('skip', currentSkip);
+
+            const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum?${params.toString()}`);
+            const data = await res.json();
+
+            if (res.ok) {
+                if (isLoadMore) {
+                    setPosts(prev => {
+                        const existingIds = new Set(prev.map(p => p._id));
+                        const newPosts = data.posts.filter(p => !existingIds.has(p._id));
+                        return [...prev, ...newPosts];
+                    });
+                } else {
+                    setPosts(data.posts);
+                }
+                setHasMore(data.hasMore);
+            }
+        } catch (error) {
+            console.error('Failed to fetch posts:', error);
+            toast.error('Failed to load community posts');
+        } finally {
+            if (isLoadMore) {
+                setLoadingMore(false);
+            } else {
+                setLoading(false);
+            }
+        }
+    };
+
     useEffect(() => {
         const loadData = async () => {
-            // Only show full skeleton on initial load or tab change, not during search
-            // If searching, we still want to fetch, but maybe not hide everything behind a skeleton
             try {
-                // If searching, we still want to fetch, but maybe not hide everything behind a skeleton
-                await Promise.all([fetchPosts(), fetchStats()]);
+                await Promise.all([fetchPosts(0, false), fetchStats()]);
             } catch (error) {
                 console.error("Error loading data", error);
             } finally {
@@ -152,26 +195,31 @@ export default function Community() {
         loadData();
     }, [activeTab, searchTerm, showMyPosts, postId]);
 
-    const fetchPosts = async () => {
-        try {
-            const params = new URLSearchParams();
-            if (activeTab !== 'All') params.append('category', activeTab);
-            if (searchTerm) params.append('searchTerm', searchTerm);
-            if (showMyPosts && currentUser) params.append('userId', currentUser._id);
-            if (postId) params.append('postId', postId);
-            // Auto-filter by user's location if available (optional enhancement)
+    useEffect(() => {
+        if (!hasMore || loadingMore || loading) return;
 
-            const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum?${params.toString()}`);
-            const data = await res.json();
-
-            if (res.ok) {
-                setPosts(data.posts);
+        const observer = new IntersectionObserver((entries) => {
+            const first = entries[0];
+            if (first.isIntersecting) {
+                fetchPosts(posts.length, true);
             }
-        } catch (error) {
-            console.error('Failed to fetch posts:', error);
-            toast.error('Failed to load community posts');
+        }, {
+            root: null,
+            rootMargin: '100px',
+            threshold: 0.1
+        });
+
+        const target = document.getElementById('infinite-scroll-trigger');
+        if (target) {
+            observer.observe(target);
         }
-    };
+
+        return () => {
+            if (target) {
+                observer.unobserve(target);
+            }
+        };
+    }, [hasMore, loadingMore, loading, posts.length]);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
@@ -884,15 +932,19 @@ export default function Community() {
             },
             body: JSON.stringify({ reason })
         })
-            .then(res => {
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
                 if (res.ok) {
                     toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} reported successfully`);
                     setReportModal({ isOpen: false, type: 'post', id: null, commentId: null, replyId: null });
                 } else {
-                    toast.error('Failed to report');
+                    toast.error(data.message || data.error || 'Failed to report');
                 }
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                toast.error('Failed to report');
+            });
     };
 
     const handleUpdateComment = async (e, postId, commentId) => {
@@ -1131,7 +1183,7 @@ export default function Community() {
                                     style={{ animationDelay: `${index * 0.1}s` }}
                                 >
                                     {/* Post Header */}
-                                    <div className="flex justify-between items-start mb-4">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 pb-3 border-b border-gray-50 dark:border-gray-800/50">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <UserAvatar
@@ -1149,7 +1201,7 @@ export default function Community() {
                                                 <h3 className="font-bold text-gray-900 dark:text-white text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
                                                     {post.author?.username}
                                                 </h3>
-                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                                                     <span className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-700">
                                                         <FaCalendarAlt className="text-gray-400" />
                                                         {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -1162,7 +1214,7 @@ export default function Community() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
                                             {stats.trendingTopics?.findIndex(t => t._id === post._id) !== -1 && (
                                                 <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
                                                     <FaFire className="text-[8px]" /> Trending #{stats.trendingTopics?.findIndex(t => t._id === post._id) + 1}
@@ -1929,6 +1981,34 @@ export default function Community() {
                                     )}
                                 </div>
                             ))
+                        )}
+                        {hasMore && (
+                            <div id="infinite-scroll-trigger" className="pt-4 pb-8 flex justify-center">
+                                {loadingMore ? (
+                                    <div className="w-full space-y-6">
+                                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 space-y-4 animate-pulse">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                    <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                <div className="h-4 w-5/6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                                                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <span className="text-sm text-gray-500">Scroll down to load more</span>
+                                )}
+                            </div>
                         )}
                     </div>
 
