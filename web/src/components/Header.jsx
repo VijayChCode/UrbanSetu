@@ -293,7 +293,7 @@ export default function Header() {
                     title="Download"
                   >
                     <FaDownload className="text-xs" />
-                    <span>Download</span>
+                    <span>Download App</span>
                   </Link>
                 </div>
                 {/* Mobile auth links when logged out */}
@@ -500,7 +500,7 @@ export default function Header() {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <FaDownload className="text-lg" />
-                        <span>Download</span>
+                        <span>Download App</span>
                       </Link>
                       <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3 font-medium">
                         Download our app for the best experience!
