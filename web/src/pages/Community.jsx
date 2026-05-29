@@ -2006,7 +2006,7 @@ export default function Community() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <span className="text-sm text-gray-500">Scroll down to load more</span>
+                                    <span className="text-sm text-gray-500">Scroll down to explore more</span>
                                 )}
                             </div>
                         )}
@@ -2162,12 +2162,6 @@ export default function Community() {
                             <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200 shadow-2xl transition-colors duration-300">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Start a Discussion</h2>
-                                    <button
-                                        onClick={() => setShowCreateModal(false)}
-                                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                                    >
-                                        <FaTimes />
-                                    </button>
                                 </div>
 
                                 <form onSubmit={handleCreatePost} className="space-y-4">
@@ -2259,7 +2253,7 @@ export default function Community() {
                                         <button
                                             type="button"
                                             onClick={() => setShowCreateModal(false)}
-                                            className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-lg mr-2 transition-colors"
+                                            className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mr-2 transition-colors"
                                         >
                                             Cancel
                                         </button>
