@@ -74,6 +74,8 @@ export default function Community() {
     });
     const [expandedComments, setExpandedComments] = useState({});
     const [commentText, setCommentText] = useState({});
+    const [commentsLoading, setCommentsLoading] = useState({});
+    const [repliesLoading, setRepliesLoading] = useState({});
 
     const sortedPosts = useMemo(() => {
         if (!posts) return [];
@@ -911,11 +913,47 @@ export default function Community() {
     };
 
 
-    const toggleComments = (postId) => {
+    const toggleComments = async (postId) => {
+        const isExpanding = !expandedComments[postId];
         setExpandedComments(prev => ({
             ...prev,
-            [postId]: !prev[postId]
+            [postId]: isExpanding
         }));
+
+        if (isExpanding) {
+            setCommentsLoading(prev => ({ ...prev, [postId]: true }));
+            try {
+                const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/${postId}`);
+                if (res.ok) {
+                    const latestPost = await res.json();
+                    setPosts(prevPosts => prevPosts.map(p => p._id === postId ? {
+                        ...p,
+                        comments: latestPost.comments || []
+                    } : p));
+                }
+            } catch (error) {
+                console.error("Failed to load comments:", error);
+            } finally {
+                setTimeout(() => {
+                    setCommentsLoading(prev => ({ ...prev, [postId]: false }));
+                }, 400);
+            }
+        }
+    };
+
+    const toggleReplies = (id) => {
+        const isExpanding = !expandedReplies[id];
+        setExpandedReplies(prev => ({
+            ...prev,
+            [id]: isExpanding
+        }));
+
+        if (isExpanding) {
+            setRepliesLoading(prev => ({ ...prev, [id]: true }));
+            setTimeout(() => {
+                setRepliesLoading(prev => ({ ...prev, [id]: false }));
+            }, 300);
+        }
     };
 
     const handleReport = (reason) => {
@@ -1393,7 +1431,19 @@ export default function Community() {
                                     {expandedComments[post._id] && (
                                         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
                                             <div className="space-y-4 mb-4">
-                                                {post.comments && post.comments.length > 0 ? (
+                                                {commentsLoading[post._id] ? (
+                                                    <div className="space-y-4 mb-4 animate-pulse">
+                                                        {[1, 2].map((i) => (
+                                                            <div key={i} className="flex gap-3">
+                                                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 animate-pulse"></div>
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                                                    <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-none animate-pulse"></div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : post.comments && post.comments.length > 0 ? (
                                                     post.comments.map((comment, idx) => (
                                                         <div key={idx} className="flex gap-3 relative group/comment">
                                                             <div className="flex-shrink-0">
@@ -1511,7 +1561,7 @@ export default function Community() {
                                                                             </div>
                                                                             {comment.replies && comment.replies.length > 0 && (
                                                                                 <button
-                                                                                    onClick={() => setExpandedReplies(prev => ({ ...prev, [comment._id]: !prev[comment._id] }))}
+                                                                                    onClick={() => toggleReplies(comment._id)}
                                                                                     className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
                                                                                 >
                                                                                     {expandedReplies[comment._id] ? <FaTimes size={10} /> : <FaComment size={10} />}
@@ -1541,7 +1591,7 @@ export default function Community() {
                                                                     {comment.isDeleted && comment.replies && comment.replies.length > 0 && (
                                                                         <div className="mt-2">
                                                                             <button
-                                                                                onClick={() => setExpandedReplies(prev => ({ ...prev, [comment._id]: !prev[comment._id] }))}
+                                                                                onClick={() => toggleReplies(comment._id)}
                                                                                 className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
                                                                             >
                                                                                 {expandedReplies[comment._id] ? <FaTimes size={10} /> : <FaComment size={10} />}
@@ -1650,8 +1700,17 @@ export default function Community() {
                                                                 {/* Infinite Recursive Replies */}
                                                                 {expandedReplies[comment._id] && comment.replies && (
                                                                     <div className="mt-2 space-y-3 pl-2 sm:pl-4 border-l-2 border-gray-100 dark:border-gray-800 ml-1 sm:ml-2">
-                                                                        {(() => {
-                                                                            // Small indentation test
+                                                                        {repliesLoading[comment._id] ? (
+                                                                            <div className="space-y-2 animate-pulse py-1">
+                                                                                <div className="flex gap-2">
+                                                                                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 animate-pulse"></div>
+                                                                                    <div className="flex-1 space-y-1.5">
+                                                                                        <div className="h-2 w-1/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                                                                        <div className="h-6 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (() => {
                                                                             const renderReplies = (parentId, depth = 0) => {
                                                                                 const currentReplies = comment.replies.filter(r => (r.parentReplyId || null) === (parentId || null));
                                                                                 if (!currentReplies.length) return null;
@@ -1676,7 +1735,6 @@ export default function Community() {
                                                                                                         </div>
                                                                                                         {editingContent.id === reply._id && editingContent.type === 'reply' ? (
                                                                                                             <form onSubmit={(e) => handleUpdateReply(e, post._id, comment._id, reply._id)} className="w-full mb-2">
-                                                                                                                {/* ... (keep form same) ... */}
                                                                                                                 <div className="relative">
                                                                                                                     {showMentionSuggestions.show && showMentionSuggestions.id === reply._id && showMentionSuggestions.type === 'edit-reply' && renderMentionsPanel()}
                                                                                                                     <textarea
@@ -1746,7 +1804,7 @@ export default function Community() {
                                                                                                             </p>
                                                                                                         )}
                                                                                                         {!reply.isDeleted && (
-                                                                                                            <div className="flex items-center gap-3 mt-1">
+                                                                                                            <div className="flex items-center gap-3 mt-1 flex-wrap">
                                                                                                                 <button
                                                                                                                     onClick={() => handleReplyReaction(post._id, comment._id, reply._id, 'like')}
                                                                                                                     className={`flex items-center gap-1 text-xs font-bold ${currentUser && reply.likes?.includes(currentUser._id) ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
@@ -1771,33 +1829,32 @@ export default function Community() {
                                                                                                                 >
                                                                                                                     Reply
                                                                                                                 </button>
+                                                                                                                {subReplies.length > 0 && (
+                                                                                                                    <button
+                                                                                                                        onClick={() => toggleReplies(reply._id)}
+                                                                                                                        className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 outline-none"
+                                                                                                                    >
+                                                                                                                        {expandedReplies[reply._id] ? 'Hide' : `View ${subReplies.length} Replies`}
+                                                                                                                    </button>
+                                                                                                                )}
+                                                                                                                {/* Report Reply Button */}
+                                                                                                                {currentUser && currentUser._id !== reply.user?._id && (
+                                                                                                                    <button
+                                                                                                                        onClick={() => setReportModal({
+                                                                                                                            isOpen: true,
+                                                                                                                            type: 'reply',
+                                                                                                                            id: post._id,
+                                                                                                                            commentId: comment._id,
+                                                                                                                            replyId: reply._id
+                                                                                                                        })}
+                                                                                                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                                                                                                        title="Report Reply"
+                                                                                                                    >
+                                                                                                                        <FaFlag size={10} />
+                                                                                                                    </button>
+                                                                                                                )}
                                                                                                             </div>
-                                                                                                        )}    {subReplies.length > 0 && (
-                                                                                                            <button
-                                                                                                                onClick={() => setExpandedReplies(prev => ({ ...prev, [reply._id]: !prev[reply._id] }))}
-                                                                                                                className="text-[9px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 outline-none"
-                                                                                                            >
-                                                                                                                {expandedReplies[reply._id] ? 'Hide' : `View ${subReplies.length} Replies`}
-                                                                                                            </button>
                                                                                                         )}
-                                                                                                        {/* Report Reply Button */}
-                                                                                                        {currentUser && currentUser._id !== reply.user?._id && (
-                                                                                                            <button
-                                                                                                                onClick={() => setReportModal({
-                                                                                                                    isOpen: true,
-                                                                                                                    type: 'reply',
-                                                                                                                    id: post._id,
-                                                                                                                    commentId: comment._id,
-                                                                                                                    replyId: reply._id
-                                                                                                                })}
-                                                                                                                className="text-gray-400 hover:text-red-500 ml-1"
-                                                                                                                title="Report Reply"
-                                                                                                            >
-                                                                                                                <FaFlag size={8} />
-                                                                                                            </button>
-                                                                                                        )}
-
-
                                                                                                         {!reply.isDeleted && currentUser && currentUser._id === reply.user?._id && (
                                                                                                             <button
                                                                                                                 onClick={() => setEditingContent({ type: 'reply', id: reply._id, content: reply.content })}
@@ -1894,7 +1951,17 @@ export default function Community() {
                                                                                                     {/* Recursion: Render replies to this reply */}
                                                                                                     {expandedReplies[reply._id] && (
                                                                                                         <div className={`border-l-2 border-gray-100 dark:border-gray-800 mt-2 animate-fade-in ${depth < 2 ? 'ml-2 sm:ml-4 pl-2 sm:pl-4' : 'ml-1 pl-1'}`}>
-                                                                                                            {renderReplies(reply._id, depth + 1)}
+                                                                                                            {repliesLoading[reply._id] ? (
+                                                                                                                <div className="space-y-2 animate-pulse py-1">
+                                                                                                                    <div className="flex gap-2">
+                                                                                                                        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 animate-pulse"></div>
+                                                                                                                        <div className="flex-1 space-y-1">
+                                                                                                                            <div className="h-1.5 w-1/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                                                                                                            <div className="h-5 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                            ) : renderReplies(reply._id, depth + 1)}
                                                                                                         </div>
                                                                                                     )}
                                                                                                 </div>
