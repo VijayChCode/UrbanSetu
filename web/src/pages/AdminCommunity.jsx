@@ -90,6 +90,7 @@ export default function AdminCommunity() {
     const [repliesLoading, setRepliesLoading] = useState({});
     const [editingContent, setEditingContent] = useState({ type: null, id: null, content: '' });
     const [expandedSummaries, setExpandedSummaries] = useState({});
+    const [summariesLoading, setSummariesLoading] = useState({});
     const [editingPost, setEditingPost] = useState(null); // State for editing main post content
 
     // Reply State
@@ -797,11 +798,33 @@ export default function AdminCommunity() {
         }
     };
 
-    const toggleSummary = (postId) => {
+    const toggleSummary = async (postId) => {
+        const isExpanding = !expandedSummaries[postId];
         setExpandedSummaries(prev => ({
             ...prev,
-            [postId]: !prev[postId]
+            [postId]: isExpanding
         }));
+
+        if (isExpanding) {
+            setSummariesLoading(prev => ({ ...prev, [postId]: true }));
+            try {
+                const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/${postId}`);
+                if (res.ok) {
+                    const latestPost = await res.json();
+                    setPosts(prevPosts => prevPosts.map(p => p._id === postId ? {
+                        ...p,
+                        reports: latestPost.reports || [],
+                        comments: latestPost.comments || []
+                    } : p));
+                }
+            } catch (error) {
+                console.error("Failed to load moderation summary:", error);
+            } finally {
+                setTimeout(() => {
+                    setSummariesLoading(prev => ({ ...prev, [postId]: false }));
+                }, 600);
+            }
+        }
     };
 
     const handleAddComment = async (e, postId) => {
@@ -1446,57 +1469,75 @@ export default function AdminCommunity() {
 
                                                 {expandedSummaries[post._id] && (
                                                     <div className="space-y-3 animate-fade-in">
-                                                        {/* Post Reports */}
-                                                        {post.reports && post.reports.length > 0 && (
-                                                            <div className="space-y-1.5">
-                                                                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Post Reports ({post.reports.length})</div>
-                                                                {post.reports.map((report, rIdx) => (
-                                                                    <div key={`post-r-${rIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-red-100/50 dark:border-red-900/20 shadow-sm flex items-start gap-2">
-                                                                        <div className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Post</div>
-                                                                        <p className="text-gray-700 dark:text-gray-300 italic">"{report.reason}"</p>
+                                                        {summariesLoading[post._id] ? (
+                                                            <div className="space-y-3 animate-pulse">
+                                                                <div className="space-y-2">
+                                                                    <div className="h-3.5 bg-red-200/50 dark:bg-red-950/40 rounded w-24 mb-2"></div>
+                                                                    <div className="bg-white/40 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-150/50 dark:border-gray-750/30 flex items-center gap-2.5 h-11">
+                                                                        <div className="bg-red-200/60 dark:bg-red-900/40 h-4 w-10 rounded shrink-0"></div>
+                                                                        <div className="bg-gray-200/80 dark:bg-gray-700/60 h-3.5 w-3/4 rounded-full"></div>
                                                                     </div>
-                                                                ))}
+                                                                    <div className="bg-white/40 dark:bg-gray-800/40 p-3 rounded-xl border border-gray-150/50 dark:border-gray-750/30 flex items-center gap-2.5 h-11">
+                                                                        <div className="bg-red-200/60 dark:bg-red-900/40 h-4 w-10 rounded shrink-0"></div>
+                                                                        <div className="bg-gray-200/80 dark:bg-gray-700/60 h-3.5 w-1/2 rounded-full"></div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        )}
-
-                                                        {/* Comment Reports */}
-                                                        {post.comments?.some(c => c.reports?.length > 0) && (
-                                                            <div className="space-y-1.5">
-                                                                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Comment Reports</div>
-                                                                {post.comments.filter(c => c.reports?.length > 0).map((comment, cIdx) => (
-                                                                    <div key={`comment-r-${cIdx}`} className="space-y-1">
-                                                                        {comment.reports.map((report, rIdx) => (
-                                                                            <div key={`comment-r-${cIdx}-${rIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-orange-100/50 dark:border-orange-900/20 shadow-sm flex items-start gap-2">
-                                                                                <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Comment</div>
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <p className="text-gray-500 dark:text-gray-400 text-[10px] truncate mb-0.5">On: "{comment.content.substring(0, 40)}..."</p>
-                                                                                    <p className="text-gray-700 dark:text-gray-300 italic font-medium">"{report.reason}"</p>
-                                                                                </div>
+                                                        ) : (
+                                                            <>
+                                                                {/* Post Reports */}
+                                                                {post.reports && post.reports.length > 0 && (
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Post Reports ({post.reports.length})</div>
+                                                                        {post.reports.map((report, rIdx) => (
+                                                                            <div key={`post-r-${rIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-red-100/50 dark:border-red-900/20 shadow-sm flex items-start gap-2">
+                                                                                <div className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Post</div>
+                                                                                <p className="text-gray-700 dark:text-gray-300 italic">"{report.reason}"</p>
                                                                             </div>
                                                                         ))}
                                                                     </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                                )}
 
-                                                        {/* Reply Reports */}
-                                                        {post.comments?.some(c => c.replies?.some(r => r.reports?.length > 0)) && (
-                                                            <div className="space-y-1.5">
-                                                                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Reply Reports</div>
-                                                                {post.comments.flatMap(c => c.replies || []).filter(r => r.reports?.length > 0).map((reply, rIdx) => (
-                                                                    <div key={`reply-r-${rIdx}`} className="space-y-1">
-                                                                        {reply.reports.map((report, rrIdx) => (
-                                                                            <div key={`reply-r-${rIdx}-${rrIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-amber-100/50 dark:border-amber-900/20 shadow-sm flex items-start gap-2">
-                                                                                <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Reply</div>
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <p className="text-gray-500 dark:text-gray-400 text-[10px] truncate mb-0.5">On: "{reply.content.substring(0, 40)}..."</p>
-                                                                                    <p className="text-gray-700 dark:text-gray-300 italic font-medium">"{report.reason}"</p>
-                                                                                </div>
+                                                                {/* Comment Reports */}
+                                                                {post.comments?.some(c => c.reports?.length > 0) && (
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Comment Reports</div>
+                                                                        {post.comments.filter(c => c.reports?.length > 0).map((comment, cIdx) => (
+                                                                            <div key={`comment-r-${cIdx}`} className="space-y-1">
+                                                                                {comment.reports.map((report, rIdx) => (
+                                                                                    <div key={`comment-r-${cIdx}-${rIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-orange-100/50 dark:border-orange-900/20 shadow-sm flex items-start gap-2">
+                                                                                        <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Comment</div>
+                                                                                        <div className="flex-1 min-w-0">
+                                                                                            <p className="text-gray-500 dark:text-gray-400 text-[10px] truncate mb-0.5">On: "{comment.content.substring(0, 40)}..."</p>
+                                                                                            <p className="text-gray-700 dark:text-gray-300 italic font-medium">"{report.reason}"</p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
                                                                             </div>
                                                                         ))}
                                                                     </div>
-                                                                ))}
-                                                            </div>
+                                                                )}
+
+                                                                {/* Reply Reports */}
+                                                                {post.comments?.some(c => c.replies?.some(r => r.reports?.length > 0)) && (
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider pl-1">Reply Reports</div>
+                                                                        {post.comments.flatMap(c => c.replies || []).filter(r => r.reports?.length > 0).map((reply, rIdx) => (
+                                                                            <div key={`reply-r-${rIdx}`} className="space-y-1">
+                                                                                {reply.reports.map((report, rrIdx) => (
+                                                                                    <div key={`reply-r-${rIdx}-${rrIdx}`} className="bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg text-xs border border-amber-100/50 dark:border-amber-900/20 shadow-sm flex items-start gap-2">
+                                                                                        <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold uppercase text-[9px] shrink-0">Reply</div>
+                                                                                        <div className="flex-1 min-w-0">
+                                                                                            <p className="text-gray-500 dark:text-gray-400 text-[10px] truncate mb-0.5">On: "{reply.content.substring(0, 40)}..."</p>
+                                                                                            <p className="text-gray-700 dark:text-gray-300 italic font-medium">"{report.reason}"</p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                 )}
