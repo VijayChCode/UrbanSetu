@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-    FaUsers, FaMapMarkerAlt, FaBullhorn, FaShieldAlt,
+    FaUsers, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope,
     FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch,
     FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaExclamationTriangle, FaEdit, FaSmile, FaUserTimes, FaFire, FaChevronDown, FaChevronUp
 } from 'react-icons/fa';
@@ -2270,6 +2270,25 @@ export default function AdminCommunity() {
                             >
                                 View Guidelines <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
                             </Link>
+                        </div>
+
+                        {/* Community Support & Feedback card in Sidebar */}
+                        <div className="bg-gradient-to-br from-blue-50/40 to-indigo-50/40 dark:from-gray-900/60 dark:to-blue-950/20 rounded-xl shadow-sm border border-blue-100/30 dark:border-gray-800 p-6 transition-all duration-300 hover:scale-[1.01] mt-6">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-full text-blue-600 dark:text-blue-400">
+                                    <FaEnvelope />
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white">Community Support</h3>
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+                                Have questions about our community guidelines, need moderation assistance, or want to share feedback? Our team is here to support you.
+                            </p>
+                            <a 
+                                href="mailto:urbansetu.noreply@gmail.com"
+                                className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline group"
+                            >
+                                urbansetu.noreply@gmail.com <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                            </a>
                         </div>
                     </div>
                 </div>
