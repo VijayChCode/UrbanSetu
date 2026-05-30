@@ -116,6 +116,16 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
                 container.removeEventListener('mousemove', handleInteraction);
                 container.removeEventListener('touchstart', handleDragStart);
                 container.removeEventListener('click', handleInteraction);
+
+                // Destroy the viewer instance properly
+                if (pannellumViewer.current) {
+                    try {
+                        pannellumViewer.current.destroy();
+                    } catch (e) {
+                        console.error('Error destroying Pannellum viewer:', e);
+                    }
+                    pannellumViewer.current = null;
+                }
             };
         }
     }, [isLoaded, imageUrl, autoLoad]); // Re-init if imageUrl changes
@@ -131,43 +141,76 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
         }
     }, [isAutoRotating]);
 
-    // CSS-based fullscreen: use position fixed + z-index to avoid Pannellum's
-    // internal fullscreenchange listener from conflicting with the native API
-    const toggleFullscreen = useCallback(() => {
-        setIsFullscreen(prev => {
-            const next = !prev;
-            // Lock/unlock body scroll when toggling fullscreen
-            if (next) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
-            return next;
-        });
-        resetControlsTimeout();
-    }, [resetControlsTimeout]);
-
-    // Handle Escape key to exit CSS fullscreen
+    // Handle native fullscreen change events on the wrapper itself
+    // We catch it here and call e.stopPropagation() so Pannellum's document-level
+    // fullscreenchange listener never receives it and exits.
     useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape' && isFullscreen) {
-                toggleFullscreen();
+        const handleFSChange = (e) => {
+            e.stopPropagation();
+
+            const isCurrentlyFS = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+
+            setIsFullscreen(isCurrentlyFS);
+
+            // Force Pannellum container resize after fullscreen state has toggled
+            if (pannellumViewer.current && typeof pannellumViewer.current.resize === 'function') {
+                setTimeout(() => {
+                    if (pannellumViewer.current && typeof pannellumViewer.current.resize === 'function') {
+                        pannellumViewer.current.resize();
+                    }
+                }, 150);
             }
         };
-        if (isFullscreen) {
-            document.addEventListener('keydown', handleKeyDown);
+
+        const el = containerRef.current;
+        if (el) {
+            el.addEventListener('fullscreenchange', handleFSChange);
+            el.addEventListener('webkitfullscreenchange', handleFSChange);
+            el.addEventListener('mozfullscreenchange', handleFSChange);
+            el.addEventListener('MSFullscreenChange', handleFSChange);
         }
-        return () => {
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isFullscreen, toggleFullscreen]);
 
-    // Cleanup body overflow on unmount
-    useEffect(() => {
         return () => {
-            document.body.style.overflow = '';
+            if (el) {
+                el.removeEventListener('fullscreenchange', handleFSChange);
+                el.removeEventListener('webkitfullscreenchange', handleFSChange);
+                el.removeEventListener('mozfullscreenchange', handleFSChange);
+                el.removeEventListener('MSFullscreenChange', handleFSChange);
+            }
         };
     }, []);
+
+    const toggleFullscreen = useCallback(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const isCurrentlyFS = !!(
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement
+        );
+
+        if (!isCurrentlyFS) {
+            const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (requestFS) {
+                requestFS.call(el).catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            }
+        } else {
+            const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+            if (exitFS) {
+                exitFS.call(document);
+            }
+        }
+        resetControlsTimeout();
+    }, [resetControlsTimeout]);
 
     const handleZoomIn = () => {
         if (pannellumViewer.current) {
@@ -194,7 +237,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     };
 
     const handleClose = (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         if (isFullscreen) {
             toggleFullscreen();
         } else {
@@ -205,7 +248,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     return (
         <div
             ref={containerRef}
-            className={`relative bg-gray-900 rounded-xl overflow-hidden shadow-2xl group ${className} ${isFullscreen ? 'fixed inset-0 z-[9999] rounded-none' : 'w-full h-full'}`}
+            className={`relative bg-gray-900 rounded-xl overflow-hidden shadow-2xl group ${className} ${isFullscreen ? 'rounded-none' : 'w-full h-full'}`}
             onMouseEnter={resetControlsTimeout}
             onMouseMove={resetControlsTimeout}
             onTouchStart={resetControlsTimeout}
@@ -261,9 +304,9 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
                 <div className="bg-black/60 backdrop-blur-md rounded-2xl p-2 flex items-center gap-1 shadow-2xl border border-white/10">
 
                     {/* AI Enhance Button */}
-                    {/* AI Enhance Button */}
                     <button
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             resetControlsTimeout();
                             if (isEnhanced) {
                                 setIsEnhanced(false);
@@ -286,7 +329,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
                     {/* Auto Rotate */}
                     <button
-                        onClick={() => { setIsAutoRotating(!isAutoRotating); resetControlsTimeout(); }}
+                        onClick={(e) => { e.stopPropagation(); setIsAutoRotating(!isAutoRotating); resetControlsTimeout(); }}
                         className={`p-2.5 rounded-xl transition-all ${isAutoRotating ? 'bg-indigo-600 text-white' : 'text-white/80 hover:bg-white/10'}`}
                         title={isAutoRotating ? "Pause Rotation" : "Auto Rotate"}
                     >
@@ -297,7 +340,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
                     {/* Zoom In */}
                     <button
-                        onClick={handleZoomIn}
+                        onClick={(e) => { e.stopPropagation(); handleZoomIn(); }}
                         className="p-2.5 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-all active:scale-95"
                         title="Zoom In"
                     >
@@ -306,7 +349,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
                     {/* Zoom Out */}
                     <button
-                        onClick={handleZoomOut}
+                        onClick={(e) => { e.stopPropagation(); handleZoomOut(); }}
                         className="p-2.5 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-all active:scale-95"
                         title="Zoom Out"
                     >
@@ -317,7 +360,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
                     {/* Reset */}
                     <button
-                        onClick={handleReset}
+                        onClick={(e) => { e.stopPropagation(); handleReset(); }}
                         className="p-2.5 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-all active:scale-95"
                         title="Reset View"
                     >
@@ -326,7 +369,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
                     {/* Fullscreen */}
                     <button
-                        onClick={() => { toggleFullscreen(); resetControlsTimeout(); }}
+                        onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
                         className="p-2.5 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-all active:scale-95"
                         title="Toggle Fullscreen"
                     >
