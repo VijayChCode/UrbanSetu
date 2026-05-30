@@ -383,8 +383,8 @@ function NormalizeRoute({ children }) {
         return <Navigate to={redirectUrl} replace />;
       }
     }
-    // Redirect to normalized route, preserving query parameters
-    return <Navigate to={`${normalized}${location.search || ''}`} replace />;
+    // Redirect to normalized route, preserving query parameters and hash fragments (e.g. Scroll to Text Fragments)
+    return <Navigate to={`${normalized}${location.search || ''}${location.hash || ''}`} replace />;
   }
   return children;
 }
