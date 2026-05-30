@@ -137,13 +137,20 @@ export default function ListingItem({ listing, onDelete, onWishToggle }) {
           <>
             <div className="relative">
               <button
-                onClick={handleWishList}
-                className={`p-2 rounded-full transition shadow-lg ${isInWishlistState ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-gray-700/90 text-red-500'}`}
-                title={isInWishlistState ? 'Remove from wishlist' : 'Add to wishlist'}
+                onClick={listing.isDeleted ? undefined : handleWishList}
+                disabled={listing.isDeleted}
+                className={`p-2 rounded-full transition shadow-lg ${
+                  listing.isDeleted
+                    ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+                    : isInWishlistState 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-white/90 dark:bg-gray-700/90 text-red-500'
+                }`}
+                title={listing.isDeleted ? 'Cannot wishlist deleted property' : isInWishlistState ? 'Remove from wishlist' : 'Add to wishlist'}
               >
                 <FaHeart className="text-base sm:text-lg" />
               </button>
-              {showWishlistTooltip && (
+              {showWishlistTooltip && !listing.isDeleted && (
                 <div className="absolute top-0 right-full mr-3 bg-red-600 text-white px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-xl z-50">
                   Please login to save properties
                   <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-red-600 transform rotate-45"></div>

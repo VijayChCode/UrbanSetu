@@ -2479,9 +2479,17 @@ export default function Listing() {
             {/* Report Button - Only for logged-in users who are not the owner */}
             {currentUser && !isAdmin && !isOwnerMatch && (
               <button
-                onClick={() => setShowReportModal(true)}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300 px-3 py-2 rounded-lg transition-colors"
-                title="Report this property"
+                onClick={() => {
+                  if (listing.isDeleted) return;
+                  setShowReportModal(true);
+                }}
+                disabled={listing.isDeleted}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  listing.isDeleted
+                    ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+                    : 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300'
+                }`}
+                title={listing.isDeleted ? "Cannot report a deleted property" : "Report this property"}
               >
                 <FaFlag className="text-sm" />
                 <span className="text-sm font-medium">Report</span>
@@ -2544,6 +2552,7 @@ export default function Listing() {
                 {currentUser?.role === 'rootadmin' && !listing.isVerified && (
                   <button
                     onClick={(e) => {
+                      if (listing.isDeleted) return;
                       e.stopPropagation();
                       setConfirmModal({
                         open: true,
@@ -2551,8 +2560,13 @@ export default function Listing() {
                         message: 'Are you sure you want to BYPASS verification? This will instantly verify and publish this property, and notify the owner.'
                       });
                     }}
-                    className="ml-3 px-3 py-1 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-full text-xs sm:text-sm font-bold flex items-center gap-1 shadow-md hover:scale-105 transition-transform animate-pulse"
-                    title="Root Admin Privilege: Instantly Verify & Publish"
+                    disabled={listing.isDeleted}
+                    className={`ml-3 px-3 py-1 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1 shadow-md transition-transform ${
+                      listing.isDeleted
+                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-orange-500 to-red-600 text-white hover:scale-105 animate-pulse'
+                    }`}
+                    title={listing.isDeleted ? "Cannot verify deleted property" : "Root Admin Privilege: Instantly Verify & Publish"}
                   >
                     <FaRocket className="text-xs" /> Root Verify
                   </button>
@@ -2562,6 +2576,7 @@ export default function Listing() {
                   <div className="ml-2 relative inline-block">
                     <button
                       onClick={() => {
+                        if (listing.isDeleted) return;
                         if (!currentUser) {
                           showSignInPrompt('wishlist');
                           return;
@@ -2574,13 +2589,20 @@ export default function Listing() {
                           setWishlistCount(prev => prev + 1);
                         }
                       }}
-                      className={`p-2 rounded-full transition z-20 ${isInWishlist(listing._id) ? 'bg-red-500 text-white' : 'bg-gray-200 text-red-500 hover:text-red-600'} focus:outline-none`}
-                      title={isInWishlist(listing._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                      disabled={listing.isDeleted}
+                      className={`p-2 rounded-full transition z-20 ${
+                        listing.isDeleted
+                          ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+                          : isInWishlist(listing._id) 
+                            ? 'bg-red-500 text-white hover:bg-red-600' 
+                            : 'bg-gray-200 text-red-500 hover:text-red-600'
+                      } focus:outline-none`}
+                      title={listing.isDeleted ? 'Cannot wishlist deleted property' : isInWishlist(listing._id) ? 'Remove from wishlist' : 'Add to wishlist'}
                       style={{ lineHeight: 0 }}
                     >
                       <FaHeart className="text-base sm:text-lg" />
                     </button>
-                    {showWishlistTooltip && (
+                    {showWishlistTooltip && !listing.isDeleted && (
                       <div className="absolute bottom-full right-0 mb-2 bg-red-600 text-white px-3 py-2 rounded-lg text-xs whitespace-nowrap shadow-lg">
                         Please login to save properties
                         <div className="absolute top-full right-4 w-2 h-2 bg-red-600 transform rotate-45"></div>
@@ -2592,13 +2614,16 @@ export default function Listing() {
                 {/* Watchlist Eye Icon - for users only */}
                 {currentUser && !(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
                   <button
-                    onClick={toggleWatchlist}
-                    disabled={watchlistLoading}
-                    className={`ml-2 p-2 rounded-full transition z-20 focus:outline-none ${isInWatchlist
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-200 text-blue-500 hover:text-blue-600 hover:bg-blue-100'
-                      } ${watchlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    title={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+                    onClick={listing.isDeleted ? undefined : toggleWatchlist}
+                    disabled={watchlistLoading || listing.isDeleted}
+                    className={`ml-2 p-2 rounded-full transition z-20 focus:outline-none ${
+                      listing.isDeleted
+                        ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
+                        : isInWatchlist
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-200 text-blue-500 hover:text-blue-600 hover:bg-blue-100'
+                    } ${watchlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={listing.isDeleted ? 'Cannot watchlist deleted property' : isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
                     style={{ lineHeight: 0 }}
                   >
                     {watchlistLoading ? (
@@ -2687,12 +2712,21 @@ export default function Listing() {
                     <p className="text-sm text-yellow-700 mb-3">
                       Your property is currently <strong>not visible to buyers</strong>. Complete the verification process to make it public and start receiving inquiries.
                     </p>
-                    <Link
-                      to={`/user/property-verification?listingId=${listing._id}`}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition-all transform hover:scale-105 shadow-md"
-                    >
-                      <FaShieldAlt /> Verify Property Now
-                    </Link>
+                    {listing.isDeleted ? (
+                      <button
+                        disabled
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-400 text-gray-200 rounded-lg text-sm font-semibold cursor-not-allowed shadow-md"
+                      >
+                        <FaShieldAlt /> Verify Property Now (Disabled - Property Deleted)
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/user/property-verification?listingId=${listing._id}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition-all transform hover:scale-105 shadow-md"
+                      >
+                        <FaShieldAlt /> Verify Property Now
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2797,10 +2831,18 @@ export default function Listing() {
                       Get your property verified to enable 360° virtual tours. Verified listings with 360° views get up to <strong>3x more engagement</strong> and trust.
                     </p>
                     <button
-                      onClick={() => navigate(`/user/property-verification?listingId=${listing._id}`)}
-                      className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 transform hover:-translate-y-0.5"
+                      onClick={() => {
+                        if (listing.isDeleted) return;
+                        navigate(`/user/property-verification?listingId=${listing._id}`);
+                      }}
+                      disabled={listing.isDeleted}
+                      className={`px-6 py-2.5 rounded-lg text-sm font-bold transition shadow-lg transform ${
+                        listing.isDeleted
+                          ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 hover:-translate-y-0.5'
+                      }`}
                     >
-                      Verify Property Now
+                      Verify Property Now {listing.isDeleted && "(Disabled - Property Deleted)"}
                     </button>
                   </div>
                 )}
