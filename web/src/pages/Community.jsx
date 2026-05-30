@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { FaUsers, FaUser, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope, FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch, FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaLock, FaFlag, FaLeaf, FaCamera, FaTrash, FaCheckCircle, FaExclamationTriangle, FaCalendar, FaTimesCircle, FaEdit, FaSmile, FaFire } from 'react-icons/fa';
+import { FaUsers, FaUser, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope, FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch, FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaLeaf, FaCamera, FaTrash, FaCheckCircle, FaExclamationTriangle, FaCalendar, FaTimesCircle, FaEdit, FaSmile, FaFire } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { toast } from 'react-toastify';
 import CommunitySkeleton from '../components/skeletons/CommunitySkeleton';
@@ -1097,6 +1097,15 @@ export default function Community() {
         }
     };
 
+    useEffect(() => {
+        if (postId && posts.length > 0) {
+            const matchingPost = posts.find(p => p._id === postId);
+            if (matchingPost && !expandedComments[postId]) {
+                toggleComments(postId);
+            }
+        }
+    }, [postId, posts]);
+
     if (loading) {
         return <CommunitySkeleton />;
     }
@@ -1201,6 +1210,14 @@ export default function Community() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        {postId && (
+                            <button
+                                onClick={() => navigate(currentUser ? '/user/community' : '/community')}
+                                className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 font-bold hover:underline mb-2 transition-all hover:-translate-x-1"
+                            >
+                                <FaArrowLeft /> Back to All Discussions
+                            </button>
+                        )}
                         {posts.length === 0 ? (
                             <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
                                 <FaUsers className="text-6xl text-gray-200 dark:text-gray-800 mx-auto mb-4" />
