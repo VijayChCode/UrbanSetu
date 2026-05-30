@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaComments, FaTimes, FaPaperPlane, FaUser, FaCircle, FaCheck, FaTrash, FaEdit, FaCheckSquare, FaSquare } from 'react-icons/fa';
+import { FaComments, FaTimes, FaPaperPlane, FaUser, FaCircle, FaCheck, FaTrash, FaEdit, FaCheckSquare, FaSquare, FaInfoCircle } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { authenticatedFetch } from '../utils/auth';
@@ -57,6 +57,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [sendIconAnimating, setSendIconAnimating] = useState(false);
     const [sendIconSent, setSendIconSent] = useState(false);
+    const [showInfoModal, setShowInfoModal] = useState(false);
 
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -419,12 +420,20 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                     <>
                         <h3 className="font-semibold text-gray-800 dark:text-white">Inquiries</h3>
                         <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowInfoModal(true)}
+                                className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-gray-700 transition"
+                                title="Pre-Booking Chat Information"
+                            >
+                                <FaInfoCircle />
+                            </button>
                             {inboxChats.length > 0 && (
                                 <button onClick={toggleSelectionMode} className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-gray-700 transition" title="Select / Delete">
                                     <FaEdit />
                                 </button>
                             )}
-                            <button onClick={toggleChat} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                            <button onClick={toggleChat} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition" title="Close">
                                 <FaTimes />
                             </button>
                         </div>
@@ -652,6 +661,14 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowInfoModal(true)}
+                            className="hover:bg-blue-800 p-1.5 rounded-full transition-colors text-white/90 hover:text-white"
+                            title="Pre-Booking Chat Information"
+                        >
+                            <FaInfoCircle />
+                        </button>
                         {messages.length > 0 && (
                             <button onClick={handleClearChat} className="text-xs bg-red-500/20 hover:bg-red-500/40 px-2 py-1.5 rounded text-white transition-colors font-medium border border-red-500/30" title="Clear Chat">
                                 Clear
@@ -795,8 +812,67 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-40 h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slideUp border border-gray-200 dark:border-gray-700">
+                <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-40 h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slideUp border border-gray-200 dark:border-gray-700 relative">
                     {(isOwner && !activeChat) ? renderInbox() : renderChat()}
+
+                    {/* Information Modal Overlay */}
+                    {showInfoModal && (
+                        <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn">
+                            <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-2xl max-w-sm w-full border border-gray-100 dark:border-gray-700 flex flex-col h-[420px] animate-scaleUp text-gray-900 dark:text-white">
+                                {/* Header */}
+                                <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2 mb-3">
+                                    <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                                        <FaInfoCircle className="text-lg animate-pulse" />
+                                        <h3 className="text-sm font-bold">Pre-Booking Inquiries</h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInfoModal(false)}
+                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-750 p-1.5 rounded-full transition"
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 text-xs text-gray-600 dark:text-gray-300 leading-relaxed scrollbar-thin">
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 dark:text-white mb-0.5">What is this chat used for?</h4>
+                                        <p>
+                                            This is a secure pre-booking inquiry channel. Prospective buyers/tenants can chat directly with the owner to clarify features, pricing, or locations before scheduling visits or signing rent-locks.
+                                        </p>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 dark:text-white mb-0.5">🔒 Absolute Confidentiality</h4>
+                                        <p>
+                                            To guarantee full privacy and avoid spam, your actual usernames and contact details are kept strictly hidden. Users are assigned fancy pseudonyms (e.g. <em>Estate Visionary</em>) and generic counter IDs.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 dark:text-white mb-0.5">📋 Security Guidelines</h4>
+                                        <ul className="list-disc list-inside space-y-1 mt-1 text-[11px]">
+                                            <li>Never share personal logins or credit card pins.</li>
+                                            <li>Keep chats focused on property clarifications.</li>
+                                            <li>Pre-booking chat does not bind deposits or agreements.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3 flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowInfoModal(false)}
+                                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 active:translate-y-0"
+                                    >
+                                        Got it, thanks!
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -805,8 +881,22 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+          from { opacity: 0; transform: scale(0.96); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .animate-slideUp {
           animation: slideUp 0.3s ease-out;
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .animate-scaleUp {
+          animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
       `}</style>
         </>
