@@ -11,6 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle, isOpen: externalIsOpen, onClose, showFloatingButton = true, isDeleted = false }) {
     const { currentUser } = useSelector((state) => state.user);
+    const isOwner = !!(currentUser && ownerId && currentUser._id === ownerId);
     const [internalIsOpen, setInternalIsOpen] = useState(false);
 
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -75,8 +76,6 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activeChat, isOpen]);
-
-    const isOwner = currentUser && ownerId && currentUser._id === ownerId;
 
     // Toggle Chat Window
     const toggleChat = () => {
