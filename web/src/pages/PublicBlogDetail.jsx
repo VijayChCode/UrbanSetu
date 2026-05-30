@@ -19,6 +19,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import SocialSharePanel from '../components/SocialSharePanel';
 
 import SEO from '../components/SEO';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import AdvancedImage from '../components/AdvancedImage';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
@@ -49,9 +50,11 @@ const PublicBlogDetail = () => {
   const [isEditingLoading, setIsEditingLoading] = useState(false);
 
   // SEO Dynamic Tags
-  const seoTitle = blog ? `${blog.title} | UrbanSetu Insights` : "Blog Detail";
+  const seoTitle = blog ? `${blog.title} · UrbanSetu Insights` : "Blog Detail · UrbanSetu";
   const seoDescription = blog ? (blog.excerpt || blog.content?.replace(/<[^>]*>/g, '').substring(0, 160)) : "Read real estate insights on UrbanSetu.";
   const seoImage = blog?.thumbnail || (blog?.imageUrls && blog.imageUrls[0]) || `${window.location.origin}/og-image.png`;
+
+  usePageTitle(seoTitle);
 
   const blogSchema = blog ? {
     "@context": "https://schema.org",

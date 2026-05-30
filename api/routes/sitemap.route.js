@@ -2,6 +2,7 @@ import express from 'express';
 import Listing from '../models/listing.model.js';
 import Blog from '../models/blog.model.js';
 import HelpArticle from '../models/helpArticle.model.js';
+import ForumPost from '../models/forumPost.model.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -56,7 +57,8 @@ router.get('/sitemap.xml', async (req, res) => {
         'sitemap-pages.xml',
         'sitemap-listings.xml',
         'sitemap-blogs.xml',
-        'sitemap-help.xml'
+        'sitemap-help.xml',
+        'sitemap-community.xml'
     ];
 
     sitemaps.forEach(sm => {
@@ -172,6 +174,32 @@ router.get('/sitemap-help.xml', async (req, res, next) => {
     <lastmod>${article.updatedAt.toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>`;
+        });
+
+        xml += '\n</urlset>';
+        res.header('Content-Type', 'application/xml');
+        res.status(200).send(xml);
+    } catch (e) { next(e); }
+});
+
+// Community Forum Posts Sitemap
+router.get('/sitemap-community.xml', async (req, res, next) => {
+    try {
+        const baseUrl = getBaseUrl(req);
+        const posts = await ForumPost.find().select('_id updatedAt');
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>';
+        xml += '<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+        posts.forEach(post => {
+            xml += `
+  <url>
+    <loc>${baseUrl}/community/post/${post._id}</loc>
+    <lastmod>${post.updatedAt.toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>`;
         });
 

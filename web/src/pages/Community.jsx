@@ -108,8 +108,40 @@ export default function Community() {
         return posts.find(p => p._id === postId);
     }, [postId, posts]);
 
-    const dynamicTitle = activePost ? activePost.title : "Community Hub - Neighborhood Forum";
-    usePageTitle(dynamicTitle);
+    const seoTitle = activePost 
+        ? `${activePost.title} · UrbanSetu Community` 
+        : "Community Hub · Neighborhood Discussion";
+    usePageTitle(seoTitle);
+
+    const seoDescription = activePost
+        ? (activePost.content?.replace(/<[^>]*>/g, '').substring(0, 160) || activePost.title)
+        : "Join your local real estate community hub. Discuss property prices, shared issues, town planning, and luxury lifestyle with neighbors across India.";
+    
+    const seoKeywords = activePost
+        ? `${activePost.category}, ${activePost.location?.city || ''}, community post, UrbanSetu forum`
+        : "real estate community hub, neighborhood forum, property discussion group, UrbanSetu community";
+
+    const seoImage = activePost?.imageUrls && activePost.imageUrls.length > 0 
+        ? activePost.imageUrls[0] 
+        : null;
+
+    const activePostSchema = activePost ? {
+        "@context": "https://schema.org",
+        "@type": "DiscussionForumPosting",
+        "headline": activePost.title,
+        "articleBody": activePost.content,
+        "author": {
+            "@type": "Person",
+            "name": activePost.author?.username || "Community Member"
+        },
+        "datePublished": activePost.createdAt,
+        "dateModified": activePost.updatedAt || activePost.createdAt,
+        "interactionStatistic": {
+            "@type": "InteractionCounter",
+            "interactionType": "https://schema.org/LikeAction",
+            "userInteractionCount": activePost.likes?.length || 0
+        }
+    } : null;
 
     // Property Mention State
     const [propertySuggestions, setPropertySuggestions] = useState([]);
@@ -1167,9 +1199,12 @@ export default function Community() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-20 pb-12 font-sans text-slate-800 dark:text-gray-200 transition-colors duration-300">
             <SEO
-                title="Community Hub - Neighborhood Discussion | UrbanSetu"
-                description="Join your local real estate community hub. Discuss property prices, shared issues, town planning, and luxury lifestyle with neighbors across India."
-                keywords="real estate community hub, neighborhood forum, property discussion group, UrbanSetu community"
+                title={seoTitle}
+                description={seoDescription}
+                keywords={seoKeywords}
+                image={seoImage}
+                type={activePost ? "article" : "website"}
+                schema={activePostSchema}
             />
             <style>{styles}</style>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
