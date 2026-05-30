@@ -41,6 +41,7 @@ export default function Community() {
 
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showMyPosts, setShowMyPosts] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -140,11 +141,11 @@ export default function Community() {
         { id: 'Marketplace', icon: FaStore, label: 'Marketplace' },
     ];
 
-    const fetchPosts = async (currentSkip = 0, isLoadMore = false) => {
+     const fetchPosts = async (currentSkip = 0, isLoadMore = false) => {
         try {
             if (isLoadMore) {
                 setLoadingMore(true);
-            } else {
+            } else if (isInitialLoad) {
                 setLoading(true);
             }
 
@@ -180,6 +181,7 @@ export default function Community() {
                 setLoadingMore(false);
             } else {
                 setLoading(false);
+                setIsInitialLoad(false);
             }
         }
     };
