@@ -258,23 +258,34 @@ export default function Home() {
         });
 
         // Fetch Community, Blogs & Guides data in parallel (non-blocking)
-        // Fetch both featured AND latest for blogs/guides so we can always fill 3 cards
+        // Fetch featured blogs/guides (compulsory) and a larger set of latest blogs/guides to select from randomly
         Promise.allSettled([
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
-          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&limit=6`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&limit=30`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
-          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&limit=6`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&limit=30`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/forum?limit=3`).then(r => r.ok ? r.json() : null),
         ]).then(([featBlogsR, allBlogsR, featGuidesR, allGuidesR, postsResult]) => {
-          // Helper: merge featured first + fill remaining from latest, deduplicated, max 3
+          // Helper: merge featured first + fill remaining slots with randomized (shuffled) non-featured items, deduplicated, max 3
           const mergeAndFill = (featuredResult, allResult) => {
             const featured = featuredResult.status === 'fulfilled' && featuredResult.value?.data ? featuredResult.value.data : [];
             const all = allResult.status === 'fulfilled' && allResult.value?.data ? allResult.value.data : [];
+            
             const ids = new Set(featured.map(f => f._id));
+            // Filter out already included featured items to get non-featured ones
+            const nonFeatured = all.filter(item => !ids.has(item._id));
+            
+            // Fisher-Yates Shuffle to randomize non-featured items on each load
+            const shuffledNonFeatured = [...nonFeatured];
+            for (let i = shuffledNonFeatured.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [shuffledNonFeatured[i], shuffledNonFeatured[j]] = [shuffledNonFeatured[j], shuffledNonFeatured[i]];
+            }
+            
             const merged = [...featured];
-            for (const item of all) {
+            for (const item of shuffledNonFeatured) {
               if (merged.length >= 3) break;
-              if (!ids.has(item._id)) { merged.push(item); ids.add(item._id); }
+              merged.push(item);
             }
             return merged.slice(0, 3);
           };
