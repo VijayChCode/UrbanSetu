@@ -2468,11 +2468,13 @@ export default function Listing() {
           </div>
 
           {/* Mobile Swipe Indicator */}
-          <div className="md:hidden flex items-center justify-center gap-2 mb-4 text-gray-400 animate-pulse">
-            <FaChevronLeft className="text-[10px]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Swipe to view more media</span>
-            <FaChevronRight className="text-[10px]" />
-          </div>
+          {((listing.imageUrls?.length || 0) + (listing.videoUrls?.length || 0)) > 1 && (
+            <div className="md:hidden flex items-center justify-center gap-2 mb-4 text-gray-400 animate-pulse">
+              <FaChevronLeft className="text-[10px]" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Swipe to view more media</span>
+              <FaChevronRight className="text-[10px]" />
+            </div>
+          )}
 
           {/* Share and Report Buttons */}
           <div className="flex justify-end items-center space-x-4 mb-4 pr-2">
