@@ -3,6 +3,29 @@ import User from '../models/user.model.js';
 import Listing from '../models/listing.model.js';
 import { sendPreBookingMessageNotification } from '../utils/emailService.js';
 
+const getAnonymizedName = (userId) => {
+    if (!userId) return "Anonymous User";
+    const FANTASY_NAMES = [
+        "Urban Explorer", "Dream Home Seeker", "City Dweller", "Property Enthusiast",
+        "Skyline Admirer", "Metro Nomad", "Estate Visionary", "Loft Lover",
+        "Home Hunter", "Space Scout", "Modern Resident", "Vibrant Villager",
+        "Cosmo Dweller", "Suburban Soul", "Downtown Dreamer", "Penthouse Pro",
+        "Cottage Core", "Villa Visionary", "Duplex Diver", "Studio Star",
+        "Bungalow Buff", "Mansion Master", "Terrace Traveler", "Garden Guru",
+        "Balcony Boss", "High-Rise Hero", "Community Connector", "Neighborhood Nomad",
+        "Street Smart", "Avenue Ace", "Lane Leader", "Boulevard Baron",
+        "Plaza Pioneer", "Square Scout", "District Diver", "Zone Zealot",
+        "Quarter Quest", "Sector Seeker", "Block Buster", "Estate Expert",
+        "Harbor Hero", "River Resident", "Lake Lover", "Mountain Mover",
+        "Valley Voyager", "Cloud Chaser", "Star Gazer", "Horizon Hunter",
+        "Dawn Dreamer", "Dusk Dweller"
+    ];
+    const hexSuffix = userId.toString().substring(userId.toString().length - 8);
+    const index = parseInt(hexSuffix, 16) % FANTASY_NAMES.length;
+    const suffix = userId.toString().substring(userId.toString().length - 4);
+    return `${FANTASY_NAMES[index]} (${suffix})`;
+};
+
 export const initiateOrGetChat = async (req, res, next) => {
     try {
         const { listingId, ownerId } = req.body;
@@ -155,11 +178,20 @@ export const sendMessage = async (req, res, next) => {
                 // Update lastEmailSentAt immediately to lock
                 await PreBookingChat.findByIdAndUpdate(chat._id, { lastEmailSentAt: now });
 
+                // Determine recipient and sender display names for pre-booking privacy
+                const isRecipientOwner = recipient._id.toString() === chat.ownerId.toString();
+                const emailRecipientName = isRecipientOwner
+                    ? "Property Owner"
+                    : getAnonymizedName(recipient._id);
+                const emailSenderName = isRecipientOwner
+                    ? getAnonymizedName(sender._id)
+                    : "Property Owner";
+
                 // We don't await email to avoid delaying response
                 sendPreBookingMessageNotification(
                     recipient.email,
-                    recipient.username,
-                    sender.username,
+                    emailRecipientName,
+                    emailSenderName,
                     subjectName,
                     propertyLink
                 ).catch(err => console.error('Email sending failed:', err));
