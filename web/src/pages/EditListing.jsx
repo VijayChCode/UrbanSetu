@@ -809,28 +809,7 @@ export default function EditListing() {
     );
   }
 
-  // 1. Block access for deleted listings
-  if (dataLoaded && formData.isDeleted) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
-        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700 transition-colors duration-300">
-          <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center transition-colors">
-            <FaExclamationTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Property Deleted</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
-            This property listing has been deleted and cannot be edited.
-          </p>
-          <button
-            onClick={() => navigate(getPreviousPath())}
-            className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            Go Back to Listings
-          </button>
-        </div>
-      </div>
-    );
-  }
+
 
   // 2. Block access for unauthorized users
   if (dataLoaded && !isAuthorized) {
