@@ -262,9 +262,30 @@ export default function Home() {
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/forum?limit=3`).then(r => r.ok ? r.json() : null),
-        ]).then(([blogsResult, guidesResult, postsResult]) => {
-          if (blogsResult.status === 'fulfilled' && blogsResult.value?.data) setHomeFeaturedBlogs(blogsResult.value.data);
-          if (guidesResult.status === 'fulfilled' && guidesResult.value?.data) setHomeFeaturedGuides(guidesResult.value.data);
+        ]).then(async ([blogsResult, guidesResult, postsResult]) => {
+          // Blogs: use featured, fallback to latest if empty
+          const featuredBlogs = blogsResult.status === 'fulfilled' && blogsResult.value?.data ? blogsResult.value.data : [];
+          if (featuredBlogs.length > 0) {
+            setHomeFeaturedBlogs(featuredBlogs);
+          } else {
+            try {
+              const fallback = await authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&limit=3`);
+              if (fallback.ok) { const d = await fallback.json(); if (d.data?.length) setHomeFeaturedBlogs(d.data); }
+            } catch { /* silent */ }
+          }
+
+          // Guides: use featured, fallback to latest if empty
+          const featuredGuides = guidesResult.status === 'fulfilled' && guidesResult.value?.data ? guidesResult.value.data : [];
+          if (featuredGuides.length > 0) {
+            setHomeFeaturedGuides(featuredGuides);
+          } else {
+            try {
+              const fallback = await authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&limit=3`);
+              if (fallback.ok) { const d = await fallback.json(); if (d.data?.length) setHomeFeaturedGuides(d.data); }
+            } catch { /* silent */ }
+          }
+
+          // Community posts
           if (postsResult.status === 'fulfilled' && postsResult.value?.posts) setHomeTrendingPosts(postsResult.value.posts);
         }).catch(() => { /* silent – insights section is enhancement only */ });
 
