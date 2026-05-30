@@ -1301,7 +1301,7 @@ export default function AdminCommunity() {
                                     style={{ animationDelay: `${index * 0.1}s` }}
                                 >
                                     {/* Post Header */}
-                                    <div className="flex justify-between items-start mb-4">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4 pb-3 border-b border-gray-150 dark:border-gray-700/50">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
                                                 <UserAvatar
@@ -1319,7 +1319,7 @@ export default function AdminCommunity() {
                                                 <h3 className="font-bold text-gray-900 dark:text-white text-lg hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">
                                                     {post.author?.username}
                                                 </h3>
-                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                                                     <span className="flex items-center gap-1 bg-gray-50 dark:bg-gray-700/50 px-2 py-0.5 rounded-full border border-gray-100 dark:border-gray-600">
                                                         <FaCalendarAlt className="text-gray-400 dark:text-gray-500" />
                                                         {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -1332,7 +1332,7 @@ export default function AdminCommunity() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-2 justify-end">
+                                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
                                             {/* Reported Badge for ANY reported content in this post tree */}
                                             {((post.reports?.length || 0) + (post.comments?.reduce((acc, c) => acc + (c.reports?.length || 0) + (c.replies?.reduce((acc2, r) => acc2 + (r.reports?.length || 0), 0) || 0), 0) || 0)) > 0 && (
                                                 <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 animate-pulse">
@@ -1605,10 +1605,13 @@ export default function AdminCommunity() {
                                                     <div className="space-y-4 mb-4 animate-pulse">
                                                         {[1, 2].map((i) => (
                                                             <div key={i} className="flex gap-3">
-                                                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-750 flex-shrink-0 animate-pulse"></div>
+                                                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 animate-pulse"></div>
                                                                 <div className="flex-1 space-y-2">
-                                                                    <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-750 rounded animate-pulse"></div>
-                                                                    <div className="h-10 bg-gray-100 dark:bg-gray-800/50 rounded-2xl rounded-tl-none animate-pulse"></div>
+                                                                    <div className="bg-gray-50/50 dark:bg-gray-750/30 rounded-2xl rounded-tl-none p-3 space-y-2 w-full border border-gray-100/50 dark:border-gray-700/30">
+                                                                        <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                                                        <div className="h-3 w-5/6 bg-gray-200/80 dark:bg-gray-700/80 rounded animate-pulse"></div>
+                                                                        <div className="h-3 w-2/3 bg-gray-200/80 dark:bg-gray-700/80 rounded animate-pulse"></div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -1860,7 +1863,17 @@ export default function AdminCommunity() {
                                                                 {/* Infinite Recursive Replies */}
                                                                 {expandedReplies[comment._id] && comment.replies && (
                                                                     <div className="mt-2 space-y-3 pl-2 sm:pl-4 border-l-2 border-gray-100 dark:border-gray-800 ml-1 sm:ml-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
-                                                                        {(() => {
+                                                                        {repliesLoading[comment._id] ? (
+                                                                            <div className="space-y-2 animate-pulse py-1">
+                                                                                <div className="flex gap-2">
+                                                                                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 animate-pulse"></div>
+                                                                                    <div className="flex-1 space-y-1.5">
+                                                                                        <div className="h-2 w-1/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                                                                        <div className="h-6 bg-gray-100 dark:bg-gray-850/30 rounded-lg animate-pulse border border-gray-150/20 dark:border-gray-700/20"></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (() => {
                                                                             const renderReplies = (parentId, depth = 0) => {
                                                                                 const currentReplies = comment.replies.filter(r => (r.parentReplyId || null) === (parentId || null));
                                                                                 if (!currentReplies.length) return null;
@@ -2104,7 +2117,17 @@ export default function AdminCommunity() {
                                                                                                     {/* Recursion: Render replies to this reply */}
                                                                                                     {expandedReplies[reply._id] && (
                                                                                                         <div className={`border-l-2 border-gray-100 dark:border-gray-800 mt-2 animate-fade-in ${depth < 2 ? 'ml-2 sm:ml-4 pl-2 sm:pl-4' : 'ml-1 pl-1'}`}>
-                                                                                                            {renderReplies(reply._id, depth + 1)}
+                                                                                                            {repliesLoading[reply._id] ? (
+                                                                                                                <div className="space-y-2 animate-pulse py-1">
+                                                                                                                    <div className="flex gap-2">
+                                                                                                                        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 animate-pulse"></div>
+                                                                                                                        <div className="flex-1 space-y-1">
+                                                                                                                            <div className="h-1.5 w-1/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                                                                                                                            <div className="h-5 bg-gray-100 dark:bg-gray-850/30 rounded-lg animate-pulse border border-gray-150/20 dark:border-gray-700/20"></div>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                            ) : renderReplies(reply._id, depth + 1)}
                                                                                                         </div>
                                                                                                     )}
                                                                                                 </div>
