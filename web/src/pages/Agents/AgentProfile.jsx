@@ -12,18 +12,49 @@ import AgentProfileSkeleton from '../../components/skeletons/AgentProfileSkeleto
 import PreBookingChatWrapper from '../../components/PreBookingChatWrapper';
 import AgentInfoModal from '../../components/AgentInfoModal';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import SEO from '../../components/SEO';
 
 const AgentProfile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
     // Set Page Title
-    const [title, setTitle] = useState("Agent Profile - UrbanSetu");
+    const [title, setTitle] = useState("Agent Profile · UrbanSetu");
     usePageTitle(title);
     const [agent, setAgent] = useState(null);
     const [loading, setLoading] = useState(true);
     const { currentUser } = useSelector(state => state.user);
     const [listings, setListings] = useState([]);
+
+    const seoDescription = agent 
+        ? `${agent.name} is a RERA certified, verified real estate agent serving ${agent.city}. Experience: ${agent.experience} years. Agency: ${agent.agencyName || 'Independent'}. View active properties and contact for buying, selling, or renting.`
+        : "Connect with verified real estate agents on UrbanSetu to buy, sell, or rent properties with expert guidance.";
+    
+    const seoKeywords = agent 
+        ? `${agent.name}, real estate agent ${agent.city}, verified broker ${agent.city}, ${agent.areas?.join(', ') || ''}, UrbanSetu agent`
+        : "real estate agents, find property agent, verified real estate brokers, UrbanSetu agents";
+    
+    const seoImage = agent?.photo || null;
+
+    const agentSchema = agent ? {
+        "@context": "https://schema.org",
+        "@type": "RealEstateAgent",
+        "name": agent.name,
+        "image": agent.photo,
+        "email": agent.email,
+        "telephone": agent.mobileNumber,
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": agent.city,
+            "addressCountry": "IN"
+        },
+        "priceRange": "$$",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": agent.rating || 5,
+            "reviewCount": agent.reviewCount || 1
+        }
+    } : null;
 
     // Edit Mode State
     const [showEditModal, setShowEditModal] = useState(false);
@@ -200,7 +231,7 @@ const AgentProfile = () => {
 
             if (res.ok) {
                 setAgent(data);
-                setTitle(`${data.name} - UrbanSetu Agent`);
+                setTitle(`${data.name} · Verified Real Estate Agent`);
                 // Fetch listings using the user ID associated with this agent
                 const userId = data.userId._id || data.userId;
                 fetchListings(userId);
@@ -326,6 +357,14 @@ const AgentProfile = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16 pb-12 transition-colors duration-300">
+            <SEO
+                title={title}
+                description={seoDescription}
+                keywords={seoKeywords}
+                image={seoImage}
+                type="profile"
+                schema={agentSchema}
+            />
             {/* Header / Cover */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-gray-800 dark:to-gray-900 h-48 md:h-60 relative transition-colors duration-300">
                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/city-fields.png')]"></div>
