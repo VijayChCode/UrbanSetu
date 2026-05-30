@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import HomeSkeleton from "../components/skeletons/HomeSkeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -11,10 +11,11 @@ import ListingSkeletonGrid from "../components/skeletons/ListingSkeletonGrid";
 import { useSelector } from "react-redux";
 import EncryptedText from "../components/ui/EncryptedText";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import AdvancedImage from "../components/AdvancedImage";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { usePageTitle } from '../hooks/usePageTitle';
 import Typewriter from "../components/ui/Typewriter";
-import { FaEye, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot } from "react-icons/fa";
+import { FaEye, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
@@ -186,6 +187,12 @@ export default function Home() {
   const [nearbyListings, setNearbyListings] = useState([]);
   const [nearbyListingsLoading, setNearbyListingsLoading] = useState(false);
 
+  // Community, Blogs & Guides section state
+  const [homeFeaturedBlogs, setHomeFeaturedBlogs] = useState([]);
+  const [homeFeaturedGuides, setHomeFeaturedGuides] = useState([]);
+  const [homeTrendingPosts, setHomeTrendingPosts] = useState([]);
+  const [insightsTab, setInsightsTab] = useState('community');
+
   // Animation states for dashboard
   const [isVisible, setIsVisible] = useState(false);
   const [statsAnimated, setStatsAnimated] = useState(false);
@@ -249,6 +256,17 @@ export default function Home() {
           transactions: 2500, // Number(transData.count) || 2500,
           satisfaction: 98
         });
+
+        // Fetch Community, Blogs & Guides data in parallel (non-blocking)
+        Promise.allSettled([
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/forum?limit=3`).then(r => r.ok ? r.json() : null),
+        ]).then(([blogsResult, guidesResult, postsResult]) => {
+          if (blogsResult.status === 'fulfilled' && blogsResult.value?.data) setHomeFeaturedBlogs(blogsResult.value.data);
+          if (guidesResult.status === 'fulfilled' && guidesResult.value?.data) setHomeFeaturedGuides(guidesResult.value.data);
+          if (postsResult.status === 'fulfilled' && postsResult.value?.posts) setHomeTrendingPosts(postsResult.value.posts);
+        }).catch(() => { /* silent – insights section is enhancement only */ });
 
       } catch (error) {
         console.error("Error fetching home data:", error);
@@ -1534,6 +1552,210 @@ export default function Home() {
                   <ListingItem key={listing._id} listing={listing} />
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* ─── Explore & Learn: Community, Blogs & Guides ─── */}
+          {(homeTrendingPosts.length > 0 || homeFeaturedBlogs.length > 0 || homeFeaturedGuides.length > 0) && (
+            <section className="animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                    <span className="p-2 bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white rounded-xl shadow-lg">
+                      <FaLightbulb className="text-lg sm:text-xl" />
+                    </span>
+                    Explore &amp; Learn
+                  </h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 ml-[52px]">Trending discussions, expert insights, and curated guides</p>
+                </div>
+              </div>
+
+              {/* Tab Switcher */}
+              <div className="flex gap-2 mb-8 overflow-x-auto pb-1 hide-scrollbar">
+                {[
+                  { id: 'community', label: 'Community', icon: FaUsers, count: homeTrendingPosts.length, bg: '#2563eb', shadow: 'rgba(37,99,235,0.25)' },
+                  { id: 'blogs', label: 'Blog Insights', icon: FaNewspaper, count: homeFeaturedBlogs.length, bg: '#4f46e5', shadow: 'rgba(79,70,229,0.25)' },
+                  { id: 'guides', label: 'Guides', icon: FaGraduationCap, count: homeFeaturedGuides.length, bg: '#9333ea', shadow: 'rgba(147,51,234,0.25)' },
+                ].filter(t => t.count > 0).map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setInsightsTab(tab.id)}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 border ${
+                      insightsTab === tab.id
+                        ? 'text-white border-transparent'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                    style={insightsTab === tab.id ? {
+                      backgroundColor: tab.bg,
+                      borderColor: tab.bg,
+                      boxShadow: `0 10px 15px -3px ${tab.shadow}`
+                    } : {}}
+                  >
+                    <tab.icon className="text-sm" />
+                    {tab.label}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                      insightsTab === tab.id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Community Trending Posts */}
+              {insightsTab === 'community' && homeTrendingPosts.length > 0 && (
+                <div className="space-y-4 animate-fade-in">
+                  {homeTrendingPosts.map((post, idx) => (
+                    <Link
+                      key={post._id}
+                      to={currentUser ? `/user/community/${post._id}` : `/community/${post._id}`}
+                      className="group block bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 p-5 transition-all duration-300 hover:-translate-y-0.5"
+                      style={{ animationDelay: `${idx * 100}ms` }}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-lg">
+                          {post.author?.username?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-bold text-gray-900 dark:text-white text-sm">{post.author?.username || 'Community Member'}</span>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">•</span>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
+                              {new Date(post.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                            </span>
+                            {post.category && (
+                              <span className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase">
+                                {post.category}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {post.title}
+                          </h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                            {post.content?.replace(/@\[[^\]]+\]\([^)]+\)/g, '').substring(0, 150)}
+                          </p>
+                          <div className="flex items-center gap-4 mt-3">
+                            <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-medium">
+                              <FaThumbsUp className="text-[10px]" /> {post.likes?.length || 0}
+                            </span>
+                            <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-medium">
+                              <FaComment className="text-[10px]" /> {post.comments?.length || 0}
+                            </span>
+                            <span className="ml-auto text-xs text-blue-600 dark:text-blue-400 font-bold group-hover:underline flex items-center gap-1">
+                              Join Discussion <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                  <div className="text-center mt-4">
+                    <Link
+                      to={currentUser ? '/user/community' : '/community'}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold text-sm rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors border border-blue-100 dark:border-blue-800"
+                    >
+                      <FaUsers className="text-sm" /> View All Discussions <FaArrowRight className="text-xs" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Featured Blog Insights */}
+              {insightsTab === 'blogs' && homeFeaturedBlogs.length > 0 && (
+                <div className="animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {homeFeaturedBlogs.map((blog, idx) => (
+                      <Link
+                        to={`/blog/${blog.slug || blog._id}`}
+                        key={blog._id}
+                        className="group relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800"
+                        style={{ animationDelay: `${idx * 120}ms` }}
+                      >
+                        <AdvancedImage
+                          src={blog.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
+                          alt={blog.title}
+                          className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 p-6 w-full">
+                          <div className="flex items-center gap-3 text-xs font-bold text-blue-300 uppercase tracking-wider mb-3">
+                            <span className="bg-blue-600/90 backdrop-blur-md px-2 py-1 rounded-md">{blog.category}</span>
+                            <span>•</span>
+                            <span>{Math.ceil((blog.content ? blog.content.split(/\s+/).length : 0) / 200)} min read</span>
+                          </div>
+                          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors leading-tight line-clamp-2">
+                            {blog.title}
+                          </h3>
+                          <p className="text-gray-300 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                            {blog.excerpt || (blog.content ? blog.content.substring(0, 100) : '')}
+                          </p>
+                          <div className="flex items-center gap-2 text-white font-bold text-sm">
+                            Read Article <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="text-center mt-6">
+                    <Link
+                      to="/blogs"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold text-sm rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors border border-indigo-100 dark:border-indigo-800"
+                    >
+                      <FaNewspaper className="text-sm" /> Browse All Blogs <FaArrowRight className="text-xs" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Featured Guide Collections */}
+              {insightsTab === 'guides' && homeFeaturedGuides.length > 0 && (
+                <div className="animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {homeFeaturedGuides.map((guide, idx) => (
+                      <Link
+                        to={`/guide/${guide.slug || guide._id}`}
+                        key={guide._id}
+                        className="group relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800"
+                        style={{ animationDelay: `${idx * 120}ms` }}
+                      >
+                        <AdvancedImage
+                          src={guide.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
+                          alt={guide.title}
+                          className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 p-6 w-full">
+                          <div className="flex items-center gap-3 text-xs font-bold text-purple-300 uppercase tracking-wider mb-3">
+                            <span className="bg-purple-600/90 backdrop-blur-md px-2 py-1 rounded-md">{guide.category}</span>
+                            <span>•</span>
+                            <span>{Math.ceil((guide.content ? guide.content.split(/\s+/).length : 0) / 200)} min read</span>
+                          </div>
+                          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors leading-tight line-clamp-2">
+                            {guide.title}
+                          </h3>
+                          <p className="text-gray-300 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                            {guide.excerpt || (guide.content ? guide.content.substring(0, 100) : '')}
+                          </p>
+                          <div className="flex items-center gap-2 text-white font-bold text-sm">
+                            Read Guide <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="text-center mt-6">
+                    <Link
+                      to="/guides"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold text-sm rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors border border-purple-100 dark:border-purple-800"
+                    >
+                      <FaGraduationCap className="text-sm" /> Explore All Guides <FaArrowRight className="text-xs" />
+                    </Link>
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
