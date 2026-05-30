@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { FaLeaf, FaUsers, FaShieldAlt, FaSave, FaCalculator, FaInfoCircle } from 'react-icons/fa';
 
-const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
+const ESGManagement = ({ esgData, onESGChange, isEditing = false, disabled = false }) => {
     const [saving, setSaving] = useState(false);
     const [saveButtonLoading, setSaveButtonLoading] = useState(false);
     const [esg, setEsg] = useState({
@@ -321,6 +321,7 @@ const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
                 </div>
             )}
 
+            <fieldset disabled={disabled} className="contents">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Environmental Section */}
                 <div className="space-y-4">
@@ -601,6 +602,7 @@ const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
                     </div>
                 </div>
             </div>
+            </fieldset>
 
             {/* Save Button */}
             <div className="mt-6 flex justify-end">
@@ -622,7 +624,7 @@ const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
                         }, 500);
                     }}
                     className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={saveButtonLoading}
+                    disabled={saveButtonLoading || disabled}
                 >
                     {saveButtonLoading ? (
                         <>
@@ -632,7 +634,7 @@ const ESGManagement = ({ esgData, onESGChange, isEditing = false }) => {
                     ) : (
                         <>
                             <FaSave />
-                            Save ESG Data
+                            {disabled ? "Save ESG Data (Disabled - Property Deleted)" : "Save ESG Data"}
                         </>
                     )}
                 </button>

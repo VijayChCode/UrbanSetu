@@ -844,7 +844,7 @@ export default function EditListing() {
           <div className="mb-6 bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-yellow-400 p-4 rounded-lg shadow-md">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-1">
-                <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-450" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -853,12 +853,23 @@ export default function EditListing() {
                 <p className="text-sm text-yellow-700 dark:text-gray-300 mb-3">
                   Your property is currently <strong>not visible to buyers</strong>. Complete the verification process to make it public and start receiving inquiries.
                 </p>
-                <Link
-                  to={`/user/property-verification?listingId=${params.listingId}`}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition-all transform hover:scale-105 shadow-md animate-pulse"
-                >
-                  <FaShieldAlt /> Verify Property Now
-                </Link>
+                {formData.isDeleted ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-400 dark:bg-gray-700 text-white rounded-lg text-sm font-semibold opacity-50 cursor-not-allowed shadow-md"
+                    title="Property is deleted and cannot be verified"
+                  >
+                    <FaShieldAlt /> Verify Property Now (Disabled - Property Deleted)
+                  </button>
+                ) : (
+                  <Link
+                    to={`/user/property-verification?listingId=${params.listingId}`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-semibold hover:bg-yellow-700 transition-all transform hover:scale-105 shadow-md animate-pulse"
+                  >
+                    <FaShieldAlt /> Verify Property Now
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -1338,25 +1349,32 @@ export default function EditListing() {
                       type="text"
                       placeholder={`Image URL ${index + 1} (e.g., https://example.com/image.jpg)`}
                       value={url || ""}
+                      disabled={formData.isDeleted}
                       onChange={(e) => handleImageChange(index, e.target.value)}
-                      className={`w-full md:flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${imageErrors[index] ? 'border-red-500' : ''
-                        }`}
+                      className={`w-full md:flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${imageErrors[index] ? 'border-red-500' : ''} ${formData.isDeleted ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900/50' : ''}`}
                     />
                     <input
                       type="text"
                       placeholder="Image Name/Title (e.g. Master Bedroom)"
                       value={formData.imageCaptions?.[index] || ""}
+                      disabled={formData.isDeleted}
                       onChange={(e) => handleCaptionChange(index, e.target.value)}
-                      className="w-full md:flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                      className={`w-full md:flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${formData.isDeleted ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900/50' : ''}`}
                     />
                     <div className="flex items-center gap-2 w-full md:w-auto">
-                      <label className={`flex-1 md:flex-none justify-center p-3 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex items-center gap-2 ${uploadingImages[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <label className={`flex-1 md:flex-none justify-center p-3 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex items-center gap-2 transition-all ${
+                        formData.isDeleted
+                          ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
+                          : uploadingImages[index]
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                      }`}>
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
                           onChange={(e) => handleFileUpload(index, e.target.files[0])}
-                          disabled={uploadingImages[index]}
+                          disabled={uploadingImages[index] || formData.isDeleted}
                         />
                         {uploadingImages[index] ? (
                           <>
@@ -1381,17 +1399,22 @@ export default function EditListing() {
                           }
                           auditByUrl(url, index, 'main');
                         }}
-                        className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                        className={`bg-blue-600 text-white px-3 py-2 rounded-lg transition flex items-center justify-center gap-2 ${
+                          formData.isDeleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                        }`}
                         title="AI Audit this URL"
-                        disabled={isAuditing[`main_${index}`]}
+                        disabled={isAuditing[`main_${index}`] || formData.isDeleted}
                       >
                         {(url && isAuditing[`main_${index}`]) ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain />}
                       </button>
                       <button
                         type="button"
                         onClick={() => onHandleRemoveImage(index)}
-                        className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
+                        className={`bg-red-500 text-white px-3 py-2 rounded-lg transition flex items-center justify-center ${
+                          formData.isDeleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'
+                        }`}
                         title="Remove this photo"
+                        disabled={formData.isDeleted}
                       >
                         ×
                       </button>
@@ -1405,7 +1428,10 @@ export default function EditListing() {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, imageUrls: [...formData.imageUrls, ""] })}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition mt-2"
+                disabled={formData.isDeleted}
+                className={`bg-blue-500 text-white px-4 py-2 rounded-lg transition mt-2 ${
+                  formData.isDeleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+                }`}
               >
                 Add Photo
               </button>
@@ -1514,17 +1540,23 @@ export default function EditListing() {
                       type="text"
                       placeholder={`Video URL ${index + 1} (e.g., https://example.com/video.mp4)`}
                       value={url || ""}
+                      disabled={formData.isDeleted}
                       onChange={(e) => handleVideoUrlChange(index, e.target.value)}
-                      className={`flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${videoErrors[index] ? 'border-red-500' : ''
-                        }`}
+                      className={`flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${videoErrors[index] ? 'border-red-500' : ''} ${formData.isDeleted ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900/50' : ''}`}
                     />
-                    <label className={`p-3 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all flex items-center gap-2 ${uploadingVideos[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <label className={`p-3 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex items-center gap-2 transition-all ${
+                      formData.isDeleted
+                        ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
+                        : uploadingVideos[index]
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    }`}>
                       <input
                         type="file"
                         accept="video/*"
                         className="hidden"
                         onChange={(e) => handleVideoUpload(index, e.target.files[0])}
-                        disabled={uploadingVideos[index]}
+                        disabled={uploadingVideos[index] || formData.isDeleted}
                       />
                       {uploadingVideos[index] ? (
                         <>
@@ -1543,8 +1575,11 @@ export default function EditListing() {
                     <button
                       type="button"
                       onClick={() => onHandleRemoveVideo(index)}
-                      className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
+                      className={`bg-red-500 text-white px-3 py-2 rounded-lg transition ${
+                        formData.isDeleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'
+                      }`}
                       title="Remove this video"
+                      disabled={formData.isDeleted}
                     >
                       ×
                     </button>
@@ -1577,7 +1612,10 @@ export default function EditListing() {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, videoUrls: [...formData.videoUrls, ""] })}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition mt-2"
+                disabled={formData.isDeleted}
+                className={`bg-blue-500 text-white px-4 py-2 rounded-lg transition mt-2 ${
+                  formData.isDeleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+                }`}
               >
                 Add Video
               </button>
@@ -1621,17 +1659,24 @@ export default function EditListing() {
                         type="text"
                         placeholder={`360 Image URL ${index + 1}`}
                         value={url || ""}
+                        disabled={formData.isDeleted}
                         onChange={(e) => handleVirtualTourUrlChange(index, e.target.value)}
-                        className={`w-full md:flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${virtualTourErrors[index] ? 'border-red-500' : ''}`}
+                        className={`w-full md:flex-1 p-3 border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${virtualTourErrors[index] ? 'border-red-500' : ''} ${formData.isDeleted ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900/50' : ''}`}
                       />
                       <div className="flex items-center gap-2 w-full md:w-auto">
-                        <label className={`flex-1 md:flex-none justify-center p-3 border-2 border-dashed border-indigo-300 dark:border-indigo-900/50 rounded-lg cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex items-center gap-2 ${uploadingVirtualTour[index] ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <label className={`flex-1 md:flex-none justify-center p-3 border-2 border-dashed border-indigo-300 dark:border-indigo-900/50 rounded-lg flex items-center gap-2 transition-all ${
+                          formData.isDeleted
+                            ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800 border-indigo-300 dark:border-indigo-900/50'
+                            : uploadingVirtualTour[index]
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                        }`}>
                           <input
                             type="file"
                             accept="image/*"
                             className="hidden"
                             onChange={(e) => handleVirtualTourUpload(index, e.target.files[0])}
-                            disabled={uploadingVirtualTour[index]}
+                            disabled={uploadingVirtualTour[index] || formData.isDeleted}
                           />
                           {uploadingVirtualTour[index] ? (
                             <>
@@ -1651,17 +1696,24 @@ export default function EditListing() {
                             }
                             auditByUrl(url, index, 'tour');
                           }}
-                          className="p-3 border-2 border-dashed border-blue-400 dark:border-blue-900/50 rounded-lg cursor-pointer hover:border-blue-500 transition-all flex items-center justify-center"
+                          className={`p-3 border-2 border-dashed rounded-lg transition-all flex items-center justify-center ${
+                            formData.isDeleted
+                              ? 'opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-700'
+                              : 'border-blue-400 dark:border-blue-900/50 cursor-pointer hover:border-blue-500'
+                          }`}
                           title="AI Audit this 360 URL"
-                          disabled={isAuditing[`tour_${index}`]}
+                          disabled={isAuditing[`tour_${index}`] || formData.isDeleted}
                         >
-                          {(url && isAuditing[`tour_${index}`]) ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain className="text-blue-500" />}
+                          {(url && isAuditing[`tour_${index}`]) ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaBrain className={formData.isDeleted ? "text-gray-400" : "text-blue-500"} />}
                         </button>
                         <button
                           type="button"
                           onClick={() => onHandleRemoveVirtualTour(index)}
-                          className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
+                          className={`bg-red-500 text-white px-3 py-2 rounded-lg transition flex items-center justify-center ${
+                            formData.isDeleted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'
+                          }`}
                           title="Remove 360 image"
+                          disabled={formData.isDeleted}
                         >
                           ×
                         </button>
@@ -1740,6 +1792,7 @@ export default function EditListing() {
               esgData={formData.esg}
               onESGChange={(esgData) => setFormData({ ...formData, esg: esgData })}
               isEditing={true}
+              disabled={formData.isDeleted}
             />
           </div>
 
@@ -1778,10 +1831,10 @@ export default function EditListing() {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || formData.isDeleted}
               className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Updating..." : "Update Listing"}
+              {loading ? "Updating..." : formData.isDeleted ? "Update Listing (Disabled - Property Deleted)" : "Update Listing"}
             </button>
           </div>
           {error && <p className="text-red-500 text-center">{error}</p>}
