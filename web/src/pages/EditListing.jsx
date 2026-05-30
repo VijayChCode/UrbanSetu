@@ -99,6 +99,8 @@ export default function EditListing() {
   const params = useParams();
   const location = useLocation();
   const isOwner = currentUser && (formData.userRef === currentUser._id || formData.userRef?._id === currentUser._id);
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
+  const isAuthorized = isOwner || isAdmin;
   const [consent, setConsent] = useState(false);
   const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
   const [previewVideo, setPreviewVideo] = useState(null);
@@ -774,6 +776,14 @@ export default function EditListing() {
     }
   };
 
+  if (!dataLoaded && !noListingFound) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
+        <UrbanSetuSpinner size="lg" />
+      </div>
+    );
+  }
+
   if (noListingFound) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
@@ -784,6 +794,52 @@ export default function EditListing() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Property Not Found</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
             We couldn't find the property you're looking for. It may have been removed, or the link might be incorrect.
+          </p>
+          <button
+            onClick={() => navigate(getPreviousPath())}
+            className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Go Back to Listings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 1. Block access for deleted listings
+  if (dataLoaded && formData.isDeleted) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center transition-colors">
+            <FaExclamationTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Property Deleted</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
+            This property listing has been deleted and cannot be edited.
+          </p>
+          <button
+            onClick={() => navigate(getPreviousPath())}
+            className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Go Back to Listings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Block access for unauthorized users
+  if (dataLoaded && !isAuthorized) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 px-4 transition-colors duration-300">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+          <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center transition-colors">
+            <FaShieldAlt className="w-10 h-10 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3 transition-colors">Access Denied</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed transition-colors">
+            You do not have permission to edit this property. You can only edit your own listings.
           </p>
           <button
             onClick={() => navigate(getPreviousPath())}
