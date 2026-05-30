@@ -254,9 +254,10 @@ export default function Community() {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    const handleSearchSelect = (term) => {
-        setSearchTerm(term);
+    const handleSearchSelect = (post) => {
+        setSearchTerm('');
         setShowSuggestions(false);
+        navigate(currentUser ? `/user/community/post/${post._id}` : `/community/post/${post._id}`);
     };
 
     const fetchStats = async () => {
@@ -1146,7 +1147,7 @@ export default function Community() {
                 </div>
 
                 {/* Controls & Tabs Header Panel */}
-                <div className="bg-white/80 dark:bg-gray-900/60 backdrop-blur-md rounded-2xl border border-gray-150 dark:border-gray-800 p-4 mb-8 shadow-sm transition-all duration-300">
+                <div className="relative z-30 bg-white/80 dark:bg-gray-900/60 backdrop-blur-md rounded-2xl border border-gray-150 dark:border-gray-800 p-4 mb-8 shadow-sm transition-all duration-300">
                     <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
                         
                         {/* Categories Horizontal Scroll */}
@@ -1177,7 +1178,7 @@ export default function Community() {
                         <div className="flex flex-col sm:flex-row items-center gap-2.5 flex-shrink-0 w-full lg:w-auto">
                             {/* Search bar */}
                             <div className="relative w-full lg:w-60 xl:w-64">
-                                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
+                                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-450 text-sm" />
                                 <input
                                     type="text"
                                     placeholder="Search discussions..."
@@ -1185,21 +1186,21 @@ export default function Community() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onFocus={() => searchTerm.length > 2 && setShowSuggestions(true)}
                                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-850 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500/50 text-xs sm:text-sm transition-all"
+                                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700/80 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500/40 text-xs sm:text-sm transition-all"
                                 />
                                 {/* Search Suggestions popup */}
                                 {showSuggestions && suggestions.length > 0 && (
-                                    <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-950 shadow-xl rounded-xl mt-2 z-50 border border-gray-150 dark:border-gray-800 overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
-                                        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-150 dark:border-gray-800">
+                                    <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-900 shadow-xl rounded-xl mt-2 z-50 border border-gray-150 dark:border-gray-800 overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
+                                        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-950/80 text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-150 dark:border-gray-800">
                                             Suggested Discussions
                                         </div>
                                         {suggestions.map((s, i) => (
                                             <div
                                                 key={i}
-                                                className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-xs sm:text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-850 last:border-0 transition-colors flex items-center gap-3 group"
-                                                onClick={() => handleSearchSelect(s.title)}
+                                                className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-xs sm:text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors flex items-center gap-3 group"
+                                                onClick={() => handleSearchSelect(s)}
                                             >
-                                                <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-850 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                                                <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
                                                     <FaSearch className="text-gray-400 group-hover:text-blue-500 dark:text-gray-500 text-[10px]" />
                                                 </div>
                                                 <span className="truncate font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.title}</span>
@@ -1217,7 +1218,7 @@ export default function Community() {
                                         className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 border flex-1 sm:flex-none ${
                                             showMyPosts
                                                 ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
-                                                : 'bg-white dark:bg-gray-850 text-gray-700 dark:text-gray-300 border-gray-250 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                : 'bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-800/80'
                                         }`}
                                     >
                                         <FaUser className="text-xs" />
@@ -1232,7 +1233,7 @@ export default function Community() {
                                     className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all flex-1 sm:flex-none"
                                 >
                                     <FaPlus className="text-xs" />
-                                    <span>New Thread</span>
+                                    <span>New Post</span>
                                 </button>
                             </div>
                         </div>
