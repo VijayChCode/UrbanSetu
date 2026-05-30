@@ -835,8 +835,12 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
     const { reviewId } = req.params;
     const { category, reason } = req.body;
 
-    if (!category || !reason) {
-      return next(errorHandler(400, 'Category and reason are required'));
+    if (!category || !category.trim()) {
+      return next(errorHandler(400, 'Category is required'));
+    }
+
+    if (category.trim().toLowerCase() === 'other' && (!reason || !reason.trim())) {
+      return next(errorHandler(400, 'Reason is required for category "Other"'));
     }
 
     const review = await Review.findById(reviewId);
@@ -844,7 +848,7 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
       return next(errorHandler(404, 'Review not found'));
     }
 
-    // Get listing for report email
+    // Get listing for report email and notifications
     const listing = await Listing.findById(review.listingId);
     const listingName = listing ? listing.name : 'Unknown Property';
     const listingId = listing ? listing._id : '#';
@@ -852,10 +856,13 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
     const reporter = await User.findById(req.user.id);
     const admins = await User.find({ role: { $in: ['admin', 'rootadmin'] } });
 
-    // Notify admins
-    const notificationMessage = `Review reported by ${reporter.username}: [${category}] ${reason}`;
+    // Create notification message with category and optional reason
+    const categoryText = category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1');
+    const reasonText = reason && reason.trim() ? ` - ${reason.trim()}` : '';
+    const notificationMessage = `A review for property "${listingName}" was reported by ${reporter?.username || 'a user'} for: ${categoryText}${reasonText}`;
 
     // Create notifications for admins
+    const now = new Date();
     const notifications = await Promise.all(admins.map(async (admin) => {
       return Notification.create({
         userId: admin._id,
@@ -864,11 +871,15 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
         message: notificationMessage,
         listingId: review.listingId,
         adminId: req.user.id,
+        createdAt: now, // Ensure same timestamp for deduplication
         meta: {
           reviewId: review._id,
-          reporterId: reporter._id,
+          reporterId: reporter?._id,
+          reporterEmail: reporter?.email || null,
+          reporterPhone: reporter?.mobileNumber || null,
+          reporterRole: reporter?.role || null,
           category,
-          reason
+          reason: reason || ''
         }
       });
     }));
@@ -888,14 +899,14 @@ router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
           listingName,
           listingId,
           category,
-          reason
+          reason || ''
         );
       } catch (emailError) {
         console.error('Failed to send issue report email:', emailError);
       }
     }
 
-    res.status(200).json({ success: true, message: 'Report submitted successfully' });
+    res.status(200).json({ success: true, message: 'Report submitted successfully.' });
   } catch (error) {
     next(error);
   }
@@ -1086,68 +1097,6 @@ router.post('/respond/like/:reviewId', verifyToken, async (req, res, next) => {
     const io = req.app.get('io');
     if (io) io.emit('reviewUpdated', review);
     res.status(200).json({ success: true, ownerResponseLikes: review.ownerResponseLikes, ownerResponseDislikes: review.ownerResponseDislikes });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Report a review (user -> admin notification)
-router.post('/report/:reviewId', verifyToken, async (req, res, next) => {
-  try {
-    const { reviewId } = req.params;
-    const { category, reason } = req.body;
-
-    // Validate required fields
-    if (!category || !category.trim()) {
-      return res.status(400).json({ message: 'Category is required.' });
-    }
-
-    const review = await Review.findById(reviewId);
-    if (!review) {
-      return res.status(404).json({ message: 'Review not found.' });
-    }
-
-    const listing = await Listing.findById(review.listingId);
-    const reporter = await User.findById(req.user.id);
-
-    // Create notification message with category and optional reason
-    const categoryText = category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1');
-    const reasonText = reason && reason.trim() ? ` - ${reason.trim()}` : '';
-    const notificationMessage = `A review for property "${listing?.name || 'Unknown'}" was reported by ${reporter?.username || 'a user'} for: ${categoryText}${reasonText}`;
-
-    // Find all admins
-    const admins = await User.find({ role: { $in: ['admin', 'rootadmin'] } });
-    const now = new Date();
-    const notifications = await Promise.all(admins.map(async (admin) => {
-      return Notification.create({
-        userId: admin._id,
-        type: 'review_reported',
-        title: 'Review Reported',
-        message: notificationMessage,
-        listingId: review.listingId,
-        adminId: req.user.id,
-        createdAt: now, // Ensure same timestamp for deduplication
-        meta: {
-          reviewId: review._id,
-          reporterId: reporter?._id,
-          reporterEmail: reporter?.email || null,
-          reporterPhone: reporter?.mobileNumber || null,
-          reporterRole: reporter?.role || null,
-          category: category,
-          reason: reason || ''
-        }
-      });
-    }));
-
-    // Emit socket event for real-time admin notification
-    const io = req.app.get('io');
-    if (io) {
-      notifications.forEach(notification => {
-        io.emit('notificationCreated', notification);
-      });
-    }
-
-    res.status(200).json({ message: 'Report submitted successfully.' });
   } catch (error) {
     next(error);
   }
