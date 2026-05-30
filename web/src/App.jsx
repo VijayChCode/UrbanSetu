@@ -799,9 +799,38 @@ function AppRoutes({ bootstrapped }) {
       // Ignore own messages
       if (data.senderId === currentUser._id) return;
 
+      const getAnonymizedName = (userId) => {
+        if (!userId) return "Anonymous User";
+        const FANTASY_NAMES = [
+          "Urban Explorer", "Dream Home Seeker", "City Dweller", "Property Enthusiast",
+          "Skyline Admirer", "Metro Nomad", "Estate Visionary", "Loft Lover",
+          "Home Hunter", "Space Scout", "Modern Resident", "Vibrant Villager",
+          "Cosmo Dweller", "Suburban Soul", "Downtown Dreamer", "Penthouse Pro",
+          "Cottage Core", "Villa Visionary", "Duplex Diver", "Studio Star",
+          "Bungalow Buff", "Mansion Master", "Terrace Traveler", "Garden Guru",
+          "Balcony Boss", "High-Rise Hero", "Community Connector", "Neighborhood Nomad",
+          "Street Smart", "Avenue Ace", "Lane Leader", "Boulevard Baron",
+          "Plaza Pioneer", "Square Scout", "District Diver", "Zone Zealot",
+          "Quarter Quest", "Sector Seeker", "Block Buster", "Estate Expert",
+          "Harbor Hero", "River Resident", "Lake Lover", "Mountain Mover",
+          "Valley Voyager", "Cloud Chaser", "Star Gazer", "Horizon Hunter",
+          "Dawn Dreamer", "Dusk Dweller"
+        ];
+        const hexSuffix = userId.substring(userId.length - 8);
+        const index = parseInt(hexSuffix, 16) % FANTASY_NAMES.length;
+        const suffix = userId.substring(userId.length - 4);
+        return `${FANTASY_NAMES[index]} (${suffix})`;
+      };
+
+      // Determine sender name based on role and anonymity guidelines
+      const isRecipientOwner = data.ownerId && currentUser._id === data.ownerId;
+      const displaySenderName = isRecipientOwner
+        ? getAnonymizedName(data.senderId)
+        : "Property Owner";
+
       try { playNotification(); } catch (_) { }
 
-      toast.info(`New message from ${data.senderName || 'Property Inquiry'}`, {
+      toast.info(`New message from ${displaySenderName}`, {
         onClick: () => {
           navigate(`/listing/${data.listingId}?openChat=true`);
         },

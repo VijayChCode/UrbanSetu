@@ -110,7 +110,8 @@ export const sendMessage = async (req, res, next) => {
             message: newMessage,
             listingId: chat.listingId ? chat.listingId._id : null,
             senderId,
-            senderName
+            senderName,
+            ownerId: chat.ownerId
         });
 
         // Also emit to sender (for multi-device sync)
@@ -119,7 +120,8 @@ export const sendMessage = async (req, res, next) => {
             message: newMessage,
             listingId: chat.listingId ? chat.listingId._id : null,
             senderId,
-            senderName
+            senderName,
+            ownerId: chat.ownerId
         });
 
         // Email Notification
