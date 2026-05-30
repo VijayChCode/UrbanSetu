@@ -11,6 +11,7 @@ const LOADING_STAGES = [
   { label: 'Fetching recently viewed properties...', icon: '👁️' },
   { label: 'Retrieving properties near your location...', icon: '🏠' },
   { label: 'Syncing your price drop watchlist...', icon: '📉' },
+  { label: 'Loading community insights & guides...', icon: '💡' },
   { label: 'Generating AI matching weights...', icon: '🤖' },
   { label: 'Mapping scheduling calendar...', icon: '📅' },
   { label: 'Finalizing premium dashboard widgets...', icon: '✨' },
@@ -395,6 +396,70 @@ export default function HomeSkeleton() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <ListingSkeletonGrid count={4} />
+          </div>
+        </section>
+
+        {/* ─── Section 5: Explore & Learn Skeleton ─── */}
+        <section className="mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-2 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-xl"
+                  style={{ animation: 'hsk-float 2.5s 1000ms infinite ease-in-out' }}
+                >
+                  <span className="text-lg">💡</span>
+                </div>
+                <Shimmer className="h-7 w-44 rounded-lg" delay={1000} />
+              </div>
+              <Shimmer className="h-3.5 w-72 rounded ml-[52px]" delay={1050} />
+            </div>
+          </div>
+
+          {/* Tab Switcher Skeleton */}
+          <div className="flex gap-2 mb-8">
+            {[
+              { w: 'w-32', color: 'from-blue-500/20 to-blue-600/20' },
+              { w: 'w-36', color: 'from-indigo-500/10 to-indigo-600/10' },
+              { w: 'w-28', color: 'from-purple-500/10 to-purple-600/10' },
+            ].map((tab, i) => (
+              <div
+                key={i}
+                className={`${tab.w} h-10 bg-gradient-to-r ${tab.color} rounded-xl border border-gray-200/30 dark:border-gray-700/30`}
+                style={{ animation: `hsk-fade-in-up 0.5s ${1050 + i * 80}ms both ease-out` }}
+              >
+                <Shimmer className="h-full w-full rounded-xl" delay={1050 + i * 80} />
+              </div>
+            ))}
+          </div>
+
+          {/* Content Cards Skeleton — 3 post-style cards */}
+          <div className="space-y-4">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-100/50 dark:border-gray-700/50 p-5 shadow-sm"
+                style={{ animation: `hsk-fade-in-up 0.5s ${1150 + i * 100}ms both ease-out` }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/15 to-indigo-600/15 flex-shrink-0 animate-pulse" />
+                  <div className="flex-1 space-y-3 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Shimmer className="h-3.5 w-24" delay={1200 + i * 100} />
+                      <Shimmer className="h-3 w-16" delay={1250 + i * 100} />
+                      <div className="h-4 w-14 bg-blue-100/50 dark:bg-blue-900/20 rounded-full" />
+                    </div>
+                    <Shimmer className="h-5 w-3/4" delay={1300 + i * 100} />
+                    <Shimmer className="h-3.5 w-full" delay={1350 + i * 100} />
+                    <Shimmer className="h-3.5 w-2/3" delay={1400 + i * 100} />
+                    <div className="flex items-center gap-4 pt-1">
+                      <Shimmer className="h-3 w-10" delay={1450 + i * 100} />
+                      <Shimmer className="h-3 w-14" delay={1500 + i * 100} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
