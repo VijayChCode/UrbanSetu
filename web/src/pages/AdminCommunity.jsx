@@ -2193,6 +2193,34 @@ export default function AdminCommunity() {
                                 </div>
                             ))
                         )}
+                        {hasMore && (
+                            <div id="infinite-scroll-trigger" className="pt-4 pb-8 flex justify-center">
+                                {loadingMore ? (
+                                    <div className="w-full space-y-6">
+                                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 space-y-4 animate-pulse">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                    <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                <div className="h-4 w-5/6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                                                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <span className="text-sm text-gray-500">Scroll down to explore more</span>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Sidebar */}
@@ -2298,15 +2326,7 @@ export default function AdminCommunity() {
             {showCreateModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200 transition-colors">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Start a Discussion</h2>
-                            <button
-                                onClick={() => setShowCreateModal(false)}
-                                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                            >
-                                <FaTimes />
-                            </button>
-                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Start a Discussion</h2>
 
                         <form onSubmit={handleCreatePost} className="space-y-4">
                             <div>
