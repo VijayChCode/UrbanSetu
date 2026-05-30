@@ -16,7 +16,6 @@ import { authenticatedFetch } from '../utils/auth';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 export default function Community() {
-    usePageTitle("Community Hub - Neighborhood Forum");
     const { currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const { postId } = useParams();
@@ -103,6 +102,14 @@ export default function Community() {
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
     }, [posts, stats.trendingTopics]);
+
+    const activePost = useMemo(() => {
+        if (!postId || !posts) return null;
+        return posts.find(p => p._id === postId);
+    }, [postId, posts]);
+
+    const dynamicTitle = activePost ? activePost.title : "Community Hub - Neighborhood Forum";
+    usePageTitle(dynamicTitle);
 
     // Property Mention State
     const [propertySuggestions, setPropertySuggestions] = useState([]);

@@ -18,7 +18,6 @@ import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import UserAvatar from '../components/UserAvatar';
 
 export default function AdminCommunity() {
-    usePageTitle("Admin Dashboard - Community Moderation");
     const { currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const { postId } = useParams();
@@ -116,6 +115,14 @@ export default function AdminCommunity() {
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
     }, [posts, stats.trendingTopics]);
+
+    const activePost = useMemo(() => {
+        if (!postId || !posts) return null;
+        return posts.find(p => p._id === postId);
+    }, [postId, posts]);
+
+    const dynamicTitle = activePost ? activePost.title : "Admin Dashboard - Community Moderation";
+    usePageTitle(dynamicTitle);
 
     // Emoji Picker State
     const [showEmojiPicker, setShowEmojiPicker] = useState({ show: false, type: null, id: null });
