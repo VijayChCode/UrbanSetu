@@ -46,6 +46,10 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
     const [selectedChatIds, setSelectedChatIds] = useState(new Set());
     const [inboxTab, setInboxTab] = useState('this-listing'); // 'this-listing' or 'all'
 
+    // State for Unread Messages & Inquiry Tracking
+    const [unreadChatIds, setUnreadChatIds] = useState(new Set());
+    const [unreadCount, setUnreadCount] = useState(0);
+
     // State for Chat View
     const [activeChat, setActiveChat] = useState(null); // The full chat object
     const [messages, setMessages] = useState([]);
@@ -118,19 +122,33 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
         setIsOpen(!isOpen);
     };
 
-    // 1. Fetch Data on Open
+    // 1. Fetch Initial Data for Badges & Inbox
     useEffect(() => {
-        if (isOpen && currentUser) {
+        if (currentUser) {
             if (isOwner) {
-                fetchOwnerChats();
+                fetchOwnerChats(false);
             } else {
-                initiateOrGetChat();
+                initiateOrGetChat(false);
             }
         }
+    }, [currentUser?._id, isOwner, listingId]);
 
-        // Prevent background scrolling when chat window is open
+    // Scroll Lock and Unread state clears
+    useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            if (!isOwner) {
+                setUnreadCount(0);
+            } else if (activeChat) {
+                setUnreadChatIds(prev => {
+                    if (prev.has(activeChat._id)) {
+                        const next = new Set(prev);
+                        next.delete(activeChat._id);
+                        return next;
+                    }
+                    return prev;
+                });
+            }
         } else {
             document.body.style.overflow = '';
         }
@@ -138,15 +156,9 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isOpen, currentUser?._id, isOwner, listingId]);
+    }, [isOpen, isOwner, activeChat?._id]);
 
     // 2. Fetch Owner's Inbox (All chats for this user)
-    // Note: The controller `getUserChats` returns ALL chats for the user.
-    // We might want to filter by listingId if we only want to show inquiries for THIS listing.
-    // But usually an Inbox shows all. For this specific wrapper on a Listing page, 
-    // maybe we should only show relevant chats? 
-    // The user requirement says: "at owner side as single owner it should first show all the messsaged users"
-    // So I will show all chats.
     const fetchOwnerChats = async (showLoading = true) => {
         if (showLoading) setIsLoading(true);
         try {
@@ -154,18 +166,30 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
             if (data.success) {
                 setInboxChats(data.chats);
+                
+                // Calculate initial unread chats
+                const unreads = new Set();
+                data.chats.forEach(chat => {
+                    if (chat.lastMessage && chat.lastMessage.sender !== currentUser._id) {
+                        // Only count as unread if owner is NOT currently viewing this chat
+                        if (!isOpen || !activeChat || activeChat._id !== chat._id) {
+                            unreads.add(chat._id);
+                        }
+                    }
+                });
+                setUnreadChatIds(unreads);
             }
         } catch (error) {
             console.error(error);
-            toast.error('Failed to load chats');
+            if (showLoading) toast.error('Failed to load chats');
         } finally {
             if (showLoading) setIsLoading(false);
         }
     };
 
     // 3. Initiate/Get Chat for Buyer
-    const initiateOrGetChat = async () => {
-        setIsLoading(true);
+    const initiateOrGetChat = async (showLoading = true) => {
+        if (showLoading) setIsLoading(true);
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/pre-booking-chat/initiate`, {
                 method: 'POST',
@@ -176,13 +200,20 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
             if (data.success) {
                 setActiveChat(data.chat);
                 setMessages(data.chat.messages || []);
+                
+                // Initialize unreadCount for buyer
+                if (data.chat.lastMessage && data.chat.lastMessage.sender !== currentUser._id) {
+                    if (!isOpen) {
+                        setUnreadCount(1);
+                    }
+                }
             } else {
-                toast.error(data.message);
+                if (showLoading) toast.error(data.message);
             }
         } catch (error) {
             console.error(error);
         } finally {
-            setIsLoading(false);
+            if (showLoading) setIsLoading(false);
         }
     };
 
@@ -195,9 +226,35 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
             if (activeChat && data.chatId === activeChat._id) {
                 setMessages((prev) => [...prev, data.message]);
                 scrollToBottom();
-            } else if (isOwner) {
-                // If owner is in inbox view, update the last message preview
-                fetchOwnerChats(false); // Simple re-fetch to update order/preview
+
+                if (isOwner) {
+                    setUnreadChatIds(prev => {
+                        if (prev.has(data.chatId)) {
+                            const next = new Set(prev);
+                            next.delete(data.chatId);
+                            return next;
+                        }
+                        return prev;
+                    });
+                } else {
+                    setUnreadCount(0);
+                }
+            } else {
+                // Message is for a chat that is NOT currently active
+                if (isOwner) {
+                    if (data.senderId !== currentUser._id) {
+                        setUnreadChatIds(prev => {
+                            const next = new Set(prev);
+                            next.add(data.chatId);
+                            return next;
+                        });
+                    }
+                    fetchOwnerChats(false); // Update inbox preview dynamically
+                } else {
+                    if (data.senderId !== currentUser._id && !isOpen) {
+                        setUnreadCount(prev => prev + 1);
+                    }
+                }
             }
         };
 
@@ -214,7 +271,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
             socket.off('pre_booking_message', handleMessage);
             socket.off('chat_cleared');
         };
-    }, [activeChat, isOwner]);
+    }, [activeChat, isOwner, isOpen, currentUser?._id]);
 
     // Scroll to bottom
     const scrollToBottom = () => {
@@ -521,11 +578,22 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                     } else {
                                         setActiveChat(chat);
                                         setMessages(chat.messages);
+                                        // Clear unread status for this chat immediately
+                                        setUnreadChatIds(prev => {
+                                            if (prev.has(chat._id)) {
+                                                const next = new Set(prev);
+                                                next.delete(chat._id);
+                                                return next;
+                                            }
+                                            return prev;
+                                        });
                                     }
                                 }}
                                 className={`p-3 rounded-lg shadow-sm cursor-pointer transition flex items-center gap-3 select-none ${isSelected
                                     ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
-                                    : 'bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                    : unreadChatIds.has(chat._id)
+                                        ? 'bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40'
+                                        : 'bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
                                     }`}
                             >
                                 {isSelectionMode && (
@@ -540,7 +608,12 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-baseline">
-                                            <h4 className="font-medium text-gray-900 dark:text-white truncate">{displayName}</h4>
+                                            <h4 className={`font-medium truncate flex items-center gap-1.5 ${unreadChatIds.has(chat._id) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-gray-900 dark:text-white'}`}>
+                                                {displayName}
+                                                {unreadChatIds.has(chat._id) && (
+                                                    <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-500 animate-pulse flex-shrink-0" title="New Message"></span>
+                                                )}
+                                            </h4>
                                             <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                                                 {chat.lastMessage?.timestamp && new Date(chat.lastMessage.timestamp).toLocaleDateString('en-GB')}
                                             </span>
@@ -781,11 +854,19 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
                         <FaComments className="w-5 h-5 text-white drop-shadow-lg" />
 
-                        {/* Badge for Owner */}
-                        {isOwner && inboxChats.length > 0 && !hasViewedInquiries && (
-                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full animate-pulse font-bold">
-                                {inboxChats.length > 99 ? '99+' : inboxChats.length}
-                            </span>
+                        {/* Dynamic Notification Badges */}
+                        {isOwner ? (
+                            unreadChatIds.size > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full animate-pulse font-bold shadow-md border border-white/20">
+                                    {unreadChatIds.size > 99 ? '99+' : unreadChatIds.size}
+                                </span>
+                            )
+                        ) : (
+                            unreadCount > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full animate-pulse font-bold shadow-md border border-white/20">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )
                         )}
 
                         {/* Enhanced Hover Tooltip */}
