@@ -4050,13 +4050,13 @@ export default function Listing() {
           {/* Reviews Section (collapsible) */}
           {showReviews && currentUser && (
             <div className="mt-8">
-              <div className="border-t border-gray-200 pt-8">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                     <FaStar className="text-yellow-500 mr-2" />
                     Reviews
                     {listing.averageRating > 0 && (
-                      <span className="ml-2 text-lg text-gray-600">
+                      <span className="ml-2 text-lg text-gray-600 dark:text-gray-300 font-semibold">
                         ({listing.averageRating.toFixed(1)} ⭐ • {listing.reviewCount} review{listing.reviewCount !== 1 ? 's' : ''})
                       </span>
                     )}
