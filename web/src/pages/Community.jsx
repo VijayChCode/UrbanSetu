@@ -37,6 +37,13 @@ export default function Community() {
 .animate-fade-in {
     animation: fadeIn 0.3s ease-out forwards;
 }
+.hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
 `;
 
     const [posts, setPosts] = useState([]);
@@ -1138,81 +1145,98 @@ export default function Community() {
                     <div className="w-24 h-1 bg-blue-600 mx-auto mt-6 rounded-full opacity-20"></div>
                 </div>
 
-                {/* Controls & Tabs */}
-                <div className="flex flex-col xl:flex-row justify-between items-center mb-8 gap-4">
-                    {/* Categories */}
-                    <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 w-full md:w-auto hide-scrollbar">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat.id}
-                                onClick={() => {
-                                    setActiveTab(cat.id);
-                                    if (postId) navigate(currentUser ? '/user/community' : '/community');
-                                }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${activeTab === cat.id
-                                    ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-lg'
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                                    }`}
-                            >
-                                <cat.icon className="text-sm" />
-                                {cat.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-                        <div className="relative w-full sm:w-64">
-                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search discussions..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onFocus={() => searchTerm.length > 2 && setShowSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-900/30 transition-all"
-                            />
-                            {showSuggestions && suggestions.length > 0 && (
-                                <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-900 shadow-xl rounded-xl mt-2 z-50 border border-gray-100 dark:border-gray-800 overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
-                                    <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/50 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
-                                        Suggested Discussions
-                                    </div>
-                                    {suggestions.map((s, i) => (
-                                        <div
-                                            key={i}
-                                            className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-sm text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors flex items-center gap-3 group"
-                                            onClick={() => handleSearchSelect(s.title)}
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
-                                                <FaSearch className="text-gray-400 group-hover:text-blue-500 dark:text-gray-500 dark:group-hover:text-blue-400 text-xs" />
-                                            </div>
-                                            <span className="truncate font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.title}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                {/* Controls & Tabs Header Panel */}
+                <div className="bg-white/80 dark:bg-gray-900/60 backdrop-blur-md rounded-2xl border border-gray-150 dark:border-gray-800 p-4 mb-8 shadow-sm transition-all duration-300">
+                    <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+                        
+                        {/* Categories Horizontal Scroll */}
+                        <div className="flex overflow-x-auto gap-1.5 pb-1 lg:pb-0 hide-scrollbar -mx-2 px-2 flex-1">
+                            {categories.map((cat) => {
+                                const isActive = activeTab === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => {
+                                            setActiveTab(cat.id);
+                                            if (postId) navigate(currentUser ? '/user/community' : '/community');
+                                        }}
+                                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
+                                            isActive
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-[1.02]'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700'
+                                        }`}
+                                    >
+                                        <cat.icon className={`text-xs ${isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
+                                        {cat.label}
+                                    </button>
+                                );
+                            })}
                         </div>
-                        {currentUser && (
-                            <button
-                                onClick={() => setShowMyPosts(!showMyPosts)}
-                                className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg transition-colors shadow-md whitespace-nowrap w-full sm:w-auto border ${showMyPosts
-                                    ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                    }`}
-                            >
-                                <FaUser /> Your Discussions
-                            </button>
-                        )}
-                        <button
-                            onClick={() => {
-                                if (!currentUser) return toast.info("Please sign in to post");
-                                setShowCreateModal(true);
-                            }}
-                            className="flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md whitespace-nowrap w-full sm:w-auto"
-                        >
-                            <FaPlus /> Start Discussion
-                        </button>
+
+                        {/* Search and Secondary Actions Block */}
+                        <div className="flex flex-col sm:flex-row items-center gap-2.5 flex-shrink-0 w-full lg:w-auto">
+                            {/* Search bar */}
+                            <div className="relative w-full lg:w-60 xl:w-64">
+                                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm" />
+                                <input
+                                    type="text"
+                                    placeholder="Search discussions..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onFocus={() => searchTerm.length > 2 && setShowSuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-850 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500/50 text-xs sm:text-sm transition-all"
+                                />
+                                {/* Search Suggestions popup */}
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-950 shadow-xl rounded-xl mt-2 z-50 border border-gray-150 dark:border-gray-800 overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
+                                        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900/50 text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-150 dark:border-gray-800">
+                                            Suggested Discussions
+                                        </div>
+                                        {suggestions.map((s, i) => (
+                                            <div
+                                                key={i}
+                                                className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-xs sm:text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-850 last:border-0 transition-colors flex items-center gap-3 group"
+                                                onClick={() => handleSearchSelect(s.title)}
+                                            >
+                                                <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-850 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                                                    <FaSearch className="text-gray-400 group-hover:text-blue-500 dark:text-gray-500 text-[10px]" />
+                                                </div>
+                                                <span className="truncate font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.title}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Secondary Action buttons */}
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                {currentUser && (
+                                    <button
+                                        onClick={() => setShowMyPosts(!showMyPosts)}
+                                        className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 border flex-1 sm:flex-none ${
+                                            showMyPosts
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                                : 'bg-white dark:bg-gray-850 text-gray-700 dark:text-gray-300 border-gray-250 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                        }`}
+                                    >
+                                        <FaUser className="text-xs" />
+                                        <span>Your Posts</span>
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        if (!currentUser) return toast.info("Please sign in to post");
+                                        setShowCreateModal(true);
+                                    }}
+                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all flex-1 sm:flex-none"
+                                >
+                                    <FaPlus className="text-xs" />
+                                    <span>New Thread</span>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
