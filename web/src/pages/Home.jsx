@@ -258,34 +258,29 @@ export default function Home() {
         });
 
         // Fetch Community, Blogs & Guides data in parallel (non-blocking)
+        // Fetch both featured AND latest for blogs/guides so we can always fill 3 cards
         Promise.allSettled([
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&limit=6`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&limit=6`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/forum?limit=3`).then(r => r.ok ? r.json() : null),
-        ]).then(async ([blogsResult, guidesResult, postsResult]) => {
-          // Blogs: use featured, fallback to latest if empty
-          const featuredBlogs = blogsResult.status === 'fulfilled' && blogsResult.value?.data ? blogsResult.value.data : [];
-          if (featuredBlogs.length > 0) {
-            setHomeFeaturedBlogs(featuredBlogs);
-          } else {
-            try {
-              const fallback = await authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&limit=3`);
-              if (fallback.ok) { const d = await fallback.json(); if (d.data?.length) setHomeFeaturedBlogs(d.data); }
-            } catch { /* silent */ }
-          }
+        ]).then(([featBlogsR, allBlogsR, featGuidesR, allGuidesR, postsResult]) => {
+          // Helper: merge featured first + fill remaining from latest, deduplicated, max 3
+          const mergeAndFill = (featuredResult, allResult) => {
+            const featured = featuredResult.status === 'fulfilled' && featuredResult.value?.data ? featuredResult.value.data : [];
+            const all = allResult.status === 'fulfilled' && allResult.value?.data ? allResult.value.data : [];
+            const ids = new Set(featured.map(f => f._id));
+            const merged = [...featured];
+            for (const item of all) {
+              if (merged.length >= 3) break;
+              if (!ids.has(item._id)) { merged.push(item); ids.add(item._id); }
+            }
+            return merged.slice(0, 3);
+          };
 
-          // Guides: use featured, fallback to latest if empty
-          const featuredGuides = guidesResult.status === 'fulfilled' && guidesResult.value?.data ? guidesResult.value.data : [];
-          if (featuredGuides.length > 0) {
-            setHomeFeaturedGuides(featuredGuides);
-          } else {
-            try {
-              const fallback = await authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&limit=3`);
-              if (fallback.ok) { const d = await fallback.json(); if (d.data?.length) setHomeFeaturedGuides(d.data); }
-            } catch { /* silent */ }
-          }
-
-          // Community posts
+          setHomeFeaturedBlogs(mergeAndFill(featBlogsR, allBlogsR));
+          setHomeFeaturedGuides(mergeAndFill(featGuidesR, allGuidesR));
           if (postsResult.status === 'fulfilled' && postsResult.value?.posts) setHomeTrendingPosts(postsResult.value.posts);
         }).catch(() => { /* silent – insights section is enhancement only */ });
 
