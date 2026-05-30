@@ -865,10 +865,15 @@ export const updatePost = async (req, res, next) => {
             return next(errorHandler(403, 'You are not allowed to update this post'));
         }
 
-        const { title, content } = req.body;
-        const isChanged = (title && title !== post.title) || (content && content !== post.content);
+        const { title, content, category, location } = req.body;
+        const isChanged = (title && title !== post.title) || 
+                          (content && content !== post.content) ||
+                          (category && category !== post.category) ||
+                          (location && JSON.stringify(location) !== JSON.stringify(post.location));
         if (title) post.title = title;
         if (content) post.content = content;
+        if (category) post.category = category;
+        if (location) post.location = location;
         if (isChanged) post.isEdited = true;
 
         await post.save();

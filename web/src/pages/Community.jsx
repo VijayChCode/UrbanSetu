@@ -782,19 +782,48 @@ export default function Community() {
         }
     };
 
+    const handleEditClick = (post) => {
+        setEditingPost(post);
+        setNewPost({
+            title: post.title,
+            content: post.content,
+            category: post.category,
+            location: {
+                city: post.location?.city || '',
+                neighborhood: post.location?.neighborhood || ''
+            }
+        });
+        setShowCreateModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowCreateModal(false);
+        setEditingPost(null);
+        setNewPost({
+            title: '',
+            content: '',
+            category: 'General',
+            location: {
+                city: '',
+                neighborhood: ''
+            }
+        });
+        setShowEmojiPicker({ show: false, type: null, id: null });
+    };
+
     const handleUpdatePost = async (e, postId) => {
         e.preventDefault();
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/${postId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: editingPost.content })
+                body: JSON.stringify(newPost)
             });
 
             if (res.ok) {
                 const updatedPost = await res.json();
                 setPosts(posts.map(p => p._id === postId ? { ...p, ...updatedPost } : p));
-                setEditingPost(null);
+                handleCloseModal();
                 toast.success('Post updated');
             } else {
                 toast.error('Failed to update post');
@@ -1334,7 +1363,7 @@ export default function Community() {
                                             {currentUser && currentUser._id === post.author?._id && (
                                                 <div className="flex items-center gap-1">
                                                     <button
-                                                        onClick={() => setEditingPost({ id: post._id, content: post.content })}
+                                                        onClick={() => handleEditClick(post)}
                                                         className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-all"
                                                         title="Edit Post"
                                                     >
@@ -1355,79 +1384,10 @@ export default function Community() {
                                     {/* Post Content */}
                                     <div className="mb-6 pl-2 border-l-4 border-gray-100 dark:border-gray-800 hover:border-blue-100 dark:hover:border-blue-900 transition-colors">
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">{post.title}</h2>
-
-                                        {editingPost?.id === post._id ? (
-                                            <form onSubmit={(e) => handleUpdatePost(e, post._id)} className="w-full mb-2">
-                                                <div className="relative">
-                                                    {showMentionSuggestions.show && showMentionSuggestions.id === post._id && showMentionSuggestions.type === 'edit-post' && renderMentionsPanel()}
-                                                    <textarea
-                                                        value={editingPost.content}
-                                                        onChange={(e) => handleInputChange(e, 'edit-post', post._id)}
-                                                        className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-gray-900 dark:text-white min-h-[100px]"
-                                                        autoFocus
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowEmojiPicker(prev => ({
-                                                            show: prev.type === 'edit-post' && prev.id === post._id ? !prev.show : true,
-                                                            type: 'edit-post',
-                                                            id: post._id
-                                                        }))}
-                                                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-all"
-                                                        title="Add Emoji"
-                                                    >
-                                                        <FaSmile className="text-base" />
-                                                    </button>
-                                                    {showEmojiPicker.show && showEmojiPicker.type === 'edit-post' && showEmojiPicker.id === post._id && (
-                                                        <div className="absolute bottom-full right-0 z-[100] mb-2 shadow-xl animate-fade-in bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700">
-                                                            <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-700 px-3 py-2 border-b border-gray-100 dark:border-gray-600 rounded-t-lg">
-                                                                <span className="text-xs font-semibold text-gray-500 dark:text-gray-300">Pick an emoji</span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setShowEmojiPicker({ show: false, type: null, id: null })}
-                                                                    className="text-gray-400 hover:text-red-500 transition-colors"
-                                                                >
-                                                                    <FaTimes size={12} />
-                                                                </button>
-                                                            </div>
-                                                            <EmojiPicker
-                                                                onEmojiClick={(emojiData) => handleEmojiClick(emojiData, 'edit-post', post._id)}
-                                                                width={300}
-                                                                height={350}
-                                                                theme={document.documentElement.classList.contains('dark') ? 'dark' : 'light'}
-                                                                searchDisabled={false}
-                                                                skinTonesDisabled
-                                                                previewConfig={{ showPreview: false }}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex justify-end gap-2 mt-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => { setEditingPost(null); setShowEmojiPicker({ show: false, type: null, id: null }); }}
-                                                        className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded bg-gray-100"
-                                                    >
-                                                        Cancel
-                                                    </button>
-
-
-                                                    <button
-                                                        type="submit"
-                                                        className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700"
-                                                    >
-                                                        Save Changes
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        ) : (
-                                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-                                                {formatContent(post.content)}
-                                                {post.isEdited && <span className="text-[10px] text-gray-400 italic font-normal ml-2">(edited)</span>}
-                                            </p>
-                                        )}
-                                        {/* Placeholder for optional post image if any */}
-                                        {/* {post.images && post.images.length > 0 && (...)} */}
+                                        <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+                                            {formatContent(post.content)}
+                                            {post.isEdited && <span className="text-[10px] text-gray-400 italic font-normal ml-2">(edited)</span>}
+                                        </p>
                                     </div>
 
                                     {/* Post Actions */}
@@ -2280,10 +2240,12 @@ export default function Community() {
                         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                             <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200 shadow-2xl transition-colors duration-300">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Start a Discussion</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {editingPost ? 'Edit Discussion' : 'Start a Discussion'}
+                                    </h2>
                                 </div>
 
-                                <form onSubmit={handleCreatePost} className="space-y-4">
+                                <form onSubmit={(e) => editingPost ? handleUpdatePost(e, editingPost._id) : handleCreatePost(e)} className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                                         <input
@@ -2371,7 +2333,7 @@ export default function Community() {
                                     <div className="flex justify-end pt-4">
                                         <button
                                             type="button"
-                                            onClick={() => setShowCreateModal(false)}
+                                            onClick={handleCloseModal}
                                             className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mr-2 transition-colors"
                                         >
                                             Cancel
@@ -2380,7 +2342,7 @@ export default function Community() {
                                             type="submit"
                                             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition-colors"
                                         >
-                                            Post Discussion
+                                            {editingPost ? 'Save Changes' : 'Post Discussion'}
                                         </button>
                                     </div>
                                 </form>
