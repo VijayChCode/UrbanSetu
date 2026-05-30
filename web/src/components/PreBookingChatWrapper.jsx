@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaComments, FaTimes, FaPaperPlane, FaUser, FaCircle, FaCheck, FaTrash, FaEdit, FaCheckSquare, FaSquare } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -12,6 +12,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle, isOpen: externalIsOpen, onClose, showFloatingButton = true, isDeleted = false }) {
     const { currentUser } = useSelector((state) => state.user);
     const isOwner = !!(currentUser && ownerId && currentUser._id === ownerId);
+    const navigate = useNavigate();
     const [internalIsOpen, setInternalIsOpen] = useState(false);
 
     const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -536,9 +537,23 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                             </span>
                                         </div>
                                         <div className="mt-1 mb-1">
-                                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-blue-100 dark:border-blue-800/40">
-                                                🏡 {chat.listingId?.name || "General Inquiry"}
-                                            </span>
+                                            {chat.listingId?._id ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/user/listing/${chat.listingId._id}`);
+                                                    }}
+                                                    className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-blue-100 dark:border-blue-800/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+                                                    title={`Go to ${chat.listingId.name}`}
+                                                >
+                                                    <span>🏡</span> {chat.listingId.name}
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-gray-100 dark:border-gray-700">
+                                                    🏡 General Inquiry
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                                             {chat.lastMessage?.content || 'No messages'}
@@ -614,10 +629,25 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                 <div className="font-semibold text-sm truncate" title={isOwner ? getAnonymizedName(otherParticipant?._id) : (listingId ? 'Property Owner' : 'Agent')}>
                                     {isOwner ? getAnonymizedName(otherParticipant?._id) : (listingId ? 'Property Owner' : 'Agent')}
                                 </div>
-                                <div className="text-[10px] opacity-90 mt-0.5 flex items-center gap-1 truncate" title={activeChat?.listingId?.name || listingTitle || "Property Inquiry"}>
-                                    <span className="flex-shrink-0">🏡</span>
-                                    <span className="truncate font-medium">{activeChat?.listingId?.name || listingTitle || "Property Inquiry"}</span>
-                                </div>
+                                {activeChat?.listingId?._id ? (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/user/listing/${activeChat.listingId._id}`);
+                                        }}
+                                        className="text-[10px] opacity-90 mt-0.5 flex items-center gap-1 truncate font-medium hover:text-blue-200 transition-colors cursor-pointer text-left w-full"
+                                        title={`Go to ${activeChat.listingId.name}`}
+                                    >
+                                        <span className="flex-shrink-0">🏡</span>
+                                        <span className="truncate">{activeChat.listingId.name}</span>
+                                    </button>
+                                ) : (
+                                    <div className="text-[10px] opacity-90 mt-0.5 flex items-center gap-1 truncate font-medium" title={listingTitle || "Property Inquiry"}>
+                                        <span className="flex-shrink-0">🏡</span>
+                                        <span className="truncate">{listingTitle || "Property Inquiry"}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
