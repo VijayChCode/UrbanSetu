@@ -807,7 +807,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-40 h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slideUp border border-gray-200 dark:border-gray-700 relative">
+                <div className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 z-40 h-[500px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slideUp border border-gray-200 dark:border-gray-700">
                     {(isOwner && !activeChat) ? renderInbox() : renderChat()}
 
                     {/* Information Modal Overlay */}
