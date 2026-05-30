@@ -3,6 +3,7 @@ import { FaCompass, FaExpand, FaCompress, FaSearchPlus, FaSearchMinus, FaPlay, F
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
+    const containerRef = useRef(null); // Outer wrapper for fullscreen
     const viewerRef = useRef(null);
     const pannellumViewer = useRef(null); // Keep track of the viewer instance
     const [isLoaded, setIsLoaded] = useState(false);
@@ -135,15 +136,21 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     }, []);
 
     const toggleFullscreen = () => {
-        if (!viewerRef.current) return;
+        const el = containerRef.current;
+        if (!el) return;
 
         if (!document.fullscreenElement) {
-            viewerRef.current.requestFullscreen().catch(err => {
-                console.error(`Error attempting to enable fullscreen: ${err.message}`);
-            });
+            // Use the outer container so all overlay controls remain visible in fullscreen
+            const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (requestFS) {
+                requestFS.call(el).catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            }
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
+            const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+            if (exitFS) {
+                exitFS.call(document);
             }
         }
     };
@@ -187,6 +194,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
     return (
         <div
+            ref={containerRef}
             className={`relative w-full h-full bg-gray-900 rounded-xl overflow-hidden shadow-2xl group ${className}`}
             onMouseEnter={resetControlsTimeout}
             onMouseMove={resetControlsTimeout}
