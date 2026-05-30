@@ -1099,6 +1099,8 @@ export default function Community() {
         }
     };
 
+    const prevPostIdRef = React.useRef(postId);
+
     useEffect(() => {
         if (postId && posts.length > 0) {
             const matchingPost = posts.find(p => p._id === postId);
@@ -1106,6 +1108,12 @@ export default function Community() {
                 toggleComments(postId);
             }
         }
+
+        if (prevPostIdRef.current && !postId) {
+            setExpandedComments({});
+        }
+
+        prevPostIdRef.current = postId;
     }, [postId, posts]);
 
     if (loading) {
