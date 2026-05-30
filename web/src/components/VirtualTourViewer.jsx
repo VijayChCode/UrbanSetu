@@ -7,13 +7,16 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     const viewerRef = useRef(null);
     const pannellumViewer = useRef(null); // Keep track of the viewer instance
     const [isLoaded, setIsLoaded] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [isAutoRotating, setIsAutoRotating] = useState(false);
 
     const [showControls, setShowControls] = useState(true);
+    const [showHint, setShowHint] = useState(true); // Show "Drag to Explore" only once
+    const hasInteracted = useRef(false); // Track if user has ever interacted
     const [isEnhanced, setIsEnhanced] = useState(false);
     const [isEnhancing, setIsEnhancing] = useState(false);
     const controlsTimeoutRef = useRef(null);
+    const hintTimeoutRef = useRef(null);
 
     // Auto-hide controls function
     const resetControlsTimeout = useCallback(() => {
@@ -22,11 +25,20 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
             clearTimeout(controlsTimeoutRef.current);
         }
         controlsTimeoutRef.current = setTimeout(() => {
-            if (!isAutoRotating) { // Optional: Keep controls hidden during auto-rotate? Or maybe hide after timeout regardless?
+            if (!isAutoRotating) {
                 setShowControls(false);
             }
         }, 3000); // Hide after 3 seconds of inactivity
     }, [isAutoRotating]);
+
+    // Dismiss the hint permanently on first drag/interaction
+    const dismissHint = useCallback(() => {
+        if (!hasInteracted.current) {
+            hasInteracted.current = true;
+            setShowHint(false);
+            if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
+        }
+    }, []);
 
     useEffect(() => {
         // Dynamically load Pannellum script and CSS if not already loaded
@@ -59,6 +71,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
 
         return () => {
             if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+            if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current);
         };
     }, []);
 
@@ -81,27 +94,28 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
             // Add event listeners for interaction to show controls
             const container = viewerRef.current;
             const handleInteraction = () => resetControlsTimeout();
+            // Dismiss the hint on first drag (mousedown/touchstart = user started dragging)
+            const handleDragStart = () => { dismissHint(); handleInteraction(); };
 
-            container.addEventListener('mousedown', handleInteraction);
+            container.addEventListener('mousedown', handleDragStart);
             container.addEventListener('mousemove', handleInteraction);
-            container.addEventListener('touchstart', handleInteraction);
+            container.addEventListener('touchstart', handleDragStart);
             container.addEventListener('click', handleInteraction);
 
             // Initial timeout start
             resetControlsTimeout();
 
+            // Auto-hide hint after 4 seconds even without interaction
+            hintTimeoutRef.current = setTimeout(() => {
+                setShowHint(false);
+            }, 4000);
+
             return () => {
                 // Cleanup listeners
-                container.removeEventListener('mousedown', handleInteraction);
+                container.removeEventListener('mousedown', handleDragStart);
                 container.removeEventListener('mousemove', handleInteraction);
-                container.removeEventListener('touchstart', handleInteraction);
+                container.removeEventListener('touchstart', handleDragStart);
                 container.removeEventListener('click', handleInteraction);
-
-                // Note: Pannellum destroy might be tricky, usually just clearing innerHTML or letting React unmount handles it roughly
-                // But properly:
-                // if (pannellumViewer.current && pannellumViewer.current.destroy) {
-                //    pannellumViewer.current.destroy();
-                // }
             };
         }
     }, [isLoaded, imageUrl, autoLoad]); // Re-init if imageUrl changes
@@ -117,43 +131,43 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
         }
     }, [isAutoRotating]);
 
+    // CSS-based fullscreen: use position fixed + z-index to avoid Pannellum's
+    // internal fullscreenchange listener from conflicting with the native API
+    const toggleFullscreen = useCallback(() => {
+        setIsFullscreen(prev => {
+            const next = !prev;
+            // Lock/unlock body scroll when toggling fullscreen
+            if (next) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+            return next;
+        });
+        resetControlsTimeout();
+    }, [resetControlsTimeout]);
+
+    // Handle Escape key to exit CSS fullscreen
     useEffect(() => {
-        const handleFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
+            }
         };
-
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
+        if (isFullscreen) {
+            document.addEventListener('keydown', handleKeyDown);
+        }
         return () => {
-            document.removeEventListener('fullscreenchange', handleFullscreenChange);
-            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isFullscreen, toggleFullscreen]);
+
+    // Cleanup body overflow on unmount
+    useEffect(() => {
+        return () => {
+            document.body.style.overflow = '';
         };
     }, []);
-
-    const toggleFullscreen = () => {
-        const el = containerRef.current;
-        if (!el) return;
-
-        if (!document.fullscreenElement) {
-            // Use the outer container so all overlay controls remain visible in fullscreen
-            const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-            if (requestFS) {
-                requestFS.call(el).catch(err => {
-                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
-                });
-            }
-        } else {
-            const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-            if (exitFS) {
-                exitFS.call(document);
-            }
-        }
-    };
 
     const handleZoomIn = () => {
         if (pannellumViewer.current) {
@@ -184,10 +198,6 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
         if (isFullscreen) {
             toggleFullscreen();
         } else {
-            // If not fullscreen, typically "Closing" might simply mean stopping auto-load or similar, 
-            // but here we can treat it as 'Reset View' or just hiding controls instantly.
-            // Or if the user meant 'Close' as in 'Remove from view', that's controlled by parent.
-            // We'll treat it as 'Reset' for inline mode to be safe and useful.
             handleReset();
         }
     };
@@ -195,7 +205,7 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
     return (
         <div
             ref={containerRef}
-            className={`relative w-full h-full bg-gray-900 rounded-xl overflow-hidden shadow-2xl group ${className}`}
+            className={`relative bg-gray-900 rounded-xl overflow-hidden shadow-2xl group ${className} ${isFullscreen ? 'fixed inset-0 z-[9999] rounded-none' : 'w-full h-full'}`}
             onMouseEnter={resetControlsTimeout}
             onMouseMove={resetControlsTimeout}
             onTouchStart={resetControlsTimeout}
@@ -217,8 +227,8 @@ const VirtualTourViewer = ({ imageUrl, autoLoad = true, className = "" }) => {
                 }}
             ></div>
 
-            {/* Interaction Hint (Only shows initially or when hovering very still) */}
-            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-1000 ${showControls && !isAutoRotating ? 'opacity-100' : 'opacity-0'}`}>
+            {/* Interaction Hint - Shows only once on initial load, hides permanently after first drag */}
+            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-1000 ${showHint && !isAutoRotating ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="bg-black/30 text-white px-4 py-2 rounded-full backdrop-blur-[2px] border border-white/10 text-center animate-pulse">
                     <p className="text-xs font-medium tracking-wider uppercase">Drag to Explore</p>
                 </div>
