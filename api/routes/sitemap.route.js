@@ -3,6 +3,7 @@ import Listing from '../models/listing.model.js';
 import Blog from '../models/blog.model.js';
 import HelpArticle from '../models/helpArticle.model.js';
 import ForumPost from '../models/forumPost.model.js';
+import Agent from '../models/agent.model.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -58,7 +59,8 @@ router.get('/sitemap.xml', async (req, res) => {
         'sitemap-listings.xml',
         'sitemap-blogs.xml',
         'sitemap-help.xml',
-        'sitemap-community.xml'
+        'sitemap-community.xml',
+        'sitemap-agents.xml'
     ];
 
     sitemaps.forEach(sm => {
@@ -81,7 +83,7 @@ router.get('/sitemap-pages.xml', (req, res) => {
         '', '/about', '/blogs', '/guides', '/market-trends', '/help-center',
         '/community', '/community-guidelines', '/download', '/faqs',
         '/search', '/contact', '/sign-in', '/sign-up', '/forgot-password',
-        '/updates', '/ai', '/terms', '/privacy', '/cookie-policy'
+        '/updates', '/ai', '/terms', '/privacy', '/cookie-policy', '/agents'
     ];
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>';
@@ -200,6 +202,32 @@ router.get('/sitemap-community.xml', async (req, res, next) => {
     <lastmod>${post.updatedAt.toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>`;
+        });
+
+        xml += '\n</urlset>';
+        res.header('Content-Type', 'application/xml');
+        res.status(200).send(xml);
+    } catch (e) { next(e); }
+});
+
+// Agents Sitemap
+router.get('/sitemap-agents.xml', async (req, res, next) => {
+    try {
+        const baseUrl = getBaseUrl(req);
+        const agents = await Agent.find({ status: 'approved' }).select('_id updatedAt');
+
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>';
+        xml += '<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>';
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+        agents.forEach(agent => {
+            xml += `
+  <url>
+    <loc>${baseUrl}/agents/${agent._id}</loc>
+    <lastmod>${agent.updatedAt.toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>`;
         });
 
