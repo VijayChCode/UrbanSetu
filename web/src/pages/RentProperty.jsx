@@ -29,6 +29,7 @@ export default function RentProperty() {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [isBookedByOther, setIsBookedByOther] = useState(false);
+  const [isDeletedProperty, setIsDeletedProperty] = useState(false);
   const [listing, setListing] = useState(null);
 
   // Set page title
@@ -254,8 +255,16 @@ export default function RentProperty() {
           return;
         }
 
+        // Check if property is deleted
+        const isListingDeleted = listingData && listingData.isDeleted;
+        if (isListingDeleted) {
+          setIsDeletedProperty(true);
+          setLoading(false);
+          return;
+        }
+
         // Check if property is removed or suspended
-        const isListingGone = listingData && (listingData.isDeleted || listingData.availabilityStatus === 'suspended');
+        const isListingGone = listingData && listingData.availabilityStatus === 'suspended';
         if (isListingGone) {
           toast.error("This property is no longer active and cannot be booked for rent.");
           navigate("/user");
@@ -978,6 +987,30 @@ export default function RentProperty() {
 
   if (loading && !listing) {
     return <RentPropertySkeleton />;
+  }
+
+  if (isDeletedProperty) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 border border-red-100 dark:border-red-900/30 text-center">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaTimesCircle className="text-red-600 dark:text-red-400 text-4xl" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">Property Deleted/Not Available Currently</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">
+            The property <span className="font-bold text-red-600 dark:text-red-400">{listing?.name}</span> has been deleted and is no longer active on the platform. Renting agreements for this property are not allowed.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => navigate(`/user`)}
+              className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform hover:scale-105"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isOwner) {

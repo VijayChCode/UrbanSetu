@@ -54,6 +54,7 @@ export default function Appointment() {
   const [listing, setListing] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [isUnavailable, setIsUnavailable] = useState(false);
+  const [isDeletedProperty, setIsDeletedProperty] = useState(false);
 
   // SetuCoins state
   const [showCoinBurst, setShowCoinBurst] = useState(false);
@@ -94,6 +95,12 @@ export default function Appointment() {
           const data = await listingRes.json();
           const listingData = data.listing || (data._id ? data : null);
           setListing(listingData);
+
+          if (listingData && listingData.isDeleted) {
+            setIsDeletedProperty(true);
+            setCheckingActive(false);
+            return;
+          }
 
           const ownerId = listingData?.userRef?._id || listingData?.userRef;
           if (listingData && currentUser && String(ownerId) === String(currentUser._id)) {
@@ -250,6 +257,28 @@ export default function Appointment() {
       }
     }, 2000);
   };
+
+  if (isDeletedProperty) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-red-100 dark:border-red-900/20 text-center">
+          <div className="text-red-600 dark:text-red-400 text-5xl mb-6">🗑️</div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Deleted/Not Available Currently</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            The property <span className="font-bold text-red-600 dark:text-red-400">{listing?.name || "this property"}</span> has been deleted and is no longer active on the platform. Booking appointments for this property is not allowed.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/user')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg transform hover:scale-105"
+            >
+              Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isOwner) {
     return (

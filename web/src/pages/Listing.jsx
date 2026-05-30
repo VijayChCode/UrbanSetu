@@ -3772,7 +3772,11 @@ export default function Listing() {
           )}
 
           <div className="flex justify-center gap-4 flex-wrap">
-            {isOwnerMatch ? (
+            {listing?.isDeleted ? (
+              <div className="text-red-500 font-semibold text-center py-3 max-w-2xl bg-red-50/50 dark:bg-red-950/20 px-6 py-3 rounded-xl border border-red-100 dark:border-red-900/30">
+                This property has been deleted and is no longer active. Bookings or renting are disabled.
+              </div>
+            ) : isOwnerMatch ? (
               <div className="text-red-500 font-semibold text-lg py-3">You cannot book an appointment or rent your own property.</div>
             ) : isListingUnavailable ? (
               <div className="text-amber-800 font-semibold text-center py-3 max-w-2xl">

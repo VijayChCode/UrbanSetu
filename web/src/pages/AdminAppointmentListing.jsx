@@ -34,6 +34,7 @@ export default function AdminAppointmentListing() {
   const [booked, setBooked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [listing, setListing] = useState(null);
+  const [isDeletedProperty, setIsDeletedProperty] = useState(false);
   const [ownerCheckLoading, setOwnerCheckLoading] = useState(true);
   const [allUsers, setAllUsers] = useState([]);
   const [emailSuggestions, setEmailSuggestions] = useState([]);
@@ -141,6 +142,9 @@ export default function AdminAppointmentListing() {
       try {
         const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/get/${listingId}`);
         const data = await res.json();
+        if (data && data.isDeleted) {
+          setIsDeletedProperty(true);
+        }
         setListing(data);
       } catch (error) {
         setListing(null);
@@ -202,6 +206,28 @@ export default function AdminAppointmentListing() {
         <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
           <div className="text-center text-blue-600 dark:text-blue-400 text-xl font-semibold py-10">
             Loading property information...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDeletedProperty) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-slate-900 min-h-screen py-10 px-2 md:px-8 flex items-center justify-center">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-red-100 dark:border-red-900/20 text-center">
+          <div className="text-red-600 dark:text-red-400 text-5xl mb-6">🗑️</div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Property Deleted/Not Available Currently</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            The property <span className="font-bold text-red-600 dark:text-red-400">{listing?.name || "this property"}</span> has been deleted and is no longer active on the platform. Booking appointments for this property is not allowed.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => navigate('/admin')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg transform hover:scale-105"
+            >
+              Back to Dashboard
+            </button>
           </div>
         </div>
       </div>
