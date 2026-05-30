@@ -59,6 +59,28 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const longPressTimeoutRef = useRef(null);
+    const isLongPressActiveRef = useRef(false);
+
+    const handlePressStart = (chatId) => {
+        if (isSelectionMode) return;
+        isLongPressActiveRef.current = false;
+        longPressTimeoutRef.current = setTimeout(() => {
+            isLongPressActiveRef.current = true;
+            setIsSelectionMode(true);
+            setSelectedChatIds(new Set([chatId]));
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }, 600);
+    };
+
+    const handlePressEnd = () => {
+        if (longPressTimeoutRef.current) {
+            clearTimeout(longPressTimeoutRef.current);
+            longPressTimeoutRef.current = null;
+        }
+    };
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -473,7 +495,17 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                         return (
                             <div
                                 key={chat._id}
+                                onMouseDown={() => handlePressStart(chat._id)}
+                                onMouseUp={handlePressEnd}
+                                onMouseLeave={handlePressEnd}
+                                onTouchStart={() => handlePressStart(chat._id)}
+                                onTouchEnd={handlePressEnd}
+                                onTouchMove={handlePressEnd}
                                 onClick={() => {
+                                    if (isLongPressActiveRef.current) {
+                                        isLongPressActiveRef.current = false;
+                                        return;
+                                    }
                                     if (isSelectionMode) {
                                         handleSelectChat(chat._id);
                                     } else {
@@ -481,7 +513,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                         setMessages(chat.messages);
                                     }
                                 }}
-                                className={`p-3 rounded-lg shadow-sm cursor-pointer transition flex items-center gap-3 ${isSelected
+                                className={`p-3 rounded-lg shadow-sm cursor-pointer transition flex items-center gap-3 select-none ${isSelected
                                     ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
                                     : 'bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
                                     }`}
