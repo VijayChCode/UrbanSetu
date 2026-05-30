@@ -43,6 +43,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
     const [hasViewedInquiries, setHasViewedInquiries] = useState(false);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedChatIds, setSelectedChatIds] = useState(new Set());
+    const [inboxTab, setInboxTab] = useState('this-listing'); // 'this-listing' or 'all'
 
     // State for Chat View
     const [activeChat, setActiveChat] = useState(null); // The full chat object
@@ -407,6 +408,32 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                     </>
                 )}
             </div>
+            {!isSelectionMode && inboxChats.length > 0 && (
+                <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                    <button
+                        type="button"
+                        onClick={() => setInboxTab('this-listing')}
+                        className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                            inboxTab === 'this-listing'
+                                ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-gray-850'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                        }`}
+                    >
+                        This Listing
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setInboxTab('all')}
+                        className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
+                            inboxTab === 'all'
+                                ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-white dark:bg-gray-850'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                        }`}
+                    >
+                        All Listings ({inboxChats.length})
+                    </button>
+                </div>
+            )}
             <div className="flex-1 overflow-y-auto p-2 space-y-2">
                 {isLoading ? (
                     <div className="flex flex-col justify-center items-center h-full gap-2">
@@ -418,8 +445,27 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                         <FaComments className="text-4xl mb-2" />
                         <p>No inquiries yet.</p>
                     </div>
-                ) : (
-                    inboxChats.map(chat => {
+                ) : (() => {
+                    const filteredChats = inboxChats.filter(chat => {
+                        if (inboxTab === 'this-listing') {
+                            return chat.listingId?._id === listingId;
+                        }
+                        return true;
+                    });
+
+                    if (filteredChats.length === 0) {
+                        return (
+                            <div className="flex flex-col items-center justify-center h-full text-gray-500 py-10 px-4 text-center">
+                                <FaComments className="text-4xl mb-3 opacity-40 text-blue-500 animate-bounce" />
+                                <h4 className="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-1">No inquiries for this specific listing yet</h4>
+                                <p className="text-xs text-gray-500 max-w-[240px]">
+                                    Click the <strong className="text-blue-600 dark:text-blue-400 font-bold">"All Listings"</strong> tab above to view inquiries for your other properties!
+                                </p>
+                            </div>
+                        );
+                    }
+
+                    return filteredChats.map(chat => {
                         const otherParticipant = chat.participants.find(p => p._id !== currentUser._id);
                         const isSelected = selectedChatIds.has(chat._id);
                         const displayName = getAnonymizedName(otherParticipant?._id);
@@ -457,7 +503,11 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                                 {chat.lastMessage?.timestamp && new Date(chat.lastMessage.timestamp).toLocaleDateString('en-GB')}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-gray-500 truncate">{chat.listingId?.name || "Agent Inquiry"}</p>
+                                        <div className="mt-1 mb-1">
+                                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-blue-100 dark:border-blue-800/40">
+                                                🏡 {chat.listingId?.name || "General Inquiry"}
+                                            </span>
+                                        </div>
                                         <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                                             {chat.lastMessage?.content || 'No messages'}
                                         </p>
@@ -465,8 +515,8 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                 </div>
                             </div>
                         );
-                    })
-                )}
+                    });
+                })()}
             </div>
         </div>
     );
@@ -515,36 +565,37 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
                 {/* Header */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-700 to-purple-700 text-white rounded-t-lg flex justify-between items-center shadow-md">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                         {isOwner && (
-                            <button onClick={() => setActiveChat(null)} className="mr-1 hover:bg-blue-700 p-1 rounded text-white">
+                            <button onClick={() => setActiveChat(null)} className="mr-1 hover:bg-blue-800 p-1.5 rounded text-white transition-colors flex-shrink-0" title="Back to Inquiries">
                                 &larr;
                             </button>
                         )}
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                             {/* Generic Avatar */}
-                            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white overflow-hidden border border-white/30">
+                            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white overflow-hidden border border-white/30 flex-shrink-0">
                                 <FaUser className="text-sm" />
                             </div>
 
-                            <div className="leading-tight">
-                                <div className="font-semibold text-sm">
+                            <div className="leading-tight min-w-0 flex-1">
+                                <div className="font-semibold text-sm truncate" title={isOwner ? getAnonymizedName(otherParticipant?._id) : (listingId ? 'Property Owner' : 'Agent')}>
                                     {isOwner ? getAnonymizedName(otherParticipant?._id) : (listingId ? 'Property Owner' : 'Agent')}
                                 </div>
-                                <div className="text-[10px] opacity-90 flex items-center gap-1.5">
-                                    <FaCircle className="w-2 h-2 text-green-400" /> Online
+                                <div className="text-[10px] opacity-90 mt-0.5 flex items-center gap-1 truncate" title={activeChat?.listingId?.name || listingTitle || "Property Inquiry"}>
+                                    <span className="flex-shrink-0">🏡</span>
+                                    <span className="truncate font-medium">{activeChat?.listingId?.name || listingTitle || "Property Inquiry"}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                         {messages.length > 0 && (
                             <button onClick={handleClearChat} className="text-xs bg-red-500/20 hover:bg-red-500/40 px-2 py-1.5 rounded text-white transition-colors font-medium border border-red-500/30" title="Clear Chat">
                                 Clear
                             </button>
                         )}
-                        <button onClick={toggleChat} className="hover:bg-blue-700 p-1.5 rounded-full transition-colors text-white/90 hover:text-white" title="Close"><FaTimes /></button>
+                        <button onClick={toggleChat} className="hover:bg-blue-800 p-1.5 rounded-full transition-colors text-white/90 hover:text-white" title="Close"><FaTimes /></button>
                     </div>
                 </div>
 
