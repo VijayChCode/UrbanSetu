@@ -425,6 +425,19 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
         return `${FANTASY_NAMES[index]} (${suffix})`;
     };
 
+    // Helpers for listing-specific inquiries and unread count tracking
+    const getUnreadThisListingCount = () => {
+        let count = 0;
+        inboxChats.forEach(chat => {
+            if (chat.listingId?._id === listingId && unreadChatIds.has(chat._id)) {
+                count++;
+            }
+        });
+        return count;
+    };
+
+    const thisListingChatsCount = inboxChats.filter(c => c.listingId?._id === listingId).length;
+
     // Render Functions
     const renderInbox = () => (
         <div className="flex flex-col h-full relative">
@@ -856,11 +869,14 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
 
                         {/* Dynamic Notification Badges */}
                         {isOwner ? (
-                            unreadChatIds.size > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full animate-pulse font-bold shadow-md border border-white/20">
-                                    {unreadChatIds.size > 99 ? '99+' : unreadChatIds.size}
-                                </span>
-                            )
+                            (() => {
+                                const unreadThisListingCount = getUnreadThisListingCount();
+                                return unreadThisListingCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full animate-pulse font-bold shadow-md border border-white/20">
+                                        {unreadThisListingCount > 99 ? '99+' : unreadThisListingCount}
+                                    </span>
+                                );
+                            })()
                         ) : (
                             unreadCount > 0 && (
                                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full animate-pulse font-bold shadow-md border border-white/20">
@@ -875,7 +891,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                 <span className="text-lg">💬</span>
                                 <span className="font-medium">
                                     {isOwner
-                                        ? (inboxChats.length > 0 ? `${inboxChats.length} Inquir${inboxChats.length !== 1 ? 'ies' : 'y'}` : 'View Inquiries')
+                                        ? (thisListingChatsCount > 0 ? `${thisListingChatsCount} Inquir${thisListingChatsCount !== 1 ? 'ies' : 'y'}` : 'View Inquiries')
                                         : 'Chat with Owner'}
                                 </span>
                             </div>
