@@ -9,7 +9,7 @@ import { socket } from '../utils/socket';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle, isOpen: externalIsOpen, onClose, showFloatingButton = true }) {
+export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle, isOpen: externalIsOpen, onClose, showFloatingButton = true, isDeleted = false }) {
     const { currentUser } = useSelector((state) => state.user);
     const [internalIsOpen, setInternalIsOpen] = useState(false);
 
@@ -29,9 +29,13 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         if (params.get('openChat') === 'true') {
+            if (isDeleted && !isOwner) {
+                toast.info('Inquiries are disabled for this deleted property.');
+                return;
+            }
             setIsOpen(true);
         }
-    }, [location.search]);
+    }, [location.search, isDeleted, isOwner]);
 
     // State for Owner View
     const [inboxChats, setInboxChats] = useState([]);
@@ -78,6 +82,10 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
     const toggleChat = () => {
         if (!currentUser) {
             toast.info('Please sign in to chat with the owner.');
+            return;
+        }
+        if (isDeleted && !isOwner) {
+            toast.info('Inquiries are disabled for this deleted property.');
             return;
         }
         if (!isOpen && isOwner) {
@@ -593,29 +601,35 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                 </div>
 
                 {/* Input */}
-                <form onSubmit={handleSend} className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-2 items-center">
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-3 border rounded-full dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    />
-                    <button
-                        type="submit"
-                        disabled={isSending || !newMessage.trim()}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-12 h-12 rounded-full shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center active:scale-95 group"
-                    >
-                        <div className="relative flex items-center justify-center">
-                            {sendIconSent ? (
-                                <FaCheck className="text-lg text-white animate-bounce" />
-                            ) : (
-                                <FaPaperPlane className={`text-lg text-white ml-0.5 ${sendIconAnimating ? 'animate-ping' : 'group-hover:scale-110 transition-transform'}`} />
-                            )}
-                        </div>
-                    </button>
-                </form>
+                {isDeleted && !isOwner ? (
+                    <div className="p-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-center text-red-500 dark:text-red-400 text-sm font-semibold select-none">
+                        Inquiries are closed for this deleted listing.
+                    </div>
+                ) : (
+                    <form onSubmit={handleSend} className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex gap-2 items-center">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type a message..."
+                            className="flex-1 px-4 py-3 border rounded-full dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        />
+                        <button
+                            type="submit"
+                            disabled={isSending || !newMessage.trim()}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-12 h-12 rounded-full shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center active:scale-95 group"
+                        >
+                            <div className="relative flex items-center justify-center">
+                                {sendIconSent ? (
+                                    <FaCheck className="text-lg text-white animate-bounce" />
+                                ) : (
+                                    <FaPaperPlane className={`text-lg text-white ml-0.5 ${sendIconAnimating ? 'animate-ping' : 'group-hover:scale-110 transition-transform'}`} />
+                                )}
+                            </div>
+                        </button>
+                    </form>
+                )}
             </div>
         );
     };
@@ -623,7 +637,7 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
     return (
         <>
             {/* Floating Entry Button */}
-            {showFloatingButton && !isOpen && (
+            {showFloatingButton && !isOpen && (!isDeleted || isOwner) && (
                 <div className="fixed bottom-24 right-6 z-40">
                     <button
                         onClick={toggleChat}

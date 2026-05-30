@@ -4624,6 +4624,7 @@ export default function Listing() {
           listingId={listing._id}
           ownerId={(listing?.userRef && typeof listing.userRef === 'object') ? listing.userRef?._id : listing?.userRef}
           listingTitle={listing.name}
+          isDeleted={listing.isDeleted}
         />
       )}
 
