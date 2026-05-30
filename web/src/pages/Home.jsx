@@ -1631,7 +1631,7 @@ export default function Home() {
                   {homeTrendingPosts.map((post, idx) => (
                     <Link
                       key={post._id}
-                      to={currentUser ? `/user/community/${post._id}` : `/community/${post._id}`}
+                      to={currentUser ? `/user/community/post/${post._id}` : `/community/post/${post._id}`}
                       className="group block bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 p-5 transition-all duration-300 hover:-translate-y-0.5"
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
