@@ -1776,7 +1776,7 @@ export default function Home() {
                   </div>
                   <div className="text-center mt-6">
                     <Link
-                      to="/user//guides"
+                      to="/user/guides"
                       className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold text-sm rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors border border-purple-100 dark:border-purple-800"
                     >
                       <FaGraduationCap className="text-sm" /> Explore All Guides <FaArrowRight className="text-xs" />
