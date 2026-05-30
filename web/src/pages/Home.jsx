@@ -1636,10 +1636,9 @@ export default function Home() {
               {insightsTab === 'community' && homeTrendingPosts.length > 0 && (
                 <div className="space-y-4 animate-fade-in">
                   {homeTrendingPosts.map((post, idx) => (
-                    <Link
+                    <div
                       key={post._id}
-                      to={currentUser ? `/user/community/post/${post._id}` : `/community/post/${post._id}`}
-                      className="group block bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 p-5 transition-all duration-300 hover:-translate-y-0.5"
+                      className="group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 p-5 transition-all duration-300 hover:-translate-y-0.5"
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
                       <div className="flex items-start gap-4">
@@ -1659,7 +1658,7 @@ export default function Home() {
                               </span>
                             )}
                           </div>
-                          <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
                             {post.title}
                           </h3>
                           <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed">
@@ -1672,13 +1671,16 @@ export default function Home() {
                             <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 font-medium">
                               <FaComment className="text-[10px]" /> {post.comments?.length || 0}
                             </span>
-                            <span className="ml-auto text-xs text-blue-600 dark:text-blue-400 font-bold group-hover:underline flex items-center gap-1">
+                            <Link
+                              to={currentUser ? `/user/community/post/${post._id}` : `/community/post/${post._id}`}
+                              className="ml-auto text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1"
+                            >
                               Join Discussion <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
-                            </span>
+                            </Link>
                           </div>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                   <div className="text-center mt-4">
                     <Link
