@@ -1718,7 +1718,7 @@ export default function Home() {
                   </div>
                   <div className="text-center mt-6">
                     <Link
-                      to="/blogs"
+                      to="/user/blogs"
                       className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold text-sm rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors border border-indigo-100 dark:border-indigo-800"
                     >
                       <FaNewspaper className="text-sm" /> Browse All Blogs <FaArrowRight className="text-xs" />
@@ -1765,7 +1765,7 @@ export default function Home() {
                   </div>
                   <div className="text-center mt-6">
                     <Link
-                      to="/guides"
+                      to="/user//guides"
                       className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 font-bold text-sm rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors border border-purple-100 dark:border-purple-800"
                     >
                       <FaGraduationCap className="text-sm" /> Explore All Guides <FaArrowRight className="text-xs" />
