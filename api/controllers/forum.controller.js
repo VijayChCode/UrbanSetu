@@ -90,25 +90,28 @@ export const getPosts = async (req, res, next) => {
 
         let query = {};
 
-        if (postId) query._id = postId;
-        if (userId) query.author = userId;
+        if (postId) {
+            query._id = postId;
+        } else {
+            if (userId) query.author = userId;
 
-        if (city) query['location.city'] = { $regex: escapeRegex(city), $options: 'i' };
-        if (neighborhood) query['location.neighborhood'] = { $regex: escapeRegex(neighborhood), $options: 'i' };
-        if (req.query.searchTerm) {
-            query.$or = [
-                { title: { $regex: escapeRegex(req.query.searchTerm), $options: 'i' } },
-                { content: { $regex: escapeRegex(req.query.searchTerm), $options: 'i' } }
-            ];
-        }
-        if (category === 'Reported') {
-            query.$or = [
-                { reports: { $exists: true, $not: { $size: 0 } } },
-                { 'comments.reports': { $exists: true, $not: { $size: 0 } } },
-                { 'comments.replies.reports': { $exists: true, $not: { $size: 0 } } }
-            ];
-        } else if (category && category !== 'All') {
-            query.category = category;
+            if (city) query['location.city'] = { $regex: escapeRegex(city), $options: 'i' };
+            if (neighborhood) query['location.neighborhood'] = { $regex: escapeRegex(neighborhood), $options: 'i' };
+            if (req.query.searchTerm) {
+                query.$or = [
+                    { title: { $regex: escapeRegex(req.query.searchTerm), $options: 'i' } },
+                    { content: { $regex: escapeRegex(req.query.searchTerm), $options: 'i' } }
+                ];
+            }
+            if (category === 'Reported') {
+                query.$or = [
+                    { reports: { $exists: true, $not: { $size: 0 } } },
+                    { 'comments.reports': { $exists: true, $not: { $size: 0 } } },
+                    { 'comments.replies.reports': { $exists: true, $not: { $size: 0 } } }
+                ];
+            } else if (category && category !== 'All') {
+                query.category = category;
+            }
         }
 
         const sortOption = sort === 'popular' ? { isPinned: -1, 'likes': -1, createdAt: -1 } : { isPinned: -1, createdAt: -1 };
