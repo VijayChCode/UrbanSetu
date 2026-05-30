@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
     FaUsers, FaMapMarkerAlt, FaBullhorn, FaShieldAlt,
     FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch,
-    FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaLock, FaFlag, FaExclamationTriangle, FaEdit, FaSmile, FaUserTimes, FaFire, FaChevronDown, FaChevronUp
+    FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaExclamationTriangle, FaEdit, FaSmile, FaUserTimes, FaFire, FaChevronDown, FaChevronUp
 } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { toast } from 'react-toastify';
@@ -15,6 +15,7 @@ import { socket } from '../utils/socket';
 import { authenticatedFetch } from '../utils/auth';
 import SocialSharePanel from '../components/SocialSharePanel';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+import UserAvatar from '../components/UserAvatar';
 
 export default function AdminCommunity() {
     usePageTitle("Admin Dashboard - Community Moderation");
@@ -38,6 +39,13 @@ export default function AdminCommunity() {
 .animate-fade-in {
     animation: fadeIn 0.3s ease-out forwards;
 }
+.hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
 `;
 
     const [posts, setPosts] = useState([]);
@@ -45,6 +53,9 @@ export default function AdminCommunity() {
     const [activeTab, setActiveTab] = useState('All');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     // Modal State
     const [confirmModal, setConfirmModal] = useState({
@@ -75,6 +86,8 @@ export default function AdminCommunity() {
 
     const [expandedComments, setExpandedComments] = useState({});
     const [commentText, setCommentText] = useState({});
+    const [commentsLoading, setCommentsLoading] = useState({});
+    const [repliesLoading, setRepliesLoading] = useState({});
     const [editingContent, setEditingContent] = useState({ type: null, id: null, content: '' });
     const [expandedSummaries, setExpandedSummaries] = useState({});
     const [editingPost, setEditingPost] = useState(null); // State for editing main post content
@@ -143,11 +156,8 @@ export default function AdminCommunity() {
 
     useEffect(() => {
         const loadData = async () => {
-            // Only show full skeleton on initial load or tab change, not during search
-            // If searching, we still want to fetch, but maybe not hide everything behind a skeleton
             try {
-                // If searching, we still want to fetch, but maybe not hide everything behind a skeleton
-                await Promise.all([fetchPosts(), fetchStats()]);
+                await Promise.all([fetchPosts(0, false), fetchStats()]);
             } catch (error) {
                 console.error("Error loading data", error);
             } finally {
@@ -157,31 +167,79 @@ export default function AdminCommunity() {
         loadData();
     }, [activeTab, searchTerm, postId]);
 
-    const fetchPosts = async () => {
+    const fetchPosts = async (currentSkip = 0, isLoadMore = false) => {
         try {
-            // Auto-filter by user's location if available (optional enhancement)
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else if (isInitialLoad) {
+                setLoading(true);
+            }
 
+            const limit = 5;
             const params = new URLSearchParams();
             if (activeTab !== 'All') params.append('category', activeTab);
             if (searchTerm) params.append('searchTerm', searchTerm);
             if (postId) params.append('postId', postId);
+            params.append('limit', limit);
+            params.append('skip', currentSkip);
 
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum?${params.toString()}`);
             const data = await res.json();
 
             if (res.ok) {
-                setPosts(data.posts);
-                if (postId) {
-                    setExpandedSummaries(prev => ({ ...prev, [postId]: true }));
-                    setExpandedComments(prev => ({ ...prev, [postId]: true })); // Also expand comments to view content
+                if (isLoadMore) {
+                    setPosts(prev => {
+                        const existingIds = new Set(prev.map(p => p._id));
+                        const newPosts = data.posts.filter(p => !existingIds.has(p._id));
+                        return [...prev, ...newPosts];
+                    });
+                } else {
+                    setPosts(data.posts);
+                    if (postId) {
+                        setExpandedSummaries(prev => ({ ...prev, [postId]: true }));
+                        setExpandedComments(prev => ({ ...prev, [postId]: true }));
+                    }
                 }
+                setHasMore(data.hasMore);
             }
         } catch (error) {
             console.error(error);
             toast.error('Failed to load community posts');
+        } finally {
+            if (isLoadMore) {
+                setLoadingMore(false);
+            } else {
+                setLoading(false);
+                setIsInitialLoad(false);
+            }
         }
     };
 
+    useEffect(() => {
+        if (!hasMore || loadingMore || loading) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            const first = entries[0];
+            if (first.isIntersecting) {
+                fetchPosts(posts.length, true);
+            }
+        }, {
+            root: null,
+            rootMargin: '100px',
+            threshold: 0.1
+        });
+
+        const target = document.getElementById('infinite-scroll-trigger');
+        if (target) {
+            observer.observe(target);
+        }
+
+        return () => {
+            if (target) {
+                observer.unobserve(target);
+            }
+        };
+    }, [hasMore, loadingMore, loading, posts.length]);
 
     // Search Debounce & Suggestions
     useEffect(() => {
@@ -205,10 +263,28 @@ export default function AdminCommunity() {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    const handleSearchSelect = (term) => {
-        setSearchTerm(term);
+    const handleSearchSelect = (post) => {
+        setSearchTerm('');
         setShowSuggestions(false);
+        navigate(`/admin/community/post/${post._id}`);
     };
+
+    const prevPostIdRef = React.useRef(postId);
+
+    useEffect(() => {
+        if (postId && posts.length > 0) {
+            const matchingPost = posts.find(p => p._id === postId);
+            if (matchingPost && !expandedComments[postId]) {
+                toggleComments(postId);
+            }
+        }
+
+        if (prevPostIdRef.current && !postId) {
+            setExpandedComments({});
+        }
+
+        prevPostIdRef.current = postId;
+    }, [postId, posts]);
 
     const fetchStats = async () => {
         try {
@@ -652,11 +728,47 @@ export default function AdminCommunity() {
         });
     };
 
-    const toggleComments = (postId) => {
+    const toggleComments = async (postId) => {
+        const isExpanding = !expandedComments[postId];
         setExpandedComments(prev => ({
             ...prev,
-            [postId]: !prev[postId]
+            [postId]: isExpanding
         }));
+
+        if (isExpanding) {
+            setCommentsLoading(prev => ({ ...prev, [postId]: true }));
+            try {
+                const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/${postId}`);
+                if (res.ok) {
+                    const latestPost = await res.json();
+                    setPosts(prevPosts => prevPosts.map(p => p._id === postId ? {
+                        ...p,
+                        comments: latestPost.comments || []
+                    } : p));
+                }
+            } catch (error) {
+                console.error("Failed to load comments:", error);
+            } finally {
+                setTimeout(() => {
+                    setCommentsLoading(prev => ({ ...prev, [postId]: false }));
+                }, 400);
+            }
+        }
+    };
+
+    const toggleReplies = (id) => {
+        const isExpanding = !expandedReplies[id];
+        setExpandedReplies(prev => ({
+            ...prev,
+            [id]: isExpanding
+        }));
+
+        if (isExpanding) {
+            setRepliesLoading(prev => ({ ...prev, [id]: true }));
+            setTimeout(() => {
+                setRepliesLoading(prev => ({ ...prev, [id]: false }));
+            }, 300);
+        }
     };
 
     const toggleSummary = (postId) => {
@@ -1072,81 +1184,88 @@ export default function AdminCommunity() {
                     <div className="w-24 h-1 bg-blue-600 mx-auto mt-6 rounded-full opacity-20"></div>
                 </div>
 
-                {/* Controls & Tabs */}
-                <div className="flex flex-col xl:flex-row justify-between items-center mb-8 gap-4">
-                    {/* Categories */}
-                    <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 w-full md:w-auto hide-scrollbar">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat.id}
-                                onClick={() => {
-                                    setActiveTab(cat.id);
-                                    if (postId) navigate('/admin/community');
-                                }}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${activeTab === cat.id
-                                    ? 'bg-blue-600 text-white shadow-lg'
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                                    }`}
-                            >
-                                <cat.icon className="text-sm" />
-                                {cat.label}
-                            </button>
-                        ))}
-                    </div>
+                {/* Controls & Tabs Header Panel */}
+                <div className="relative z-30 bg-white/80 dark:bg-gray-900/60 backdrop-blur-md rounded-2xl border border-gray-150 dark:border-gray-800 p-4 mb-8 shadow-sm transition-all duration-300">
+                    <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+                        
+                        {/* Categories Horizontal Scroll */}
+                        <div className="flex overflow-x-auto gap-1.5 pb-1 lg:pb-0 hide-scrollbar -mx-2 px-2 flex-1">
+                            {categories.map((cat) => {
+                                const isActive = activeTab === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => {
+                                            setActiveTab(cat.id);
+                                            if (postId) navigate('/admin/community');
+                                        }}
+                                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
+                                            isActive
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-[1.02]'
+                                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700'
+                                        }`}
+                                    >
+                                        <cat.icon className={`text-xs ${isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
+                                        {cat.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-                        <div className="relative w-full sm:w-64">
-                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                            <input
-                                type="text"
-                                placeholder="Search discussions..."
-                                className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onFocus={() => searchTerm.length > 2 && setShowSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                            />
-                            {showSuggestions && suggestions.length > 0 && (
-                                <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-900 shadow-xl rounded-xl mt-2 z-50 border border-gray-100 dark:border-gray-800 overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
-                                    <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/50 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
-                                        Suggested Discussions
-                                    </div>
-                                    {suggestions.map((s, i) => (
-                                        <div
-                                            key={i}
-                                            className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-sm text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors flex items-center gap-3 group"
-                                            onClick={() => handleSearchSelect(s.title)}
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
-                                                <FaSearch className="text-gray-400 group-hover:text-blue-500 dark:text-gray-500 dark:group-hover:text-blue-400 text-xs" />
-                                            </div>
-                                            <span className="truncate font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.title}</span>
+                        {/* Search and Secondary Actions Block */}
+                        <div className="flex flex-col sm:flex-row items-center gap-2.5 flex-shrink-0 w-full lg:w-auto">
+                            {/* Search bar */}
+                            <div className="relative w-full lg:w-60 xl:w-64">
+                                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-450 text-sm" />
+                                <input
+                                    type="text"
+                                    placeholder="Search discussions..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onFocus={() => searchTerm.length > 2 && setShowSuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700/80 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500/40 text-xs sm:text-sm transition-all"
+                                />
+                                {/* Search Suggestions popup */}
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-900 shadow-xl rounded-xl mt-2 z-50 border border-gray-150 dark:border-gray-800 overflow-hidden animate-fade-in max-h-60 overflow-y-auto">
+                                        <div className="px-3 py-2 bg-gray-50 dark:bg-gray-950/80 text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-150 dark:border-gray-800">
+                                            Suggested Discussions
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+                                        {suggestions.map((s, i) => (
+                                            <div
+                                                key={i}
+                                                className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer text-xs sm:text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-800 last:border-0 transition-colors flex items-center gap-3 group"
+                                                onClick={() => handleSearchSelect(s)}
+                                            >
+                                                <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                                                    <FaSearch className="text-gray-400 group-hover:text-blue-500 dark:text-gray-500 text-[10px]" />
+                                                </div>
+                                                <span className="truncate font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{s.title}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Secondary Action buttons */}
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <button
+                                    onClick={() => {
+                                        if (!currentUser) {
+                                            toast.error("Please sign in to post");
+                                            return navigate('/sign-in');
+                                        }
+                                        setShowCreateModal(true);
+                                    }}
+                                    className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all flex-1 sm:flex-none"
+                                >
+                                    <FaPlus className="text-xs" />
+                                    <span>Start Discussion</span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <button
-                                onClick={() => fetchPosts()}
-                                className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-                            >
-                                Search
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (!currentUser) {
-                                        toast.error("Please sign in to post");
-                                        return navigate('/sign-in');
-                                    }
-                                    setShowCreateModal(true);
-                                }}
-                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md whitespace-nowrap"
-                            >
-                                <FaPlus /> Start Discussion
-                            </button>
-                        </div>
+
                     </div>
                 </div>
 
@@ -1154,10 +1273,18 @@ export default function AdminCommunity() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        {postId && (
+                            <button
+                                onClick={() => navigate('/admin/community')}
+                                className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 font-bold hover:underline mb-2 transition-all hover:-translate-x-1"
+                            >
+                                <FaArrowLeft /> Back to All Discussions
+                            </button>
+                        )}
                         {posts.length === 0 ? (
-                            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+                            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                                 <FaUsers className="text-6xl text-gray-200 dark:text-gray-700 mx-auto mb-4" />
-                                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">No posts found</h3>
+                                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No posts found</h3>
                                 <p className="text-gray-500 dark:text-gray-400 mb-6">Be the first to start a conversation in this category!</p>
                                 <button
                                     onClick={() => setShowCreateModal(true)}
@@ -1177,10 +1304,10 @@ export default function AdminCommunity() {
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="relative">
-                                                <img
-                                                    src={post.author?.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                                    alt={post.author?.username}
-                                                    className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-md"
+                                                <UserAvatar
+                                                    user={post.author}
+                                                    size="w-12 h-12"
+                                                    className="border-2 border-white dark:border-gray-700 shadow-md text-2xl"
                                                 />
                                                 {post.author?.type === 'agent' && (
                                                     <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-[10px] p-1 rounded-full border-2 border-white dark:border-gray-700" title="Agent">
@@ -1474,17 +1601,29 @@ export default function AdminCommunity() {
                                     {expandedComments[post._id] && (
                                         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 animate-fade-in transition-colors">
                                             <div className="space-y-4 mb-4">
-                                                {post.comments && post.comments.length > 0 ? (
+                                                {commentsLoading[post._id] ? (
+                                                    <div className="space-y-4 mb-4 animate-pulse">
+                                                        {[1, 2].map((i) => (
+                                                            <div key={i} className="flex gap-3">
+                                                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-750 flex-shrink-0 animate-pulse"></div>
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="h-3 w-1/4 bg-gray-200 dark:bg-gray-750 rounded animate-pulse"></div>
+                                                                    <div className="h-10 bg-gray-100 dark:bg-gray-800/50 rounded-2xl rounded-tl-none animate-pulse"></div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : post.comments && post.comments.length > 0 ? (
                                                     post.comments.map((comment, idx) => (
-                                                        <div key={idx} className="flex gap-3 relative group/comment">
+                                                        <div key={idx} className="flex gap-3 relative group/comment min-w-0">
                                                             <div className="flex-shrink-0">
-                                                                <img
-                                                                    src={comment.user?.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                                                    alt="User"
-                                                                    className="w-8 h-8 rounded-full object-cover mt-1"
+                                                                <UserAvatar
+                                                                    user={comment.user}
+                                                                    size="w-8 h-8"
+                                                                    className="mt-1 text-sm flex-shrink-0"
                                                                 />
                                                             </div>
-                                                            <div className="flex-1">
+                                                            <div className="flex-1 min-w-0">
                                                                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl rounded-tl-none p-3 pr-8 relative transition-colors">
                                                                     <div className="flex justify-between items-center mb-1">
                                                                         <span className="font-semibold text-sm text-gray-900 dark:text-white">{comment.user?.username}</span>
@@ -1591,13 +1730,13 @@ export default function AdminCommunity() {
                                                                                 onClick={() => handleCommentReaction(post._id, comment._id, 'like')}
                                                                                 className={`flex items-center gap-1 text-xs font-semibold ${comment.likes?.includes(currentUser?._id) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'}`}
                                                                             >
-                                                                                <FaThumbsUp /> {comment.likes?.length || 0}
+                                                                                <FaThumbsUp size={12} /> {comment.likes?.length || 0}
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => handleCommentReaction(post._id, comment._id, 'dislike')}
                                                                                 className={`flex items-center gap-1 text-xs font-semibold ${comment.dislikes?.includes(currentUser?._id) ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400'}`}
                                                                             >
-                                                                                <FaThumbsDown /> {comment.dislikes?.length || 0}
+                                                                                <FaThumbsDown size={12} /> {comment.dislikes?.length || 0}
                                                                             </button>
                                                                         </div>
                                                                         <button
@@ -1619,7 +1758,7 @@ export default function AdminCommunity() {
                                                                             </button>
                                                                         )}
                                                                     </div>
-
+ 
                                                                     {!comment.isDeleted && (
                                                                         <>
                                                                             {/* Admin Edit Comment Button */}
@@ -1630,7 +1769,7 @@ export default function AdminCommunity() {
                                                                             >
                                                                                 <FaEdit className="text-xs" />
                                                                             </button>
-
+ 
                                                                             {/* Admin Delete Comment Button */}
                                                                             <button
                                                                                 onClick={() => handleDeleteComment(post._id, comment._id)}
@@ -1642,15 +1781,16 @@ export default function AdminCommunity() {
                                                                         </>
                                                                     )}
                                                                 </div>
-
+ 
                                                                 {/* Top level Reply Input */}
                                                                 {activeReplyInput === comment._id && (
-                                                                    <div className="mt-2 flex gap-2 animate-fade-in pl-2">
-                                                                        <img
-                                                                            src={currentUser?.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                                                            className="w-6 h-6 rounded-full object-cover"
+                                                                    <div className="mt-2 flex gap-2 animate-fade-in pl-2 min-w-0">
+                                                                        <UserAvatar
+                                                                            user={currentUser}
+                                                                            size="w-6 h-6"
+                                                                            className="text-xs flex-shrink-0"
                                                                         />
-                                                                        <form onSubmit={(e) => handleAddReply(e, post._id, comment._id, null)} className="flex-1 flex gap-2 relative">
+                                                                        <form onSubmit={(e) => handleAddReply(e, post._id, comment._id, null)} className="flex-1 flex gap-2 relative min-w-0">
                                                                             {showMentionSuggestions.show && showMentionSuggestions.id === comment._id && renderMentionsPanel("bottom-full mb-2")}
                                                                             <input
                                                                                 type="text"
@@ -1719,7 +1859,7 @@ export default function AdminCommunity() {
 
                                                                 {/* Infinite Recursive Replies */}
                                                                 {expandedReplies[comment._id] && comment.replies && (
-                                                                    <div className="mt-2 space-y-3 pl-2 sm:pl-4 border-l-2 border-gray-100 dark:border-gray-700 ml-1 sm:ml-2 transition-colors">
+                                                                    <div className="mt-2 space-y-3 pl-2 sm:pl-4 border-l-2 border-gray-100 dark:border-gray-800 ml-1 sm:ml-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors">
                                                                         {(() => {
                                                                             const renderReplies = (parentId, depth = 0) => {
                                                                                 const currentReplies = comment.replies.filter(r => (r.parentReplyId || null) === (parentId || null));
@@ -1728,23 +1868,23 @@ export default function AdminCommunity() {
                                                                                 return currentReplies.map(reply => {
                                                                                     const subReplies = comment.replies.filter(r => r.parentReplyId === reply._id);
                                                                                     return (
-                                                                                        <div key={reply._id} className="flex gap-2 relative group/reply flex-col mb-2 animate-fade-in">
-                                                                                            <div className="flex gap-2">
-                                                                                                <img
-                                                                                                    src={reply.user?.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                                                                                    className="w-6 h-6 rounded-full object-cover mt-1"
+                                                                                        <div key={reply._id} className="flex gap-2 relative group/reply flex-col mb-2 animate-fade-in min-w-0">
+                                                                                            <div className="flex gap-2 min-w-0">
+                                                                                                <UserAvatar
+                                                                                                    user={reply.user}
+                                                                                                    size="w-6 h-6"
+                                                                                                    className="mt-1 text-xs flex-shrink-0"
                                                                                                 />
-                                                                                                <div className="flex-1">
+                                                                                                <div className="flex-1 min-w-0">
                                                                                                     <div className="bg-gray-50/50 dark:bg-gray-700/50 p-2 rounded-lg relative transition-colors">
-                                                                                                        <div className="flex items-center gap-2 mb-1">
-                                                                                                            <span className="text-sm font-bold text-gray-800 dark:text-white">{reply.user?.username}</span>
-                                                                                                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                                                                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                                                                            <span className="text-xs font-bold text-gray-800 dark:text-white">{reply.user?.username}</span>
+                                                                                                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
                                                                                                                 {new Date(reply.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                                                                                                             </span>
                                                                                                         </div>
                                                                                                         {editingContent.id === reply._id && editingContent.type === 'reply' ? (
                                                                                                             <form onSubmit={(e) => handleUpdateReply(e, post._id, comment._id, reply._id)} className="w-full mb-2">
-                                                                                                                {/* ... (keep form same) ... */}
                                                                                                                 <div className="relative">
                                                                                                                     {showMentionSuggestions.show && showMentionSuggestions.id === reply._id && showMentionSuggestions.type === 'edit-reply' && renderMentionsPanel("bottom-full mb-2")}
                                                                                                                     <textarea
@@ -1815,7 +1955,7 @@ export default function AdminCommunity() {
                                                                                                                 )}
                                                                                                                 <p className={`text-sm text-gray-700 dark:text-gray-300 break-words overflow-hidden leading-relaxed ${reply.isDeleted ? 'opacity-60 italic' : ''}`}>
                                                                                                                     {formatContent(reply.content)}
-                                                                                                                    {reply.isEdited && <span className="text-xs text-gray-400 dark:text-gray-500 italic font-normal ml-2">(edited)</span>}
+                                                                                                                    {!reply.isDeleted && reply.isEdited && <span className="text-[10px] text-gray-400 dark:text-gray-500 italic font-normal ml-2">(edited)</span>}
                                                                                                                 </p>
                                                                                                             </div>
                                                                                                         )}
@@ -1829,18 +1969,18 @@ export default function AdminCommunity() {
                                                                                                             </div>
                                                                                                         )}
 
-                                                                                                        <div className="flex items-center gap-3 mt-1.5">
+                                                                                                        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                                                                                                             <button
                                                                                                                 onClick={() => handleReplyReaction(post._id, comment._id, reply._id, 'like')}
                                                                                                                 className={`flex items-center gap-1 text-xs font-semibold ${reply.likes?.includes(currentUser?._id) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400'}`}
                                                                                                             >
-                                                                                                                <FaThumbsUp /> {reply.likes?.length || 0}
+                                                                                                                <FaThumbsUp size={10} /> {reply.likes?.length || 0}
                                                                                                             </button>
                                                                                                             <button
                                                                                                                 onClick={() => handleReplyReaction(post._id, comment._id, reply._id, 'dislike')}
                                                                                                                 className={`flex items-center gap-1 text-xs font-semibold ${reply.dislikes?.includes(currentUser?._id) ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400'}`}
                                                                                                             >
-                                                                                                                <FaThumbsDown /> {reply.dislikes?.length || 0}
+                                                                                                                <FaThumbsDown size={10} /> {reply.dislikes?.length || 0}
                                                                                                             </button>
                                                                                                             {/* Admin Reply Button */}
                                                                                                             <button
@@ -1886,14 +2026,16 @@ export default function AdminCommunity() {
                                                                                                             </>
                                                                                                         )}
                                                                                                     </div>
+
                                                                                                     {/* Reply Input for Nested Reply */}
                                                                                                     {activeReplyInput === reply._id && (
-                                                                                                        <div className="mt-2 flex gap-2 animate-fade-in pl-2">
-                                                                                                            <img
-                                                                                                                src={currentUser?.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                                                                                                className="w-6 h-6 rounded-full object-cover"
+                                                                                                        <div className="mt-2 flex gap-2 animate-fade-in pl-2 min-w-0">
+                                                                                                            <UserAvatar
+                                                                                                                user={currentUser}
+                                                                                                                size="w-6 h-6"
+                                                                                                                className="text-xs flex-shrink-0"
                                                                                                             />
-                                                                                                            <form onSubmit={(e) => handleAddReply(e, post._id, comment._id, reply._id)} className="flex-1 flex gap-2 relative">
+                                                                                                            <form onSubmit={(e) => handleAddReply(e, post._id, comment._id, reply._id)} className="flex-1 flex gap-2 relative min-w-0">
                                                                                                                 {showMentionSuggestions.show && showMentionSuggestions.id === comment._id && renderMentionsPanel("bottom-full mb-2")}
                                                                                                                 <input
                                                                                                                     type="text"
@@ -1901,9 +2043,9 @@ export default function AdminCommunity() {
                                                                                                                     value={replyText}
                                                                                                                     onChange={(e) => handleInputChange(e, 'reply', comment._id)}
                                                                                                                     placeholder={`Replying to ${reply.user?.username}...`}
-                                                                                                                    className="flex-1 bg-white dark:bg-gray-700 border-b-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 text-gray-900 dark:text-white outline-none text-sm py-1 px-2 transition-colors"
+                                                                                                                    className="flex-1 bg-white dark:bg-gray-700 border-b-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 text-gray-900 dark:text-white outline-none text-sm py-1 px-2 transition-colors min-w-0"
                                                                                                                 />
-                                                                                                                <div className="flex gap-1 items-center">
+                                                                                                                <div className="flex gap-1 items-center flex-shrink-0">
                                                                                                                     <div className="relative">
                                                                                                                         <button
                                                                                                                             type="button"
@@ -1961,7 +2103,7 @@ export default function AdminCommunity() {
                                                                                                     )}
                                                                                                     {/* Recursion: Render replies to this reply */}
                                                                                                     {expandedReplies[reply._id] && (
-                                                                                                        <div className={`border-l-2 border-gray-100 mt-2 animate-fade-in ${depth < 2 ? 'ml-2 sm:ml-4 pl-2 sm:pl-4' : 'ml-1 pl-1'}`}>
+                                                                                                        <div className={`border-l-2 border-gray-100 dark:border-gray-800 mt-2 animate-fade-in ${depth < 2 ? 'ml-2 sm:ml-4 pl-2 sm:pl-4' : 'ml-1 pl-1'}`}>
                                                                                                             {renderReplies(reply._id, depth + 1)}
                                                                                                         </div>
                                                                                                     )}
