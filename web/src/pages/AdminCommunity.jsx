@@ -2118,7 +2118,7 @@ export default function AdminCommunity() {
                                                                                                     )}
                                                                                                     {/* Recursion: Render replies to this reply */}
                                                                                                     {expandedReplies[reply._id] && (
-                                                                                                        <div className={`border-l-2 border-gray-100 dark:border-gray-800 mt-2 animate-fade-in ${depth < 2 ? 'ml-2 sm:ml-4 pl-2 sm:pl-4' : 'ml-1 pl-1'}`}>
+                                                                                                        <div className={`border-l-2 border-gray-100 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors mt-2 animate-fade-in ${depth < 2 ? 'ml-2 sm:ml-4 pl-2 sm:pl-4' : 'ml-1 pl-1'}`}>
                                                                                                             {repliesLoading[reply._id] ? (
                                                                                                                 <div className="space-y-2 animate-pulse py-1">
                                                                                                                     <div className="flex gap-2">
