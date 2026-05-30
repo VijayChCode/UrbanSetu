@@ -820,13 +820,6 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                         <FaInfoCircle className="text-lg animate-pulse" />
                                         <h3 className="text-sm font-bold">Pre-Booking Inquiries</h3>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowInfoModal(false)}
-                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-750 p-1.5 rounded-full transition"
-                                    >
-                                        <FaTimes />
-                                    </button>
                                 </div>
 
                                 {/* Content */}
