@@ -169,7 +169,7 @@ export const sendMessage = async (req, res, next) => {
                 let subjectName = "General Inquiry";
 
                 if (chat.listingId) {
-                    propertyLink = `${propertyLink}/listing/${chat.listingId._id}`;
+                    propertyLink = `${propertyLink}/listing/${chat.listingId._id}?openChat=true`;
                     subjectName = chat.listingId.name;
                 } else {
                     propertyLink = `${propertyLink}/user/messages`; // Direct to inbox
