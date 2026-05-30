@@ -547,17 +547,12 @@ export default function PreBookingChatWrapper({ listingId, ownerId, listingTitle
                                         </div>
                                         <div className="mt-1 mb-1">
                                             {chat.listingId?._id ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/user/listing/${chat.listingId._id}`);
-                                                    }}
-                                                    className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-blue-100 dark:border-blue-800/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
-                                                    title={`Go to ${chat.listingId.name}`}
+                                                <span
+                                                    className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-blue-100 dark:border-blue-800/40"
+                                                    title={chat.listingId.name}
                                                 >
                                                     <span>🏡</span> {chat.listingId.name}
-                                                </button>
+                                                </span>
                                             ) : (
                                                 <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded inline-flex items-center gap-1 max-w-full truncate border border-gray-100 dark:border-gray-700">
                                                     🏡 General Inquiry
