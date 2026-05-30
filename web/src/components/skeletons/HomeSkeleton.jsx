@@ -333,6 +333,20 @@ export default function HomeSkeleton() {
           </div>
         </div>
 
+        {/* ─── Section 4: Price Drop Alerts Skeleton ─── */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <span className="p-1.5 bg-green-500/10 text-green-600 rounded-xl">📉</span>
+              <Shimmer className="h-5.5 w-40 rounded-lg" delay={900} />
+            </div>
+            <Shimmer className="h-4 w-24 rounded" delay={950} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <ListingSkeletonGrid count={4} />
+          </div>
+        </section>
+
         {/* ─── Section 1: Recently Viewed Skeleton ─── */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
@@ -385,19 +399,6 @@ export default function HomeSkeleton() {
           </div>
         </section>
 
-        {/* ─── Section 4: Price Drop Alerts Skeleton ─── */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-3">
-              <span className="p-1.5 bg-green-500/10 text-green-600 rounded-xl">📉</span>
-              <Shimmer className="h-5.5 w-40 rounded-lg" delay={900} />
-            </div>
-            <Shimmer className="h-4 w-24 rounded" delay={950} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <ListingSkeletonGrid count={4} />
-          </div>
-        </section>
 
         {/* ─── Section 5: Explore & Learn Skeleton ─── */}
         <section className="mb-12">

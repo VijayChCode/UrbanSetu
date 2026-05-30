@@ -1087,6 +1087,31 @@ export default function Home() {
                 </Link>
               )}
 
+              {/* ─── Price Drop Alerts ─── */}
+              {priceDropListings.length > 0 && (
+                <div className="mt-6 animate-fade-in">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                      <span className="p-1.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl shadow-lg">
+                        <FaArrowDown className="text-base" />
+                      </span>
+                      Price Drop Alerts
+                      <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase ml-1">
+                        {priceDropListings.length} drop{priceDropListings.length !== 1 ? 's' : ''}
+                      </span>
+                    </h3>
+                    <Link to={`${linkPrefix}/watchlist`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group">
+                      View Watchlist <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {priceDropListings.map((listing) => (
+                      <ListingItem key={listing._id} listing={listing} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Recently Viewed Properties */}
               {recentlyViewedListings.length > 0 && (
                 <div className="mt-6">
@@ -1299,30 +1324,6 @@ export default function Home() {
             </section>
           )}
 
-          {/* ─── Price Drop Alerts ─── */}
-          {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && priceDropListings.length > 0 && (
-            <section className="animate-fade-in">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                  <span className="p-1.5 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl shadow-lg">
-                    <FaArrowDown className="text-base" />
-                  </span>
-                  Price Drop Alerts
-                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-[10px] font-black rounded-full uppercase ml-1">
-                    {priceDropListings.length} drop{priceDropListings.length !== 1 ? 's' : ''}
-                  </span>
-                </h3>
-                <Link to={`${linkPrefix}/watchlist`} className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 group">
-                  View Watchlist <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {priceDropListings.map((listing) => (
-                  <ListingItem key={listing._id} listing={listing} />
-                ))}
-              </div>
-            </section>
-          )}
 
 
 
