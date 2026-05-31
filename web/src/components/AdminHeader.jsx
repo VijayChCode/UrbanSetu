@@ -510,19 +510,18 @@ export default function AdminHeader() {
             <nav className="hidden lg:flex items-center space-x-2">
               {/* Desktop Search */}
               <div className="flex items-center">
-                {!searchOpen ? (
-                  <button
-                    className="p-2 text-white hover:text-yellow-300 focus:outline-none transition-all duration-300 hover:bg-white/10 rounded-lg"
-                    onClick={() => setSearchOpen(true)}
-                    aria-label="Open search"
+                <div className="relative" ref={searchContainerRef}>
+                  <form
+                    onSubmit={handleSearch}
+                    className={`flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden transition-all duration-300 ${
+                      searchOpen ? 'ring-2 ring-yellow-300 bg-white/20' : ''
+                    }`}
                   >
-                    <FaSearch className="text-base" />
-                  </button>
-                ) : (
-                  <div className="relative" ref={searchContainerRef}>
-                    <form
-                      onSubmit={handleSearch}
-                      className="flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-yellow-300 focus-within:bg-white/20 transition-all duration-300 w-48"
+                    <motion.div
+                      initial={false}
+                      animate={{ width: searchOpen ? "180px" : "0px" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="overflow-hidden"
                     >
                       <input
                         ref={searchInputRef}
@@ -532,22 +531,40 @@ export default function AdminHeader() {
                         onChange={handleSearchInputChange}
                         onFocus={handleSearchInputFocus}
                         onBlur={handleSearchInputBlur}
-                        className="px-3 py-2 outline-none w-full text-white placeholder-white/70 bg-transparent text-sm"
+                        className="px-3 py-2 outline-none text-white placeholder-white/70 bg-transparent text-sm w-44"
                       />
-                      <button className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 p-2 transition-colors" type="submit">
-                        <FaSearch className="text-sm" />
-                      </button>
-                    </form>
+                    </motion.div>
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        if (!searchOpen) {
+                          setSearchOpen(true);
+                        } else if (!searchTerm.trim()) {
+                          setSearchOpen(false);
+                        } else {
+                          const dummyEvent = { preventDefault: () => {} };
+                          handleSearch(dummyEvent);
+                        }
+                      }}
+                      whileHover={{ scale: 1.1, rotate: 10 }}
+                      whileTap={{ scale: 0.9, rotate: -10 }}
+                      className={`p-2 transition-colors duration-300 focus:outline-none flex items-center justify-center ${
+                        searchOpen ? 'bg-yellow-400 text-gray-800 rounded-r-lg' : 'text-white hover:text-yellow-300 hover:bg-white/10 rounded-lg'
+                      }`}
+                      aria-label="Search"
+                    >
+                      <FaSearch className={searchOpen ? "text-sm text-gray-800" : "text-base"} />
+                    </motion.button>
+                  </form>
 
-                    <SearchSuggestions
-                      searchTerm={searchTerm}
-                      onSuggestionClick={handleSuggestionClick}
-                      onClose={() => setShowSuggestions(false)}
-                      isVisible={showSuggestions}
-                      className="mt-1 w-64"
-                    />
-                  </div>
-                )}
+                  <SearchSuggestions
+                    searchTerm={searchTerm}
+                    onSuggestionClick={handleSuggestionClick}
+                    onClose={() => setShowSuggestions(false)}
+                    isVisible={showSuggestions}
+                    className="mt-1 w-64"
+                  />
+                </div>
               </div>
 
               {/* Admin Navigation Links */}
