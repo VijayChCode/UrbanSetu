@@ -38,6 +38,7 @@ export default function AdminChangePassword() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [showSignoutModal, setShowSignoutModal] = useState(false);
+  const [wrongPasswordAttempts, setWrongPasswordAttempts] = useState(0);
 
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
@@ -123,8 +124,27 @@ export default function AdminChangePassword() {
         return;
       }
       if (!res.ok || data.success === false) {
-        setError(data.message || "Failed to change password");
+        if (data.message === "Previous password is incorrect") {
+          const newAttempts = wrongPasswordAttempts + 1;
+          setWrongPasswordAttempts(newAttempts);
+          if (newAttempts >= 3) {
+            setError("Too many failed attempts. For security reasons, you have been signed out.");
+            toast.error("Too many failed attempts. Signing out...");
+            setTimeout(async () => {
+              await signout({
+                showToast: false,
+                navigateTo: "/sign-in",
+                delay: 0
+              });
+            }, 1500);
+          } else {
+            setError(`Previous password is incorrect. You have ${3 - newAttempts} attempts remaining.`);
+          }
+        } else {
+          setError(data.message || "Failed to change password");
+        }
       } else {
+        setWrongPasswordAttempts(0);
         setSuccess("Password changed successfully");
         setTimeout(() => {
           navigate("/admin");
