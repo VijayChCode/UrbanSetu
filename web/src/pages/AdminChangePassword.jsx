@@ -124,7 +124,7 @@ export default function AdminChangePassword() {
         return;
       }
       if (!res.ok || data.success === false) {
-        if (data.message === "Previous password is incorrect") {
+        if (data.message === "Current password is incorrect") {
           const newAttempts = wrongPasswordAttempts + 1;
           setWrongPasswordAttempts(newAttempts);
           if (newAttempts >= 3) {
@@ -138,7 +138,7 @@ export default function AdminChangePassword() {
               });
             }, 1500);
           } else {
-            setError(`Previous password is incorrect. You have ${3 - newAttempts} attempts remaining.`);
+            setError(`Current password is incorrect. You have ${3 - newAttempts} attempts remaining.`);
           }
         } else {
           setError(data.message || "Failed to change password");
