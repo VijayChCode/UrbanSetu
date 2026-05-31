@@ -722,7 +722,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                             </button>
                           ) : (
                             (!emailEditMode) && (
-                              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-20 bg-gray-100 pl-1 rounded-l-sm">
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-20 bg-gray-100 dark:bg-gray-800 pl-1 rounded-l-sm">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -733,7 +733,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                                     setResendTimer(0);
                                     setEmailVerified(false);
                                   }}
-                                  className="text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors"
+                                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"
                                   title="Edit email"
                                   aria-label="Edit email"
                                 >
@@ -827,15 +827,15 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                           </p>
                           <div className="flex items-center gap-2">
                             {resendTimer > 0 ? (
-                              <span className="text-xs text-gray-500">
-                                Resend in {Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                Resend in <span className="text-gray-600 dark:text-gray-300">{Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}</span>
                               </span>
                             ) : (
                               <button
                                 type="button"
                                 onClick={handleSendOTP}
                                 disabled={otpLoading || verifyLoading}
-                                className="text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {otpLoading ? "Sending..." : "Resend OTP"}
                               </button>
@@ -963,7 +963,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                               { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                             );
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-full transition-colors z-20"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-full transition-colors z-20"
                           title="Get current location"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1109,7 +1109,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                           <span className="ml-2 text-indigo-500 text-xs animate-pulse font-medium">Verifying code...</span>
                         )}
                         {!referralCodeStatus.loading && referralCodeStatus.valid === true && (
-                          <span className="ml-2 text-green-600 text-xs font-bold flex items-center gap-1 inline-flex">
+                          <span className="ml-2 text-green-600 dark:text-green-400 text-xs font-bold flex items-center gap-1 inline-flex">
                             <FaCheckCircle className="inline" />
                             {(() => {
                               const params = new URLSearchParams(location.search);
@@ -1246,7 +1246,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="px-3 bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 font-medium">OR CONTINUE WITH</span>
+                        <span className="px-3 bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-400 font-medium">OR CONTINUE WITH</span>
                       </div>
                     </div>
 
