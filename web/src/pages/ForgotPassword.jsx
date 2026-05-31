@@ -628,7 +628,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                                 setResendTimer(0);
                                 setEmailVerified(false);
                               }}
-                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                               title="Edit email"
                               aria-label="Edit email"
                             >
@@ -715,20 +715,20 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                       </button>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">
+                      <p className="text-xs text-gray-500 dark:text-gray-300 transition-colors">
                         Enter the 6-digit code sent to your email
                       </p>
                       <div className="flex items-center gap-2">
                         {resendTimer > 0 ? (
                           <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors">
-                            Resend in {Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}
+                            Resend in <span className="text-gray-600 dark:text-gray-300">{Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}</span>
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={handleSendOTP}
                             disabled={otpLoading || verifyLoading}
-                            className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="text-xs text-red-600 dark:text-red-400 hover:text-red-850 dark:hover:text-red-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             {otpLoading ? "Sending..." : "Resend OTP"}
                           </button>
@@ -795,21 +795,21 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
               </form>
 
               <div className="mt-6 text-center transition-colors">
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-300">
                   Remember your password?{" "}
                   <Link
                     to="/sign-in"
-                    className={`text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 font-semibold hover:underline transition-colors duration-200 ${verifyLoading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                    className={`text-orange-600 dark:text-orange-400 hover:text-orange-850 dark:hover:text-orange-300 font-semibold hover:underline transition-colors duration-200 ${verifyLoading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                       }`}
                   >
                     Sign In
                   </Link>
                 </p>
-                <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-4 text-sm text-gray-500 dark:text-gray-300">
                   Trouble verifying email?{" "}
                   <Link
                     to="/help-center"
-                    className="text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 font-medium hover:underline transition-colors"
+                    className="text-orange-600 dark:text-orange-400 hover:text-orange-850 dark:hover:text-orange-300 font-medium hover:underline transition-colors"
                   >
                     Visit our Help Center
                   </Link>
@@ -942,7 +942,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                         setStep(1);
                         navigate('/forgot-password?step=1', { replace: true });
                       }}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 dark:text-green-400 bg-gray-100 dark:bg-gray-900 hover:text-green-700 dark:hover:text-green-300 p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30 transition-all z-20"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-600 dark:text-green-400 bg-gray-100 dark:bg-gray-850 hover:text-green-700 dark:hover:text-green-300 p-1 rounded hover:bg-green-50 dark:hover:bg-green-950/30 transition-all z-20"
                       title="Edit email address"
                       aria-label="Edit email address"
                     >
@@ -950,7 +950,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                     </button>
                   }
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 transition-colors">
+                <p className="text-xs text-gray-500 dark:text-gray-300 mt-1 transition-colors">
                   Click the edit icon to change your email address
                 </p>
               </div>
@@ -972,9 +972,18 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   placeholder="Create a strong password"
                   startIcon={<Lock className="w-5 h-5" />}
                   endAdornment={
-                    <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? (<FaEyeSlash className="text-gray-600 dark:text-gray-400" />) : (<FaEye className="text-gray-600 dark:text-gray-400" />)}
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                      tabIndex={-1}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
+                      ) : (
+                        <FaEye className="text-gray-400 dark:text-gray-500" />
+                      )}
+                    </button>
                   }
                   inputClassName={`${loading ? 'bg-gray-100 dark:bg-gray-900 cursor-not-allowed' : 'bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600'} pr-12 focus:ring-green-500 focus:border-green-500 hover:border-green-500 transition-colors`}
                   required
@@ -1031,7 +1040,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1 transition-colors">
                   Confirm New Password
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 ml-1 transition-colors">(Re-enter your new password)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 mb-2 ml-1 transition-colors">(Re-enter your new password)</p>
                 <FormField
                   label={undefined}
                   id="confirmPassword"
@@ -1043,9 +1052,18 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
                   placeholder="Confirm your password"
                   startIcon={<Lock className="w-5 h-5 text-gray-400" />}
                   endAdornment={
-                    <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer hover:text-gray-600 dark:hover:text-white transition-colors" onClick={() => setShowCPassword(!showCPassword)}>
-                      {showCPassword ? (<FaEyeSlash className="text-gray-400" />) : (<FaEye className="text-gray-400" />)}
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                      tabIndex={-1}
+                      onClick={() => setShowCPassword(!showCPassword)}
+                    >
+                      {showCPassword ? (
+                        <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
+                      ) : (
+                        <FaEye className="text-gray-400 dark:text-gray-500" />
+                      )}
+                    </button>
                   }
                   inputClassName={`${loading ? 'bg-gray-100 dark:bg-gray-900 cursor-not-allowed' : 'bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600'} pr-12 transition-all duration-200 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 hover:border-green-500`}
                   required
@@ -1119,17 +1137,17 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
             </form>
 
             <div className="mt-8 text-center transition-colors">
-              <p className="text-gray-500 dark:text-gray-400 font-medium">
+              <p className="text-gray-500 dark:text-gray-300 font-medium">
                 Remembered your password?{" "}
                 <Link
                   to="/sign-in"
-                  className={`font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:underline transition-colors ${(verifyLoading || loading) ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                  className={`font-bold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:underline transition-colors ${(verifyLoading || loading) ? 'opacity-50 pointer-events-none' : ''
                     }`}
                 >
                   Back to Sign In
                 </Link>
               </p>
-              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-4 text-sm text-gray-500 dark:text-gray-300">
                 Trouble resetting password?{" "}
                 <Link
                   to="/help-center"
