@@ -909,7 +909,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                 endAdornment={
                                                     <button
                                                         type="button"
-                                                        disabled={authInProgress === 'google' || authInProgress === 'password' || loading}
+                                                        disabled={authInProgress === 'google'}
                                                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none"
                                                         tabIndex={-1}
                                                         onClick={() => setShowPassword((prev) => !prev)}

@@ -1000,18 +1000,24 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Create a strong password"
                         onChange={handleChange}
-                        disabled={authInProgress === 'google'}
+                        disabled={authInProgress === 'google' || loading}
                         startIcon={<Lock className="w-5 h-5 text-gray-400" />}
                         endAdornment={
-                          <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
+                          <button
+                            type="button"
+                            disabled={authInProgress === 'google'}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                            tabIndex={-1}
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
                             {showPassword ? (
-                              <FaEyeSlash className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
+                              <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
                             ) : (
-                              <FaEye className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
+                              <FaEye className="text-gray-400 dark:text-gray-500" />
                             )}
-                          </div>
+                          </button>
                         }
-                        inputClassName={`pr-12 border border-gray-300 transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
+                        inputClassName={`pr-12 border border-gray-300 transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${authInProgress === 'google' || loading ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
                         required
                       />
                     </div>
@@ -1072,18 +1078,24 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         type={showCPassword ? 'text' : 'password'}
                         placeholder="Confirm your password"
                         onChange={handleChange}
-                        disabled={authInProgress === 'google'}
+                        disabled={authInProgress === 'google' || loading}
                         startIcon={<Lock className="w-5 h-5 text-gray-400" />}
                         endAdornment={
-                          <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer" onClick={() => setShowCPassword(!showCPassword)}>
+                          <button
+                            type="button"
+                            disabled={authInProgress === 'google'}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                            tabIndex={-1}
+                            onClick={() => setShowCPassword(!showCPassword)}
+                          >
                             {showCPassword ? (
-                              <FaEyeSlash className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
+                              <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
                             ) : (
-                              <FaEye className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
+                              <FaEye className="text-gray-400 dark:text-gray-500" />
                             )}
-                          </div>
+                          </button>
                         }
-                        inputClassName={`pr-12 border border-gray-300 transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${authInProgress === 'google' ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
+                        inputClassName={`pr-12 border border-gray-300 transition-all duration-200 focus:ring-2 focus:ring-green-500/20 ${authInProgress === 'google' || loading ? 'bg-gray-100 cursor-not-allowed' : ''} hover:border-green-500`}
                         required
                       />
                     </div>
