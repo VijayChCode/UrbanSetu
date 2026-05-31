@@ -1129,7 +1129,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
 
                             <Oauth
                                 pageType="signIn"
-                                disabled={authInProgress !== null || otpSent}
+                                disabled={authInProgress !== null}
                                 onAuthStart={setAuthInProgress}
                             onAuthSuccess={(data) => {
                                     // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
@@ -1148,20 +1148,20 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                             )}
 
                             <div className="mt-8 text-center">
-                                <p className="text-gray-500 dark:text-gray-400 font-medium">
+                                <p className="text-gray-500 dark:text-gray-300 font-medium">
                                     Don't have an account?{" "}
                                     <Link
                                         to={`/sign-up${location.search}`}
-                                        className={`text-blue-600 hover:text-blue-700 font-bold hover:underline transition-colors ${(authInProgress !== null || loading || otpVerifyingLoading || otpSent) ? 'opacity-50 pointer-events-none' : ''}`}
+                                        className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold hover:underline transition-colors ${(authInProgress !== null || loading || otpVerifyingLoading) ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
                                         Sign Up
                                     </Link>
                                 </p>
-                                <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                                <p className="mt-4 text-sm text-gray-500 dark:text-gray-300">
                                     Trouble signing in?{" "}
                                     <Link
                                         to="/help-center"
-                                        className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium hover:underline transition-colors"
                                     >
                                         Visit our Help Center
                                     </Link>
@@ -1169,11 +1169,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                             </div>
                         </div>
 
-
-
                         <div className="mt-8 text-center">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">
-                                By signing in, you agree to our <a href="/terms" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline">Terms of Service</a> and <a href="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline">Privacy Policy</a>.
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                By signing in, you agree to our <a href="/terms" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors underline">Terms of Service</a> and <a href="/privacy" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors underline">Privacy Policy</a>.
                             </p>
                         </div>
 

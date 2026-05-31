@@ -1192,7 +1192,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         required
                       />
                       <label htmlFor="consent" className="text-sm text-gray-700 dark:text-gray-300 select-none">
-                        I agree to the <Link to="/terms" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" onClick={e => { e.preventDefault(); window.open('/terms', '_blank', 'noopener,noreferrer'); }}>Terms of Use</Link> and <Link to="/privacy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" onClick={e => { e.preventDefault(); window.open('/privacy', '_blank', 'noopener,noreferrer'); }}>Privacy Policy</Link>.
+                        I agree to the <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-700 dark:hover:text-blue-300" target="_blank" rel="noopener noreferrer" onClick={e => { e.preventDefault(); window.open('/terms', '_blank', 'noopener,noreferrer'); }}>Terms of Use</Link> and <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-700 dark:hover:text-blue-300" target="_blank" rel="noopener noreferrer" onClick={e => { e.preventDefault(); window.open('/privacy', '_blank', 'noopener,noreferrer'); }}>Privacy Policy</Link>.
                       </label>
                     </div>
 
@@ -1272,11 +1272,11 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                   </form>
 
                   <div className="mt-8 text-center">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium">
+                    <p className="text-gray-500 dark:text-gray-300 font-medium">
                       Already have an account?{" "}
                       <Link
                         to="/sign-in"
-                        className={`text-blue-600 hover:text-blue-700 font-bold hover:underline transition-colors duration-200 ${(authInProgress !== null || loading || otpLoading || verifyLoading)
+                        className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold hover:underline transition-colors duration-200 ${(authInProgress !== null || loading || otpLoading || verifyLoading)
                           ? 'opacity-50 cursor-not-allowed pointer-events-none'
                           : ''
                           }`}
@@ -1284,11 +1284,11 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         Sign In
                       </Link>
                     </p>
-                    <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-4 text-sm text-gray-500 dark:text-gray-300">
                       Trouble creating an account?{" "}
                       <Link
                         to="/help-center"
-                        className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium hover:underline transition-colors"
                       >
                         Visit our Help Center
                       </Link>
