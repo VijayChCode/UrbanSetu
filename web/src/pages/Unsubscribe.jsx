@@ -148,7 +148,7 @@ export default function Unsubscribe() {
                                 </p>
 
                                 <div className="bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 text-sm text-slate-500 dark:text-slate-500 mb-8 border border-slate-200/50 dark:border-slate-700/50">
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Note:</span> You will still receive essential account-related emails like OTPs and password resets.
+                                    <span className="font-semibold text-slate-700 dark:text-slate-300">Note:</span> You will still receive essential account-related emails like OTPs, password resets and reports (if any).
                                 </div>
 
                                 <button
