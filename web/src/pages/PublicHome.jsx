@@ -101,9 +101,9 @@ export default function PublicHome() {
           saleRes,
           statsRes
         ] = await Promise.all([
-          authenticatedFetch(`${API_BASE_URL}/api/listing/get?offer=true&visibility=public`),
-          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=rent&visibility=public`),
-          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=sale&visibility=public`),
+          authenticatedFetch(`${API_BASE_URL}/api/listing/get?offer=true&visibility=public&limit=12`),
+          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=rent&visibility=public&limit=12`),
+          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=sale&visibility=public&limit=12`),
           Promise.all([
             authenticatedFetch(`${API_BASE_URL}/api/listing/count`),
             authenticatedFetch(`${API_BASE_URL}/api/user/count`)

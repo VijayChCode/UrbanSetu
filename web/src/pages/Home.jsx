@@ -218,10 +218,10 @@ export default function Home() {
           trendingRes,
           statsRes
         ] = await Promise.all([
-          authenticatedFetch(`${API_BASE_URL}/api/listing/get?offer=true&visibility=public`),
-          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=rent&visibility=public`),
-          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=sale&visibility=public`),
-          authenticatedFetch(`${API_BASE_URL}/api/watchlist/top?limit=6`),
+          authenticatedFetch(`${API_BASE_URL}/api/listing/get?offer=true&visibility=public&limit=12`),
+          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=rent&visibility=public&limit=12`),
+          authenticatedFetch(`${API_BASE_URL}/api/listing/get?type=sale&visibility=public&limit=12`),
+          authenticatedFetch(`${API_BASE_URL}/api/watchlist/top?limit=12`),
           Promise.all([
             authenticatedFetch(`${API_BASE_URL}/api/listing/count`),
             authenticatedFetch(`${API_BASE_URL}/api/user/count`)
@@ -314,7 +314,7 @@ export default function Home() {
         return;
       }
       try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/ai/recommendations?userId=${currentUser._id}`);
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/ai/recommendations?userId=${currentUser._id}&limit=12`);
         if (!res.ok) return;
         const data = await res.json();
         setRecommendedListings(Array.isArray(data) ? data : (data?.listings || []));
@@ -1509,7 +1509,7 @@ export default function Home() {
                     <ListingItem key={listing._id} listing={listing} />
                   ))
                 ) : (
-                  offerListings.slice(0, 4).map((listing) => (
+                  offerListings.slice(0, 12).map((listing) => (
                     <ListingItem key={listing._id} listing={listing} />
                   ))
                 )}
