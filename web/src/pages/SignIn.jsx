@@ -868,7 +868,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                     type="button"
                                                     onClick={handleEmailEdit}
                                                     disabled={loading || authInProgress !== null}
-                                                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 bg-gray-100 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors z-20 ${loading || authInProgress !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-gray-700 hover:text-blue-700 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors z-20 ${loading || authInProgress !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     aria-label="Edit email"
                                                 >
                                                     <FaEdit className="text-sm" />
@@ -883,7 +883,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                             <div className="text-right mt-2">
                                                 <Link
                                                     to={`/forgot-password?email=${encodeURIComponent(formData.email || '')}`}
-                                                    className={`text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors ${(authInProgress === 'google' || loading) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                    className={`text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress === 'google' || loading) ? 'opacity-50 pointer-events-none' : ''}`}
                                                 >
                                                     Forgot Password?
                                                 </Link>
@@ -924,7 +924,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                             <div className="text-right mt-2">
                                                 <Link
                                                     to={`/forgot-password?email=${encodeURIComponent(formData.email)}`}
-                                                    className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                                                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
                                                 >
                                                     Forgot Password?
                                                 </Link>
@@ -996,7 +996,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                         setOtpSuccessMessage("");
                                                     }}
                                                     disabled={loading || authInProgress !== null}
-                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 bg-gray-100 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors z-20"
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-gray-700 hover:text-blue-700 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors z-20"
                                                     aria-label="Edit email"
                                                 >
                                                     <FaEdit className="text-sm" />
@@ -1070,14 +1070,14 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                         <div className="text-center animate-fade-in">
                                             {resendTimer > 0 ? (
                                                 <span className="text-sm text-gray-400 font-medium">
-                                                    Resend in <span className="text-gray-600">{Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}</span>
+                                                    Resend in <span className="text-gray-600 dark:text-gray-300">{Math.floor(resendTimer / 60)}:{(resendTimer % 60).toString().padStart(2, '0')}</span>
                                                 </span>
                                             ) : (
                                                 <button
                                                     type="button"
                                                     onClick={handleSendOTP}
                                                     disabled={otpLoading || !canResend || otpVerifyingLoading}
-                                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors disabled:opacity-50"
+                                                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors disabled:opacity-50"
                                                 >
                                                     {otpLoading ? "Sending..." : "Resend OTP"}
                                                 </button>
