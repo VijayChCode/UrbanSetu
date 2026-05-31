@@ -19,6 +19,92 @@ import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalThem
 import ThemeDetailModal from "./ThemeDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
 
+const Realistic3DSearchIcon = ({ className = "" }) => {
+  return (
+    <svg
+      className={`w-5 h-5 transition-all duration-300 filter select-none pointer-events-none ${className}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="metalRingUser" x1="2" y1="2" x2="16" y2="16" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="30%" stopColor="#d1d5db" />
+          <stop offset="70%" stopColor="#4b5563" />
+          <stop offset="100%" stopColor="#1f2937" />
+        </linearGradient>
+
+        <linearGradient id="ringHighlightUser" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="50%" stopColor="#9ca3af" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#111827" stopOpacity="0.9" />
+        </linearGradient>
+
+        <radialGradient id="glassLensUser" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#e0f2fe" stopOpacity="0.9" />
+          <stop offset="40%" stopColor="#bae6fd" stopOpacity="0.45" />
+          <stop offset="80%" stopColor="#38bdf8" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#0284c7" stopOpacity="0.5" />
+        </radialGradient>
+
+        <linearGradient id="glassReflectionUser" x1="2" y1="2" x2="12" y2="12" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+
+        <linearGradient id="handleGradientUser" x1="12" y1="12" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#9ca3af" />
+          <stop offset="25%" stopColor="#ffffff" />
+          <stop offset="45%" stopColor="#4b5563" />
+          <stop offset="60%" stopColor="#b45309" />
+          <stop offset="85%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#78350f" />
+        </linearGradient>
+
+        <filter id="shadow3dUser" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0.6" dy="1.2" stdDeviation="0.8" floodColor="#000000" floodOpacity="0.45" />
+        </filter>
+      </defs>
+
+      <g filter="url(#shadow3dUser)">
+        <line
+          x1="12.2"
+          y1="12.2"
+          x2="15.2"
+          y2="15.2"
+          stroke="url(#ringHighlightUser)"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+        />
+        <line
+          x1="14.2"
+          y1="14.2"
+          x2="21.2"
+          y2="21.2"
+          stroke="url(#handleGradientUser)"
+          strokeWidth="3.6"
+          strokeLinecap="round"
+        />
+        <circle cx="21.2" cy="21.2" r="1.8" fill="#1f2937" />
+
+        <circle cx="9" cy="9" r="6.8" fill="none" stroke="url(#metalRingUser)" strokeWidth="1.8" />
+        <circle cx="9" cy="9" r="6.0" fill="none" stroke="url(#ringHighlightUser)" strokeWidth="0.8" />
+
+        <circle cx="9" cy="9" r="5.6" fill="url(#glassLensUser)" />
+
+        <path
+          d="M 5.2 6.2 A 5 5 0 0 1 12.8 6.2 A 5.2 5.2 0 0 0 5.2 6.2 Z"
+          fill="url(#glassReflectionUser)"
+          opacity="0.8"
+        />
+        <ellipse cx="11.5" cy="11.5" rx="1.2" ry="0.6" transform="rotate(-45 11.5 11.5)" fill="#ffffff" opacity="0.25" />
+      </g>
+    </svg>
+  );
+};
+
 const USER_HEADER_OPTIONS = [
   { path: '/user', icon: FaHome, label: 'Home' },
   { path: '/search', icon: FaCompass, label: 'Explore' },
@@ -472,8 +558,8 @@ export default function Header() {
                         onBlur={handleSearchInputBlur}
                         className="px-4 py-3 outline-none w-full text-gray-800 dark:text-gray-200 bg-transparent placeholder-gray-500 dark:placeholder-gray-400"
                       />
-                      <button className={`${getSearchButtonColor()} text-white p-3 transition-colors`} type="submit">
-                        <FaSearch />
+                      <button className={`${getSearchButtonColor()} text-white p-3 transition-colors flex items-center justify-center`} type="submit">
+                        <Realistic3DSearchIcon />
                       </button>
                     </form>
 
@@ -780,7 +866,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
                 }`}
                 aria-label="Search"
               >
-                <FaSearch className={searchOpen ? "text-sm text-gray-800" : "text-base"} />
+                <Realistic3DSearchIcon />
               </motion.button>
             </form>
 
