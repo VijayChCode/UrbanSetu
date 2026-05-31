@@ -38,7 +38,34 @@ export default function AdminChangePassword() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [showSignoutModal, setShowSignoutModal] = useState(false);
-  const [wrongPasswordAttempts, setWrongPasswordAttempts] = useState(0);
+  const [wrongPasswordAttempts, setWrongPasswordAttempts] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`change_password_attempts_${currentUser?._id}`);
+      if (stored) {
+        const { count, lastAttempt } = JSON.parse(stored);
+        if (Date.now() - lastAttempt < 15 * 60 * 1000) {
+          return count;
+        }
+      }
+    } catch (e) {
+      console.error("Error reading password attempts from localStorage:", e);
+    }
+    return 0;
+  });
+
+  const updateAttempts = (count) => {
+    setWrongPasswordAttempts(count);
+    try {
+      const key = `change_password_attempts_${currentUser?._id}`;
+      if (count === 0) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify({ count, lastAttempt: Date.now() }));
+      }
+    } catch (e) {
+      console.error("Error saving password attempts to localStorage:", e);
+    }
+  };
 
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
@@ -126,8 +153,9 @@ export default function AdminChangePassword() {
       if (!res.ok || data.success === false) {
         if (data.message === "Current password is incorrect") {
           const newAttempts = wrongPasswordAttempts + 1;
-          setWrongPasswordAttempts(newAttempts);
+          updateAttempts(newAttempts);
           if (newAttempts >= 3) {
+            updateAttempts(0);
             setError("Too many failed attempts. For security reasons, you have been signed out.");
             toast.error("Too many failed attempts. Signing out...");
             setTimeout(async () => {
@@ -138,13 +166,13 @@ export default function AdminChangePassword() {
               });
             }, 1500);
           } else {
-            setError(`Current password is incorrect. You have ${3 - newAttempts} attempts remaining.`);
+            setError(`Current password is incorrect. You have ${3 - newAttempts} attempts remaining before log-out.`);
           }
         } else {
           setError(data.message || "Failed to change password");
         }
       } else {
-        setWrongPasswordAttempts(0);
+        updateAttempts(0);
         setSuccess("Password changed successfully");
         setTimeout(() => {
           navigate("/admin");
