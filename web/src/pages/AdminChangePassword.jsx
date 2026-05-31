@@ -230,7 +230,7 @@ export default function AdminChangePassword() {
               <Lock className="w-7 h-7 text-blue-600 dark:text-blue-500" />
               Change Password
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">Keep your account secure by updating your password regularly.</p>
+            <p className="text-gray-600 dark:text-gray-300">Keep your account secure by updating your password regularly.</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 relative overflow-hidden transition-colors duration-200">
@@ -243,7 +243,7 @@ export default function AdminChangePassword() {
                 <label htmlFor="previousPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Current Password
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">(Enter your existing password)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">(Enter your existing password)</p>
                 <FormField
                   label={undefined}
                   id="previousPassword"
@@ -256,9 +256,18 @@ export default function AdminChangePassword() {
                   placeholder="Enter your current password"
                   startIcon={<Lock className="w-5 h-5 dark:text-gray-400" />}
                   endAdornment={
-                    <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer" onClick={() => setShowPrev(!showPrev)}>
-                      {showPrev ? (<FaEyeSlash className="text-gray-600 dark:text-gray-400" />) : (<FaEye className="text-gray-600 dark:text-gray-400" />)}
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                      tabIndex={-1}
+                      onClick={() => setShowPrev(!showPrev)}
+                    >
+                      {showPrev ? (
+                        <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
+                      ) : (
+                        <FaEye className="text-gray-400 dark:text-gray-500" />
+                      )}
+                    </button>
                   }
                   inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 ${loading ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600'} hover:border-blue-500`}
                   required
@@ -281,7 +290,7 @@ export default function AdminChangePassword() {
                 <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   New Password
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">(Create a strong new password)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">(Create a strong new password)</p>
                 <FormField
                   label={undefined}
                   id="newPassword"
@@ -293,9 +302,18 @@ export default function AdminChangePassword() {
                   placeholder="Create a strong password"
                   startIcon={<Lock className="w-5 h-5 dark:text-gray-400" />}
                   endAdornment={
-                    <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer" onClick={() => setShowNew(!showNew)}>
-                      {showNew ? (<FaEyeSlash className="text-gray-600 dark:text-gray-400" />) : (<FaEye className="text-gray-600 dark:text-gray-400" />)}
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                      tabIndex={-1}
+                      onClick={() => setShowNew(!showNew)}
+                    >
+                      {showNew ? (
+                        <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
+                      ) : (
+                        <FaEye className="text-gray-400 dark:text-gray-500" />
+                      )}
+                    </button>
                   }
                   inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 ${loading ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600'} hover:border-blue-500`}
                   required
@@ -340,7 +358,7 @@ export default function AdminChangePassword() {
                   )}
 
                   {/* Security Tips */}
-                  <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-300 space-y-1">
                     <p>💡 <strong>Tip:</strong> Use a unique password for this account</p>
                     <p>🔒 <strong>Security:</strong> Consider using a password manager</p>
                   </div>
@@ -352,7 +370,7 @@ export default function AdminChangePassword() {
                 <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Confirm New Password
                 </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">(Re-enter your new password)</p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 mb-2">(Re-enter your new password)</p>
                 <FormField
                   label={undefined}
                   id="confirmNewPassword"
@@ -364,9 +382,18 @@ export default function AdminChangePassword() {
                   placeholder="Confirm your new password"
                   startIcon={<Lock className="w-5 h-5 dark:text-gray-400" />}
                   endAdornment={
-                    <div className="absolute inset-y-0 right-3 flex items-center cursor-pointer" onClick={() => setShowConfirm(!showConfirm)}>
-                      {showConfirm ? (<FaEyeSlash className="text-gray-600 dark:text-gray-400" />) : (<FaEye className="text-gray-600 dark:text-gray-400" />)}
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none z-20"
+                      tabIndex={-1}
+                      onClick={() => setShowConfirm(!showConfirm)}
+                    >
+                      {showConfirm ? (
+                        <FaEyeSlash className="text-gray-400 dark:text-gray-500" />
+                      ) : (
+                        <FaEye className="text-gray-400 dark:text-gray-500" />
+                      )}
+                    </button>
                   }
                   inputClassName={`transition-all duration-200 focus:ring-2 focus:ring-blue-500/20 ${loading ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600'} hover:border-blue-500`}
                   required
@@ -401,7 +428,7 @@ export default function AdminChangePassword() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-300">
                 Changed your mind?{" "}
                 <button
                   onClick={() => navigate("/admin/profile")}
