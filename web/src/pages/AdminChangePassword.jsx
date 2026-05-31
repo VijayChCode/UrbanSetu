@@ -280,7 +280,7 @@ export default function AdminChangePassword() {
                     className={`text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors duration-200 ${loading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                       }`}
                   >
-                    Forgot Password?
+                    Forgot Current Password?
                   </button>
                 </div>
               </div>
