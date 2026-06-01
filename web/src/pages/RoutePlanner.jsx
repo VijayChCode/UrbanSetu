@@ -167,6 +167,30 @@ export default function RoutePlanner() {
     if (!activeMap) return;
 
     const [longitude, latitude] = coordinates;
+
+    // Create premium loading spinner popup on the map for user location geocoding
+    const loadingPopup = new mapboxgl.Popup({ 
+      offset: 10,
+      closeButton: false,
+      closeOnClick: true
+    })
+      .setLngLat(coordinates)
+      .setHTML(`
+        <div class="flex flex-col items-center justify-center p-4 min-w-[210px] bg-white dark:bg-gray-800 rounded-lg shadow-xl text-center border border-gray-100 dark:border-gray-700">
+          <div class="premium-spinner mb-3"></div>
+          <span class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2">Analyzing Coordinates...</span>
+          <div class="flex flex-col gap-1.5 w-full">
+            <span class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-100 dark:border-blue-800/50 justify-center">
+              <span class="animate-pulse">📍</span> Fetching Location...
+            </span>
+            <span class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-md border border-indigo-100 dark:border-indigo-800/50 justify-center animate-pulse">
+              🔍 Resolving Address details...
+            </span>
+          </div>
+        </div>
+      `)
+      .addTo(activeMap);
+
     const loadingToast = toast.loading('Resolving live location details...');
 
     try {
@@ -185,6 +209,9 @@ export default function RoutePlanner() {
       } catch (geocodingError) {
         console.warn('Reverse geocoding failed:', geocodingError);
       }
+
+      // Remove loading popup
+      loadingPopup.remove();
 
       // Center map on user location
       activeMap.flyTo({
@@ -464,9 +491,17 @@ export default function RoutePlanner() {
           })
             .setLngLat(coordinates)
             .setHTML(`
-              <div class="flex flex-col items-center justify-center p-4 min-w-[180px] bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-                <div class="premium-spinner mb-2.5"></div>
-                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Analyzing Coordinates...</span>
+              <div class="flex flex-col items-center justify-center p-4 min-w-[210px] bg-white dark:bg-gray-800 rounded-lg shadow-xl text-center border border-gray-100 dark:border-gray-700">
+                <div class="premium-spinner mb-3"></div>
+                <span class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2">Analyzing Coordinates...</span>
+                <div class="flex flex-col gap-1.5 w-full">
+                  <span class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-100 dark:border-blue-800/50 justify-center">
+                    <span class="animate-pulse">📍</span> Fetching Location...
+                  </span>
+                  <span class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-md border border-indigo-100 dark:border-indigo-800/50 justify-center animate-pulse">
+                    🔍 Resolving Address details...
+                  </span>
+                </div>
               </div>
             `)
             .addTo(mapInstance);
