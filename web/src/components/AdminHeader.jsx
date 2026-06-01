@@ -97,7 +97,7 @@ const THEME_DECORATIONS = {
 const Realistic3DSearchIcon = ({ className = "" }) => {
   return (
     <svg
-      className={`w-5 h-5 transition-all duration-300 filter select-none pointer-events-none ${className}`}
+      className={`w-5 h-5 transition-all duration-300 filter drop-shadow-[0.8px_1.2px_1.5px_rgba(0,0,0,0.4)] select-none pointer-events-none ${className}`}
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -137,13 +137,9 @@ const Realistic3DSearchIcon = ({ className = "" }) => {
           <stop offset="85%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#78350f" />
         </linearGradient>
-
-        <filter id="shadow3dAdmin" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0.6" dy="1.2" stdDeviation="0.8" floodColor="#000000" floodOpacity="0.45" />
-        </filter>
       </defs>
 
-      <g filter="url(#shadow3dAdmin)">
+      <g>
         <line
           x1="12.2"
           y1="12.2"
