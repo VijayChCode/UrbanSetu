@@ -558,9 +558,14 @@ export default function Header() {
                         onBlur={handleSearchInputBlur}
                         className="px-4 py-3 outline-none w-full text-gray-800 dark:text-gray-200 bg-transparent placeholder-gray-500 dark:placeholder-gray-400"
                       />
-                      <button className={`${getSearchButtonColor()} text-white p-3 transition-colors flex items-center justify-center`} type="submit">
+                      <motion.button 
+                        className={`group ${getSearchButtonColor()} text-white p-3 transition-colors flex items-center justify-center`} 
+                        type="submit"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
                         <Realistic3DSearchIcon />
-                      </button>
+                      </motion.button>
                     </form>
 
                     <SearchSuggestions
