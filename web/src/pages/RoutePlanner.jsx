@@ -91,6 +91,7 @@ export default function RoutePlanner() {
   const geocoderRefs = useRef([]);
   const markersRef = useRef([]);
   const routeSourcesRef = useRef([]);
+  const currentLocationMarkerRef = useRef(null);
 
   // Map styles configuration
   const mapStyles = {
@@ -218,6 +219,10 @@ export default function RoutePlanner() {
     }
 
     return () => {
+      if (currentLocationMarkerRef.current) {
+        currentLocationMarkerRef.current.remove();
+        currentLocationMarkerRef.current = null;
+      }
       if (map) {
         map.remove();
         setMap(null);
@@ -1063,6 +1068,99 @@ export default function RoutePlanner() {
     }
   };
 
+  // Show user's current location on the map with custom pulse marker
+  const showUserLocationOnMap = async () => {
+    const allowLocationAccess = localStorage.getItem('allowLocationAccess');
+    if (allowLocationAccess !== 'true') {
+      const settingsPath = currentUser?.role?.includes('admin') ? '/admin/settings' : '/user/settings';
+      toast.info(
+        <div>
+          Please enable Location Access in <Link to={settingsPath} className="font-bold underline">Settings &gt; Privacy</Link>
+        </div>
+      );
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by this browser');
+      return;
+    }
+
+    const loadingToast = toast.loading('Locating you...');
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        );
+      });
+
+      const { latitude, longitude } = position.coords;
+      const coordinates = [longitude, latitude];
+
+      // Center map on user location
+      if (map) {
+        map.flyTo({
+          center: coordinates,
+          zoom: 14,
+          pitch: 45,
+          essential: true
+        });
+
+        // Remove existing current location marker if any
+        if (currentLocationMarkerRef.current) {
+          currentLocationMarkerRef.current.remove();
+        }
+
+        // Create a custom pulsing element
+        const el = document.createElement('div');
+        el.className = 'user-location-pulse';
+
+        // Add popup
+        const popup = new mapboxgl.Popup({ offset: 15 })
+          .setHTML(`
+            <div class="p-2 text-center min-w-[120px]">
+              <h3 class="font-bold text-sm text-blue-600 dark:text-blue-400">You Are Here</h3>
+              <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
+            </div>
+          `);
+
+        // Create new marker
+        const newMarker = new mapboxgl.Marker(el)
+          .setLngLat(coordinates)
+          .setPopup(popup)
+          .addTo(map);
+
+        currentLocationMarkerRef.current = newMarker;
+
+        toast.update(loadingToast, {
+          render: 'Found your location!',
+          type: 'success',
+          isLoading: false,
+          autoClose: 2000
+        });
+      }
+    } catch (error) {
+      console.error('Error showing user location:', error);
+      let errorMsg = 'Failed to retrieve location.';
+      if (error.code === error.PERMISSION_DENIED) {
+        errorMsg = 'Location access denied by browser.';
+      }
+      toast.update(loadingToast, {
+        render: errorMsg,
+        type: 'error',
+        isLoading: false,
+        autoClose: 3000
+      });
+    }
+  };
+
   // Fetch saved routes on component mount
   useEffect(() => {
     fetchSavedRoutes();
@@ -1148,6 +1246,37 @@ export default function RoutePlanner() {
         @media print {
           header, nav, .main-header, .navbar { display: none !important; }
           body { -webkit-print-color-adjust: exact; }
+        }
+        .user-location-pulse {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #3b82f6;
+          border: 3px solid white;
+          box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+          position: relative;
+        }
+        .user-location-pulse::after {
+          content: '';
+          position: absolute;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 2px solid #3b82f6;
+          top: -13px;
+          left: -13px;
+          animation: pulse-ring 1.8s infinite ease-out;
+          opacity: 0;
+        }
+        @keyframes pulse-ring {
+          0% {
+            transform: scale(0.5);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(1.3);
+            opacity: 0;
+          }
         }
       `}</style>
       <div className={`flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 overflow-hidden relative ${isFullscreen ? 'fixed inset-0 z-50 h-screen' : ''}`}>
@@ -1525,6 +1654,13 @@ export default function RoutePlanner() {
                   title="Change Map Style"
                 >
                   <FaLayerGroup size={18} />
+                </button>
+                <button
+                  onClick={showUserLocationOnMap}
+                  className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center text-blue-600 dark:text-blue-400"
+                  title="Show My Location"
+                >
+                  <FaLocationArrow size={16} />
                 </button>
               </div>
 
