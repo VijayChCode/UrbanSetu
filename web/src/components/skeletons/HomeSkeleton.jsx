@@ -347,6 +347,38 @@ export default function HomeSkeleton() {
           </div>
         </section>
 
+        {/* ─── Rent Payment Overdue Alerts Skeleton ─── */}
+        <section className="mb-12 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="p-1.5 bg-red-500/10 text-red-600 rounded-xl">🚨</span>
+              <Shimmer className="h-5.5 w-48 rounded-lg" delay={920} />
+            </div>
+          </div>
+          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-red-100 dark:border-red-950/20 shadow-md p-5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 flex-1 min-w-0 w-full">
+              <div className="w-14 h-14 bg-red-100/50 dark:bg-red-950/20 rounded-2xl animate-pulse shrink-0" />
+              <div className="space-y-2.5 flex-1 w-full text-center sm:text-left">
+                <div className="h-5 w-32 bg-red-100/60 dark:bg-red-950/30 rounded-full inline-block" />
+                <Shimmer className="h-5 w-3/4 mx-auto sm:mx-0" delay={940} />
+                <Shimmer className="h-3.5 w-1/3 mx-auto sm:mx-0" delay={960} />
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-1">
+                  <div className="h-6 w-24 bg-gray-100/50 dark:bg-gray-700/50 rounded-lg" />
+                  <div className="h-6 w-32 bg-gray-100/50 dark:bg-gray-700/50 rounded-lg" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-3 w-full md:w-auto">
+              <div className="text-center md:text-right space-y-1 w-full">
+                <Shimmer className="h-3 w-16 md:ml-auto" delay={980} />
+                <Shimmer className="h-8 w-28 md:ml-auto" delay={1000} />
+              </div>
+              <div className="h-11 w-full sm:w-36 bg-red-200/50 dark:bg-red-900/30 rounded-xl animate-pulse" />
+            </div>
+          </div>
+        </section>
+
+
         {/* ─── Section 1: Recently Viewed Skeleton ─── */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-6">
