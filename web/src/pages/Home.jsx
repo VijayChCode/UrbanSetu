@@ -15,7 +15,7 @@ import AdvancedImage from "../components/AdvancedImage";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { usePageTitle } from '../hooks/usePageTitle';
 import Typewriter from "../components/ui/Typewriter";
-import { FaEye, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
+import { FaEye, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
