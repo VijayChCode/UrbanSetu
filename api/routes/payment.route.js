@@ -1327,9 +1327,10 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
             });
             // 2. Update Streak & Check for On-Time Bonus
             let isLate = false;
+            let wallet;
             try {
               const RentWallet = (await import('../models/rentWallet.model.js')).default;
-              const wallet = await RentWallet.findOne({ contractId: payment.contractId });
+              wallet = await RentWallet.findOne({ contractId: payment.contractId });
               
               if (wallet && wallet.paymentSchedule) {
                 const getMeta = (key) => payment.metadata instanceof Map ? payment.metadata.get(key) : (payment.metadata ? payment.metadata[key] : undefined);

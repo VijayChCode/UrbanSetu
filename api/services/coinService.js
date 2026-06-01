@@ -19,11 +19,14 @@ class CoinService {
         }
 
         // AUTO-GENERATE FOR EXISTING USERS: If no referral code exists, generate it now
-        // This triggers the pre-save hook in user.model.js
         if (!user.gamification?.referralCode) {
-            await user.save();
-            // Re-fetch to get the generated code from the hook
-            user = await User.findById(userId).select('gamification');
+            const code = await User.generateUniqueReferralCode();
+
+            user = await User.findByIdAndUpdate(
+                userId,
+                { $set: { "gamification.referralCode": code } },
+                { new: true }
+            ).select('gamification');
         }
 
         const stats = user.gamification || {

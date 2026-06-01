@@ -425,29 +425,33 @@ const userSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Static method to generate a unique, human-readable referral code (8 chars)
+userSchema.statics.generateUniqueReferralCode = async function () {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0/O/1/I to avoid confusion
+  const generateCode = () => {
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  let code;
+  let attempts = 0;
+  do {
+    code = generateCode();
+    const existing = await this.findOne({ 'gamification.referralCode': code });
+    if (!existing) break;
+    attempts++;
+  } while (attempts < 10);
+  return code;
+};
+
 // Auto-generate referralCode on first save
 userSchema.pre('save', async function (next) {
   if (!this.gamification) this.gamification = {};
   if (!this.gamification.referralCode) {
-    // Generate a short, unique, human-readable code (8 chars)
-    const generateCode = () => {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No 0/O/1/I to avoid confusion
-      let code = '';
-      for (let i = 0; i < 8; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return code;
-    };
-    // Ensure uniqueness with retry
-    let code;
-    let attempts = 0;
-    do {
-      code = generateCode();
-      const existing = await mongoose.model('User').findOne({ 'gamification.referralCode': code });
-      if (!existing) break;
-      attempts++;
-    } while (attempts < 10);
-    this.gamification.referralCode = code;
+    this.gamification.referralCode = await this.constructor.generateUniqueReferralCode();
   }
   next();
 });
