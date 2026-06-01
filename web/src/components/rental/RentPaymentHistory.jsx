@@ -362,6 +362,14 @@ export default function RentPaymentHistory({ wallet, contract }) {
             const dueDate = new Date(payment.dueDate);
             const isOverdue = payment.status === 'pending' && dueDate < new Date();
             const maintenance = contract?.maintenanceCharges || 0;
+            const coinsRedeemed = typeof payment.paymentId === 'object' && payment.paymentId?.metadata?.coinsRedeemed
+              ? payment.paymentId.metadata.coinsRedeemed
+              : 0;
+            const coinsEarned = (payment.status === 'completed' || payment.status === 'paid') && typeof payment.paymentId === 'object'
+              ? (payment.paymentId.currency === 'USD'
+                ? Math.floor((payment.paymentId.amount || 0) * 8)
+                : Math.floor((payment.paymentId.amount || 0) / 10))
+              : 0;
 
             return (
               <div
@@ -409,9 +417,25 @@ export default function RentPaymentHistory({ wallet, contract }) {
                           <p className="text-gray-600 dark:text-gray-400">Note: {payment.remarks}</p>
                         )}
                         {payment.paymentId && (
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            Payment ID: {typeof payment.paymentId === 'object' ? payment.paymentId.paymentId : payment.paymentId}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 flex-wrap">
+                            Payment ID: <span className="font-mono bg-white/70 dark:bg-black/30 px-2 py-0.5 rounded text-[10px] text-gray-700 dark:text-gray-300 shadow-sm border border-gray-100 dark:border-gray-800">{typeof payment.paymentId === 'object' ? payment.paymentId.paymentId : payment.paymentId}</span>
                           </p>
+                        )}
+                        
+                        {/* SetuCoins Loyalty Program Badge */}
+                        {(coinsRedeemed > 0 || coinsEarned > 0) && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {coinsRedeemed > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900 shadow-sm">
+                                🪙 Used: {coinsRedeemed} SC
+                              </span>
+                            )}
+                            {coinsEarned > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900 shadow-sm">
+                                ✨ Earned: {coinsEarned} SC
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
