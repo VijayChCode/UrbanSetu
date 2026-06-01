@@ -705,8 +705,8 @@ router.post("/verify", verifyToken, async (req, res) => {
                 if (scheduleEntry && scheduleEntry.dueDate) {
                   const paymentDate = new Date(); // now
                   const dueDate = new Date(scheduleEntry.dueDate);
-                  // Standard grace period logic or strict due date?
-                  // Let's assume strict due date for gamification
+                  // Set to end of the due date (23:59:59.999) to avoid time-of-day comparison bugs
+                  dueDate.setHours(23, 59, 59, 999);
                   if (paymentDate > dueDate) {
                     isLate = true;
                   }
@@ -1341,7 +1341,10 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
                 if (scheduleEntry && scheduleEntry.dueDate) {
                   const paymentDate = payment.completedAt || new Date();
                   const dueDate = new Date(scheduleEntry.dueDate);
-                  if (paymentDate > dueDate) {
+                  // Set to end of the due date (23:59:59.999) to avoid time-of-day comparison bugs
+                  dueDate.setHours(23, 59, 59, 999);
+                  const pDate = new Date(paymentDate);
+                  if (pDate > dueDate) {
                     isLate = true;
                   }
                 }

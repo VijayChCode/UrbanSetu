@@ -321,8 +321,18 @@ class CoinService {
             }
         }
 
-        user.gamification.lastRentPaymentDate = currentDate;
-        await user.save({ session });
+        // Update streak, badges, and last rent payment date in database atomically
+        await User.findByIdAndUpdate(
+            user._id,
+            {
+                $set: {
+                    "gamification.currentStreak": user.gamification.currentStreak,
+                    "gamification.lastRentPaymentDate": currentDate,
+                    "gamification.badges": user.gamification.badges
+                }
+            },
+            { session }
+        );
 
         return {
             currentStreak: user.gamification.currentStreak,
