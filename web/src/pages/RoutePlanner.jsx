@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { FaRoute, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaCar, FaWalking, FaBicycle, FaBus, FaCog, FaDownload, FaShare, FaBookmark, FaHistory, FaFilter, FaSearch, FaLocationArrow, FaDirections, FaInfoCircle, FaTrafficLight, FaLayerGroup, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp, FaExpand, FaCompress, FaPrint } from 'react-icons/fa';
+import { FaRoute, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaCar, FaWalking, FaBicycle, FaBus, FaCog, FaDownload, FaShare, FaBookmark, FaHistory, FaFilter, FaSearch, FaLocationArrow, FaDirections, FaInfoCircle, FaTrafficLight, FaLayerGroup, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp, FaExpand, FaCompress, FaPrint, FaCrosshairs } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
@@ -1547,7 +1547,7 @@ export default function RoutePlanner() {
                                 className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 transition-colors ${loadingLocation === i ? 'animate-pulse' : ''}`}
                                 title="Current Location"
                               >
-                                <FaLocationArrow className="text-xs" />
+                                <FaCrosshairs className="text-xs" />
                               </button>
                               {stops.length > 1 && (
                                 <button
@@ -1747,7 +1747,7 @@ export default function RoutePlanner() {
                   className="w-10 h-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center text-blue-600 dark:text-blue-400"
                   title="Show My Location"
                 >
-                  <FaLocationArrow size={16} />
+                  <FaCrosshairs size={18} />
                 </button>
               </div>
 
