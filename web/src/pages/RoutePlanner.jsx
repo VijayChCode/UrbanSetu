@@ -33,6 +33,7 @@ export default function RoutePlanner() {
   const [plan, setPlan] = useState([]);
   const [routeData, setRouteData] = useState(null);
   const [predictions, setPredictions] = useState([]);
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState({ stopIndex: null, suggestionIndex: -1 });
   const [mapReady, setMapReady] = useState(false);
   const [map, setMap] = useState(null);
   const [mapError, setMapError] = useState(null);
@@ -1074,6 +1075,7 @@ export default function RoutePlanner() {
   // Handle address input with debounced geocoding
   const onChangeAddress = useCallback(async (i, value) => {
     updateStop(i, value);
+    setActiveSuggestionIdx({ stopIndex: i, suggestionIndex: -1 });
 
     if (!value || value.length < 3) {
       setPredictions(prev => {
@@ -1109,6 +1111,39 @@ export default function RoutePlanner() {
       copy[i] = [];
       return copy;
     });
+    setActiveSuggestionIdx({ stopIndex: null, suggestionIndex: -1 });
+  };
+
+  const handleKeyDown = (i, e) => {
+    const preds = predictions[i] || [];
+    if (preds.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestionIdx(prev => {
+        const nextIdx = prev.stopIndex === i ? Math.min(prev.suggestionIndex + 1, preds.length - 1) : 0;
+        return { stopIndex: i, suggestionIndex: nextIdx };
+      });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestionIdx(prev => {
+        const nextIdx = prev.stopIndex === i ? Math.max(prev.suggestionIndex - 1, -1) : -1;
+        return { stopIndex: i, suggestionIndex: nextIdx };
+      });
+    } else if (e.key === 'Enter') {
+      if (activeSuggestionIdx.stopIndex === i && activeSuggestionIdx.suggestionIndex >= 0) {
+        e.preventDefault();
+        pickPrediction(i, preds[activeSuggestionIdx.suggestionIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setPredictions(prev => {
+        const copy = [...prev];
+        copy[i] = [];
+        return copy;
+      });
+      setActiveSuggestionIdx({ stopIndex: null, suggestionIndex: -1 });
+    }
   };
 
   // Use current location
@@ -1736,7 +1771,8 @@ export default function RoutePlanner() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative z-10"
+                        className="relative"
+                        style={{ zIndex: 100 - i }}
                       >
                         <div className="flex gap-2 items-start">
                           {/* Marker Number */}
@@ -1752,21 +1788,51 @@ export default function RoutePlanner() {
                               <input
                                 value={s.address}
                                 onChange={e => onChangeAddress(i, e.target.value)}
+                                onKeyDown={e => handleKeyDown(i, e)}
                                 placeholder={i === 0 ? "Start Location" : "Destination"}
                                 className="w-full text-sm outline-none bg-transparent dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                               />
                               {/* Suggestions Dropdown */}
                               {predictions[i] && predictions[i].length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
-                                  {predictions[i].map((pred, idx) => (
-                                    <div
-                                      key={idx}
-                                      onMouseDown={() => pickPrediction(i, pred)}
-                                      className="p-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer text-xs border-b border-gray-50 dark:border-gray-700 last:border-0"
-                                    >
-                                      <div className="font-medium text-gray-800 dark:text-gray-200">{pred.place_name}</div>
-                                    </div>
-                                  ))}
+                                <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-150 dark:border-gray-700 z-50 overflow-hidden">
+                                  <div className="max-h-60 overflow-y-auto">
+                                    {predictions[i].map((pred, idx) => {
+                                      const isActive = activeSuggestionIdx.stopIndex === i && activeSuggestionIdx.suggestionIndex === idx;
+                                      const parts = pred.place_name.split(', ');
+                                      const primaryText = parts[0];
+                                      const secondaryText = parts.slice(1).join(', ');
+                                      return (
+                                        <div
+                                          key={idx}
+                                          onMouseDown={() => pickPrediction(i, pred)}
+                                          onMouseEnter={() => setActiveSuggestionIdx({ stopIndex: i, suggestionIndex: idx })}
+                                          className={`p-2.5 flex items-start gap-2.5 cursor-pointer text-xs transition-colors border-b border-gray-100 dark:border-gray-700/60 last:border-0 ${
+                                            isActive
+                                              ? 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-semibold'
+                                              : 'hover:bg-gray-50 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-300'
+                                          }`}
+                                        >
+                                          <FaMapMarkerAlt className={`text-xs mt-0.5 flex-shrink-0 ${isActive ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'}`} />
+                                          <div className="flex-1 min-w-0">
+                                            <div className={`font-semibold truncate ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-150'}`}>
+                                              {primaryText}
+                                            </div>
+                                            {secondaryText && (
+                                              <div className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                                                {secondaryText}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  <div className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700/40 text-[9px] text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                    <span>Suggestions</span>
+                                    <span className="flex items-center gap-1 font-sans">
+                                      Use <span className="px-1 py-0.5 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded shadow-sm text-[8px] font-mono">↑</span> <span className="px-1 py-0.5 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded shadow-sm text-[8px] font-mono">↓</span> and <span className="px-1 py-0.5 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded shadow-sm text-[8px] font-mono font-bold">Enter</span> to select
+                                    </span>
+                                  </div>
                                 </div>
                               )}
                             </div>
