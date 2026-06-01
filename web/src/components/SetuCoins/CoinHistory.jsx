@@ -70,11 +70,16 @@ const CoinHistory = ({ initialOpen = false, refreshTrigger = 0 }) => {
                                         <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="mt-1 p-2 rounded-lg" />
                                         <div>
                                             <p className="font-medium text-gray-800 dark:text-gray-100">{tx.description}</p>
-                                            <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                 <span className="flex items-center gap-1"><FaCalendarAlt className="text-[10px]" /> {new Date(tx.createdAt).toLocaleDateString()}</span>
                                                 <span className={`px-1.5 rounded uppercase text-[10px] tracking-wider font-bold ${theme.adminColor}`}>
                                                     {tx.source.replace(/_/g, ' ')}
                                                 </span>
+                                                {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
+                                                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-850 px-1.5 py-0.5 rounded border border-gray-100 dark:border-gray-800/30">
+                                                        Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
+                                                    </span>
+                                                )}
                                                 {tx.type === 'credit' && tx.expiryDate && (
                                                     <span className="text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 rounded text-[10px] border border-orange-100 dark:border-orange-800">
                                                         Exp: {new Date(tx.expiryDate).toLocaleDateString()}

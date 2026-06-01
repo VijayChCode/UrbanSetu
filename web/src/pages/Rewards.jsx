@@ -504,7 +504,14 @@ export default function Rewards() {
                                                                 <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="w-10 h-10 rounded-xl flex items-center justify-center" />
                                                                 <div>
                                                                     <p className="font-bold text-slate-800 dark:text-gray-200 text-sm">{tx.description}</p>
-                                                                    <p className={`text-[10px] font-bold tracking-wide uppercase ${theme.labelColor}`}>{tx.source.replace(/_/g, ' ')}</p>
+                                                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                                        <span className={`text-[10px] font-bold tracking-wide uppercase ${theme.labelColor}`}>{tx.source.replace(/_/g, ' ')}</span>
+                                                                        {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
+                                                                            <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 bg-slate-50 dark:bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-gray-700/50">
+                                                                                Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </td>
