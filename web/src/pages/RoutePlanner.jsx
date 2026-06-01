@@ -229,6 +229,14 @@ export default function RoutePlanner() {
       // Create a custom pulsing element
       const el = document.createElement('div');
       el.className = 'user-location-pulse';
+      el.style.width = '18px';
+      el.style.height = '18px';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = '#3b82f6';
+      el.style.border = '3px solid white';
+      el.style.boxShadow = '0 0 12px rgba(59, 130, 246, 0.8)';
+      el.style.position = 'relative';
+      el.style.cursor = 'pointer';
 
       // Check if start stop (index 0) has coordinates already set
       const currentStops = stopsRef.current;
@@ -456,7 +464,7 @@ export default function RoutePlanner() {
           trackUserLocation: true,
           showUserHeading: true,
           showAccuracyCircle: true,
-          showUserLocation: false // Hide standard geolocate blue dot since we place our unified custom pulsing dot!
+          showUserLocation: true // Show native geolocate blue dot pinpointly
         });
 
         geolocate.on('geolocate', (e) => {
