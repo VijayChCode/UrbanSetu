@@ -1902,7 +1902,7 @@ export default function RoutePlanner() {
                                 value={s.address}
                                 onChange={e => onChangeAddress(i, e.target.value)}
                                 onKeyDown={e => handleKeyDown(i, e)}
-                                placeholder={i === 0 ? "Start Location" : "Destination"}
+                                placeholder={i === 0 ? "Start Location" : `Destination ${i}`}
                                 className="w-full text-sm outline-none bg-transparent dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                               />
                               {/* Suggestions Dropdown */}
