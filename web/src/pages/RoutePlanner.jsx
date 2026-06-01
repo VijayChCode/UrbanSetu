@@ -304,10 +304,13 @@ export default function RoutePlanner() {
         const isStart = index === 0;
         const isEnd = index === stops.length - 1;
 
-        // Create custom marker element
+        // Create custom marker element (nested wrapper to prevent Mapbox coordinate displacement on scaling)
         const el = document.createElement('div');
-        el.className = 'custom-marker';
-        el.style.cssText = `
+        el.className = 'custom-marker-container';
+
+        const innerEl = document.createElement('div');
+        innerEl.className = 'custom-marker-inner';
+        innerEl.style.cssText = `
           width: 30px;
           height: 30px;
           border-radius: 50%;
@@ -323,7 +326,8 @@ export default function RoutePlanner() {
           cursor: pointer;
           transition: all 0.2s ease-in-out;
         `;
-        el.textContent = index + 1;
+        innerEl.textContent = index + 1;
+        el.appendChild(innerEl);
 
         // Add popup with address, coordinates, and copy coordinates actions
         const popup = new mapboxgl.Popup({ 
@@ -347,21 +351,21 @@ export default function RoutePlanner() {
           .setPopup(popup)
           .addTo(map);
 
-        // Dynamic Hover Scale & Details Popup Trigger
-        el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.25)';
-          el.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+        // Dynamic Hover Scale & Details Popup Trigger (acts on inner wrapper element)
+        innerEl.addEventListener('mouseenter', () => {
+          innerEl.style.transform = 'scale(1.25)';
+          innerEl.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
           popup.addTo(map);
         });
 
-        el.addEventListener('mouseleave', () => {
-          el.style.transform = 'scale(1)';
-          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        innerEl.addEventListener('mouseleave', () => {
+          innerEl.style.transform = 'scale(1)';
+          innerEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
           popup.remove();
         });
 
         // Click to smoothly center/fly map to stop coordinates
-        el.addEventListener('click', () => {
+        innerEl.addEventListener('click', () => {
           map.flyTo({
             center: stop.coordinates,
             zoom: 13,
