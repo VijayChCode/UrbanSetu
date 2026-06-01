@@ -442,29 +442,30 @@ export default function RoutePlanner() {
   const handleDragOver = (e, index) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    if (draggedIdx === null || draggedIdx === index) return;
+
+    // Interactive Live Sorting: rearrange state on the fly
+    const updated = [...stops];
+    const [draggedItem] = updated.splice(draggedIdx, 1);
+    updated.splice(index, 0, draggedItem);
+    
+    setDraggedIdx(index);
+    setStops(updated);
   };
 
   const handleDragEnd = (e) => {
     e.currentTarget.style.opacity = '1';
     setDraggedIdx(null);
+
+    // Auto-recalculate route on drop/drag end if route is already planned
+    if (routeData) {
+      optimize(stops);
+    }
   };
 
   const handleDrop = (e, targetIndex) => {
     e.preventDefault();
-    if (draggedIdx === null || draggedIdx === targetIndex) return;
-
-    const updated = [...stops];
-    const [draggedItem] = updated.splice(draggedIdx, 1);
-    updated.splice(targetIndex, 0, draggedItem);
-    
-    setStops(updated);
-
-    // Auto-recalculate route if route is already planned
-    if (routeData) {
-      setTimeout(() => {
-        optimize(updated);
-      }, 50);
-    }
+    setDraggedIdx(null);
   };
 
   // Initialize Mapbox
