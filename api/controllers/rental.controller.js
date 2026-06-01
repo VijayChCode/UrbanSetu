@@ -393,11 +393,18 @@ export const getContract = async (req, res, next) => {
 
     // If active, fetch wallet and payment schedule
     let contractObj = contract.toObject();
-    if (contract.status === 'active' && contract.walletId) {
+    if (contract.status === 'active') {
       try {
         const RentWallet = (await import('../models/rentWallet.model.js')).default;
-        const wallet = await RentWallet.findById(contract.walletId)
-          .select('paymentSchedule totalPaid totalDue escrow');
+        let wallet = null;
+        if (contract.walletId) {
+          wallet = await RentWallet.findById(contract.walletId)
+            .select('paymentSchedule totalPaid totalDue escrow');
+        }
+        if (!wallet) {
+          wallet = await RentWallet.findOne({ contractId: contract._id, userId: contract.tenantId })
+            .select('paymentSchedule totalPaid totalDue escrow');
+        }
 
         if (wallet) {
           contractObj.wallet = {
@@ -466,10 +473,17 @@ export const listContracts = async (req, res, next) => {
           console.error(`Error fetching checklists for contract ${contract._id}:`, error);
         }
 
-        if (contract.status === 'active' && contract.walletId) {
+        if (contract.status === 'active') {
           try {
-            const wallet = await RentWallet.findById(contract.walletId)
-              .select('paymentSchedule totalPaid totalDue');
+            let wallet = null;
+            if (contract.walletId) {
+              wallet = await RentWallet.findById(contract.walletId)
+                .select('paymentSchedule totalPaid totalDue escrow');
+            }
+            if (!wallet) {
+              wallet = await RentWallet.findOne({ contractId: contract._id, userId: contract.tenantId })
+                .select('paymentSchedule totalPaid totalDue escrow');
+            }
 
             if (wallet) {
               // Add payment status summary to contract
@@ -540,10 +554,17 @@ export const listAllContracts = async (req, res, next) => {
     // For active contracts, fetch wallet and payment schedule for payment status display (admin)
     const contractsWithPaymentStatus = await Promise.all(
       contracts.map(async (contract) => {
-        if (contract.status === 'active' && contract.walletId) {
+        if (contract.status === 'active') {
           try {
-            const wallet = await RentWallet.findById(contract.walletId)
-              .select('paymentSchedule totalPaid totalDue');
+            let wallet = null;
+            if (contract.walletId) {
+              wallet = await RentWallet.findById(contract.walletId)
+                .select('paymentSchedule totalPaid totalDue escrow');
+            }
+            if (!wallet) {
+              wallet = await RentWallet.findOne({ contractId: contract._id, userId: contract.tenantId })
+                .select('paymentSchedule totalPaid totalDue escrow');
+            }
 
             if (wallet) {
               // Add payment status summary to contract
@@ -551,7 +572,8 @@ export const listAllContracts = async (req, res, next) => {
               contractObj.wallet = {
                 paymentSchedule: wallet.paymentSchedule || [],
                 totalPaid: wallet.totalPaid || 0,
-                totalDue: wallet.totalDue || 0
+                totalDue: wallet.totalDue || 0,
+                escrow: wallet.escrow || { status: 'none' }
               };
               return contractObj;
             }

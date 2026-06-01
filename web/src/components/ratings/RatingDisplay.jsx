@@ -23,7 +23,7 @@ export default function RatingDisplay({ rating, contract, currentUser, onUpdate 
               }`}
           />
         ))}
-        <span className="ml-2 text-sm font-semibold text-gray-700">{rating.toFixed(1)}/5</span>
+        <span className="ml-2 text-sm font-semibold text-gray-700 dark:text-gray-300">{rating.toFixed(1)}/5</span>
       </div>
     );
   };
@@ -51,16 +51,16 @@ export default function RatingDisplay({ rating, contract, currentUser, onUpdate 
 
           return (
             <div key={item.key} className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">{item.label}:</span>
+              <span className="text-gray-600 dark:text-gray-300">{item.label}:</span>
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <FaStar
                     key={i}
-                    className={`text-sm ${i < value ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                    className={`text-sm ${i < value ? 'text-yellow-400 fill-current' : 'text-gray-300 dark:text-gray-600'
                       }`}
                   />
                 ))}
-                <span className="ml-1 text-xs text-gray-600">({value}/5)</span>
+                <span className="ml-1 text-xs text-gray-600 dark:text-gray-400">({value}/5)</span>
               </div>
             </div>
           );
