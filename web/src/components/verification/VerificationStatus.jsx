@@ -260,10 +260,10 @@ export default function VerificationStatus({ verification, listing, currentUser,
                       const basePath = isAdmin ? '/admin' : '/user';
                       const doc = verification.documents.ownershipProof;
                       if (doc._id) {
-                        window.open(`${basePath}/view/${doc._id}`, '_blank');
+                        window.open(`${basePath}/view/${doc._id}?source=verification`, '_blank');
                       } else {
                         const encodedUrl = encodeURIComponent(doc.documentUrl);
-                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=OwnershipProof`, '_blank');
+                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=OwnershipProof&source=verification`, '_blank');
                       }
                     }}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
@@ -321,10 +321,10 @@ export default function VerificationStatus({ verification, listing, currentUser,
                       const basePath = isAdmin ? '/admin' : '/user';
                       const doc = verification.documents.identityProof;
                       if (doc._id) {
-                        window.open(`${basePath}/view/${doc._id}`, '_blank');
+                        window.open(`${basePath}/view/${doc._id}?source=verification`, '_blank');
                       } else {
                         const encodedUrl = encodeURIComponent(doc.documentUrl);
-                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=IdentityProof`, '_blank');
+                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=IdentityProof&source=verification`, '_blank');
                       }
                     }}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"
@@ -382,10 +382,10 @@ export default function VerificationStatus({ verification, listing, currentUser,
                       const basePath = isAdmin ? '/admin' : '/user';
                       const doc = verification.documents.addressProof;
                       if (doc._id) {
-                        window.open(`${basePath}/view/${doc._id}`, '_blank');
+                        window.open(`${basePath}/view/${doc._id}?source=verification`, '_blank');
                       } else {
                         const encodedUrl = encodeURIComponent(doc.documentUrl);
-                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=AddressProof`, '_blank');
+                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=AddressProof&source=verification`, '_blank');
                       }
                     }}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-medium"

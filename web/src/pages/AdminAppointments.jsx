@@ -8084,7 +8084,7 @@ function AdminAppointmentRow({
                                                     else if (ext === 'pdf') type = 'pdf';
 
                                                     // Open preview in new tab
-                                                    const previewUrl = `/admin/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}`;
+                                                    const previewUrl = `/admin/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&source=admin_appointments`;
                                                     window.open(previewUrl, '_blank');
                                                   }}
                                                 >
@@ -8106,7 +8106,7 @@ function AdminAppointmentRow({
                                                     let type = 'document';
                                                     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
                                                     else if (ext === 'pdf') type = 'pdf';
-                                                    const previewUrl = `/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}`;
+                                                    const previewUrl = `/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&source=admin_appointments`;
                                                     window.open(previewUrl, '_blank');
                                                   }}
                                                 >
@@ -8611,7 +8611,7 @@ function AdminAppointmentRow({
                                               let type = 'document';
                                               if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
                                               // Open preview in new tab
-                                              const previewUrl = `/admin/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&appointmentId=${appt._id}`;
+                                              const previewUrl = `/admin/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&appointmentId=${appt._id}&source=admin_appointments`;
                                               window.open(previewUrl, '_blank');
                                             }}
                                             title="Click to view document"

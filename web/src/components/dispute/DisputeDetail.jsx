@@ -295,7 +295,7 @@ export default function DisputeDetail({
         onClick={() => {
           const basePath = isAdmin ? '/admin' : '/user';
           const encodedUrl = encodeURIComponent(url);
-          window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=Attachment${idx + 1}`, '_blank');
+          window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=Attachment${idx + 1}&source=disputes`, '_blank');
         }}
       >
         <FaFile className="text-blue-500 shrink-0" />
@@ -419,10 +419,10 @@ export default function DisputeDetail({
                     onClick={() => {
                       const basePath = isAdmin ? '/admin' : '/user';
                       if (evidence._id) {
-                        window.open(`${basePath}/view/${evidence._id}`, '_blank');
+                        window.open(`${basePath}/view/${evidence._id}?source=disputes`, '_blank');
                       } else {
                         const encodedUrl = encodeURIComponent(evidence.url);
-                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=DisputeEvidence`, '_blank');
+                        window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=DisputeEvidence&source=disputes`, '_blank');
                       }
                     }}
                   >
@@ -557,7 +557,7 @@ export default function DisputeDetail({
                           onClick={() => {
                             const basePath = isAdmin ? '/admin' : '/user';
                             const encodedUrl = encodeURIComponent(attachment.url);
-                            window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=PendingAttachment${index + 1}`, '_blank');
+                            window.open(`${basePath}/view/preview?url=${encodedUrl}&type=document&name=PendingAttachment${index + 1}&source=disputes`, '_blank');
                           }}
                         >
                           <FaFile size={24} />

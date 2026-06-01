@@ -23,6 +23,23 @@ export default function ViewChatDocument() {
     const { currentUser } = useSelector((state) => state.user);
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+    const params = new URLSearchParams(location.search);
+    const source = params.get('source');
+
+    const formatSourceLabel = (src) => {
+        if (!src) return '';
+        const mapping = {
+            'my_appointments': 'My Appointments',
+            'admin_appointments': 'Admin Appointments',
+            'gemini_chatbox': 'SetuAI Chatbox',
+            'disputes': 'Dispute Evidence',
+            'loans': 'Loan Documents',
+            'verification': 'User Verification',
+            'deployment': 'Deployment Management',
+        };
+        return mapping[src] || src.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    };
+
     const pageTitle = document?.name || (document?.type ? `${document.type.charAt(0).toUpperCase() + document.type.slice(1)} Preview` : 'Document Preview');
     usePageTitle(`${pageTitle} - UrbanSetu`);
 
@@ -284,8 +301,14 @@ export default function ViewChatDocument() {
                     >
                         <FaArrowLeft />
                     </button>
-                    <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate pr-2">
-                        {document.name || 'Document View'}
+                    <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate pr-2 flex items-center gap-2">
+                        <span>{document.name || 'Document View'}</span>
+                        {source && (
+                            <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
+                                {formatSourceLabel(source)}
+                            </span>
+                        )}
                     </h1>
                 </div>
                 {isRestricted ? (

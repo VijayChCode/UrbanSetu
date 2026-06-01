@@ -9633,7 +9633,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                   else if (ext === 'pdf') type = 'pdf';
 
                                                   // Open preview in new tab
-                                                  const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&participants=${encodeURIComponent((appt.buyerId?._id || '') + ',' + (appt.sellerId?._id || ''))}&appointmentId=${appt._id}`;
+                                                  const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&participants=${encodeURIComponent((appt.buyerId?._id || '') + ',' + (appt.sellerId?._id || ''))}&appointmentId=${appt._id}&source=my_appointments`;
                                                   window.open(previewUrl, '_blank');
                                                 }}
                                                 title="Click to view document"

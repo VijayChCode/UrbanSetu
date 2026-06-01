@@ -209,7 +209,7 @@ export default function VerificationForm({ listing, onSuccess, onCancel }) {
                 onClick={() => {
                   const encodedUrl = encodeURIComponent(formData[section].documentUrl);
                   const name = formData[section].originalName || 'Document';
-                  window.open(`/user/view/preview?url=${encodedUrl}&type=document&name=${name}`, '_blank');
+                  window.open(`/user/view/preview?url=${encodedUrl}&type=document&name=${name}&source=verification`, '_blank');
                 }}
                 title="Click to preview"
               >

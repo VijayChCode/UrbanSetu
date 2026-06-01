@@ -19,6 +19,23 @@ export default function ViewDocument() {
     const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
     const { currentUser } = useSelector((state) => state.user);
 
+    const params = new URLSearchParams(location.search);
+    const source = params.get('source');
+
+    const formatSourceLabel = (src) => {
+        if (!src) return '';
+        const mapping = {
+            'my_appointments': 'My Appointments',
+            'admin_appointments': 'Admin Appointments',
+            'gemini_chatbox': 'SetuAI Chatbox',
+            'disputes': 'Dispute Evidence',
+            'loans': 'Loan Documents',
+            'verification': 'User Verification',
+            'deployment': 'Deployment Management',
+        };
+        return mapping[src] || src.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    };
+
     const docType = document?.type?.replace(/_/g, ' ') || 'Document';
     usePageTitle(`${docType.charAt(0).toUpperCase() + docType.slice(1)} - UrbanSetu`);
 
@@ -284,8 +301,14 @@ export default function ViewDocument() {
                     >
                         <FaArrowLeft />
                     </button>
-                    <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white capitalize truncate pr-2">
-                        {document.type?.replace(/_/g, ' ') || 'Document View'}
+                    <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white capitalize truncate pr-2 flex items-center gap-2">
+                        <span>{document.type?.replace(/_/g, ' ') || 'Document View'}</span>
+                        {source && (
+                            <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
+                                {formatSourceLabel(source)}
+                            </span>
+                        )}
                     </h1>
                 </div>
                 {isPublic ? (

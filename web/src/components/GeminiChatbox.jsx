@@ -7772,7 +7772,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     else if (ext === 'pdf') type = 'pdf';
 
                                                                     const pathPrefix = currentUser ? (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user') : '';
-                                                                    const previewUrl = `${pathPrefix}/view/preview?url=${encodeURIComponent(message.documentUrl)}&name=${encodeURIComponent(message.documentName || 'Document')}&type=${type}`;
+                                                                    const previewUrl = `${pathPrefix}/view/preview?url=${encodeURIComponent(message.documentUrl)}&name=${encodeURIComponent(message.documentName || 'Document')}&type=${type}&source=gemini_chatbox`;
                                                                     window.open(previewUrl, '_blank');
                                                                 }}
                                                                 title="Click to view document"

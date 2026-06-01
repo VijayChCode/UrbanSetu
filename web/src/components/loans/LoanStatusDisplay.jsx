@@ -352,7 +352,7 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
                 <FaFile className="text-gray-600 dark:text-gray-400" />
                 {doc._id ? (
                   <Link
-                    to={isAdmin ? `/admin/view/${doc._id}` : `/user/view/${doc._id}`}
+                    to={isAdmin ? `/admin/view/${doc._id}?source=loans` : `/user/view/${doc._id}?source=loans`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline capitalize font-medium cursor-pointer"

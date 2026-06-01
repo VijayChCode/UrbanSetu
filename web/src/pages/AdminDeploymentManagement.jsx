@@ -1215,7 +1215,7 @@ export default function AdminDeploymentManagement() {
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
                   <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{doc.file}</span>
                   <a
-                    href={`/admin/view/${doc.file.toLowerCase()}`}
+                    href={`/admin/view/${doc.file.toLowerCase()}?source=deployment`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
