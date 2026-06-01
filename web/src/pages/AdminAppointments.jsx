@@ -7730,10 +7730,12 @@ function AdminAppointmentRow({
                 {isDragOver && (
                   <div className="absolute inset-0 bg-transparent backdrop-blur-sm flex flex-col items-center justify-center z-50 text-white animate-fadeIn pointer-events-none">
                     <div className="relative flex items-center justify-center w-40 h-40 mb-6">
-                      {/* Terminal/Code Icon (Left) */}
+                      {/* Music Note Icon (Left) */}
                       <div className="absolute w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-xl shadow-lg flex items-center justify-center transform -rotate-12 -translate-x-12 translate-y-2 border border-white/20">
-                        <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 18V5l12-2v13" />
+                          <circle cx="6" cy="18" r="3" />
+                          <circle cx="18" cy="16" r="3" />
                         </svg>
                       </div>
                       {/* Document Icon (Center/Back) */}
