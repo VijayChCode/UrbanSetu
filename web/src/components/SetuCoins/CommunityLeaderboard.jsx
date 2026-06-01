@@ -147,7 +147,7 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
     );
 
     if (loading) {
-        return <LeaderboardSkeleton />;
+        return <LeaderboardSkeleton showYourStatus={showYourStatus} />;
     }
 
     return (
@@ -165,7 +165,10 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                             {displayRank === 1 && <FaCrown className="absolute -top-3 -right-2 text-yellow-500 text-xl animate-bounce" />}
                         </div>
                         <div>
-                            <h3 className="font-black text-slate-800 dark:text-white text-xl">Your Status</h3>
+                            <h3 className="font-black text-slate-800 dark:text-white text-xl flex items-center gap-2">
+                                <span>{currentUser.username?.length > 3 ? `${currentUser.username.substring(0, 3)}***` : `${currentUser.username}***`}</span>
+                                <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">YOU</span>
+                            </h3>
                             {displayRank ? (
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-black shadow-lg shadow-indigo-200">
