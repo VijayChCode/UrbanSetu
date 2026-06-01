@@ -13,27 +13,27 @@ import CoinTransaction from "../models/coinTransaction.model.js";
  */
 export const awardSetuCoins = async (userId, amount, source, description, referenceId = null, referenceModel = null) => {
     try {
-        const user = await User.findById(userId);
+        // Use atomic $inc to prevent race conditions and stale overwrites.
+        // Previously used user.save() which could overwrite concurrent $inc 
+        // operations from CoinService.credit(), resetting the balance.
+        const user = await User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: {
+                    "gamification.setuCoinsBalance": amount,
+                    "gamification.totalCoinsEarned": amount
+                },
+                $set: { "gamification.lastCoinTransaction": new Date() }
+            },
+            { new: true, runValidators: true, setDefaultsOnInsert: true }
+        ).select('gamification');
+
         if (!user) throw new Error("User not found");
 
-        // Initialize gamification if missing
-        if (!user.gamification) {
-            user.gamification = {
-                setuCoinsBalance: 0,
-                totalCoinsEarned: 0,
-                currentStreak: 0
-            };
-        }
+        const newBalance = user.gamification.setuCoinsBalance;
 
-        // Update user balance
-        const previousBalance = user.gamification.setuCoinsBalance || 0;
-        const newBalance = previousBalance + amount;
-
-        user.gamification.setuCoinsBalance = newBalance;
-        user.gamification.totalCoinsEarned = (user.gamification.totalCoinsEarned || 0) + amount;
-
-        // Save User
-        await user.save();
+        // Expiry period (standard 1 year)
+        const expiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
         // Create Transaction Record
         await CoinTransaction.create({
@@ -44,7 +44,9 @@ export const awardSetuCoins = async (userId, amount, source, description, refere
             description,
             referenceId,
             referenceModel,
-            balanceAfter: newBalance
+            balanceAfter: newBalance,
+            expiryDate,
+            remainingBalance: amount // For FIFO tracking
         });
 
         return { success: true, newBalance };
@@ -64,20 +66,28 @@ export const awardSetuCoins = async (userId, amount, source, description, refere
  */
 export const revokeSetuCoins = async (userId, amount, adminId, reason) => {
     try {
-        const user = await User.findById(userId);
-        if (!user) throw new Error("User not found");
+        // First, read the current balance to calculate the actual deduction
+        const currentUser = await User.findById(userId).select('gamification.setuCoinsBalance');
+        if (!currentUser) throw new Error("User not found");
 
-        if (!user.gamification) {
-            user.gamification = { setuCoinsBalance: 0 };
-        }
-
-        const previousBalance = user.gamification.setuCoinsBalance || 0;
+        const previousBalance = currentUser.gamification?.setuCoinsBalance || 0;
         // Don't go below zero
         const actualDeduction = Math.min(previousBalance, amount);
-        const newBalance = previousBalance - actualDeduction;
 
-        user.gamification.setuCoinsBalance = newBalance;
-        await user.save();
+        if (actualDeduction <= 0) {
+            return { success: true, newBalance: 0, deducted: 0 };
+        }
+
+        // Use atomic $inc with negative value to safely decrement
+        const user = await User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: { "gamification.setuCoinsBalance": -actualDeduction }
+            },
+            { new: true, runValidators: true }
+        ).select('gamification');
+
+        const newBalance = user.gamification.setuCoinsBalance;
 
         await CoinTransaction.create({
             userId,

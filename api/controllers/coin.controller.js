@@ -100,8 +100,9 @@ export const getLeaderboard = async (req, res, next) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
         const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'rootadmin');
-        const leaderboard = await CoinService.getLeaderboard(limit, isAdmin);
-        res.status(200).json({ success: true, leaderboard });
+        const requestingUserId = req.user?.id || null;
+        const result = await CoinService.getLeaderboard(limit, isAdmin, requestingUserId);
+        res.status(200).json({ success: true, leaderboard: result.leaderboard, currentUserEntry: result.currentUserEntry || null });
     } catch (error) {
         next(error);
     }

@@ -363,13 +363,13 @@ class CoinService {
     /**
      * Get Leaderboard
      */
-    async getLeaderboard(limit = 10, isAdmin = false) {
+    async getLeaderboard(limit = 10, isAdmin = false, requestingUserId = null) {
         const users = await User.find({ 'gamification.totalCoinsEarned': { $gt: 0 } })
             .select('username firstName lastName avatar gamification.totalCoinsEarned gamification.currentStreak')
             .sort({ 'gamification.totalCoinsEarned': -1 })
             .limit(limit);
 
-        return users.map((u, index) => {
+        const leaderboard = users.map((u, index) => {
             const name = u.username || 'Anonymous';
             const maskedName = name.length > 3
                 ? `${name.substring(0, 3)}***`
@@ -390,6 +390,35 @@ class CoinService {
 
             return entry;
         });
+
+        // If requesting user is logged in and NOT in the top N, compute their rank
+        let currentUserEntry = null;
+        if (requestingUserId) {
+            const isInList = leaderboard.some(u => u.userId.toString() === requestingUserId.toString());
+            if (!isInList) {
+                const requestingUser = await User.findById(requestingUserId)
+                    .select('username avatar gamification.totalCoinsEarned gamification.currentStreak');
+
+                if (requestingUser && requestingUser.gamification?.totalCoinsEarned > 0) {
+                    const rank = await User.countDocuments({
+                        'gamification.totalCoinsEarned': { $gt: requestingUser.gamification.totalCoinsEarned }
+                    }) + 1;
+
+                    const name = requestingUser.username || 'Anonymous';
+                    currentUserEntry = {
+                        rank,
+                        userId: requestingUser._id,
+                        name: name.length > 3 ? `${name.substring(0, 3)}***` : `${name}***`,
+                        avatar: requestingUser.avatar,
+                        totalCoins: requestingUser.gamification.totalCoinsEarned,
+                        streak: requestingUser.gamification.currentStreak || 0,
+                        isCurrentUser: true
+                    };
+                }
+            }
+        }
+
+        return { leaderboard, currentUserEntry };
     }
 
     /**

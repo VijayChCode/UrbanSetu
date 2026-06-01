@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaCoins, FaTrophy, FaFire, FaCrown, FaMedal, FaStar, FaInfoCircle } from 'react-icons/fa';
+import { FaCoins, FaTrophy, FaFire, FaCrown, FaMedal, FaStar, FaInfoCircle, FaEllipsisH } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { authenticatedFetch } from '../../utils/auth';
 import LeaderboardSkeleton from '../skeletons/LeaderboardSkeleton';
@@ -12,9 +12,14 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userRank, setUserRank] = useState(null);
+    const [currentUserEntry, setCurrentUserEntry] = useState(null);
+    const [freshBalance, setFreshBalance] = useState(null);
 
     useEffect(() => {
         fetchLeaderboard();
+        if (showYourStatus && currentUser) {
+            fetchFreshBalance();
+        }
     }, [limit]);
 
     const fetchLeaderboard = async () => {
@@ -29,6 +34,11 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                     const myRank = data.leaderboard.find(u => u.userId === currentUser._id);
                     if (myRank) setUserRank(myRank);
                 }
+
+                // If the API returned a currentUserEntry (user is NOT in the top N)
+                if (data.currentUserEntry) {
+                    setCurrentUserEntry(data.currentUserEntry);
+                }
             }
         } catch (error) {
             console.error(error);
@@ -36,6 +46,26 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
             setLoading(false);
         }
     };
+
+    // Fetch fresh coin balance for the "Your Status" card instead of relying on stale Redux data
+    const fetchFreshBalance = async () => {
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/balance`);
+            const data = await res.json();
+            if (data.success) {
+                setFreshBalance({
+                    totalCoinsEarned: data.totalCoinsEarned || 0,
+                    rank: data.rank || null
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching fresh balance for leaderboard:", error);
+        }
+    };
+
+    // Determine the total earned to show in "Your Status"
+    const displayTotalEarned = freshBalance?.totalCoinsEarned ?? currentUser?.gamification?.totalCoinsEarned ?? 0;
+    const displayRank = userRank?.rank || freshBalance?.rank || null;
 
     const getRankStyle = (rank) => {
         switch (rank) {
@@ -55,6 +85,67 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
         }
     };
 
+    // Render a single leaderboard row (reusable for both main list and appended user)
+    const renderLeaderboardRow = (user, idx, isAppended = false) => (
+        <div
+            key={`${user.rank}-${isAppended ? 'appended' : 'main'}`}
+            className={`flex items-center justify-between p-5 rounded-2xl transition-all duration-300 border ${getRankStyle(user.rank)} ${user.userId === currentUser?._id ? 'ring-2 ring-indigo-500 ring-offset-4 dark:ring-offset-gray-900' : ''}`}
+        >
+            <div className="flex items-center gap-4 sm:gap-6">
+                <div className="w-8 flex justify-center">
+                    {getRankIcon(user.rank)}
+                </div>
+                <div className="relative">
+                    <img
+                        src={user.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
+                        className={`w-14 h-14 rounded-2xl object-cover shadow-md bg-slate-100 border-2 ${user.rank === 1 ? 'border-yellow-400' : 'border-white'}`}
+                        alt={user.name}
+                    />
+                    {user.rank === 1 && (
+                        <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-white rounded-lg p-1 shadow-lg">
+                            <FaCrown size={10} />
+                        </div>
+                    )}
+                </div>
+                <div>
+                    <p className={`font-black tracking-tight ${user.userId === currentUser?._id ? 'text-indigo-800 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}>
+                        {user.userId === currentUser?._id ? (currentUser.username?.length > 3 ? `${currentUser.username.substring(0, 3)}***` : `${currentUser.username}***`) : user.name} {user.userId === currentUser?._id && <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] px-2 py-0.5 rounded-full ml-1">YOU</span>}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-300 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/50 px-2 py-0.5 rounded-md uppercase tracking-tighter">
+                            <FaFire className="text-orange-500" /> {user.streak} Month Streak
+                        </span>
+                        {isAdmin && (
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
+                                ID: {user.userId.toString().slice(-6)}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <div className="flex items-center gap-6">
+                <div className="text-right">
+                    <p className="font-black text-slate-800 dark:text-white text-xl flex items-center justify-end gap-1.5 tabular-nums">
+                        {user.totalCoins.toLocaleString()}
+                        <FaCoins className="text-yellow-500 text-sm" />
+                    </p>
+                    <span className="text-[10px] uppercase font-black text-slate-300 tracking-[0.1em]">Total Earned</span>
+                </div>
+                {isAdmin && (
+                    <div className="hidden sm:block">
+                        <Link 
+                            to={`/admin/setu-coins?search=${encodeURIComponent(user.fullName || user.name)}`}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 block"
+                            title="Manage user coins"
+                        >
+                            <FaCoins />
+                        </Link>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
     if (loading) {
         return <LeaderboardSkeleton />;
     }
@@ -71,16 +162,18 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                                 alt="Profile"
                                 className="w-20 h-20 rounded-2xl border-4 border-indigo-50 object-cover shadow-lg"
                             />
-                            {userRank?.rank === 1 && <FaCrown className="absolute -top-3 -right-2 text-yellow-500 text-xl animate-bounce" />}
+                            {displayRank === 1 && <FaCrown className="absolute -top-3 -right-2 text-yellow-500 text-xl animate-bounce" />}
                         </div>
                         <div>
                             <h3 className="font-black text-slate-800 dark:text-white text-xl">Your Status</h3>
-                            {userRank ? (
+                            {displayRank ? (
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-black shadow-lg shadow-indigo-200">
-                                        Rank #{userRank.rank}
+                                        Rank #{displayRank}
                                     </span>
-                                    <span className="text-slate-500 text-sm font-medium">Top Tier Finisher!</span>
+                                    <span className="text-slate-500 text-sm font-medium">
+                                        {displayRank <= 10 ? 'Top Tier Finisher!' : 'Keep climbing!'}
+                                    </span>
                                 </div>
                             ) : (
                                 <p className="text-slate-500 text-sm mt-1 flex items-center gap-1">
@@ -92,7 +185,7 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                     <div className="text-center md:text-right bg-slate-50 dark:bg-gray-700/50 px-6 py-4 rounded-3xl border border-slate-100 dark:border-gray-600 min-w-[180px]">
                         <p className="text-slate-400 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest mb-1">Total Earned</p>
                         <p className="text-3xl font-black text-indigo-900 dark:text-indigo-200 flex items-center justify-center md:justify-end gap-2">
-                            {currentUser.gamification?.totalCoinsEarned || 0}
+                            {displayTotalEarned.toLocaleString()}
                             <FaCoins className="text-yellow-500 text-lg" />
                         </p>
                     </div>
@@ -127,65 +220,31 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                             <p className="text-slate-300 dark:text-gray-500 text-sm">Be the first to climb the leaderboard!</p>
                         </div>
                     ) : (
-                        leaderboard.map((user, idx) => (
-                            <div
-                                key={user.rank}
-                                className={`flex items-center justify-between p-5 rounded-2xl transition-all duration-300 border ${getRankStyle(user.rank)} ${user.userId === currentUser?._id ? 'ring-2 ring-indigo-500 ring-offset-4' : ''}`}
-                            >
-                                <div className="flex items-center gap-4 sm:gap-6">
-                                    <div className="w-8 flex justify-center">
-                                        {getRankIcon(user.rank)}
-                                    </div>
-                                    <div className="relative">
-                                        <img
-                                            src={user.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                            className={`w-14 h-14 rounded-2xl object-cover shadow-md bg-slate-100 border-2 ${idx === 0 ? 'border-yellow-400' : 'border-white'}`}
-                                            alt={user.name}
-                                        />
-                                        {idx === 0 && (
-                                            <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-white rounded-lg p-1 shadow-lg">
-                                                <FaCrown size={10} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className={`font-black tracking-tight ${user.userId === currentUser?._id ? 'text-indigo-800 dark:text-indigo-400' : 'text-slate-800 dark:text-white'}`}>
-                                            {user.name} {user.userId === currentUser?._id && <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] px-2 py-0.5 rounded-full ml-1">YOU</span>}
-                                        </p>
-                                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-300 flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/50 px-2 py-0.5 rounded-md uppercase tracking-tighter">
-                                                <FaFire className="text-orange-500" /> {user.streak} Month Streak
-                                            </span>
-                                            {isAdmin && (
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-gray-700 px-2 py-0.5 rounded-md">
-                                                    ID: {user.userId.slice(-6)}
-                                                </span>
-                                            )}
+                        <>
+                            {leaderboard.map((user, idx) => renderLeaderboardRow(user, idx))}
+
+                            {/* Appended current user entry if NOT in top N */}
+                            {currentUserEntry && !isAdmin && (
+                                <>
+                                    {/* Separator */}
+                                    <div className="flex items-center gap-3 py-2">
+                                        <div className="flex-1 border-t-2 border-dashed border-slate-200 dark:border-gray-700"></div>
+                                        <div className="flex items-center gap-2 text-slate-400 dark:text-gray-500">
+                                            <FaEllipsisH className="text-xs" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Your Position</span>
+                                            <FaEllipsisH className="text-xs" />
                                         </div>
+                                        <div className="flex-1 border-t-2 border-dashed border-slate-200 dark:border-gray-700"></div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-6">
-                                    <div className="text-right">
-                                        <p className="font-black text-slate-800 dark:text-white text-xl flex items-center justify-end gap-1.5 tabular-nums">
-                                            {user.totalCoins.toLocaleString()}
-                                            <FaCoins className="text-yellow-500 text-sm" />
-                                        </p>
-                                        <span className="text-[10px] uppercase font-black text-slate-300 tracking-[0.1em]">Total Earned</span>
-                                    </div>
-                                    {isAdmin && (
-                                        <div className="hidden sm:block">
-                                            <Link 
-                                                to={`/admin/setu-coins?search=${encodeURIComponent(user.fullName || user.name)}`}
-                                                className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95 block"
-                                                title="Manage user coins"
-                                            >
-                                                <FaCoins />
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))
+
+                                    {/* Current user's row with special highlight */}
+                                    {renderLeaderboardRow({
+                                        ...currentUserEntry,
+                                        avatar: currentUser?.avatar || currentUserEntry.avatar
+                                    }, leaderboard.length, true)}
+                                </>
+                            )}
+                        </>
                     )}
                 </div>
 
