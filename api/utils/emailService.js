@@ -17468,6 +17468,17 @@ export const sendCoinTransactionNotificationEmail = async (email, username, tran
 
   const historyUrl = `${clientBaseUrl}/user/rewards?tab=history`;
 
+  const mailtoSubject = encodeURIComponent("Join me on UrbanSetu and get 50 SetuCoins! 🎁");
+  const mailtoBody = encodeURIComponent(
+    `Hey!\n\n` +
+    `I've been using UrbanSetu for managing my rentals and payments, and it's been amazing! 🚀\n\n` +
+    `I want to invite you to join the community. If you sign up using my referral link, you'll immediately get a welcome bonus of 50 SetuCoins (which you can redeem for real discounts on monthly rent or home services!):\n\n` +
+    `👉 ${referralUrl}\n\n` +
+    (referralCode ? `🎁 Or use my referral code: ${referralCode}\n\n` : '') +
+    `Let's get rewarded together!\n`
+  );
+  const mailtoUrl = `mailto:?subject=${mailtoSubject}&body=${mailtoBody}`;
+
   const themeColor = isCredit ? '#eab308' : '#6366f1'; // Gold for credit, Indigo for debit
   const headerBg = isCredit 
     ? 'linear-gradient(135deg, #fef08a 0%, #fde047 100%)' 
@@ -17587,7 +17598,7 @@ export const sendCoinTransactionNotificationEmail = async (email, username, tran
                 ${referralUrl}
               </div>
               
-              <a href="${referralUrl}" style="font-size: 13px; font-weight: 700; color: #4f46e5; text-decoration: none; display: inline-block; border-bottom: 1px solid #4f46e5;">
+              <a href="${mailtoUrl}" style="font-size: 13px; font-weight: 700; color: #4f46e5; text-decoration: none; display: inline-block; border-bottom: 1px solid #4f46e5;">
                 Share Referral Link &rarr;
               </a>
             </div>
@@ -17600,7 +17611,7 @@ export const sendCoinTransactionNotificationEmail = async (email, username, tran
               This is an automated transaction notification from your UrbanSetu Loyalty Account.
             </p>
             <p style="margin: 0 0 8px 0; font-size: 12px;">
-              <a href="${clientBaseUrl}/user/rewards" style="color: #64748b; text-decoration: underline;">Loyalty Terms</a>
+              <a href="${clientBaseUrl}/terms" style="color: #64748b; text-decoration: underline;">Loyalty Terms</a>
               &nbsp;·&nbsp;
               <a href="${clientBaseUrl}/privacy" style="color: #64748b; text-decoration: underline;">Privacy Policy</a>
             </p>
