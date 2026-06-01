@@ -1,7 +1,7 @@
 import User from "../models/user.model.js";
 import CoinTransaction from "../models/coinTransaction.model.js";
 import mongoose from "mongoose";
-import { sendLeaderboardBonusEmail, sendBadgeEarnedEmail } from "../utils/emailService.js";
+import { sendLeaderboardBonusEmail, sendBadgeEarnedEmail, sendCoinTransactionNotificationEmail } from "../utils/emailService.js";
 
 /**
  * Service to handle SetuCoins operations
@@ -87,7 +87,7 @@ class CoinService {
                 runValidators: true,
                 setDefaultsOnInsert: true
             }
-        ).select('gamification');
+        ).select('email username gamification');
 
         if (!user) {
             throw new Error('User not found');
@@ -112,6 +112,14 @@ class CoinService {
         });
 
         await transaction.save({ session });
+
+        // Trigger transaction notification email asynchronously
+        sendCoinTransactionNotificationEmail(
+            user.email,
+            user.username || 'UrbanSetu User',
+            transaction,
+            user.gamification?.referralCode
+        ).catch(err => console.error("Error sending coin transaction notification email:", err));
 
         return {
             success: true,
@@ -189,6 +197,14 @@ class CoinService {
         });
 
         await transaction.save({ session });
+
+        // Trigger transaction notification email asynchronously
+        sendCoinTransactionNotificationEmail(
+            user.email,
+            user.username || 'UrbanSetu User',
+            transaction,
+            user.gamification?.referralCode
+        ).catch(err => console.error("Error sending coin transaction notification email:", err));
 
         return {
             success: true,
@@ -675,6 +691,14 @@ class CoinService {
                 balanceAfter: user.gamification.setuCoinsBalance
             });
             await transaction.save({ session });
+
+            // Trigger transaction notification email asynchronously
+            sendCoinTransactionNotificationEmail(
+                user.email,
+                user.username || 'UrbanSetu User',
+                transaction,
+                user.gamification?.referralCode
+            ).catch(err => console.error("Error sending coin transaction notification email:", err));
         }
 
         return {

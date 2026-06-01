@@ -17431,3 +17431,202 @@ export const sendCreatorFeedbackEmail = async (email, username) => {
     return createErrorResponse(error, 'creator_feedback');
   }
 };
+
+// Send Automated SetuCoins Transaction Notification Email
+export const sendCoinTransactionNotificationEmail = async (email, username, transaction, referralCode) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const unsubscribeUrl = getUnsubscribeUrl(email);
+  const isCredit = transaction.type === 'credit';
+
+  // Helper to format source category beautifully
+  const getSourceLabel = (source) => {
+    const sources = {
+      signup_bonus: "Welcome Signup Bonus 🎁",
+      profile_completion: "Profile Completion Reward 👤",
+      rent_payment: "Rent Payment Cash-back 🏠",
+      rent_streak_bonus: "Rent Streak Achievement 🔥",
+      review_reward: "Rental Experience Review ⭐",
+      referral: "Friend Referral Reward 🤝",
+      payment_reward: "Payment Reward 💳",
+      admin_adjustment: "SetuCoins Adjustment 🛠️",
+      redemption_rent_fee: "Rent Discount Redemption 📉",
+      redemption_coupon: "Gift Coupon Redemption 🎫",
+      monthly_leaderboard_reward: "Leaderboard Championship Bonus 🏆",
+      other: "Loyalty Program Reward 🌟"
+    };
+    return sources[source] || "SetuCoins Transaction 🪙";
+  };
+
+  let sourceLabel = getSourceLabel(transaction.source);
+  if (transaction.source === 'other' && transaction.description && transaction.description.toLowerCase().includes('expire')) {
+    sourceLabel = "Coins Expired ❄️";
+  }
+
+  const referralUrl = referralCode
+    ? `${clientBaseUrl}/sign-up?ref=${referralCode}`
+    : `${clientBaseUrl}/sign-up`;
+
+  const historyUrl = `${clientBaseUrl}/user/rewards?tab=history`;
+
+  const themeColor = isCredit ? '#eab308' : '#6366f1'; // Gold for credit, Indigo for debit
+  const headerBg = isCredit 
+    ? 'linear-gradient(135deg, #fef08a 0%, #fde047 100%)' 
+    : 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)';
+  const titleColor = isCredit ? '#854d0e' : '#3730a3';
+  const badgeBg = isCredit ? '#fef9c3' : '#e0e7ff';
+  const amountColor = isCredit ? '#ca8a04' : '#4f46e5';
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: isCredit 
+      ? `✨ +${transaction.amount} SetuCoins Earned! - UrbanSetu Loyalty`
+      : `💎 SetuCoins Account Update: -${transaction.amount} Redeemed - UrbanSetu`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SetuCoins Update</title>
+      </head>
+      <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #e2e8f0;">
+          
+          <!-- Header Banner -->
+          <div style="background: ${headerBg}; padding: 35px 30px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+            <div style="font-size: 55px; margin-bottom: 10px; display: inline-block;">${isCredit ? '✨🪙✨' : '💎💸💎'}</div>
+            <h1 style="color: ${titleColor}; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">
+              ${isCredit ? 'SetuCoins Credited!' : 'SetuCoins Debited!'}
+            </h1>
+            <p style="color: ${isCredit ? '#713f12' : '#312e81'}; margin: 8px 0 0 0; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+              UrbanSetu Loyalty Program
+            </p>
+          </div>
+          
+          <!-- Main Content -->
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; color: #334155; line-height: 1.6; margin: 0 0 20px 0;">
+              Hello <strong>${username}</strong>,
+            </p>
+            <p style="font-size: 15px; color: #475569; line-height: 1.6; margin: 0 0 25px 0;">
+              Your SetuCoins loyalty account has been updated with a new transaction. Below are the full details of this activity.
+            </p>
+            
+            <!-- Transaction Card -->
+            <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 25px; margin-bottom: 30px;">
+              <div style="text-align: center; margin-bottom: 25px;">
+                <div style="display: inline-block; background-color: ${badgeBg}; border-radius: 9999px; padding: 12px 30px; border: 1px solid ${themeColor}20;">
+                  <span style="font-size: 30px; font-weight: 900; color: ${amountColor};">
+                    ${isCredit ? `+${transaction.amount}` : `-${transaction.amount}`}
+                  </span>
+                  <span style="font-size: 15px; font-weight: 700; color: ${isCredit ? '#854d0e' : '#3730a3'}; margin-left: 5px;">SetuCoins</span>
+                </div>
+              </div>
+              
+              <!-- Details Table -->
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #334155;">
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b; width: 35%;">Transaction ID</td>
+                  <td style="padding: 10px 0; font-family: monospace; font-weight: bold; color: #1e293b;">${transaction._id}</td>
+                </tr>
+                <tr style="border-top: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Type</td>
+                  <td style="padding: 10px 0; font-weight: bold; color: ${isCredit ? '#15803d' : '#be123c'};">
+                    ${isCredit ? 'Earned & Deposited' : 'Redeemed & Deducted'}
+                  </td>
+                </tr>
+                <tr style="border-top: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Activity Type</td>
+                  <td style="padding: 10px 0; font-weight: 600; color: #0f172a;">${sourceLabel}</td>
+                </tr>
+                <tr style="border-top: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Description</td>
+                  <td style="padding: 10px 0; line-height: 1.4; color: #334155;">${transaction.description || 'N/A'}</td>
+                </tr>
+                <tr style="border-top: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Date & Time</td>
+                  <td style="padding: 10px 0; color: #334155;">${formatIndiaTime(transaction.createdAt || new Date())}</td>
+                </tr>
+                ${isCredit ? `
+                <tr style="border-top: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Expiry Date</td>
+                  <td style="padding: 10px 0; color: #e11d48; font-weight: 600;">
+                    ${transaction.expiryDate ? formatIndiaTime(transaction.expiryDate) : 'Never Expires'}
+                  </td>
+                </tr>
+                ` : ''}
+              </table>
+            </div>
+            
+            <!-- Live Balance Callout -->
+            <div style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 12px; border: 1px solid #e9d5ff; padding: 20px; text-align: center; margin-bottom: 30px;">
+              <span style="font-size: 14px; color: #6b21a8; font-weight: 600; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Current Available Balance</span>
+              <span style="font-size: 28px; font-weight: 800; color: #581c87; font-family: monospace;">
+                ${transaction.balanceAfter || 0} SetuCoins
+              </span>
+            </div>
+            
+            <!-- CTA Button -->
+            <div style="text-align: center; margin-bottom: 40px;">
+              <a href="${historyUrl}" style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 10px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);">
+                📂 View Rewards History
+              </a>
+            </div>
+            
+            <!-- Referral Block -->
+            <div style="border: 2px dashed #cbd5e1; border-radius: 16px; background-color: #f8fafc; padding: 22px; text-align: center;">
+              <div style="font-size: 24px; margin-bottom: 5px;">🤝🎁</div>
+              <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 16px; font-weight: 700;">Earn More SetuCoins!</h3>
+              <p style="margin: 0 0 15px 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                Invite your friends to <strong>UrbanSetu</strong>! Share your unique referral link below and earn <strong style="color: #ca8a04;">100 SetuCoins</strong> when they sign up and make a payment. Plus, they get <strong style="color: #16a34a;">50 SetuCoins</strong> as a welcome bonus!
+              </p>
+              
+              <!-- Link Display Box -->
+              <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 13px; color: #2563eb; font-weight: bold; overflow-x: auto; white-space: nowrap; margin-bottom: 12px;">
+                ${referralUrl}
+              </div>
+              
+              <a href="${referralUrl}" style="font-size: 13px; font-weight: 700; color: #4f46e5; text-decoration: none; display: inline-block; border-bottom: 1px solid #4f46e5;">
+                Share Referral Link &rarr;
+              </a>
+            </div>
+            
+          </div>
+          
+          <!-- Footer -->
+          <div style="background-color: #f8fafc; padding: 25px 30px; border-top: 1px solid #e2e8f0; text-align: center;">
+            <p style="color: #64748b; font-size: 12px; margin: 0 0 8px 0; line-height: 1.6;">
+              This is an automated transaction notification from your UrbanSetu Loyalty Account.
+            </p>
+            <p style="margin: 0 0 8px 0; font-size: 12px;">
+              <a href="${clientBaseUrl}/user/rewards" style="color: #64748b; text-decoration: underline;">Loyalty Terms</a>
+              &nbsp;·&nbsp;
+              <a href="${clientBaseUrl}/privacy" style="color: #64748b; text-decoration: underline;">Privacy Policy</a>
+            </p>
+            <p style="color: #94a3b8; margin: 0 0 8px 0; font-size: 11px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+            <p style="margin: 0; color: #94a3b8; font-size: 11px;">
+              Don't want to receive these emails? 
+              <a href="${unsubscribeUrl}" style="color: #94a3b8; text-decoration: underline;">Unsubscribe</a> from transaction alerts.
+            </p>
+          </div>
+          
+        </div>
+      </body>
+      </html>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions, 3, 1000, 'essential');
+    return result.success ?
+      createSuccessResponse(result.messageId, 'coin_transaction_notification') :
+      createErrorResponse(new Error(result.error), 'coin_transaction_notification');
+  } catch (error) {
+    console.error('Error sending coin transaction notification email:', error);
+    return createErrorResponse(error, 'coin_transaction_notification');
+  }
+};
+
