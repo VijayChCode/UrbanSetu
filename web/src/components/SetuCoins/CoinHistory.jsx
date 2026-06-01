@@ -75,11 +75,21 @@ const CoinHistory = ({ initialOpen = false, refreshTrigger = 0 }) => {
                                                 <span className={`px-1.5 rounded uppercase text-[10px] tracking-wider font-bold ${theme.adminColor}`}>
                                                     {tx.source.replace(/_/g, ' ')}
                                                 </span>
-                                                {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
-                                                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-850 px-1.5 py-0.5 rounded border border-gray-100 dark:border-gray-800/30">
-                                                        Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
-                                                    </span>
-                                                )}
+                                                 {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (() => {
+                                                     const pId = typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId;
+                                                     return (
+                                                         <button 
+                                                             onClick={(e) => {
+                                                                 e.stopPropagation();
+                                                                 navigate(`/user/my-payments?paymentId=${pId}`);
+                                                             }}
+                                                             className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all cursor-pointer shadow-sm active:scale-95 flex items-center gap-1"
+                                                             title="Click to view payment details"
+                                                         >
+                                                             Tx ID: {pId}
+                                                         </button>
+                                                     );
+                                                 })()}
                                                 {tx.type === 'credit' && tx.expiryDate && (
                                                     <span className="text-orange-600 dark:text-orange-400 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 rounded text-[10px] border border-orange-100 dark:border-orange-800">
                                                         Exp: {new Date(tx.expiryDate).toLocaleDateString()}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaCoins, FaFire, FaUsers, FaChartLine, FaHistory, FaArrowUp, FaArrowDown, FaSearch, FaTrophy, FaUser, FaCheck, FaExclamationTriangle, FaTimes, FaFilter, FaChevronLeft, FaChevronRight, FaRocket, FaStar } from 'react-icons/fa';
 import TransactionThemedIcon, { GET_TRANSACTION_THEME } from '../components/SetuCoins/TransactionThemedIcon';
 import { toast } from 'react-toastify';
@@ -11,6 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminCoinStats() {
     usePageTitle("Admin - SetuCoins Management");
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -389,14 +390,14 @@ export default function AdminCoinStats() {
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow group">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">Circulating Supply</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Circulating Supply</p>
                             <h3 className="text-3xl font-black text-gray-800 dark:text-white mt-1">{stats.circulatingSupply?.toLocaleString()}</h3>
                         </div>
                         <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
                             <FaCoins size={24} />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-xs text-gray-500">
+                    <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <span className="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">Active Assets</span>
                     </div>
                 </div>
@@ -404,14 +405,14 @@ export default function AdminCoinStats() {
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow group">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">Lifetime Earning</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Lifetime Earning</p>
                             <h3 className="text-3xl font-black text-gray-800 dark:text-white mt-1">{stats.totalMintedLifetime?.toLocaleString()}</h3>
                         </div>
                         <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-2xl text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform">
                             <FaArrowUp size={24} />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-xs text-gray-500">
+                    <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <span className="bg-green-50 dark:bg-green-900/40 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-bold">Total Minted</span>
                     </div>
                 </div>
@@ -419,14 +420,14 @@ export default function AdminCoinStats() {
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow group">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">Redeemed Coins</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Redeemed Coins</p>
                             <h3 className="text-3xl font-black text-gray-800 dark:text-white mt-1">{stats.totalBurned?.toLocaleString()}</h3>
                         </div>
                         <div className="p-4 bg-red-50 dark:bg-red-900/30 rounded-2xl text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
                             <FaFire size={24} />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-xs text-gray-500">
+                    <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <span className="bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold">Total Burned</span>
                     </div>
                 </div>
@@ -434,14 +435,14 @@ export default function AdminCoinStats() {
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow group">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-gray-400 dark:text-gray-500 text-xs font-bold uppercase tracking-wider">Coin Holders</p>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Coin Holders</p>
                             <h3 className="text-3xl font-black text-gray-800 dark:text-white mt-1">{stats.holdersCount?.toLocaleString()}</h3>
                         </div>
                         <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
                             <FaUsers size={24} />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-xs text-gray-500">
+                    <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
                         <span className="bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold">Unique Users</span>
                     </div>
                 </div>
@@ -561,11 +562,18 @@ export default function AdminCoinStats() {
                                                                  <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{tx.description}</p>
                                                                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                                                      {tx.adminId && <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-tighter italic">By Administrator</span>}
-                                                                     {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
-                                                                         <span className="text-[10px] font-mono text-slate-400 dark:text-gray-400 bg-slate-50 dark:bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-gray-700/50">
-                                                                             Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
-                                                                         </span>
-                                                                     )}
+                                                                     {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (() => {
+                                                                         const pId = typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId;
+                                                                         return (
+                                                                             <button 
+                                                                                 onClick={() => navigate(`/admin/payments?paymentId=${pId}`)}
+                                                                                 className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all cursor-pointer shadow-sm active:scale-95"
+                                                                                 title="Click to view payment details"
+                                                                             >
+                                                                                 Tx ID: {pId}
+                                                                             </button>
+                                                                         );
+                                                                     })()}
                                                                  </div>
                                                              </div>
                                                          </div>
@@ -575,13 +583,15 @@ export default function AdminCoinStats() {
                                                              {tx.source.replace(/_/g, ' ')}
                                                          </span>
                                                      </td>
-                                                     <td className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 whitespace-nowrap">
-                                                         {new Date(tx.createdAt).toLocaleDateString()} <span className="text-gray-300 dark:text-gray-600 mx-1">/</span> {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                     <td className="px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                                                         {new Date(tx.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                         <br />
+                                                         <span className="text-[10px] text-gray-400 dark:text-gray-400 font-normal">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                      </td>
-                                                     <td className="px-6 py-4 text-xs font-medium text-gray-400 dark:text-gray-300">
+                                                     <td className="px-6 py-4 text-xs font-medium text-gray-550 dark:text-gray-400">
                                                          {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
                                                      </td>
-                                                    <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
+                                                    <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                         {tx.type === 'credit' ? '+' : '-'}{tx.amount}
                                                     </td>
                                                 </tr>
@@ -701,21 +711,28 @@ export default function AdminCoinStats() {
                                                 </div>
                                                 <div className="flex flex-wrap items-center gap-2 mt-0.5 pl-7">
                                                     <span className="text-[10px] text-gray-400 dark:text-gray-450 uppercase tracking-widest">{tx.source?.replace(/_/g, ' ')}</span>
-                                                    {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
-                                                        <span className="text-[9px] font-mono text-slate-400 dark:text-gray-500 bg-slate-50 dark:bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-gray-750">
-                                                            Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
-                                                        </span>
-                                                    )}
+                                                    {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (() => {
+                                                        const pId = typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId;
+                                                        return (
+                                                            <button 
+                                                                onClick={() => navigate(`/admin/payments?paymentId=${pId}`)}
+                                                                className="text-[9px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all cursor-pointer shadow-sm active:scale-95"
+                                                                title="Click to view payment details"
+                                                            >
+                                                                Tx ID: {pId}
+                                                            </button>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300">
-                                                {new Date(tx.createdAt).toLocaleDateString()}
-                                                <span className="text-gray-300 dark:text-gray-600 mx-1">•</span>
-                                                {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {tx.type === 'credit' ? '+' : '-'}{tx.amount}
-                                            </td>
+                                             <td className="px-6 py-4 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                                 {new Date(tx.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                 <br />
+                                                 <span className="text-[10px] text-gray-400 dark:text-gray-400 font-normal">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                             </td>
+                                             <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                 {tx.type === 'credit' ? '+' : '-'}{tx.amount}
+                                             </td>
                                         </tr>
                                     ))
                                 )}

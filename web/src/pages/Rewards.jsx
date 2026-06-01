@@ -506,26 +506,33 @@ export default function Rewards() {
                                                                     <p className="font-bold text-slate-800 dark:text-gray-200 text-sm">{tx.description}</p>
                                                                     <div className="flex flex-wrap items-center gap-2 mt-1">
                                                                         <span className={`text-[10px] font-bold tracking-wide uppercase ${theme.labelColor}`}>{tx.source.replace(/_/g, ' ')}</span>
-                                                                        {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
-                                                                            <span className="text-[10px] font-mono text-slate-400 dark:text-gray-500 bg-slate-50 dark:bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-gray-700/50">
-                                                                                Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
-                                                                            </span>
-                                                                        )}
+                                                                        {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (() => {
+                                                                            const pId = typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId;
+                                                                            return (
+                                                                                <button 
+                                                                                    onClick={() => navigate(`/user/my-payments?paymentId=${pId}`)}
+                                                                                    className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all cursor-pointer shadow-sm active:scale-95"
+                                                                                    title="Click to view payment details"
+                                                                                >
+                                                                                    Tx ID: {pId}
+                                                                                </button>
+                                                                            );
+                                                                        })()}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
+                                                            <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 dark:text-green-400">
                                                                 <FaCheckCircle className="text-[10px]" /> Completed
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                        <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-gray-300">
                                                             {new Date(tx.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                                                             <br />
-                                                            <span className="text-[10px] opacity-60 font-normal">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                            <span className="text-[10px] text-slate-400 dark:text-gray-400 font-normal">{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-xs font-medium text-slate-400 dark:text-gray-500">
+                                                        <td className="px-6 py-4 text-xs font-medium text-slate-500 dark:text-gray-400">
                                                             {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
                                                         </td>
                                                         <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
