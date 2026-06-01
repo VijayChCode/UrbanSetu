@@ -11647,6 +11647,24 @@ export const sendRentPaymentReceivedEmail = async (email, paymentDetails) => {
                 Your rent payment has been received and is being held in escrow for 3 days. It will be automatically released to your landlord after this period. A receipt is attached to this email.
               </p>
             </div>
+
+            <!-- Rate Experience Section -->
+            <div style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); padding: 25px; border-radius: 12px; border: 1px solid #ddd6fe; margin-top: 25px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.05);">
+              <h3 style="color: #6d28d9; margin: 0 0 10px 0; font-size: 18px; font-weight: bold; font-family: Arial, sans-serif;">How was your renting experience?</h3>
+              <p style="color: #5b21b6; margin: 0 0 20px 0; font-size: 14px; line-height: 1.5; font-family: Arial, sans-serif;">
+                Your feedback helps build trust in the community. Please take a moment to rate the landlord and the property.
+              </p>
+              <div style="margin-bottom: 20px;">
+                <a href="${clientUrl}/user/rental-ratings?contractId=${contractId}&role=tenant" style="text-decoration: none; font-size: 30px; margin: 0 5px; color: #fbbf24;">★</a>
+                <a href="${clientUrl}/user/rental-ratings?contractId=${contractId}&role=tenant" style="text-decoration: none; font-size: 30px; margin: 0 5px; color: #fbbf24;">★</a>
+                <a href="${clientUrl}/user/rental-ratings?contractId=${contractId}&role=tenant" style="text-decoration: none; font-size: 30px; margin: 0 5px; color: #fbbf24;">★</a>
+                <a href="${clientUrl}/user/rental-ratings?contractId=${contractId}&role=tenant" style="text-decoration: none; font-size: 30px; margin: 0 5px; color: #fbbf24;">★</a>
+                <a href="${clientUrl}/user/rental-ratings?contractId=${contractId}&role=tenant" style="text-decoration: none; font-size: 30px; margin: 0 5px; color: #fbbf24;">★</a>
+              </div>
+              <a href="${clientUrl}/user/rental-ratings?contractId=${contractId}&role=tenant" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.2); font-family: Arial, sans-serif;">
+                ⭐ Rate Experience
+              </a>
+            </div>
             
             <div style="text-align: center; margin-top: 30px;">
               ${walletUrl ? `<a href="${walletUrl}" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; margin: 5px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">View Rent Wallet</a>` : ''}

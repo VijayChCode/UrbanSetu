@@ -33,8 +33,8 @@ export const generateReceiptPdf = (payment) => {
                 .fontSize(25)
                 .text('PAYMENT RECEIPT', 50, 160, { width: 495, align: 'center' });
 
-            // --- Payment Details Box ---
-            doc.rect(50, 200, 495, 280).stroke('#cccccc');
+            // --- Payment Details Box Start ---
+            const boxStartY = 200;
 
             const leftX = 70;
             const rightX = 300;
@@ -67,20 +67,22 @@ export const generateReceiptPdf = (payment) => {
             addRow('Property:', propertyName);
 
             // Purpose (Added)
-            if (payment.paymentType === 'emi' || payment.emiDetails) {
+            if (payment.paymentType === 'emi') {
                 addRow('Purpose:', 'Loan EMI Installment');
-            } else if (payment.rentMonth && payment.rentYear) {
+            } else if (payment.paymentType === 'monthly_rent' || (payment.rentMonth && payment.rentYear)) {
                 addRow('Purpose:', 'Monthly Rent');
             }
 
             // Rent/EMI Period
-            if (payment.emiDetails?.month && payment.emiDetails?.year) {
-                addRow('EMI Period:', `${payment.emiDetails.month}/${payment.emiDetails.year}`);
-            } else if (payment.metadata?.get && payment.metadata.get('month') && payment.metadata.get('year')) {
-                addRow('EMI Period:', `${payment.metadata.get('month')}/${payment.metadata.get('year')}`);
-            } else if (payment.metadata?.month && payment.metadata?.year) {
-                addRow('EMI Period:', `${payment.metadata.month}/${payment.metadata.year}`);
-            } else if (payment.rentMonth && payment.rentYear) {
+            if (payment.paymentType === 'emi') {
+                if (payment.emiDetails?.month && payment.emiDetails?.year) {
+                    addRow('EMI Period:', `${payment.emiDetails.month}/${payment.emiDetails.year}`);
+                } else if (payment.metadata?.get && payment.metadata.get('month') && payment.metadata.get('year')) {
+                    addRow('EMI Period:', `${payment.metadata.get('month')}/${payment.metadata.get('year')}`);
+                } else if (payment.metadata?.month && payment.metadata?.year) {
+                    addRow('EMI Period:', `${payment.metadata.month}/${payment.metadata.year}`);
+                }
+            } else if (payment.paymentType === 'monthly_rent' || (payment.rentMonth && payment.rentYear)) {
                 addRow('Rent Period:', `${payment.rentMonth}/${payment.rentYear}`);
             }
 
@@ -105,14 +107,55 @@ export const generateReceiptPdf = (payment) => {
                 if (discount > 0) addRow('SetuCoins Discount:', `- INR ${discount.toLocaleString('en-IN')}`);
             }
 
+            // --- Payment Breakdown (for Monthly Rent) ---
+            if (payment.paymentType === 'monthly_rent') {
+                y += 5;
+                const coinDiscount = payment.metadata?.get 
+                    ? (payment.metadata.get('coinDiscount') || 0)
+                    : (payment.metadata?.coinDiscount || 0);
+
+                const baseRent = payment.contractId?.lockedRentAmount || 0;
+                const maintenance = payment.contractId?.maintenanceCharges || 0;
+                const lateFee = payment.penaltyAmount || 0;
+
+                if (baseRent > 0) {
+                    addRow('Monthly Rent:', `INR ${baseRent.toLocaleString('en-IN')}`);
+                }
+                if (lateFee > 0) {
+                    addRow('Late Fee / Penalty:', `INR ${lateFee.toLocaleString('en-IN')}`);
+                }
+                if (maintenance > 0) {
+                    addRow('Maintenance Charges:', `INR ${maintenance.toLocaleString('en-IN')}`);
+                }
+                if (coinDiscount > 0) {
+                    addRow('SetuCoins Discount:', `- INR ${coinDiscount.toLocaleString('en-IN')}`);
+                }
+
+                if (payment.contractId?.securityDeposit > 0) {
+                    // Add upfront security deposit note
+                    y += 5;
+                    doc.fontSize(9)
+                       .fillColor('#666666')
+                       .font('Helvetica-Oblique')
+                       .text(`Note: Security deposit of INR ${payment.contractId.securityDeposit.toLocaleString('en-IN')} was paid upfront`, leftX, y)
+                       .font('Helvetica');
+                    y += 15;
+                }
+            }
+
+            // Draw dynamic border box
+            const boxHeight = y - boxStartY + 10;
+            doc.rect(50, boxStartY, 495, boxHeight).stroke('#cccccc');
+
             // --- Amount Section ---
+            const currencyStr = payment.currency || 'INR';
             doc.rect(50, y + 20, 495, 50).fillAndStroke('#f0f9ff', '#cccccc');
             doc.fillColor('#000000')
                 .fontSize(14)
                 .text('Total Amount Paid', 70, y + 37)
                 .fontSize(16)
                 .font('Helvetica-Bold')
-                .text(`INR ${payment.amount?.toLocaleString('en-IN') || '0.00'}`, 300, y + 36, { align: 'right', width: 220 });
+                .text(`${currencyStr} ${payment.amount?.toLocaleString('en-IN') || '0.00'}`, 300, y + 36, { align: 'right', width: 220 });
 
             // --- Footer ---
             doc.fontSize(10)
