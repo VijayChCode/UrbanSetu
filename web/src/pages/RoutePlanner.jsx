@@ -331,13 +331,14 @@ export default function RoutePlanner() {
           closeButton: false,
           closeOnClick: false
         })
+          .setLngLat(stop.coordinates)
           .setHTML(`
             <div class="p-2.5 max-w-[220px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded shadow-lg">
               <span class="inline-block px-1.5 py-0.5 mb-1.5 text-[9px] font-bold text-white bg-blue-600 dark:bg-blue-500 rounded">
                 Stop ${index + 1}
               </span>
               <p class="text-xs font-semibold leading-snug line-clamp-2">${stop.address}</p>
-              <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-mono">${stop.coordinates[1].toFixed(5)}, ${stop.coordinates[0].toFixed(5)}</p>
+              <p class="text-[9px] text-gray-400 dark:text-blue-200 mt-1 font-mono">${stop.coordinates[1].toFixed(5)}, ${stop.coordinates[0].toFixed(5)}</p>
             </div>
           `);
 
@@ -1167,14 +1168,19 @@ export default function RoutePlanner() {
         el.className = 'user-location-pulse';
 
         // Add popup with address, coordinates, and action buttons
-        const popup = new mapboxgl.Popup({ offset: 15 })
+        const popup = new mapboxgl.Popup({ 
+          offset: 15,
+          closeButton: false,
+          closeOnClick: false
+        })
+          .setLngLat(coordinates)
           .setHTML(`
             <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg">
               <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
                 📍 Live Location
               </span>
               <h3 id="popup-address" class="font-bold text-xs truncate max-w-[220px]" title="${address}">${address}</h3>
-              <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-mono">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
+              <p class="text-[9px] text-gray-400 dark:text-blue-200 mt-1 font-mono">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
               
               <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
                 <button id="btn-set-start" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
@@ -1187,8 +1193,47 @@ export default function RoutePlanner() {
             </div>
           `);
 
+        // Dynamic Hover Trigger with Smooth Delay for Actions
+        let closeTimeout = null;
+        el.style.cursor = 'pointer';
+
+        el.addEventListener('mouseenter', () => {
+          if (closeTimeout) clearTimeout(closeTimeout);
+          popup.addTo(map);
+        });
+
+        el.addEventListener('mouseleave', () => {
+          closeTimeout = setTimeout(() => {
+            popup.remove();
+          }, 300);
+        });
+
+        // Click to keep open or toggle popup
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (closeTimeout) clearTimeout(closeTimeout);
+          if (popup.isOpen()) {
+            popup.remove();
+          } else {
+            popup.addTo(map);
+          }
+        });
+
         // Attach action event listeners to popup contents when it opens
         popup.on('open', () => {
+          // Keep popup open when hovering over the popup container itself
+          const popupEl = popup.getElement();
+          if (popupEl) {
+            popupEl.addEventListener('mouseenter', () => {
+              if (closeTimeout) clearTimeout(closeTimeout);
+            });
+            popupEl.addEventListener('mouseleave', () => {
+              closeTimeout = setTimeout(() => {
+                popup.remove();
+              }, 300);
+            });
+          }
+
           const btnSetStart = document.getElementById('btn-set-start');
           const btnAddStop = document.getElementById('btn-add-stop');
           
@@ -1333,6 +1378,53 @@ export default function RoutePlanner() {
         @media print {
           header, nav, .main-header, .navbar { display: none !important; }
           body { -webkit-print-color-adjust: exact; }
+        }
+        /* Dynamic Mapbox Popup Styling for Dark & Light Mode */
+        .mapboxgl-popup-content {
+          background: #ffffff !important;
+          color: #1f2937 !important;
+          border-radius: 12px !important;
+          padding: 0 !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+          border: 1px solid rgba(229, 231, 235, 0.5) !important;
+        }
+        .mapboxgl-popup-tip {
+          border-top-color: #ffffff !important;
+          border-bottom-color: #ffffff !important;
+        }
+        
+        /* Dark Theme overrides for Mapbox popups */
+        .dark .mapboxgl-popup-content {
+          background: #1f2937 !important; /* bg-gray-800 */
+          color: #f9fafb !important;
+          border: 1px solid rgba(75, 85, 99, 0.4) !important;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        /* Arrow tip pointing directions for dark mode */
+        .dark .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+          border-bottom-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+          border-top-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+          border-right-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+          border-left-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip {
+          border-bottom-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+          border-bottom-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip {
+          border-top-color: #1f2937 !important;
+        }
+        .dark .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+          border-top-color: #1f2937 !important;
         }
         .user-location-pulse {
           width: 18px;
