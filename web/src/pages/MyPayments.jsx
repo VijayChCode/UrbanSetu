@@ -734,7 +734,7 @@ const MyPayments = () => {
           {/* Pagination */}
           {allPayments.length > 10 && totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-2">
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-gray-700 dark:text-gray-300">
                 Page {currentPage} of {totalPages}
               </div>
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
