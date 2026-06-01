@@ -150,6 +150,183 @@ export default function RoutePlanner() {
     };
   }, []);
 
+  // Helper to check if a location is already in stops list
+  const isLocationAlreadyInStops = (coords) => {
+    if (!coords) return false;
+    return stopsRef.current.some(stop => {
+      if (!stop.coordinates) return false;
+      const latDiff = Math.abs(stop.coordinates[1] - coords[1]);
+      const lngDiff = Math.abs(stop.coordinates[0] - coords[0]);
+      return latDiff < 0.0001 && lngDiff < 0.0001; // extremely close coordinates
+    });
+  };
+
+  // Unified helper to place pulsing user location marker with geocoded details popup
+  const placeUserLocationMarker = async (coordinates, mapObj = null) => {
+    const activeMap = mapObj || map;
+    if (!activeMap) return;
+
+    const [longitude, latitude] = coordinates;
+    const loadingToast = toast.loading('Resolving live location details...');
+
+    try {
+      // Get reverse geocoded address for current location
+      let address = 'Current Location';
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,poi`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            address = data.features[0].place_name;
+          }
+        }
+      } catch (geocodingError) {
+        console.warn('Reverse geocoding failed:', geocodingError);
+      }
+
+      // Center map on user location
+      activeMap.flyTo({
+        center: coordinates,
+        zoom: 14,
+        pitch: 45,
+        essential: true
+      });
+
+      // Remove existing current location marker if any
+      if (currentLocationMarkerRef.current) {
+        currentLocationMarkerRef.current.remove();
+      }
+
+      // Create a custom pulsing element
+      const el = document.createElement('div');
+      el.className = 'user-location-pulse';
+
+      // Check if start stop (index 0) has coordinates already set
+      const currentStops = stopsRef.current;
+      const isStartSet = currentStops.length > 0 && currentStops[0].coordinates !== null;
+      const isAlreadyAdded = isLocationAlreadyInStops(coordinates);
+      const isLimitReached = currentStops.length >= 10;
+
+      // Build popup HTML conditionally based on stops state
+      let actionButtonsHtml = '';
+      if (isAlreadyAdded) {
+        actionButtonsHtml = `
+          <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
+            <span class="inline-block px-2.5 py-1 text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded-md border border-green-100 dark:border-green-800">
+              ✓ Added to stops
+            </span>
+          </div>
+        `;
+      } else if (isLimitReached) {
+        actionButtonsHtml = `
+          <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
+            <span class="inline-block px-2.5 py-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-md border border-amber-100 dark:border-amber-800">
+              ⚠️ Stops limit reached (10)
+            </span>
+          </div>
+        `;
+      } else {
+        actionButtonsHtml = `
+          <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+            ${!isStartSet ? `
+              <button id="btn-set-start" data-address="${address}" data-coordinates="${JSON.stringify(coordinates)}" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
+                Set as Start
+              </button>
+            ` : ''}
+            <button id="btn-add-stop" data-address="${address}" data-coordinates="${JSON.stringify(coordinates)}" class="flex-1 py-1 px-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded transition-colors">
+              Add Stop
+            </button>
+          </div>
+        `;
+      }
+
+      // Add popup with address, coordinates, and action buttons
+      const popup = new mapboxgl.Popup({ 
+        offset: 15,
+        closeButton: false,
+        closeOnClick: false
+      })
+        .setLngLat(coordinates)
+        .setHTML(`
+          <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+            <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
+              📍 Live Location
+            </span>
+            <h3 id="popup-address" class="font-bold text-xs truncate max-w-[220px]" title="${address}">${address}</h3>
+            <p class="text-[9px] text-gray-400 dark:text-blue-200 mt-1 font-mono">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
+            ${actionButtonsHtml}
+          </div>
+        `);
+
+      // Dynamic Hover Trigger with Smooth Delay for Actions
+      let closeTimeout = null;
+      el.style.cursor = 'pointer';
+
+      el.addEventListener('mouseenter', () => {
+        if (closeTimeout) clearTimeout(closeTimeout);
+        
+        popup.once('open', () => {
+          // Keep popup open when hovering over the popup container itself
+          const popupEl = popup.getElement();
+          if (popupEl) {
+            popupEl.addEventListener('mouseenter', () => {
+              if (closeTimeout) clearTimeout(closeTimeout);
+            });
+            popupEl.addEventListener('mouseleave', () => {
+              closeTimeout = setTimeout(() => {
+                popup.remove();
+              }, 300);
+            });
+          }
+        });
+
+        popup.addTo(activeMap);
+      });
+
+      el.addEventListener('mouseleave', () => {
+        closeTimeout = setTimeout(() => {
+          popup.remove();
+        }, 300);
+      });
+
+      // Click to keep open or toggle popup
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (closeTimeout) clearTimeout(closeTimeout);
+        if (popup.isOpen()) {
+          popup.remove();
+        } else {
+          popup.addTo(activeMap);
+        }
+      });
+
+      // Create new marker
+      const newMarker = new mapboxgl.Marker(el)
+        .setLngLat(coordinates)
+        .setPopup(popup)
+        .addTo(activeMap);
+
+      currentLocationMarkerRef.current = newMarker;
+
+      toast.update(loadingToast, {
+        render: 'Found your location!',
+        type: 'success',
+        isLoading: false,
+        autoClose: 2000
+      });
+    } catch (error) {
+      console.error('Error placing user location marker:', error);
+      toast.update(loadingToast, {
+        render: 'Failed to resolve location details.',
+        type: 'error',
+        isLoading: false,
+        autoClose: 3000
+      });
+    }
+  };
+
   // Close suggestions when clicking outside stop input containers
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -258,7 +435,7 @@ export default function RoutePlanner() {
         geolocate.on('geolocate', (e) => {
           const coordinates = [e.coords.longitude, e.coords.latitude];
           setCurrentLocation(coordinates);
-          placeUserLocationMarker(coordinates);
+          placeUserLocationMarker(coordinates, mapInstance);
         });
 
         mapInstance.addControl(geolocate, 'top-right');
@@ -1333,181 +1510,7 @@ export default function RoutePlanner() {
     }
   };
 
-  // Helper to check if a location is already in stops list
-  const isLocationAlreadyInStops = (coords) => {
-    if (!coords) return false;
-    return stopsRef.current.some(stop => {
-      if (!stop.coordinates) return false;
-      const latDiff = Math.abs(stop.coordinates[1] - coords[1]);
-      const lngDiff = Math.abs(stop.coordinates[0] - coords[0]);
-      return latDiff < 0.0001 && lngDiff < 0.0001; // extremely close coordinates
-    });
-  };
 
-  // Unified helper to place pulsing user location marker with geocoded details popup
-  const placeUserLocationMarker = async (coordinates) => {
-    if (!map) return;
-
-    const [longitude, latitude] = coordinates;
-    const loadingToast = toast.loading('Resolving live location details...');
-
-    try {
-      // Get reverse geocoded address for current location
-      let address = 'Current Location';
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,poi`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.features && data.features.length > 0) {
-            address = data.features[0].place_name;
-          }
-        }
-      } catch (geocodingError) {
-        console.warn('Reverse geocoding failed:', geocodingError);
-      }
-
-      // Center map on user location
-      map.flyTo({
-        center: coordinates,
-        zoom: 14,
-        pitch: 45,
-        essential: true
-      });
-
-      // Remove existing current location marker if any
-      if (currentLocationMarkerRef.current) {
-        currentLocationMarkerRef.current.remove();
-      }
-
-      // Create a custom pulsing element
-      const el = document.createElement('div');
-      el.className = 'user-location-pulse';
-
-      // Check if start stop (index 0) has coordinates already set
-      const currentStops = stopsRef.current;
-      const isStartSet = currentStops.length > 0 && currentStops[0].coordinates !== null;
-      const isAlreadyAdded = isLocationAlreadyInStops(coordinates);
-      const isLimitReached = currentStops.length >= 10;
-
-      // Build popup HTML conditionally based on stops state
-      let actionButtonsHtml = '';
-      if (isAlreadyAdded) {
-        actionButtonsHtml = `
-          <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
-            <span class="inline-block px-2.5 py-1 text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded-md border border-green-100 dark:border-green-800">
-              ✓ Added to stops
-            </span>
-          </div>
-        `;
-      } else if (isLimitReached) {
-        actionButtonsHtml = `
-          <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 text-center">
-            <span class="inline-block px-2.5 py-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-md border border-amber-100 dark:border-amber-800">
-              ⚠️ Stops limit reached (10)
-            </span>
-          </div>
-        `;
-      } else {
-        actionButtonsHtml = `
-          <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
-            ${!isStartSet ? `
-              <button id="btn-set-start" data-address="${address}" data-coordinates="${JSON.stringify(coordinates)}" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
-                Set as Start
-              </button>
-            ` : ''}
-            <button id="btn-add-stop" data-address="${address}" data-coordinates="${JSON.stringify(coordinates)}" class="flex-1 py-1 px-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded transition-colors">
-              Add Stop
-            </button>
-          </div>
-        `;
-      }
-
-      // Add popup with address, coordinates, and action buttons
-      const popup = new mapboxgl.Popup({ 
-        offset: 15,
-        closeButton: false,
-        closeOnClick: false
-      })
-        .setLngLat(coordinates)
-        .setHTML(`
-          <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-            <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
-              📍 Live Location
-            </span>
-            <h3 id="popup-address" class="font-bold text-xs truncate max-w-[220px]" title="${address}">${address}</h3>
-            <p class="text-[9px] text-gray-400 dark:text-blue-200 mt-1 font-mono">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
-            ${actionButtonsHtml}
-          </div>
-        `);
-
-      // Dynamic Hover Trigger with Smooth Delay for Actions
-      let closeTimeout = null;
-      el.style.cursor = 'pointer';
-
-      el.addEventListener('mouseenter', () => {
-        if (closeTimeout) clearTimeout(closeTimeout);
-        
-        popup.once('open', () => {
-          // Keep popup open when hovering over the popup container itself
-          const popupEl = popup.getElement();
-          if (popupEl) {
-            popupEl.addEventListener('mouseenter', () => {
-              if (closeTimeout) clearTimeout(closeTimeout);
-            });
-            popupEl.addEventListener('mouseleave', () => {
-              closeTimeout = setTimeout(() => {
-                popup.remove();
-              }, 300);
-            });
-          }
-        });
-
-        popup.addTo(map);
-      });
-
-      el.addEventListener('mouseleave', () => {
-        closeTimeout = setTimeout(() => {
-          popup.remove();
-        }, 300);
-      });
-
-      // Click to keep open or toggle popup
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (closeTimeout) clearTimeout(closeTimeout);
-        if (popup.isOpen()) {
-          popup.remove();
-        } else {
-          popup.addTo(map);
-        }
-      });
-
-      // Create new marker
-      const newMarker = new mapboxgl.Marker(el)
-        .setLngLat(coordinates)
-        .setPopup(popup)
-        .addTo(map);
-
-      currentLocationMarkerRef.current = newMarker;
-
-      toast.update(loadingToast, {
-        render: 'Found your location!',
-        type: 'success',
-        isLoading: false,
-        autoClose: 2000
-      });
-    } catch (error) {
-      console.error('Error placing user location marker:', error);
-      toast.update(loadingToast, {
-        render: 'Failed to resolve location details.',
-        type: 'error',
-        isLoading: false,
-        autoClose: 3000
-      });
-    }
-  };
 
   // Show user's current location on the map
   const showUserLocationOnMap = async () => {
