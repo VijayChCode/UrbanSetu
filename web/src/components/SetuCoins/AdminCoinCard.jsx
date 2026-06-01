@@ -72,7 +72,7 @@ const AdminCoinCard = ({ loading: parentLoading }) => {
             <FaChartLine className="absolute -bottom-6 -right-6 text-9xl text-white/5 rotate-12" />
 
             <div className="relative p-6 text-white">
-                <div className="flex justify-between items-start mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/10 rounded-lg backdrop-blur-md border border-white/20">
@@ -88,17 +88,17 @@ const AdminCoinCard = ({ loading: parentLoading }) => {
                     </div>
 
                     {/* Leaderboard Management & Holders Badge */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                         <Link
                             to="/admin/leaderboard"
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg transition-all"
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg transition-all"
                             title="Global Leaderboard Management"
                         >
                             <FaTrophy className="text-yellow-400 text-sm" />
                             <span className="text-xs font-black text-white uppercase tracking-wider">Leaderboard</span>
                         </Link>
 
-                        <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg" title="Total Active Holders">
+                        <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 shadow-lg" title="Total Active Holders">
                             <FaUsers className="text-indigo-300" />
                             <span className="font-black text-sm tabular-nums">{holdersCount.toLocaleString()} <span className="text-[10px] text-indigo-300 uppercase ml-0.5">Holders</span></span>
                         </div>
