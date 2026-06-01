@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { FaRoute, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaCar, FaWalking, FaBicycle, FaBus, FaCog, FaDownload, FaShare, FaBookmark, FaHistory, FaFilter, FaSearch, FaLocationArrow, FaDirections, FaInfoCircle, FaTrafficLight, FaLayerGroup, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp, FaExpand, FaCompress, FaPrint, FaCrosshairs } from 'react-icons/fa';
+import { FaRoute, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaCar, FaWalking, FaBicycle, FaBus, FaCog, FaDownload, FaShare, FaBookmark, FaHistory, FaFilter, FaSearch, FaLocationArrow, FaDirections, FaInfoCircle, FaTrafficLight, FaLayerGroup, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp, FaExpand, FaCompress, FaPrint, FaCrosshairs, FaGripVertical } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
@@ -28,7 +28,7 @@ export default function RoutePlanner() {
   const { currentUser } = useSelector((state) => state.user);
 
   // State management
-  const [stops, setStops] = useState([{ address: '', coordinates: null }]);
+  const [stops, setStops] = useState([{ id: 'start-stop', address: '', coordinates: null }]);
   const [optimizing, setOptimizing] = useState(false);
   const [plan, setPlan] = useState([]);
   const [routeData, setRouteData] = useState(null);
@@ -420,13 +420,51 @@ export default function RoutePlanner() {
       toast.warning('Maximum of 10 stops allowed.');
       return;
     }
-    setStops(s => [...s, { address: '', coordinates: null }]);
+    setStops(s => [...s, { id: Math.random().toString(36).substring(7), address: '', coordinates: null }]);
   };
   const removeStop = (i) => setStops(s => s.filter((_, idx) => idx !== i));
   const updateStop = (i, value, coordinates = null) => {
     setStops(s => s.map((st, idx) =>
-      idx === i ? { address: value, coordinates } : st
+      idx === i ? { ...st, address: value, coordinates } : st
     ));
+  };
+
+  // Drag & Drop Stop Reordering Handlers
+  const [draggedIdx, setDraggedIdx] = useState(null);
+
+  const handleDragStart = (e, index) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Smooth drag visual opacity
+    e.currentTarget.style.opacity = '0.4';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnd = (e) => {
+    e.currentTarget.style.opacity = '1';
+    setDraggedIdx(null);
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === targetIndex) return;
+
+    const updated = [...stops];
+    const [draggedItem] = updated.splice(draggedIdx, 1);
+    updated.splice(targetIndex, 0, draggedItem);
+    
+    setStops(updated);
+
+    // Auto-recalculate route if route is already planned
+    if (routeData) {
+      setTimeout(() => {
+        optimize(updated);
+      }, 50);
+    }
   };
 
   // Initialize Mapbox
@@ -881,8 +919,9 @@ export default function RoutePlanner() {
   };
 
   // Enhanced route planning with alternatives
-  const optimize = async () => {
-    const validStops = stops.filter(s => s.address.trim() && s.coordinates);
+  const optimize = async (customStops = null) => {
+    const activeStops = customStops || stops;
+    const validStops = activeStops.filter(s => s.address.trim() && s.coordinates);
     if (validStops.length < 2) {
       toast.error('Please add at least 2 valid addresses with coordinates');
       return;
@@ -1439,7 +1478,7 @@ export default function RoutePlanner() {
       toast.warning('Maximum of 10 stops allowed.');
       return;
     }
-    setStops(s => [...s, { address: '', coordinates: null }]);
+    setStops(s => [...s, { id: Math.random().toString(36).substring(7), address: '', coordinates: null }]);
     setFocusNewStopIndex(stopsRef.current.length);
   };
 
@@ -1963,20 +2002,28 @@ export default function RoutePlanner() {
                   <AnimatePresence>
                     {stops.map((s, i) => (
                       <motion.div
-                        key={i}
+                        key={s.id || `stop-${i}`}
                         layout
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative"
+                        className={`relative group ${draggedIdx === i ? 'opacity-40 scale-95 border-dashed border-blue-400 bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
                         style={{ zIndex: 100 - i }}
+                        draggable="true"
+                        onDragStart={(e) => handleDragStart(e, i)}
+                        onDragOver={(e) => handleDragOver(e, i)}
+                        onDragEnd={handleDragEnd}
+                        onDrop={(e) => handleDrop(e, i)}
                       >
-                        <div className="flex gap-2 items-start">
-                          {/* Marker Number */}
-                          <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm mt-1 z-10 ring-2 ring-white
-                          ${i === 0 ? 'bg-green-500' : i === stops.length - 1 ? 'bg-red-500' : 'bg-blue-500'}
-                        `}>
-                            {i + 1}
+                        <div className="flex gap-2 items-start w-full">
+                          {/* Grab Handle & Marker Number */}
+                          <div className="flex items-center gap-1 mt-1 flex-shrink-0">
+                            <FaGripVertical className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing text-xs transition-colors" />
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm z-10 ring-2 ring-white
+                              ${i === 0 ? 'bg-green-500' : i === stops.length - 1 ? 'bg-red-500' : 'bg-blue-500'}
+                            `}>
+                              {i + 1}
+                            </div>
                           </div>
 
                           {/* Input Area */}
