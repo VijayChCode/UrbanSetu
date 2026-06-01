@@ -94,11 +94,21 @@ export default function RoutePlanner() {
   const routeSourcesRef = useRef([]);
   const currentLocationMarkerRef = useRef(null);
   const stopsRef = useRef(stops);
+  const stopInputRefs = useRef([]);
+  const [focusNewStopIndex, setFocusNewStopIndex] = useState(null);
 
   // Sync stops with ref to prevent stale closures in map click event handlers
   useEffect(() => {
     stopsRef.current = stops;
   }, [stops]);
+
+  // Auto-focus new stop inputs on addition
+  useEffect(() => {
+    if (focusNewStopIndex !== null && stopInputRefs.current[focusNewStopIndex]) {
+      stopInputRefs.current[focusNewStopIndex].focus();
+      setFocusNewStopIndex(null);
+    }
+  }, [stops, focusNewStopIndex]);
 
   // Global event delegation for geocoding popup actions to avoid event duplication
   useEffect(() => {
@@ -137,6 +147,22 @@ export default function RoutePlanner() {
     document.addEventListener('click', handleGlobalClick, true);
     return () => {
       document.removeEventListener('click', handleGlobalClick, true);
+    };
+  }, []);
+
+  // Close suggestions when clicking outside stop input containers
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      const isInside = e.target.closest('[data-stop-input-container="true"]');
+      if (!isInside) {
+        setPredictions(prev => prev.map(() => []));
+        setActiveSuggestionIdx({ stopIndex: null, suggestionIndex: -1 });
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
     };
   }, []);
 
@@ -1149,26 +1175,48 @@ export default function RoutePlanner() {
     setActiveSuggestionIdx({ stopIndex: null, suggestionIndex: -1 });
   };
 
+  const addNewStopAndFocus = () => {
+    if (stopsRef.current.length >= 10) {
+      toast.warning('Maximum of 10 stops allowed.');
+      return;
+    }
+    setStops(s => [...s, { address: '', coordinates: null }]);
+    setFocusNewStopIndex(stopsRef.current.length);
+  };
+
   const handleKeyDown = (i, e) => {
     const preds = predictions[i] || [];
-    if (preds.length === 0) return;
 
     if (e.key === 'ArrowDown') {
+      if (preds.length === 0) return;
       e.preventDefault();
       setActiveSuggestionIdx(prev => {
         const nextIdx = prev.stopIndex === i ? Math.min(prev.suggestionIndex + 1, preds.length - 1) : 0;
         return { stopIndex: i, suggestionIndex: nextIdx };
       });
     } else if (e.key === 'ArrowUp') {
+      if (preds.length === 0) return;
       e.preventDefault();
       setActiveSuggestionIdx(prev => {
         const nextIdx = prev.stopIndex === i ? Math.max(prev.suggestionIndex - 1, -1) : -1;
         return { stopIndex: i, suggestionIndex: nextIdx };
       });
     } else if (e.key === 'Enter') {
-      if (activeSuggestionIdx.stopIndex === i && activeSuggestionIdx.suggestionIndex >= 0) {
+      const currentStop = stops[i];
+      if (currentStop && currentStop.address.trim()) {
         e.preventDefault();
-        pickPrediction(i, preds[activeSuggestionIdx.suggestionIndex]);
+
+        // If suggestions are open and an item is highlighted, pick it.
+        // If suggestions are open but nothing is highlighted, pick the first prediction.
+        if (activeSuggestionIdx.stopIndex === i && preds.length > 0) {
+          const highlightIdx = activeSuggestionIdx.suggestionIndex >= 0 ? activeSuggestionIdx.suggestionIndex : 0;
+          pickPrediction(i, preds[highlightIdx]);
+        }
+        
+        // Open the next stop and focus it
+        setTimeout(() => {
+          addNewStopAndFocus();
+        }, 100);
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -1848,8 +1896,9 @@ export default function RoutePlanner() {
 
                           {/* Input Area */}
                           <div className="flex-1 bg-white dark:bg-gray-700 p-2 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all flex gap-2">
-                            <div className="flex-1 relative">
+                            <div className="flex-1 relative" data-stop-input-container="true">
                               <input
+                                ref={el => stopInputRefs.current[i] = el}
                                 value={s.address}
                                 onChange={e => onChangeAddress(i, e.target.value)}
                                 onKeyDown={e => handleKeyDown(i, e)}
