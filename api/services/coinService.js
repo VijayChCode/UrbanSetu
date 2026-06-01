@@ -483,7 +483,8 @@ class CoinService {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate('userId', 'username email gamification.totalCoinsEarned');
+            .populate('userId', 'username email gamification.totalCoinsEarned')
+            .populate('referenceId');
 
         // Add rank to each transaction's user
         const transactions = await Promise.all(transactionsRaw.map(async (tx) => {
