@@ -293,7 +293,7 @@ export default function RoutePlanner() {
     markersRef.current = [];
   }, []);
 
-  // Add markers for stops with enhanced styling
+  // Add markers for stops with enhanced styling and premium hover popup triggers
   const addMarkers = useCallback(() => {
     if (!map || !map.isStyleLoaded()) return;
 
@@ -320,27 +320,55 @@ export default function RoutePlanner() {
           color: white;
           font-weight: bold;
           font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s ease-in-out;
         `;
         el.textContent = index + 1;
 
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat(stop.coordinates)
-          .addTo(map);
-
-        // Add popup with stop information
-        const popup = new mapboxgl.Popup({ offset: 25 })
+        // Add popup with address, coordinates, and copy coordinates actions
+        const popup = new mapboxgl.Popup({ 
+          offset: 25,
+          closeButton: false,
+          closeOnClick: false
+        })
           .setHTML(`
-            <div class="p-2">
-              <h3 class="font-semibold text-sm">Stop ${index + 1}</h3>
-              <p class="text-xs text-gray-600">${stop.address}</p>
-              <button onclick="navigator.clipboard.writeText('${stop.coordinates[1]}, ${stop.coordinates[0]}')" 
-                      class="text-xs text-blue-600 hover:text-blue-800 mt-1">
-                Copy Coordinates
-              </button>
+            <div class="p-2.5 max-w-[220px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded shadow-lg">
+              <span class="inline-block px-1.5 py-0.5 mb-1.5 text-[9px] font-bold text-white bg-blue-600 dark:bg-blue-500 rounded">
+                Stop ${index + 1}
+              </span>
+              <p class="text-xs font-semibold leading-snug line-clamp-2">${stop.address}</p>
+              <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-mono">${stop.coordinates[1].toFixed(5)}, ${stop.coordinates[0].toFixed(5)}</p>
             </div>
           `);
 
-        marker.setPopup(popup);
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat(stop.coordinates)
+          .setPopup(popup)
+          .addTo(map);
+
+        // Dynamic Hover Scale & Details Popup Trigger
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.25)';
+          el.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+          popup.addTo(map);
+        });
+
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)';
+          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+          popup.remove();
+        });
+
+        // Click to smoothly center/fly map to stop coordinates
+        el.addEventListener('click', () => {
+          map.flyTo({
+            center: stop.coordinates,
+            zoom: 13,
+            pitch: 30,
+            essential: true
+          });
+        });
+
         markersRef.current.push(marker);
       }
     });
