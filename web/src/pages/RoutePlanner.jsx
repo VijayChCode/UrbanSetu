@@ -921,7 +921,7 @@ export default function RoutePlanner() {
 
   // Enhanced route planning with alternatives
   const optimize = async (customStops = null) => {
-    const activeStops = customStops || stops;
+    const activeStops = Array.isArray(customStops) ? customStops : stops;
     const validStops = activeStops.filter(s => s.address.trim() && s.coordinates);
     if (validStops.length < 2) {
       toast.error('Please add at least 2 valid addresses with coordinates');
