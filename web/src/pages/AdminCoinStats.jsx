@@ -533,7 +533,7 @@ export default function AdminCoinStats() {
                             </div>
                             <div className="max-h-[500px] overflow-y-auto">
                                 <table className="w-full text-left">
-                                    <thead className="bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 sticky top-0 z-10 border-b border-gray-100 dark:border-gray-700">
+                                     <thead className="bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-300 sticky top-0 z-10 border-b border-gray-100 dark:border-gray-700">
                                         <tr>
                                             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Activity</th>
                                             <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider">Source</th>
@@ -554,26 +554,33 @@ export default function AdminCoinStats() {
                                                     className="hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
                                                     style={{ animation: `fadeInRow 0.3s ease-out ${index * 0.03}s backwards` }}
                                                 >
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" />
-                                                            <div>
-                                                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{tx.description}</p>
-                                                                {tx.adminId && <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-tighter italic">By Administrator</p>}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${GET_TRANSACTION_THEME(tx.source, tx.type).adminColor}`}>
-                                                            {tx.source.replace(/_/g, ' ')}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-xs font-medium text-gray-500 whitespace-nowrap">
-                                                        {new Date(tx.createdAt).toLocaleDateString()} <span className="text-gray-300 mx-1">/</span> {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-xs font-medium text-gray-400">
-                                                        {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
-                                                    </td>
+                                                     <td className="px-6 py-4">
+                                                         <div className="flex items-center gap-3">
+                                                             <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm" />
+                                                             <div>
+                                                                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{tx.description}</p>
+                                                                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                                                     {tx.adminId && <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-tighter italic">By Administrator</span>}
+                                                                     {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
+                                                                         <span className="text-[10px] font-mono text-slate-400 dark:text-gray-400 bg-slate-50 dark:bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-gray-700/50">
+                                                                             Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
+                                                                         </span>
+                                                                     )}
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                     </td>
+                                                     <td className="px-6 py-4">
+                                                         <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${GET_TRANSACTION_THEME(tx.source, tx.type).adminColor}`}>
+                                                             {tx.source.replace(/_/g, ' ')}
+                                                         </span>
+                                                     </td>
+                                                     <td className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 whitespace-nowrap">
+                                                         {new Date(tx.createdAt).toLocaleDateString()} <span className="text-gray-300 dark:text-gray-600 mx-1">/</span> {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                     </td>
+                                                     <td className="px-6 py-4 text-xs font-medium text-gray-400 dark:text-gray-300">
+                                                         {tx.expiryDate ? new Date(tx.expiryDate).toLocaleDateString() : '-'}
+                                                     </td>
                                                     <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                                                         {tx.type === 'credit' ? '+' : '-'}{tx.amount}
                                                     </td>
@@ -609,29 +616,29 @@ export default function AdminCoinStats() {
                                     <option value="debit">Debits (Burned)</option>
                                 </select>
                             </div>
-                            <input
-                                type="date"
-                                value={filters.startDate}
-                                max={new Date().toISOString().split('T')[0]}
-                                onChange={(e) => { setFilters(prev => ({ ...prev, startDate: e.target.value })); setTxPage(1); }}
-                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-gray-500 dark:text-gray-400"
-                                placeholder="Start Date"
-                            />
-                            <input
-                                type="date"
-                                value={filters.endDate}
-                                max={new Date().toISOString().split('T')[0]}
-                                onChange={(e) => { setFilters(prev => ({ ...prev, endDate: e.target.value })); setTxPage(1); }}
-                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-gray-500 dark:text-gray-400"
-                                placeholder="End Date"
-                            />
-                            <input
-                                type="number"
-                                value={filters.minAmount}
-                                onChange={(e) => { setFilters(prev => ({ ...prev, minAmount: e.target.value })); setTxPage(1); }}
-                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
-                                placeholder="Min Amount"
-                            />
+                             <input
+                                 type="date"
+                                 value={filters.startDate}
+                                 max={new Date().toISOString().split('T')[0]}
+                                 onChange={(e) => { setFilters(prev => ({ ...prev, startDate: e.target.value })); setTxPage(1); }}
+                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium placeholder-gray-500 dark:placeholder-gray-400"
+                                 placeholder="Start Date"
+                             />
+                             <input
+                                 type="date"
+                                 value={filters.endDate}
+                                 max={new Date().toISOString().split('T')[0]}
+                                 onChange={(e) => { setFilters(prev => ({ ...prev, endDate: e.target.value })); setTxPage(1); }}
+                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium placeholder-gray-500 dark:placeholder-gray-400"
+                                 placeholder="End Date"
+                             />
+                             <input
+                                 type="number"
+                                 value={filters.minAmount}
+                                 onChange={(e) => { setFilters(prev => ({ ...prev, minAmount: e.target.value })); setTxPage(1); }}
+                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium placeholder-gray-500 dark:placeholder-gray-400"
+                                 placeholder="Min Amount"
+                             />
                         </div>
                     </div>
 
@@ -683,7 +690,7 @@ export default function AdminCoinStats() {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-[10px] text-gray-400 dark:text-gray-500">{tx.userId?.email}</p>
+                                                <p className="text-[10px] text-gray-400 dark:text-gray-500">{tx.userId?.email}</p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -692,11 +699,18 @@ export default function AdminCoinStats() {
                                                     <TransactionThemedIcon source={tx.source} type={tx.type} containerClassName="p-1 rounded-md" />
                                                     {tx.description}
                                                 </div>
-                                                <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5 pl-7">{tx.source?.replace(/_/g, ' ')}</p>
+                                                <div className="flex flex-wrap items-center gap-2 mt-0.5 pl-7">
+                                                    <span className="text-[10px] text-gray-400 dark:text-gray-450 uppercase tracking-widest">{tx.source?.replace(/_/g, ' ')}</span>
+                                                    {tx.referenceId && (tx.source === 'rent_payment' || tx.source === 'payment_reward' || tx.referenceModel === 'Payment') && (
+                                                        <span className="text-[9px] font-mono text-slate-400 dark:text-gray-500 bg-slate-50 dark:bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-gray-750">
+                                                            Tx ID: {typeof tx.referenceId === 'object' ? (tx.referenceId.paymentId || tx.referenceId._id || String(tx.referenceId)) : tx.referenceId}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-xs font-medium text-gray-500">
+                                            <td className="px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300">
                                                 {new Date(tx.createdAt).toLocaleDateString()}
-                                                <span className="text-gray-300 mx-1">•</span>
+                                                <span className="text-gray-300 dark:text-gray-600 mx-1">•</span>
                                                 {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </td>
                                             <td className={`px-6 py-4 text-right font-black text-lg ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
