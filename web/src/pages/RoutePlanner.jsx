@@ -1873,7 +1873,7 @@ export default function RoutePlanner() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-6 custom-scrollbar">
 
               {/* 1. Travel Mode & Options */}
               <motion.div
@@ -2063,7 +2063,7 @@ export default function RoutePlanner() {
               </motion.div>
 
               {/* 3. Action Button */}
-              <motion.div variants={itemVariants} className="sticky bottom-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm pt-2 print:hidden">
+              <motion.div variants={itemVariants} className="pt-2 print:hidden">
                 <button
                   onClick={optimize}
                   disabled={optimizing || !map}
