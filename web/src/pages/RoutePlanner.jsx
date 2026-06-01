@@ -92,6 +92,12 @@ export default function RoutePlanner() {
   const markersRef = useRef([]);
   const routeSourcesRef = useRef([]);
   const currentLocationMarkerRef = useRef(null);
+  const stopsRef = useRef(stops);
+
+  // Sync stops with ref to prevent stale closures in map click event handlers
+  useEffect(() => {
+    stopsRef.current = stops;
+  }, [stops]);
 
   // Map styles configuration
   const mapStyles = {
@@ -195,6 +201,114 @@ export default function RoutePlanner() {
 
         // Add fullscreen control
         mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+
+        // Handle map click for dynamic location popup with latency loading
+        mapInstance.on('click', async (e) => {
+          // Ignore clicks on markers, controls, or sidebar overlays
+          if (e.originalEvent.target.className !== 'mapboxgl-canvas') return;
+
+          const coordinates = [e.lngLat.lng, e.lngLat.lat];
+
+          // Create a premium loading spinner popup
+          const loadingPopup = new mapboxgl.Popup({ 
+            offset: 10,
+            closeButton: false,
+            closeOnClick: true
+          })
+            .setLngLat(coordinates)
+            .setHTML(`
+              <div class="flex flex-col items-center justify-center p-4 min-w-[180px] bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+                <div class="premium-spinner mb-2.5"></div>
+                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Analyzing Coordinates...</span>
+              </div>
+            `)
+            .addTo(mapInstance);
+
+          let address = 'Selected Location';
+          try {
+            const response = await fetch(
+              `https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,poi`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              if (data.features && data.features.length > 0) {
+                address = data.features[0].place_name;
+              }
+            }
+          } catch (geocodingError) {
+            console.warn('Map click reverse geocoding failed:', geocodingError);
+          }
+
+          // Remove the loading popup
+          loadingPopup.remove();
+
+          // Check if start stop (index 0) has coordinates already set
+          const currentStops = stopsRef.current;
+          const isStartSet = currentStops.length > 0 && currentStops[0].coordinates !== null;
+
+          // Create the resolved detail popup
+          const clickPopup = new mapboxgl.Popup({ 
+            offset: 10,
+            closeButton: false,
+            closeOnClick: true
+          })
+            .setLngLat(coordinates)
+            .setHTML(`
+              <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+                <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
+                  📍 Map Location
+                </span>
+                <h3 id="popup-address" class="font-bold text-xs truncate max-w-[220px]" title="${address}">${address}</h3>
+                <p class="text-[9px] text-gray-400 dark:text-blue-200 mt-1 font-mono">${coordinates[1].toFixed(5)}, ${coordinates[0].toFixed(5)}</p>
+                
+                <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+                  ${!isStartSet ? `
+                    <button id="btn-set-start-click" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
+                      Set as Start
+                    </button>
+                  ` : ''}
+                  <button id="btn-add-stop-click" class="flex-1 py-1 px-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded transition-colors">
+                    Add Stop
+                  </button>
+                </div>
+              </div>
+            `);
+
+          // Bind listeners when the resolved popup opens exactly once
+          clickPopup.once('open', () => {
+            const btnSetStart = document.getElementById('btn-set-start-click');
+            const btnAddStop = document.getElementById('btn-add-stop-click');
+
+            if (btnSetStart) {
+              btnSetStart.addEventListener('click', (e) => {
+                e.stopPropagation();
+                updateStop(0, address, coordinates);
+                toast.success('Location set as Start stop!');
+                clickPopup.remove();
+              });
+            }
+
+            if (btnAddStop) {
+              btnAddStop.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setStops(s => {
+                  if (s.length === 1 && !s[0].address) {
+                    return [{ address, coordinates }];
+                  }
+                  if (s.length >= 10) {
+                    toast.warning('Maximum of 10 stops allowed.');
+                    return s;
+                  }
+                  return [...s, { address, coordinates }];
+                });
+                toast.success('Location added as a stop!');
+                clickPopup.remove();
+              });
+            }
+          });
+
+          clickPopup.addTo(mapInstance);
+        });
       });
 
       // Handle map errors
@@ -1160,16 +1274,9 @@ export default function RoutePlanner() {
           zoom: 14,
           pitch: 45,
           essential: true
-        });
-
-        // Remove existing current location marker if any
-        if (currentLocationMarkerRef.current) {
-          currentLocationMarkerRef.current.remove();
-        }
-
-        // Create a custom pulsing element
-        const el = document.createElement('div');
-        el.className = 'user-location-pulse';
+            // Check if start stop (index 0) has coordinates already set
+        const currentStops = stopsRef.current;
+        const isStartSet = currentStops.length > 0 && currentStops[0].coordinates !== null;
 
         // Add popup with address, coordinates, and action buttons
         const popup = new mapboxgl.Popup({ 
@@ -1179,7 +1286,7 @@ export default function RoutePlanner() {
         })
           .setLngLat(coordinates)
           .setHTML(`
-            <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg">
+            <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg shadow-xl">
               <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
                 📍 Live Location
               </span>
@@ -1187,10 +1294,12 @@ export default function RoutePlanner() {
               <p class="text-[9px] text-gray-400 dark:text-blue-200 mt-1 font-mono">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
               
               <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
-                <button id="btn-set-start" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
-                  Set as Start
-                </button>
-                <button id="btn-add-stop" class="py-1 px-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded transition-colors">
+                ${!isStartSet ? `
+                  <button id="btn-set-start" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
+                    Set as Start
+                  </button>
+                ` : ''}
+                <button id="btn-add-stop" class="flex-1 py-1 px-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded transition-colors">
                   Add Stop
                 </button>
               </div>
@@ -1203,6 +1312,53 @@ export default function RoutePlanner() {
 
         el.addEventListener('mouseenter', () => {
           if (closeTimeout) clearTimeout(closeTimeout);
+          
+          // Re-register the one-time open listener to attach fresh button handlers on every open
+          popup.once('open', () => {
+            // Keep popup open when hovering over the popup container itself
+            const popupEl = popup.getElement();
+            if (popupEl) {
+              popupEl.addEventListener('mouseenter', () => {
+                if (closeTimeout) clearTimeout(closeTimeout);
+              });
+              popupEl.addEventListener('mouseleave', () => {
+                closeTimeout = setTimeout(() => {
+                  popup.remove();
+                }, 300);
+              });
+            }
+
+            const btnSetStart = document.getElementById('btn-set-start');
+            const btnAddStop = document.getElementById('btn-add-stop');
+            
+            if (btnSetStart) {
+              btnSetStart.addEventListener('click', (e) => {
+                e.stopPropagation();
+                updateStop(0, address, coordinates);
+                toast.success('Current location set as Start stop!');
+                popup.remove();
+              });
+            }
+            
+            if (btnAddStop) {
+              btnAddStop.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setStops(s => {
+                  if (s.length === 1 && !s[0].address) {
+                    return [{ address, coordinates }];
+                  }
+                  if (s.length >= 10) {
+                    toast.warning('Maximum of 10 stops allowed.');
+                    return s;
+                  }
+                  return [...s, { address, coordinates }];
+                });
+                toast.success('Current location added as a stop!');
+                popup.remove();
+              });
+            }
+          });
+
           popup.addTo(map);
         });
 
@@ -1220,50 +1376,6 @@ export default function RoutePlanner() {
             popup.remove();
           } else {
             popup.addTo(map);
-          }
-        });
-
-        // Attach action event listeners to popup contents when it opens
-        popup.on('open', () => {
-          // Keep popup open when hovering over the popup container itself
-          const popupEl = popup.getElement();
-          if (popupEl) {
-            popupEl.addEventListener('mouseenter', () => {
-              if (closeTimeout) clearTimeout(closeTimeout);
-            });
-            popupEl.addEventListener('mouseleave', () => {
-              closeTimeout = setTimeout(() => {
-                popup.remove();
-              }, 300);
-            });
-          }
-
-          const btnSetStart = document.getElementById('btn-set-start');
-          const btnAddStop = document.getElementById('btn-add-stop');
-          
-          if (btnSetStart) {
-            btnSetStart.addEventListener('click', () => {
-              updateStop(0, address, coordinates);
-              toast.success('Current location set as Start stop!');
-              popup.remove();
-            });
-          }
-          
-          if (btnAddStop) {
-            btnAddStop.addEventListener('click', () => {
-              setStops(s => {
-                if (s.length === 1 && !s[0].address) {
-                  return [{ address, coordinates }];
-                }
-                if (s.length >= 10) {
-                  toast.warning('Maximum of 10 stops allowed.');
-                  return s;
-                }
-                return [...s, { address, coordinates }];
-              });
-              toast.success('Current location added as a stop!');
-              popup.remove();
-            });
           }
         });
 
@@ -1438,6 +1550,18 @@ export default function RoutePlanner() {
           border: 3px solid white;
           box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
           position: relative;
+        }
+        .premium-spinner {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 3px solid rgba(59, 130, 246, 0.2);
+          border-top-color: #3b82f6;
+          animation: spin-premium 0.8s infinite linear;
+        }
+        @keyframes spin-premium {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
         .user-location-pulse::after {
           content: '';
