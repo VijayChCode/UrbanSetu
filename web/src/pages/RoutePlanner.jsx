@@ -523,8 +523,9 @@ export default function RoutePlanner() {
 
         // Handle map click for dynamic location popup with latency loading
         mapInstance.on('click', async (e) => {
-          // Ignore clicks on markers, controls, or sidebar overlays
-          if (e.originalEvent.target.className !== 'mapboxgl-canvas') return;
+          // Ignore clicks on mapbox controls, sidebar overlays, or stop markers
+          const isControlOrMarker = e.originalEvent.target.closest('.mapboxgl-ctrl, .custom-marker-container, .custom-marker-inner, .user-location-pulse');
+          if (isControlOrMarker) return;
 
           const coordinates = [e.lngLat.lng, e.lngLat.lat];
 
