@@ -1274,7 +1274,18 @@ export default function RoutePlanner() {
           zoom: 14,
           pitch: 45,
           essential: true
-            // Check if start stop (index 0) has coordinates already set
+        });
+
+        // Remove existing current location marker if any
+        if (currentLocationMarkerRef.current) {
+          currentLocationMarkerRef.current.remove();
+        }
+
+        // Create a custom pulsing element
+        const el = document.createElement('div');
+        el.className = 'user-location-pulse';
+
+        // Check if start stop (index 0) has coordinates already set
         const currentStops = stopsRef.current;
         const isStartSet = currentStops.length > 0 && currentStops[0].coordinates !== null;
 
