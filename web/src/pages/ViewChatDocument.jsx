@@ -303,6 +303,13 @@ export default function ViewChatDocument() {
                     </button>
                     <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate pr-2 flex items-center gap-2">
                         <span>{document.name || 'Document View'}</span>
+                        <span
+                            title="This document is from an end-to-end encrypted chat and is accessible only by you and the other participant. Anyone else attempting to view this link will be denied access."
+                            className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 shadow-sm cursor-help"
+                        >
+                            <FaLock className="w-2.5 h-2.5 mr-1 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <span>Encrypted & Secure</span>
+                        </span>
                         {source && (
                             <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
