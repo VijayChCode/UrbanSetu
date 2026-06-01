@@ -1068,7 +1068,7 @@ export default function RoutePlanner() {
     }
   };
 
-  // Show user's current location on the map with custom pulse marker
+  // Show user's current location on the map with custom pulse marker and geocoded details
   const showUserLocationOnMap = async () => {
     const allowLocationAccess = localStorage.getItem('allowLocationAccess');
     if (allowLocationAccess !== 'true') {
@@ -1104,6 +1104,22 @@ export default function RoutePlanner() {
       const { latitude, longitude } = position.coords;
       const coordinates = [longitude, latitude];
 
+      // Get reverse geocoded address for current location
+      let address = 'Current Location';
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,poi`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            address = data.features[0].place_name;
+          }
+        }
+      } catch (geocodingError) {
+        console.warn('Reverse geocoding failed:', geocodingError);
+      }
+
       // Center map on user location
       if (map) {
         map.flyTo({
@@ -1122,14 +1138,57 @@ export default function RoutePlanner() {
         const el = document.createElement('div');
         el.className = 'user-location-pulse';
 
-        // Add popup
+        // Add popup with address, coordinates, and action buttons
         const popup = new mapboxgl.Popup({ offset: 15 })
           .setHTML(`
-            <div class="p-2 text-center min-w-[120px]">
-              <h3 class="font-bold text-sm text-blue-600 dark:text-blue-400">You Are Here</h3>
-              <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
+            <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg">
+              <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
+                📍 Live Location
+              </span>
+              <h3 id="popup-address" class="font-bold text-xs truncate max-w-[220px]" title="${address}">${address}</h3>
+              <p class="text-[9px] text-gray-400 dark:text-gray-500 mt-1 font-mono">${latitude.toFixed(5)}, ${longitude.toFixed(5)}</p>
+              
+              <div class="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700 flex gap-2">
+                <button id="btn-set-start" class="flex-1 py-1 px-2 text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors shadow-sm">
+                  Set as Start
+                </button>
+                <button id="btn-add-stop" class="py-1 px-2 text-[10px] font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded transition-colors">
+                  Add Stop
+                </button>
+              </div>
             </div>
           `);
+
+        // Attach action event listeners to popup contents when it opens
+        popup.on('open', () => {
+          const btnSetStart = document.getElementById('btn-set-start');
+          const btnAddStop = document.getElementById('btn-add-stop');
+          
+          if (btnSetStart) {
+            btnSetStart.addEventListener('click', () => {
+              updateStop(0, address, coordinates);
+              toast.success('Current location set as Start stop!');
+              popup.remove();
+            });
+          }
+          
+          if (btnAddStop) {
+            btnAddStop.addEventListener('click', () => {
+              setStops(s => {
+                if (s.length === 1 && !s[0].address) {
+                  return [{ address, coordinates }];
+                }
+                if (s.length >= 10) {
+                  toast.warning('Maximum of 10 stops allowed.');
+                  return s;
+                }
+                return [...s, { address, coordinates }];
+              });
+              toast.success('Current location added as a stop!');
+              popup.remove();
+            });
+          }
+        });
 
         // Create new marker
         const newMarker = new mapboxgl.Marker(el)
