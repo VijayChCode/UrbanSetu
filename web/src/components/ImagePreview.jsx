@@ -95,6 +95,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
   const imageRef = useRef(null);
   const containerRef = useRef(null);
+  const viewerRef = useRef(null);
   const slideshowRef = useRef(null);
   const settingsRef = useRef(null);
   const feedbackTimeoutRef = useRef(null);
@@ -386,22 +387,19 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      if (isFullscreen) {
-        document.documentElement.requestFullscreen?.();
-      }
     } else {
       document.body.style.overflow = '';
       if (document.fullscreenElement) {
-        document.exitFullscreen?.();
+        document.exitFullscreen?.()?.catch(err => console.warn("Exit fullscreen failed:", err));
       }
     }
     return () => {
       document.body.style.overflow = '';
       if (document.fullscreenElement) {
-        document.exitFullscreen?.();
+        document.exitFullscreen?.()?.catch(err => console.warn("Exit fullscreen failed on unmount:", err));
       }
     };
-  }, [isOpen, isFullscreen]);
+  }, [isOpen]);
 
   // Auto-fit logic for rotation (Same as VideoPreview)
   useEffect(() => {
@@ -812,12 +810,26 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const toggleFullscreen = () => {
+    const el = viewerRef.current || document.documentElement;
     if (document.fullscreenElement || isFullscreen) {
-      document.exitFullscreen?.();
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.()?.catch(err => console.warn("Exit fullscreen failed:", err));
+      }
       setIsFullscreen(false);
       showFeedback("Exit Fullscreen");
     } else {
-      document.documentElement.requestFullscreen?.();
+      el.requestFullscreen?.()?.catch(err => {
+        console.warn("Element requestFullscreen failed, trying document fallback:", err);
+        // Fallback to document.documentElement if element request fails
+        if (el !== document.documentElement) {
+          document.documentElement.requestFullscreen?.()?.catch(e => {
+            console.error("All fullscreen requests failed:", e);
+            showToast("Fullscreen is not supported or was blocked by the browser.", "warning");
+          });
+        } else {
+          showToast("Fullscreen is not supported or was blocked by the browser.", "warning");
+        }
+      });
       setIsFullscreen(true);
       showFeedback("Fullscreen");
     }
@@ -1089,6 +1101,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
   const content = (
     <div
+      ref={viewerRef}
       className={`fixed inset-0 bg-black bg-opacity-95 z-[9999] flex items-center justify-center transition-all duration-300 select-none touch-none ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       onMouseMove={handleWrapperMouseMove}
