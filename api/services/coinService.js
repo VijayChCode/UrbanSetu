@@ -484,7 +484,10 @@ class CoinService {
             .skip(skip)
             .limit(limit)
             .populate('userId', 'username email gamification.totalCoinsEarned')
-            .populate('referenceId');
+            .populate({
+                path: 'referenceId',
+                select: 'paymentId username email rating comment title'
+            });
 
         // Add rank to each transaction's user
         const transactions = await Promise.all(transactionsRaw.map(async (tx) => {
@@ -556,7 +559,10 @@ class CoinService {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate('referenceId'); // Populate might be tricky if dynamic, but basic is fine
+            .populate({
+                path: 'referenceId',
+                select: 'paymentId username email rating comment title'
+            }); // Only select non-sensitive fields to protect data
 
         const total = await CoinTransaction.countDocuments({ userId });
 
