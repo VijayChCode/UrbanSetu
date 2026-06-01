@@ -186,6 +186,7 @@ export default function Home() {
   const [nearbyCities, setNearbyCities] = useState([]);
   const [nearbyListings, setNearbyListings] = useState([]);
   const [nearbyListingsLoading, setNearbyListingsLoading] = useState(false);
+  const [overdueContracts, setOverdueContracts] = useState([]);
 
   // Community, Blogs & Guides section state
   const [homeFeaturedBlogs, setHomeFeaturedBlogs] = useState([]);
@@ -481,10 +482,35 @@ export default function Home() {
         }
       } catch (e) { console.error("Dashboard: price drops error", e); }
     };
+    
+    // Fetch active contracts to check for overdue payments
+    const fetchOverdueRent = async () => {
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts?status=active`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.contracts) {
+            const overdue = data.contracts.filter(contract => {
+              const isTenant = contract.tenantId?._id === currentUser._id || contract.tenantId === currentUser._id;
+              if (!isTenant || !contract.wallet?.paymentSchedule) return false;
+
+              const now = new Date();
+              return contract.wallet.paymentSchedule.some(p => {
+                const dueDate = new Date(p.dueDate);
+                dueDate.setHours(23, 59, 59, 999);
+                return (p.status === 'pending' || p.status === 'overdue') && dueDate < now;
+              });
+            });
+            setOverdueContracts(overdue);
+          }
+        }
+      } catch (e) { console.error("Dashboard: fetchOverdueRent error", e); }
+    };
 
     fetchMyListings();
     fetchAppointments();
     fetchPriceDrops();
+    fetchOverdueRent();
 
     // Fetch recently viewed listings by their IDs
     const fetchRecentlyViewed = async () => {
@@ -1119,6 +1145,93 @@ export default function Home() {
                     {priceDropListings.map((listing) => (
                       <ListingItem key={listing._id} listing={listing} />
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Rent Payment Overdue Alerts ─── */}
+              {overdueContracts.length > 0 && (
+                <div className="mt-6 animate-fade-in space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                      <span className="p-1.5 bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl shadow-lg">
+                        <FaExclamationTriangle className="text-base" />
+                      </span>
+                      Rent Overdue Alerts
+                      <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-[10px] font-black rounded-full uppercase ml-1 animate-pulse">
+                        Action Required
+                      </span>
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {overdueContracts.map((contract) => {
+                      const now = new Date();
+                      const overduePayments = contract.wallet?.paymentSchedule?.filter(p => {
+                        const dueDate = new Date(p.dueDate);
+                        dueDate.setHours(23, 59, 59, 999);
+                        return (p.status === 'pending' || p.status === 'overdue') && dueDate < now;
+                      }) || [];
+
+                      const maintenance = contract.maintenanceCharges || 0;
+                      const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+
+                      // Find the oldest overdue payment to show days overdue
+                      let maxDaysOverdue = 0;
+                      overduePayments.forEach(p => {
+                        const dueDate = new Date(p.dueDate);
+                        const days = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+                        if (days > maxDaysOverdue) maxDaysOverdue = days;
+                      });
+
+                      return (
+                        <div
+                          key={contract._id}
+                          className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-red-100 dark:border-red-900/50 shadow-md p-5 flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.005] hover:shadow-lg transition-all duration-300"
+                        >
+                          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 flex-1 min-w-0">
+                            <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center shrink-0">
+                              <FaExclamationTriangle className="text-2xl animate-bounce" />
+                            </div>
+                            <div className="text-center sm:text-left min-w-0 flex-1">
+                              <span className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-2">
+                                Overdue by {maxDaysOverdue} days
+                              </span>
+                              <h4 className="font-extrabold text-gray-900 dark:text-white text-lg truncate">
+                                {contract.listingId?.name || "Property Rent Payment"}
+                              </h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Contract ID: <span className="font-mono text-xs">{contract.contractId}</span>
+                              </p>
+                              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
+                                <span className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-lg font-bold">
+                                  {overduePayments.length} Payment{overduePayments.length > 1 ? 's' : ''} Pending
+                                </span>
+                                {contract.maintenanceCharges > 0 && (
+                                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-lg font-medium">
+                                    Incl. ₹{contract.maintenanceCharges} Maintenance
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-center md:items-end gap-3 w-full md:w-auto">
+                            <div className="text-center md:text-right">
+                              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-0.5">Total Overdue</p>
+                              <p className="text-3xl font-black text-red-600 dark:text-red-400 flex items-center justify-center md:justify-end gap-1.5">
+                                ₹{totalOverdue.toLocaleString('en-IN')}
+                              </p>
+                            </div>
+                            <Link
+                              to={`/user/rent-wallet?contractId=${contract._id}`}
+                              className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm text-center shadow-lg shadow-red-500/20 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+                            >
+                              Pay Rent Now <FaArrowRight />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
