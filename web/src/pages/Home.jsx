@@ -15,7 +15,7 @@ import AdvancedImage from "../components/AdvancedImage";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { usePageTitle } from '../hooks/usePageTitle';
 import Typewriter from "../components/ui/Typewriter";
-import { FaEye, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
@@ -187,6 +187,7 @@ export default function Home() {
   const [nearbyListings, setNearbyListings] = useState([]);
   const [nearbyListingsLoading, setNearbyListingsLoading] = useState(false);
   const [overdueContracts, setOverdueContracts] = useState([]);
+  const [hideOverdueAlerts, setHideOverdueAlerts] = useState(localStorage.getItem('hideOverdueAlerts') === 'true');
 
   // Community, Blogs & Guides section state
   const [homeFeaturedBlogs, setHomeFeaturedBlogs] = useState([]);
@@ -1162,8 +1163,30 @@ export default function Home() {
                         Action Required
                       </span>
                     </h3>
+                    <button
+                      onClick={() => {
+                        const newVal = !hideOverdueAlerts;
+                        setHideOverdueAlerts(newVal);
+                        localStorage.setItem('hideOverdueAlerts', String(newVal));
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-300 shadow-sm border border-gray-200/50 dark:border-gray-700/50 cursor-pointer active:scale-95"
+                    >
+                      {hideOverdueAlerts ? (
+                        <>
+                          <FaEye className="text-sm" /> Show Alerts
+                        </>
+                      ) : (
+                        <>
+                          <FaEyeSlash className="text-sm" /> Hide Alerts
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <div className="space-y-4">
+                  <div className={`space-y-4 transition-all duration-500 ease-in-out overflow-hidden transform origin-top ${
+                    hideOverdueAlerts
+                      ? 'max-h-0 opacity-0 scale-95 pointer-events-none'
+                      : 'max-h-[2000px] opacity-100 scale-100'
+                  }`}>
                     {overdueContracts.map((contract) => {
                       const now = new Date();
                       const overduePayments = contract.wallet?.paymentSchedule?.filter(p => {
