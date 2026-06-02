@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../config/api';
 import { reconnectSocket } from "../utils/socket";
 import { syncSettingsFromUser } from "../utils/settingsSync";
 
-import PremiumLoader from './ui/PremiumLoader';
+
 import { app } from '../firebase'; // Import initialized Firebase app
 
 const GoogleOneTap = () => {
@@ -17,21 +17,7 @@ const GoogleOneTap = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [scriptLoaded, setScriptLoaded] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isNewUser, setIsNewUser] = useState(false);
-
-    const [authData, setAuthData] = useState(null);
-
-    const finalizeAuth = () => {
-        if (!authData) return;
-
-        if (authData.role === "admin" || authData.role === "rootadmin") {
-            navigate("/admin");
-        } else {
-            navigate("/user");
-        }
-        setIsLoading(false);
-    };
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // Don't show One Tap on auth pages (avoid conflict with Oauth.jsx and redundant UI)
     const isAuthPage = ['/sign-in', '/sign-up'].includes(location.pathname);
@@ -56,7 +42,7 @@ const GoogleOneTap = () => {
 
     // Initialize One Tap
     useEffect(() => {
-        if (!scriptLoaded || currentUser || isLoading || isAuthPage) return;
+        if (!scriptLoaded || currentUser || isProcessing || isAuthPage) return;
 
         const handleCredentialResponse = async (response) => {
             try {
@@ -64,7 +50,7 @@ const GoogleOneTap = () => {
                 const idToken = response.credential;
                 if (!idToken) return;
 
-                setIsLoading(true); // Start loading
+                setIsProcessing(true);
 
                 // 2. Create a Firebase credential from the token
                 const credential = GoogleAuthProvider.credential(idToken);
@@ -103,20 +89,15 @@ const GoogleOneTap = () => {
                         deletedAccountData: data.deletedAccountData,
                         conflictToken: data.conflictToken
                     }));
-                    setIsLoading(false);
+                    setIsProcessing(false);
                     navigate('/account-conflict');
                     return;
                 }
 
                 if (data.success === false) {
                     console.error('Backend auth failed:', data.message);
-                    setIsLoading(false);
+                    setIsProcessing(false);
                     return;
-                }
-
-                // Determine if new user based on backend response (if available)
-                if (data.isNewUser) {
-                    setIsNewUser(true);
                 }
 
                 if (data.token) {
@@ -126,17 +107,20 @@ const GoogleOneTap = () => {
                     localStorage.setItem('login', Date.now()); // Notify other tabs
                 }
 
-                // 5. Update Redux state and Redirect
+                // 5. Update Redux state and navigate directly
                 dispatch(signInSuccess(data));
                 syncSettingsFromUser(data);
                 reconnectSocket();
 
-                // Store data to trigger the premium loader animation completion phase
-                setAuthData(data);
+                if (data.role === "admin" || data.role === "rootadmin") {
+                    navigate("/admin");
+                } else {
+                    navigate("/user");
+                }
 
             } catch (error) {
                 console.error('Google One Tap Error:', error);
-                setIsLoading(false);
+                setIsProcessing(false);
             }
         };
 
@@ -161,11 +145,7 @@ const GoogleOneTap = () => {
                 }
             });
         }
-    }, [scriptLoaded, currentUser, dispatch, navigate, location.search, isLoading, isAuthPage]);
-
-    if (isLoading) {
-        return <PremiumLoader mode={isNewUser ? 'signup' : 'signin'} onComplete={finalizeAuth} />;
-    }
+    }, [scriptLoaded, currentUser, dispatch, navigate, location.search, isProcessing, isAuthPage]);
 
     return null;
 };

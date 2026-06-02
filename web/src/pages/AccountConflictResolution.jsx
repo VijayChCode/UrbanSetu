@@ -9,7 +9,6 @@ import { syncSettingsFromUser } from '../utils/settingsSync';
 import { reconnectSocket } from '../utils/socket';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
-import PremiumLoader from '../components/ui/PremiumLoader';
 import RecaptchaWidget from "../components/RecaptchaWidget";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -32,9 +31,6 @@ export default function AccountConflictResolution() {
   const recaptchaRef = useRef(null);
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [showLoader, setShowLoader] = useState(false);
-  const [pendingLoginData, setPendingLoginData] = useState(null);
-  const [loaderMode, setLoaderMode] = useState('signup');
 
   useEffect(() => {
     try {
@@ -73,35 +69,29 @@ export default function AccountConflictResolution() {
       });
       const loginData = await loginRes.json();
       if (loginRes.ok) {
-        setPendingLoginData(loginData);
-        setShowLoader(true);
+        // Commit tokens and Redux state, then navigate
+        if (loginData.token) {
+          localStorage.setItem('accessToken', loginData.token);
+          if (loginData.sessionId) localStorage.setItem('sessionId', loginData.sessionId);
+          if (loginData.refreshToken) localStorage.setItem('refreshToken', loginData.refreshToken);
+          localStorage.setItem('login', Date.now());
+        }
+        dispatch(signInSuccess(loginData));
+        syncSettingsFromUser(loginData);
+        reconnectSocket();
+        sessionStorage.removeItem('signupConflictData');
+
+        if (loginData.role === 'admin' || loginData.role === 'rootadmin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/user', { replace: true });
+        }
       } else {
         // Fallback: redirect to sign-in
         navigate('/sign-in', { replace: true });
       }
     } catch {
       navigate('/sign-in', { replace: true });
-    }
-  };
-
-  const finalizeLogin = () => {
-    if (pendingLoginData) {
-      if (pendingLoginData.token) {
-        localStorage.setItem('accessToken', pendingLoginData.token);
-        if (pendingLoginData.sessionId) localStorage.setItem('sessionId', pendingLoginData.sessionId);
-        if (pendingLoginData.refreshToken) localStorage.setItem('refreshToken', pendingLoginData.refreshToken);
-        localStorage.setItem('login', Date.now());
-      }
-      dispatch(signInSuccess(pendingLoginData));
-      syncSettingsFromUser(pendingLoginData);
-      reconnectSocket();
-      sessionStorage.removeItem('signupConflictData');
-
-      if (pendingLoginData.role === 'admin' || pendingLoginData.role === 'rootadmin') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/user', { replace: true });
-      }
     }
   };
 
@@ -125,7 +115,6 @@ export default function AccountConflictResolution() {
       if (res.ok && data.success) {
         setSuccessMessage('Your previous account has been restored! Signing you in...');
         setSuccess(true);
-        setLoaderMode('signin');
         setTimeout(() => {
           autoLogin(conflictData.signupFormData.email, conflictData.signupFormData.password);
         }, 1500);
@@ -237,7 +226,6 @@ export default function AccountConflictResolution() {
 
       setSuccessMessage('New account created! Signing you in...');
       setSuccess(true);
-      setLoaderMode('signup');
 
       // For admin accounts that need approval
       if (conflictData.signupFormData.role === 'admin' || conflictData.signupFormData.role === 'rootadmin' || data.requiresApproval) {
@@ -253,9 +241,24 @@ export default function AccountConflictResolution() {
         localStorage.removeItem('urbansetu_ref');
         
         if (isGoogleAuth && data.token) {
-          // For Google, we already have the token in the response
-          setPendingLoginData(data);
-          setShowLoader(true);
+          // For Google, we already have the token in the response — commit and navigate
+          if (data.token) {
+            localStorage.setItem('accessToken', data.token);
+            if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+            localStorage.setItem('login', Date.now());
+          }
+          dispatch(signInSuccess(data));
+          syncSettingsFromUser(data);
+          reconnectSocket();
+          sessionStorage.removeItem('signupConflictData');
+          localStorage.removeItem('urbansetu_ref');
+
+          if (data.role === 'admin' || data.role === 'rootadmin') {
+            navigate('/admin', { replace: true });
+          } else {
+            navigate('/user', { replace: true });
+          }
         } else {
           autoLogin(conflictData.signupFormData.email, conflictData.signupFormData.password);
         }
@@ -291,14 +294,6 @@ export default function AccountConflictResolution() {
   const { deletedAccountData } = conflictData;
   const daysRemaining = getDaysRemaining(deletedAccountData.expiresAt);
   const progressPercent = getProgressPercentage(deletedAccountData.expiresAt);
-
-  if (showLoader) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <PremiumLoader mode={loaderMode} onComplete={finalizeLogin} />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-transparent dark:bg-gray-950 flex flex-col justify-center relative overflow-hidden py-6 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">

@@ -16,7 +16,7 @@ import PrimaryButton from "../components/ui/PrimaryButton";
 import AuthFormLayout from "../components/ui/AuthFormLayout";
 import SelectField from "../components/ui/SelectField";
 import FormField from "../components/ui/FormField";
-import PremiumLoader from "../components/ui/PremiumLoader";
+
 import { syncSettingsFromUser } from "../utils/settingsSync";
 import SecureBadge from "../components/ui/SecureBadge";
 import { useDispatch } from "react-redux";
@@ -82,10 +82,20 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
 
   // State to track which authentication method is in progress
   const [authInProgress, setAuthInProgress] = useState(null); // null, 'form', 'google'
-  const [showLoader, setShowLoader] = useState(false);
-  const [pendingLoginData, setPendingLoginData] = useState(null);
-  const pendingRedirectRef = useRef(null); // useRef to avoid closure staleness in PremiumLoader
   const dispatch = useDispatch();
+
+  // Navigation helper — called after successful auth to redirect to the right page
+  const navigateAfterLogin = (data) => {
+    const searchParams = new URLSearchParams(location.search);
+    let redirectUrl = searchParams.get('redirect');
+    if (redirectUrl && redirectUrl.startsWith('/')) {
+      navigate(redirectUrl, { replace: true });
+    } else if (data.role === 'admin' || data.role === 'rootadmin') {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/user', { replace: true });
+    }
+  };
 
   const checkPasswordStrength = (password) => {
     const strength = calculatePasswordStrength(password);
@@ -224,9 +234,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     }
   }, [location]);
 
-  // Redirect if already logged in (but NOT during PremiumLoader — finalizeLogin handles that)
+  // Redirect if already logged in
   useEffect(() => {
-    if (showLoader) return; // Don't interfere while PremiumLoader is active
     if (currentUser && sessionChecked) {
       const searchParams = new URLSearchParams(location.search);
       const redirectUrl = searchParams.get('redirect');
@@ -238,7 +247,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         navigate('/user', { replace: true });
       }
     }
-  }, [currentUser, sessionChecked, navigate, location.search, showLoader]);
+  }, [currentUser, sessionChecked, navigate, location.search]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -489,10 +498,9 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
             const loginData = await loginRes.json();
 
             if (loginRes.ok) {
-              setSuccess("Account Created Successfully! 🏠✨ Welcome to UrbanSetu. Please wait a moment while we're signing you in...");
+              setSuccess("Account Created Successfully! 🏠✨ Welcome to UrbanSetu. Signing you in...");
 
-              // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY so a page
-              // refresh during the PremiumLoader animation can recover the session.
+              // Commit tokens and Redux state, then navigate
               if (loginData.token) {
                 localStorage.setItem('accessToken', loginData.token);
                 if (loginData.sessionId) localStorage.setItem('sessionId', loginData.sessionId);
@@ -503,16 +511,8 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
               syncSettingsFromUser(loginData);
               reconnectSocket();
 
-              // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
-              const signupSearchParams = new URLSearchParams(location.search);
-              pendingRedirectRef.current = signupSearchParams.get('redirect');
-
-              setPendingLoginData(loginData);
-
-              // Delay the premium loader slightly so user can read the success message
-              setTimeout(() => {
-                setShowLoader(true);
-              }, 2500);
+              // Short delay so user can read the success message
+              setTimeout(() => navigateAfterLogin(loginData), 1500);
             } else {
               setSuccess("Account Created Successfully! 🏠✨ Welcome to UrbanSetu. Please wait a moment while we're signing you in...");
               setTimeout(() => navigate("/sign-in"), 2000);
@@ -533,36 +533,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     }
   };
 
-  const finalizeLogin = async () => {
-    if (pendingLoginData) {
-      // Tokens, Redux state, settings sync, and socket reconnection are already
-      // committed immediately after successful API response (in handleSubmit /
-      // onAuthSuccess). This function now only handles navigation
-      // after the PremiumLoader animation completes.
 
-      // Use the captured redirect URL (ref is always up-to-date, no closure issues)
-      // Fallback chain: ref → window.location.search (belt-and-suspenders)
-      let redirectUrl = pendingRedirectRef.current;
-      if (!redirectUrl) {
-        const fallbackParams = new URLSearchParams(window.location.search);
-        redirectUrl = fallbackParams.get('redirect');
-      }
-
-      if (redirectUrl && redirectUrl.startsWith('/')) {
-        navigate(redirectUrl, { replace: true });
-      } else {
-        // Navigate based on user role
-        if (pendingLoginData.role === "admin" || pendingLoginData.role === "rootadmin") {
-          navigate("/admin");
-        } else {
-          navigate("/user");
-        }
-      }
-    } else {
-      // Fallback for regular signup (not logged in yet)
-      navigate("/sign-in");
-    }
-  };
 
 
 
@@ -656,9 +627,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         {/* Right Side - Sign Up Form */}
         <>
           <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-gray-50 dark:bg-gray-900 min-h-screen">
-            {showLoader ? (
-              <PremiumLoader mode={(pendingLoginData?.isNewUser === false) ? 'signin' : 'signup'} onComplete={finalizeLogin} />
-            ) : (
+
               <div className="w-full max-w-[480px] animate-fade-in">
                 <div className="text-center mb-10">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-6 shadow-sm">
@@ -1258,7 +1227,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       disabled={authInProgress !== null}
                       onAuthStart={setAuthInProgress}
                       onAuthSuccess={(data) => {
-                        // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY
+                        // Commit tokens and Redux state, then navigate
                         if (data.token) {
                           localStorage.setItem('accessToken', data.token);
                           if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
@@ -1268,12 +1237,7 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         dispatch(signInSuccess(data));
                         syncSettingsFromUser(data);
                         reconnectSocket();
-
-                        // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
-                        const googleSearchParams = new URLSearchParams(location.search);
-                        pendingRedirectRef.current = googleSearchParams.get('redirect');
-                        setPendingLoginData(data);
-                        setShowLoader(true);
+                        navigateAfterLogin(data);
                       }}
                     />
 
@@ -1312,7 +1276,6 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                   <SecureBadge />
                 </div>
               </div>
-            )}
           </div>
           <ContactSupportWrapper />
         </>

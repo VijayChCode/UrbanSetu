@@ -17,7 +17,7 @@ import { LogIn, Mail, Lock } from "lucide-react";
 import FormField from "../components/ui/FormField";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import AuthFormLayout from "../components/ui/AuthFormLayout";
-import PremiumLoader from "../components/ui/PremiumLoader";
+
 import { syncSettingsFromUser } from "../utils/settingsSync";
 import SecureBadge from "../components/ui/SecureBadge";
 
@@ -71,10 +71,26 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     // State to track OTP verification loading
     const [otpVerifyingLoading, setOtpVerifyingLoading] = useState(false);
 
-    // Premium Loader State
-    const [showLoader, setShowLoader] = useState(false);
-    const [pendingLoginData, setPendingLoginData] = useState(null);
-    const pendingRedirectRef = useRef(null); // useRef to avoid closure staleness in PremiumLoader
+    // Navigation helper — called after successful auth to redirect to the right page
+    const navigateAfterLogin = (data) => {
+        const searchParams = new URLSearchParams(location.search);
+        let redirectUrl = searchParams.get('redirect');
+
+        if (redirectUrl && redirectUrl.startsWith('/')) {
+            if (redirectUrl.startsWith('/ai/share/')) {
+                const prefix = (data.role === "admin" || data.role === "rootadmin") ? "/admin" : "/user";
+                navigate(`${prefix}${redirectUrl}`, { replace: true });
+            } else {
+                navigate(redirectUrl, { replace: true });
+            }
+        } else {
+            if (data.role === "admin" || data.role === "rootadmin") {
+                navigate("/admin");
+            } else {
+                navigate("/user");
+            }
+        }
+    };
 
     const { loading, error, currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
@@ -135,9 +151,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         }
     }, [location.search]);
 
-    // Redirect if already logged in (but NOT during PremiumLoader — finalizeLogin handles that)
+    // Redirect if already logged in
     useEffect(() => {
-        if (showLoader) return; // Don't interfere while PremiumLoader is active
         if (currentUser && sessionChecked) {
             const searchParams = new URLSearchParams(location.search);
             const redirectUrl = searchParams.get('redirect');
@@ -151,7 +166,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 }
             }
         }
-    }, [currentUser, sessionChecked, navigate, location.search, showLoader]);
+    }, [currentUser, sessionChecked, navigate, location.search]);
 
     // Sync state with URL parameters
     useEffect(() => {
@@ -559,8 +574,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 return;
             }
 
-            // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY so a page
-            // refresh during the PremiumLoader animation can recover the session.
+            // Commit tokens and Redux state, then navigate
             if (data.token) {
                 localStorage.setItem('accessToken', data.token);
                 if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
@@ -570,14 +584,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             dispatch(signInSuccess(data));
             syncSettingsFromUser(data);
             reconnectSocket();
-
-            // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
-            const otpSearchParams = new URLSearchParams(location.search);
-            pendingRedirectRef.current = otpSearchParams.get('redirect');
-
-            // Trigger Loading Animation — navigation happens in finalizeLogin
-            setPendingLoginData(data);
-            setShowLoader(true);
+            navigateAfterLogin(data);
 
         } catch (error) {
             dispatch(signInFailure(error.message));
@@ -677,8 +684,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             setRecaptchaToken(null);
             setRecaptchaError("");
 
-            // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY so a page
-            // refresh during the PremiumLoader animation can recover the session.
+            // Commit tokens and Redux state, then navigate
             if (data.token) {
                 localStorage.setItem('accessToken', data.token);
                 if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
@@ -688,14 +694,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             dispatch(signInSuccess(data));
             syncSettingsFromUser(data);
             reconnectSocket();
-
-            // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
-            const pwSearchParams = new URLSearchParams(location.search);
-            pendingRedirectRef.current = pwSearchParams.get('redirect');
-
-            // Trigger Loading Animation — navigation happens in finalizeLogin
-            setPendingLoginData(data);
-            setShowLoader(true);
+            navigateAfterLogin(data);
 
         } catch (error) {
             dispatch(signInFailure(error.message));
@@ -704,44 +703,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         }
     };
 
-    const finalizeLogin = () => {
-        if (!pendingLoginData) return;
 
-        const data = pendingLoginData;
-
-        // Tokens, Redux state, settings sync, and socket reconnection are already
-        // committed immediately after successful API response (in handleSubmit /
-        // handleOtpLogin / onAuthSuccess). This function now only handles navigation
-        // after the PremiumLoader animation completes.
-
-        // Use the captured redirect URL (ref is always up-to-date, no closure issues)
-        // Fallback chain: ref → window.location.search (belt-and-suspenders)
-        let redirectUrl = pendingRedirectRef.current;
-        if (!redirectUrl) {
-            const fallbackParams = new URLSearchParams(window.location.search);
-            redirectUrl = fallbackParams.get('redirect');
-        }
-
-        if (redirectUrl && redirectUrl.startsWith('/')) {
-            // Specific fix for shared chat redirection to enforce role-based paths
-            if (redirectUrl.startsWith('/ai/share/')) {
-                const prefix = (data.role === "admin" || data.role === "rootadmin") ? "/admin" : "/user";
-                navigate(`${prefix}${redirectUrl}`, { replace: true });
-            } else {
-                navigate(redirectUrl, { replace: true });
-            }
-        } else {
-            if (data.role === "admin" || data.role === "rootadmin") {
-                navigate("/admin");
-            } else {
-                navigate("/user");
-            }
-        }
-    };
-
-    if (showLoader) {
-        return <PremiumLoader mode={pendingLoginData?.isNewUser ? 'signup' : 'signin'} onComplete={finalizeLogin} />;
-    }
 
     return (
         <>
@@ -1152,7 +1114,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                 disabled={authInProgress !== null}
                                 onAuthStart={setAuthInProgress}
                             onAuthSuccess={(data) => {
-                                    // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY
+                                    // Commit tokens and Redux state, then navigate
                                     if (data.token) {
                                         localStorage.setItem('accessToken', data.token);
                                         if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
@@ -1162,12 +1124,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                     dispatch(signInSuccess(data));
                                     syncSettingsFromUser(data);
                                     reconnectSocket();
-
-                                    // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
-                                    const googleSearchParams = new URLSearchParams(location.search);
-                                    pendingRedirectRef.current = googleSearchParams.get('redirect');
-                                    setPendingLoginData(data);
-                                    setShowLoader(true);
+                                    navigateAfterLogin(data);
                                 }}
                             />
 
