@@ -6,6 +6,7 @@ import { signInSuccess } from '../redux/user/userSlice';
 import { authenticatedFetch } from '../utils/csrf';
 import { API_BASE_URL } from '../config/api';
 import { reconnectSocket } from "../utils/socket";
+import { syncSettingsFromUser } from "../utils/settingsSync";
 
 import PremiumLoader from './ui/PremiumLoader';
 import { app } from '../firebase'; // Import initialized Firebase app
@@ -120,12 +121,14 @@ const GoogleOneTap = () => {
 
                 if (data.token) {
                     localStorage.setItem('accessToken', data.token);
+                    if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
                     if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
                     localStorage.setItem('login', Date.now()); // Notify other tabs
                 }
 
                 // 5. Update Redux state and Redirect
                 dispatch(signInSuccess(data));
+                syncSettingsFromUser(data);
                 reconnectSocket();
 
                 // Store data to trigger the premium loader animation completion phase
