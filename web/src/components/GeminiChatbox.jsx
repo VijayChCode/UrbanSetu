@@ -8675,7 +8675,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                         handleKeyDown(e);
                                                     }}
-                                                    placeholder={isBlockedByPolicy ? `Policy Restricted: ${remainingCooldownText || 'Checking status...'}` : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to continue chatting..." : "Ask me anything about real estate or @ mention any property/blog/guide..."}
+                                                    placeholder={isBlockedByPolicy ? `Policy Restricted: ${remainingCooldownText || 'Checking status...'}` : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to chat..." : "Ask anything..."}
                                                     aria-label="Type your message"
                                                     aria-describedby="input-help"
                                                     role="textbox"
