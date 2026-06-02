@@ -491,6 +491,18 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
             if (loginRes.ok) {
               setSuccess("Account Created Successfully! 🏠✨ Welcome to UrbanSetu. Please wait a moment while we're signing you in...");
 
+              // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY so a page
+              // refresh during the PremiumLoader animation can recover the session.
+              if (loginData.token) {
+                localStorage.setItem('accessToken', loginData.token);
+                if (loginData.sessionId) localStorage.setItem('sessionId', loginData.sessionId);
+                if (loginData.refreshToken) localStorage.setItem('refreshToken', loginData.refreshToken);
+                localStorage.setItem('login', Date.now());
+              }
+              dispatch(signInSuccess(loginData));
+              syncSettingsFromUser(loginData);
+              reconnectSocket();
+
               // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
               const signupSearchParams = new URLSearchParams(location.search);
               pendingRedirectRef.current = signupSearchParams.get('redirect');
@@ -523,19 +535,10 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
 
   const finalizeLogin = async () => {
     if (pendingLoginData) {
-      if (pendingLoginData.token) {
-        localStorage.setItem('accessToken', pendingLoginData.token);
-        if (pendingLoginData.sessionId) localStorage.setItem('sessionId', pendingLoginData.sessionId);
-        if (pendingLoginData.refreshToken) localStorage.setItem('refreshToken', pendingLoginData.refreshToken);
-        localStorage.setItem('login', Date.now());
-      }
-      dispatch(signInSuccess(pendingLoginData));
-
-      // Sync user settings (theme, fontSize, language, etc.) from backend to localStorage
-      syncSettingsFromUser(pendingLoginData);
-
-      // Reconnect socket with new token
-      reconnectSocket();
+      // Tokens, Redux state, settings sync, and socket reconnection are already
+      // committed immediately after successful API response (in handleSubmit /
+      // onAuthSuccess). This function now only handles navigation
+      // after the PremiumLoader animation completes.
 
       // Use the captured redirect URL (ref is always up-to-date, no closure issues)
       // Fallback chain: ref → window.location.search (belt-and-suspenders)
@@ -1255,6 +1258,17 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       disabled={authInProgress !== null}
                       onAuthStart={setAuthInProgress}
                       onAuthSuccess={(data) => {
+                        // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY
+                        if (data.token) {
+                          localStorage.setItem('accessToken', data.token);
+                          if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+                          if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+                          localStorage.setItem('login', Date.now());
+                        }
+                        dispatch(signInSuccess(data));
+                        syncSettingsFromUser(data);
+                        reconnectSocket();
+
                         // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
                         const googleSearchParams = new URLSearchParams(location.search);
                         pendingRedirectRef.current = googleSearchParams.get('redirect');

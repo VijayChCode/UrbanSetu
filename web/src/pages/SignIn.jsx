@@ -93,6 +93,15 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         }
     }, [location.search, navigate]);
 
+    // Safety guard: clear stale loading state from redux-persist on mount.
+    // This handles the edge case where a previous login attempt was interrupted
+    // (e.g., page refresh mid-flow) and left Redux persisted with loading: true.
+    useEffect(() => {
+        if (loading && !currentUser) {
+            dispatch(signInFailure(null));
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Check for 'redirect' parameter to show context toast
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -550,15 +559,25 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 return;
             }
 
+            // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY so a page
+            // refresh during the PremiumLoader animation can recover the session.
+            if (data.token) {
+                localStorage.setItem('accessToken', data.token);
+                if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+                if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('login', Date.now()); // Notify other tabs
+            }
+            dispatch(signInSuccess(data));
+            syncSettingsFromUser(data);
+            reconnectSocket();
+
             // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
             const otpSearchParams = new URLSearchParams(location.search);
             pendingRedirectRef.current = otpSearchParams.get('redirect');
 
-            // Trigger Loading Animation
+            // Trigger Loading Animation — navigation happens in finalizeLogin
             setPendingLoginData(data);
             setShowLoader(true);
-
-            // Dispatch success deferred to finalizeLogin
 
         } catch (error) {
             dispatch(signInFailure(error.message));
@@ -658,15 +677,25 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             setRecaptchaToken(null);
             setRecaptchaError("");
 
+            // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY so a page
+            // refresh during the PremiumLoader animation can recover the session.
+            if (data.token) {
+                localStorage.setItem('accessToken', data.token);
+                if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+                if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('login', Date.now()); // Notify other tabs
+            }
+            dispatch(signInSuccess(data));
+            syncSettingsFromUser(data);
+            reconnectSocket();
+
             // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
             const pwSearchParams = new URLSearchParams(location.search);
             pendingRedirectRef.current = pwSearchParams.get('redirect');
 
-            // Trigger Loading Animation
+            // Trigger Loading Animation — navigation happens in finalizeLogin
             setPendingLoginData(data);
             setShowLoader(true);
-
-            // Dispatch success deferred to finalizeLogin
 
         } catch (error) {
             dispatch(signInFailure(error.message));
@@ -680,19 +709,10 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
 
         const data = pendingLoginData;
 
-        if (data.token) {
-            localStorage.setItem('accessToken', data.token);
-            if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
-            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
-            localStorage.setItem('login', Date.now()); // Notify other tabs
-        }
-        dispatch(signInSuccess(data));
-
-        // Sync user settings (theme, fontSize, language, etc.) from backend to localStorage
-        syncSettingsFromUser(data);
-
-        // Reconnect socket with new token
-        reconnectSocket();
+        // Tokens, Redux state, settings sync, and socket reconnection are already
+        // committed immediately after successful API response (in handleSubmit /
+        // handleOtpLogin / onAuthSuccess). This function now only handles navigation
+        // after the PremiumLoader animation completes.
 
         // Use the captured redirect URL (ref is always up-to-date, no closure issues)
         // Fallback chain: ref → window.location.search (belt-and-suspenders)
@@ -1132,6 +1152,17 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                 disabled={authInProgress !== null}
                                 onAuthStart={setAuthInProgress}
                             onAuthSuccess={(data) => {
+                                    // CRITICAL FIX: Commit tokens and Redux state IMMEDIATELY
+                                    if (data.token) {
+                                        localStorage.setItem('accessToken', data.token);
+                                        if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);
+                                        if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+                                        localStorage.setItem('login', Date.now());
+                                    }
+                                    dispatch(signInSuccess(data));
+                                    syncSettingsFromUser(data);
+                                    reconnectSocket();
+
                                     // Capture redirect URL BEFORE showing loader (ref avoids closure issues)
                                     const googleSearchParams = new URLSearchParams(location.search);
                                     pendingRedirectRef.current = googleSearchParams.get('redirect');
