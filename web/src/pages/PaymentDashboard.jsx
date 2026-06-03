@@ -348,7 +348,7 @@ const PaymentDashboard = () => {
     const status = payment.status.charAt(0).toUpperCase() + payment.status.slice(1);
 
     const description = `Payment Receipt\nProperty: ${propertyName}\nBuyer: ${buyer}\nAmount: ${amount}\nStatus: ${status}\nPayment ID: ${payment.paymentId}`;
-    const shareUrl = window.location.origin + `/admin/payments?paymentId=${payment.paymentId}`;
+    const shareUrl = window.location.origin + `/admin/payments?paymentId=${payment.paymentId}&tab=payment_history`;
 
     setShareConfig({
       url: shareUrl,
@@ -1164,7 +1164,7 @@ const PaymentDashboard = () => {
                   <button
                     onClick={() => {
                       copyPaymentLink(
-                        window.location.origin + `/admin/payments?paymentId=${selectedPayment.paymentId}`,
+                        window.location.origin + `/admin/payments?paymentId=${selectedPayment.paymentId}&tab=payment_history`,
                         `Payment Details:\nProperty: ${selectedPayment.appointmentId?.propertyName || 'N/A'}\nBuyer: ${selectedPayment.userId?.username || 'N/A'}\nAmount: ${selectedPayment.currency === 'INR' ? '₹' : '$'}{Number(selectedPayment.amount).toFixed(2)}\nStatus: ${selectedPayment.status}\nPayment ID: ${selectedPayment.paymentId}`
                       );
                     }}
