@@ -8003,7 +8003,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 {/* Message footer with timestamp and actions */}
                                                 <div className={`flex items-center justify-between mt-2 pt-2 border-t ${isDarkMode ? 'border-gray-200/20' : 'border-gray-300/60'}`}>
                                                     {message.timestamp && showTimestamps && (
-                                                        <div className={`${message.role === 'user' ? 'text-white/80' : message.isError ? (isDarkMode ? 'text-red-400' : 'text-red-700') : 'text-gray-500'} text-[10px]`}>
+                                                        <div className={`${message.role === 'user' ? 'text-white/80' : message.isError ? (isDarkMode ? 'text-red-400' : 'text-red-700') : 'text-gray-500 dark:text-gray-400'} text-[10px]`}>
                                                             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     )}
