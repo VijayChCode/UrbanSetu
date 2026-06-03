@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createPortal } from 'react-dom';
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaSync, FaCalendar, FaPhone, FaVideo, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload, FaDollarSign, FaHistory, FaCircle, FaVolumeUp, FaVolumeMute, FaEye, FaEyeSlash, FaExpand, FaCompress, FaPowerOff, FaCog, FaFileAlt, FaPlay } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaStar, FaSync, FaCalendar, FaPhone, FaVideo, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload, FaDollarSign, FaHistory, FaCircle, FaVolumeUp, FaVolumeMute, FaEye, FaEyeSlash, FaExpand, FaCompress, FaPowerOff, FaCog, FaFileAlt, FaPlay } from "react-icons/fa";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextWithReadMore } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
