@@ -11,6 +11,7 @@ import React from 'react';
 const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => {
     // REFINED RADII: Significantly reduced based on visual feedback while maintaining high-thickness logic
     const sizeClasses = {
+        xs: 'w-4 h-4',
         sm: 'w-5 h-5',
         md: 'w-8 h-8',
         lg: 'w-11 h-11',
@@ -40,7 +41,7 @@ const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => 
                     mask: 'radial-gradient(farthest-side, transparent calc(100% - 6px), black calc(100% - 5px))',
                     WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 6px), black calc(100% - 5px))',
                     // Proportional thickness reduction for smaller sizes
-                    ...(size === 'sm' && { 
+                    ...((size === 'xs' || size === 'sm') && { 
                         mask: 'radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2px))', 
                         WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2px))' 
                     }),

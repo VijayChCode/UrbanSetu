@@ -7316,7 +7316,7 @@ function AdminAppointmentRow({
                       <div className="relative flex items-center gap-2">
                         {/* Loading icon when refreshing messages */}
                         {loadingComments && (
-                          <div className="text-white bg-white/10 rounded-full p-2 shadow">
+                          <div className="text-white bg-white/10 rounded-full p-1.5 shadow">
                             <UrbanSetuSpinner size="xs" isBright={true} />
                           </div>
                         )}
@@ -7935,6 +7935,15 @@ function AdminAppointmentRow({
                                 repliedMessage = localComments.find(msg => msg._id === (c && c.replyTo));
                               }
 
+                              const getCleanRepliedMessage = (msgText) => {
+                                if (!msgText) return 'Original message';
+                                return msgText
+                                  .replace(/@\[([^\]]+)\]\(([^)]+)\)/g, '@$1')
+                                  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+                              };
+
+                              const cleanMsgText = getCleanRepliedMessage(repliedMessage?.message);
+
                               return (
                                 <div className="border-l-4 border-purple-400 pl-3 mb-2 text-xs bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 hover:from-purple-100 hover:to-blue-100 dark:hover:from-purple-900/50 dark:hover:to-blue-900/50 rounded-lg w-full max-w-full break-words cursor-pointer transition-all duration-200 hover:shadow-sm" onClick={() => {
                                   if (c && c.replyTo && messageRefs.current[c.replyTo]) {
@@ -7945,9 +7954,9 @@ function AdminAppointmentRow({
                                     }, 1600);
                                   }
                                 }} role="button" tabIndex={0} aria-label="Go to replied message">
-                                  <span className="text-xs text-gray-700 font-medium truncate max-w-[150px] flex items-center gap-1">
+                                  <span className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate max-w-[150px] flex items-center gap-1">
                                     <span className="text-purple-500">↩</span>
-                                    {repliedMessage?.message?.substring(0, 30) || 'Original message'}{repliedMessage?.message?.length > 30 ? '...' : ''}
+                                    {cleanMsgText.substring(0, 30)}{cleanMsgText.length > 30 ? '...' : ''}
                                   </span>
                                 </div>
                               );
