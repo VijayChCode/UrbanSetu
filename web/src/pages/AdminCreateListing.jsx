@@ -4,14 +4,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
-import { FaCompass, FaPlay } from "react-icons/fa";
+import { FaCompass, FaPlay, FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb, FaMagic } from "react-icons/fa";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import VideoPreview from '../components/VideoPreview';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import { useImageAuditor } from '../hooks/useImageAuditor';
-import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb, FaMagic } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from "../components/ConfirmationModal";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;

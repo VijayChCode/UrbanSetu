@@ -4,13 +4,12 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
-import { FaCompass, FaPlay } from "react-icons/fa";
+import { FaCompass, FaPlay, FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from "react-icons/fa";
 import VideoPreview from '../components/VideoPreview';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import { useImageAuditor } from '../hooks/useImageAuditor';
-import { FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb } from 'react-icons/fa';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from '../components/ConfirmationModal';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
