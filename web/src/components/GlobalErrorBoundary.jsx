@@ -36,7 +36,7 @@ class GlobalErrorBoundary extends React.Component {
         this.state = {
             hasError: false,
             error: null,
-            redirectCountdown: 10,
+            redirectCountdown: 5,
             reloadCount: parseInt(sessionStorage.getItem('err_reload_count') || '0'),
             switchCount: urlSwitchCount,
             isPersistentError: urlSwitchCount >= 2,
