@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaDollarSign, FaCreditCard, FaChartLine, FaSync, FaDownload, FaCheck, FaUndo, FaCheckCircle, FaTimes, FaExclamationTriangle, FaUsers, FaHome, FaCalendar, FaMoneyBill, FaLock, FaShare, FaEye, FaCopy, FaExternalLinkAlt, FaWallet } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import PaymentHistory from '../components/PaymentHistory';
@@ -24,8 +24,33 @@ const PaymentDashboard = () => {
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Sync activeTab with URL search parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+    const tabParam = params.get('tab');
+    const paymentId = params.get('paymentId');
+    const contractId = params.get('contractId');
+
+    if (paymentId || contractId) {
+      setActiveTab('history');
+      if (tabParam !== 'payment_history') {
+        params.set('tab', 'payment_history');
+        setSearchParams(params, { replace: true });
+      }
+    } else if (tabParam === 'overview') {
+      setActiveTab('overview');
+    } else if (tabParam === 'payment_history') {
+      setActiveTab('history');
+    } else if (tabParam === 'refund') {
+      setActiveTab('refunds');
+    } else if (!tabParam) {
+      setActiveTab('overview');
+    }
+  }, [searchParams, setSearchParams]);
   const [stats, setStats] = useState({
     totalPayments: 0,
     totalAmount: 0,
@@ -393,7 +418,22 @@ const PaymentDashboard = () => {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => {
+                      const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+                      if (tab.id === 'overview') {
+                        params.set('tab', 'overview');
+                        params.delete('category');
+                      } else if (tab.id === 'history') {
+                        params.set('tab', 'payment_history');
+                        params.delete('category');
+                      } else if (tab.id === 'refunds') {
+                        params.set('tab', 'refund');
+                        if (!params.has('category')) {
+                          params.set('category', 'direct');
+                        }
+                      }
+                      setSearchParams(params);
+                    }}
                     className={`shrink-0 py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-2 ${activeTab === tab.id
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -529,7 +569,11 @@ const PaymentDashboard = () => {
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   <button
-                    onClick={() => setActiveTab('history')}
+                    onClick={() => {
+                      const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+                      params.set('tab', 'payment_history');
+                      setSearchParams(params);
+                    }}
                     className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 p-3 sm:p-4 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-2 sm:gap-3"
                   >
                     <FaCreditCard className="text-lg sm:text-xl" />
@@ -540,7 +584,12 @@ const PaymentDashboard = () => {
                   </button>
 
                   <button
-                    onClick={() => setActiveTab('refunds')}
+                    onClick={() => {
+                      const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+                      params.set('tab', 'refund');
+                      params.set('category', 'direct');
+                      setSearchParams(params);
+                    }}
                     className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 sm:p-4 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-2 sm:gap-3"
                   >
                     <FaUndo className="text-lg sm:text-xl" />

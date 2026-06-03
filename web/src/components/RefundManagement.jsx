@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaUndo, FaDollarSign, FaRupeeSign, FaExclamationTriangle, FaCheckCircle, FaTimes, FaSearch, FaFilter, FaRedo, FaInfo } from 'react-icons/fa';
+import { useSearchParams } from 'react-router-dom';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
@@ -34,7 +35,20 @@ const RefundManagement = ({ onRefundProcessed }) => {
     dateTo: ''
   });
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('payments'); // 'payments' or 'requests'
+  
+  // Sync activeTab with category parameter in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+    const category = params.get('category');
+    if (category === 'requests') {
+      setActiveTab('requests');
+    } else {
+      setActiveTab('payments');
+    }
+  }, [searchParams]);
+
   const [selectedRefundRequest, setSelectedRefundRequest] = useState(null);
   const [showRefundRequestModal, setShowRefundRequestModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
@@ -405,7 +419,12 @@ const RefundManagement = ({ onRefundProcessed }) => {
       {/* Tabs */}
       <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
         <button
-          onClick={() => setActiveTab('payments')}
+          onClick={() => {
+            const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+            params.set('tab', 'refund');
+            params.set('category', 'direct');
+            setSearchParams(params);
+          }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'payments'
             ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
@@ -414,7 +433,12 @@ const RefundManagement = ({ onRefundProcessed }) => {
           Direct Refunds
         </button>
         <button
-          onClick={() => setActiveTab('requests')}
+          onClick={() => {
+            const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+            params.set('tab', 'refund');
+            params.set('category', 'requests');
+            setSearchParams(params);
+          }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${activeTab === 'requests'
             ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
             : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
