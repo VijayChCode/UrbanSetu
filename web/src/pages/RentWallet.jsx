@@ -296,9 +296,19 @@ export default function RentWallet() {
               <p className="text-gray-600 dark:text-gray-300">
                 Contract ID: <span className="font-semibold break-all text-gray-800 dark:text-gray-200">{contract.contractId}</span>
               </p>
-              {contract.listingId && typeof contract.listingId === 'object' && (
+              {contract.listingId && typeof contract.listingId === "object" && (
                 <p className="text-gray-600 dark:text-gray-300">
                   Property: <span className="font-semibold text-gray-800 dark:text-gray-200">{contract.listingId.name}</span>
+                </p>
+              )}
+              {isTenant && contract.landlordId && (
+                <p className="text-gray-600 dark:text-gray-300">
+                  Landlord: <span className="font-semibold text-gray-800 dark:text-gray-200">{contract.landlordId.username || contract.landlordId.name || "N/A"}</span> ({contract.landlordId.email || "N/A"})
+                </p>
+              )}
+              {isLandlord && contract.tenantId && (
+                <p className="text-gray-600 dark:text-gray-300">
+                  Tenant: <span className="font-semibold text-gray-800 dark:text-gray-200">{contract.tenantId.username || contract.tenantId.name || "N/A"}</span> ({contract.tenantId.email || "N/A"})
                 </p>
               )}
             </div>
