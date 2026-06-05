@@ -867,7 +867,7 @@ export default function RentalContracts() {
 
                       {displayStatus === 'active' && (
                         <button
-                          onClick={() => navigate(`/user/rent-wallet?contractId=${contractIdentifier}`)}
+                          onClick={() => navigate(`/user/rent-wallet?contractId=${contractIdentifier}&tab=overview`)}
                           className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-md ${isTenant ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
                           <FaMoneyBillWave /> {isTenant ? 'Rent Wallet' : 'Monitor Rent Wallet'}
