@@ -14,6 +14,7 @@ import { ImageFavoritesProvider } from "./contexts/ImageFavoritesContext";
 import { HeaderProvider, useHeader } from "./contexts/HeaderContext";
 import { CallProvider, useCallContext } from "./contexts/CallContext";
 import ContactSupportWrapper from "./components/ContactSupportWrapper";
+import UserAvatar from "./components/UserAvatar";
 import NetworkStatus from "./components/NetworkStatus";
 import CookieConsent from "./components/CookieConsent";
 import VisitorTracker from "./components/VisitorTracker";
@@ -44,7 +45,7 @@ import UserPrivacy from "./pages/UserPrivacy";
 import AdminPrivacy from "./pages/AdminPrivacy";
 import UserCookiePolicy from "./pages/UserCookiePolicy";
 import AdminCookiePolicy from "./pages/AdminCookiePolicy";
-import { FaHome } from "react-icons/fa";
+import { FaHome, FaServer, FaArrowRight } from "react-icons/fa";
 import { LogOut } from "lucide-react";
 import AdminManagement from './pages/AdminManagement';
 import { ToastContainer } from 'react-toastify';
@@ -501,8 +502,10 @@ function AppRoutes({ bootstrapped }) {
   const isYearPath = location.pathname.includes('/year/');
   const hideHeaderRoutes = ["/appointments"];
 
-  // Persistent session check on app load — single source of truth for auth verification
-  useEffect(() => {
+  const [pendingTransfer, setPendingTransfer] = useState(null);
+  const [checkingTransferUser, setCheckingTransferUser] = useState(false);
+
+  const runSessionCheck = async () => {
     const isTransfer = sessionStorage.getItem('transfer_pending') === 'true';
     const isTransferFailed = sessionStorage.getItem('transfer_failed') === 'true';
     const hasSessionConflict = sessionStorage.getItem('transfer_session_conflict') === 'true';
@@ -517,59 +520,194 @@ function AppRoutes({ bootstrapped }) {
       toast.error('Session transfer failed — the token was invalid or expired. Please sign in again.', { autoClose: 6000 });
     }
 
-    const checkSession = async () => {
-      // If no token exists at all, user is not logged in — skip server verification
-      if (!localStorage.getItem('accessToken')) {
-        setSessionChecked(true);
-        return;
-      }
+    // If no token exists at all, user is not logged in — skip server verification
+    if (!localStorage.getItem('accessToken')) {
+      setSessionChecked(true);
+      return;
+    }
 
-      dispatch(verifyAuthStart());
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/verify`, {
-          method: 'GET'
-        });
-        const data = await res.json();
-        if (res.ok && data.authenticated !== false && data._id) {
-          // Server confirmed session is valid — update Redux with fresh user data
-          dispatch(verifyAuthSuccess(data));
+    dispatch(verifyAuthStart());
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/auth/verify`, {
+        method: 'GET'
+      });
+      const data = await res.json();
+      if (res.ok && data.authenticated !== false && data._id) {
+        // Server confirmed session is valid — update Redux with fresh user data
+        dispatch(verifyAuthSuccess(data));
 
-          // Show transfer-specific feedback
-          if (isTransfer) {
-            if (hasSessionConflict) {
-              toast.info('Session transferred from another server. Your previous session on this domain was replaced.', { autoClose: 5000 });
-            } else {
-              toast.success('Session transferred successfully from backup server.', { autoClose: 4000 });
-            }
-          }
-        } else {
-          // Server explicitly confirmed session is invalid — clean up completely
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('sessionId');
-          localStorage.removeItem('refreshToken');
-          await persistor.purge();
-          dispatch(verifyAuthFailure(data.message || 'Session invalid'));
-          dispatch(signoutUserSuccess());
-
-          // Show transfer-specific error
-          if (isTransfer) {
-            toast.error('Session transfer failed — the session is no longer valid. Please sign in again.', { autoClose: 6000 });
-          }
-        }
-      } catch (err) {
-        console.warn('Session verification network error, keeping existing state:', err);
-        // Do NOT sign out on network error — trust local persisted state for resilience
+        // Show transfer-specific feedback
         if (isTransfer) {
-          toast.warning('Session transferred but could not verify with server. You may need to sign in again if issues persist.', { autoClose: 5000 });
+          if (hasSessionConflict) {
+            toast.info('Session transferred from another server. Your previous session on this domain was replaced.', { autoClose: 5000 });
+          } else {
+            toast.success('Session transferred successfully from backup server.', { autoClose: 4000 });
+          }
         }
-      } finally {
-        setSessionChecked(true);
+      } else {
+        // Server explicitly confirmed session is invalid — clean up completely
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem('refreshToken');
+        await persistor.purge();
+        dispatch(verifyAuthFailure(data.message || 'Session invalid'));
+        dispatch(signoutUserSuccess());
+
+        // Show transfer-specific error
+        if (isTransfer) {
+          toast.error('Session transfer failed — the session is no longer valid. Please sign in again.', { autoClose: 6000 });
+        }
       }
-    };
-    if (bootstrapped) {
-      checkSession();
+    } catch (err) {
+      console.warn('Session verification network error, keeping existing state:', err);
+      // Do NOT sign out on network error — trust local persisted state for resilience
+      if (isTransfer) {
+        toast.warning('Session transferred but could not verify with server. You may need to sign in again if issues persist.', { autoClose: 5000 });
+      }
+    } finally {
+      setSessionChecked(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!bootstrapped) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const transferToken = params.get('transfer_token');
+    const transferSession = params.get('transfer_session');
+    const transferRefresh = params.get('transfer_refresh');
+
+    if (transferToken) {
+      // Validate JWT structure before storing (must be 3 dot-separated base64 parts with valid payload)
+      let isValid = false;
+      try {
+        const parts = transferToken.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          // Check that the token has an expiry and is not already expired
+          if (payload && payload.exp && payload.exp > Date.now() / 1000) {
+            isValid = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Transfer token validation failed:', e.message);
+      }
+
+      // Always clean URL regardless of validation outcome
+      params.delete('transfer_token');
+      params.delete('transfer_session');
+      params.delete('transfer_refresh');
+      const newSearch = params.toString();
+      const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+      window.history.replaceState({}, '', newPath);
+
+      if (isValid) {
+        const existingToken = localStorage.getItem('accessToken');
+        if (existingToken) {
+          // There is an existing session - let's fetch details of the transfer token first
+          setCheckingTransferUser(true);
+
+          fetch(`${API_BASE_URL}/api/auth/verify`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${transferToken}`,
+              ...(transferSession ? { 'X-Session-Id': transferSession } : {})
+            }
+          })
+            .then(res => res.json())
+            .then(data => {
+              setCheckingTransferUser(false);
+              if (data && data._id && data.email) {
+                // Determine current user email from Redux or local storage
+                let existingEmail = '';
+                let existingId = '';
+                try {
+                  const existingPayload = JSON.parse(atob(existingToken.split('.')[1]));
+                  existingId = existingPayload.id || '';
+                  existingEmail = currentUser?.email || '';
+                  if (!existingEmail) {
+                    const userInfoStr = localStorage.getItem('persist:root');
+                    if (userInfoStr) {
+                      const parsed = JSON.parse(userInfoStr);
+                      const user = JSON.parse(parsed.user);
+                      existingEmail = user?.currentUser?.email || '';
+                    }
+                  }
+                } catch (e) {}
+
+                // If user IDs/emails differ, ask for confirmation
+                const transferPayload = JSON.parse(atob(transferToken.split('.')[1]));
+                const isDifferentUser = (existingId && transferPayload.id && existingId !== transferPayload.id) ||
+                                        (existingEmail && data.email && existingEmail.toLowerCase() !== data.email.toLowerCase());
+
+                if (isDifferentUser) {
+                  // Conflict! Set pending transfer and flag to render page + modal
+                  const currentUsername = currentUser?.username || existingEmail.split('@')[0] || 'Active User';
+                  setPendingTransfer({
+                    token: transferToken,
+                    session: transferSession,
+                    refresh: transferRefresh,
+                    targetPath: newPath,
+                    currentUser: currentUser ? { ...currentUser, email: existingEmail, username: currentUsername } : { email: existingEmail, username: currentUsername },
+                    newUser: data
+                  });
+                  setSessionChecked(true); // render pages with the modal overlay
+                } else {
+                  // Same user - just overwrite and check
+                  localStorage.setItem('accessToken', transferToken);
+                  if (transferSession) localStorage.setItem('sessionId', transferSession);
+                  if (transferRefresh) localStorage.setItem('refreshToken', transferRefresh);
+                  sessionStorage.setItem('transfer_pending', 'true');
+                  runSessionCheck();
+                }
+              } else {
+                sessionStorage.setItem('transfer_failed', 'true');
+                runSessionCheck();
+              }
+            })
+            .catch(err => {
+              setCheckingTransferUser(false);
+              console.error('Error verifying transfer token user:', err);
+              sessionStorage.setItem('transfer_failed', 'true');
+              runSessionCheck();
+            });
+        } else {
+          // No existing session - proceed directly with switch
+          localStorage.setItem('accessToken', transferToken);
+          if (transferSession) localStorage.setItem('sessionId', transferSession);
+          if (transferRefresh) localStorage.setItem('refreshToken', transferRefresh);
+          sessionStorage.setItem('transfer_pending', 'true');
+          runSessionCheck();
+        }
+      } else {
+        // Invalid transfer token
+        sessionStorage.setItem('transfer_failed', 'true');
+        runSessionCheck();
+      }
+    } else {
+      // Normal application load
+      runSessionCheck();
     }
   }, [bootstrapped, dispatch]);
+
+  const handleConfirmTransfer = () => {
+    if (!pendingTransfer) return;
+
+    localStorage.setItem('accessToken', pendingTransfer.token);
+    if (pendingTransfer.session) localStorage.setItem('sessionId', pendingTransfer.session);
+    if (pendingTransfer.refresh) localStorage.setItem('refreshToken', pendingTransfer.refresh);
+    
+    sessionStorage.setItem('transfer_session_conflict', 'true');
+    sessionStorage.setItem('transfer_pending', 'true');
+
+    const target = pendingTransfer.targetPath;
+    setPendingTransfer(null);
+    window.location.href = target;
+  };
+
+  const handleCancelTransfer = () => {
+    setPendingTransfer(null);
+  };
 
   // Socket event listener for account suspension
   useEffect(() => {
@@ -912,13 +1050,85 @@ function AppRoutes({ bootstrapped }) {
   }, [dispatch, navigate, currentUser]);
 
   // Show loader while checking session
-  if (!bootstrapped || !sessionChecked) {
+  if (!bootstrapped || !sessionChecked || checkingTransferUser) {
     return <LoadingSpinner />;
   }
 
   return (
     <>
       <NetworkStatus />
+
+      {/* Session Transfer Confirmation Modal */}
+      {pendingTransfer && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fadeIn animate-duration-200">
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full filter blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full filter blur-2xl"></div>
+
+            {/* Icon */}
+            <div className="mx-auto w-16 h-16 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6 animate-pulse">
+              <FaServer className="text-3xl text-blue-500" />
+            </div>
+
+            <h2 className="text-2xl font-black text-white mb-3">Switch Session?</h2>
+            
+            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+              A session transfer was requested from a backup server. You are already logged in on this device.
+            </p>
+
+            {/* Side-by-Side User Comparison with Avatars */}
+            <div className="flex items-center justify-between gap-4 bg-slate-950/40 border border-slate-800/80 rounded-2xl p-6 mb-8">
+              {/* Current user */}
+              <div className="flex flex-col items-center flex-1 min-w-0 text-center">
+                <UserAvatar user={pendingTransfer.currentUser} size="w-16 h-16" textSize="text-lg" showBorder={true} className="border-2 border-slate-700 shadow-md" />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-3">Current User</span>
+                <span className="text-sm font-bold text-white truncate max-w-full mt-1">
+                  {pendingTransfer.currentUser.username || 'Active User'}
+                </span>
+                <span className="text-[11px] text-slate-400 truncate max-w-full mt-0.5">
+                  {pendingTransfer.currentUser.email}
+                </span>
+              </div>
+
+              {/* Transition arrow */}
+              <div className="flex flex-col items-center justify-center text-blue-500 animate-pulse">
+                <FaArrowRight className="text-xl" />
+              </div>
+
+              {/* Incoming user */}
+              <div className="flex flex-col items-center flex-1 min-w-0 text-center">
+                <UserAvatar user={pendingTransfer.newUser} size="w-16 h-16" textSize="text-lg" showBorder={true} className="border-2 border-blue-500 shadow-md animate-pulse" />
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mt-3">New Session</span>
+                <span className="text-sm font-black text-white truncate max-w-full mt-1">
+                  {pendingTransfer.newUser.username || 'New User'}
+                </span>
+                <span className="text-[11px] text-blue-300 truncate max-w-full mt-0.5">
+                  {pendingTransfer.newUser.email}
+                </span>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleConfirmTransfer}
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span>Switch to New Session</span>
+                <FaArrowRight className="text-xs" />
+              </button>
+
+              <button
+                onClick={handleCancelTransfer}
+                className="w-full py-3 px-4 bg-transparent border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98] hover:border-slate-700"
+              >
+                <span>Keep Current Session</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <CookieConsent />
       <VisitorTracker />
       <GoogleOneTap />
@@ -1168,61 +1378,7 @@ export default function App({ bootstrapped }) {
   // Set this to true to halt all services and show the maintenance page
   const MAINTENANCE_MODE = false;
 
-  // Handle cross-domain auth transfer with JWT validation
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const transferToken = params.get('transfer_token');
-    const transferSession = params.get('transfer_session');
-    const transferRefresh = params.get('transfer_refresh');
-
-    if (transferToken) {
-      // Validate JWT structure before storing (must be 3 dot-separated base64 parts with valid payload)
-      let isValid = false;
-      try {
-        const parts = transferToken.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1]));
-          // Check that the token has an expiry and is not already expired
-          if (payload && payload.exp && payload.exp > Date.now() / 1000) {
-            isValid = true;
-          }
-        }
-      } catch (e) {
-        console.warn('Transfer token validation failed:', e.message);
-      }
-
-      if (isValid) {
-        // Check if there was an existing session for a different user
-        const existingToken = localStorage.getItem('accessToken');
-        if (existingToken) {
-          try {
-            const existingPayload = JSON.parse(atob(existingToken.split('.')[1]));
-            const transferPayload = JSON.parse(atob(transferToken.split('.')[1]));
-            if (existingPayload.id && transferPayload.id && existingPayload.id !== transferPayload.id) {
-              sessionStorage.setItem('transfer_session_conflict', 'true');
-            }
-          } catch (e) { /* ignore comparison errors */ }
-        }
-
-        localStorage.setItem('accessToken', transferToken);
-        if (transferSession) localStorage.setItem('sessionId', transferSession);
-        if (transferRefresh) localStorage.setItem('refreshToken', transferRefresh);
-        // Flag so AppRoutes checkSession can show transfer-specific feedback
-        sessionStorage.setItem('transfer_pending', 'true');
-      } else {
-        // Token is malformed or expired — don't store, flag for error toast
-        sessionStorage.setItem('transfer_failed', 'true');
-      }
-
-      // Always clean URL regardless of validation outcome
-      params.delete('transfer_token');
-      params.delete('transfer_session');
-      params.delete('transfer_refresh');
-      const newSearch = params.toString();
-      const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : '');
-      window.history.replaceState({}, '', newPath);
-    }
-  }, []);
+  // URL parameters and transfers are fully handled within AppRoutes to enable confirmation dialogs
 
 
   if (MAINTENANCE_MODE) {
