@@ -17,6 +17,10 @@ import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const getNormalizedSearchParams = () => {
+  return new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+};
+
 const PaymentDashboard = () => {
   // Set page title
   usePageTitle("Payment Dashboard - Financial Management");
@@ -30,7 +34,7 @@ const PaymentDashboard = () => {
 
   // Sync activeTab with URL search parameters
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+    const params = getNormalizedSearchParams();
     const tabParam = params.get('tab');
     const paymentId = params.get('paymentId');
     const contractId = params.get('contractId');
@@ -99,7 +103,7 @@ const PaymentDashboard = () => {
 
   // Helper to clear paymentId from URL
   const clearPaymentIdFromUrl = () => {
-    const params = new URLSearchParams(window.location.search);
+    const params = getNormalizedSearchParams();
     if (params.get('paymentId')) {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
@@ -113,7 +117,7 @@ const PaymentDashboard = () => {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = getNormalizedSearchParams();
     const paymentId = params.get('paymentId');
     const contractId = params.get('contractId');
 
@@ -284,7 +288,7 @@ const PaymentDashboard = () => {
       const q = qSel ? qSel.value : '';
       const fromDate = fromSel ? fromSel.value : '';
       const toDate = toSel ? toSel.value : '';
-      const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = getNormalizedSearchParams();
       const contractId = urlParams.get('contractId') || '';
 
       const [usdRes, inrRes] = await Promise.all([
@@ -419,7 +423,7 @@ const PaymentDashboard = () => {
                   <button
                     key={tab.id}
                     onClick={() => {
-                      const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+                      const params = getNormalizedSearchParams();
                       if (tab.id === 'overview') {
                         params.set('tab', 'overview');
                         params.delete('category');
@@ -570,7 +574,7 @@ const PaymentDashboard = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   <button
                     onClick={() => {
-                      const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+                      const params = getNormalizedSearchParams();
                       params.set('tab', 'payment_history');
                       setSearchParams(params);
                     }}
@@ -585,7 +589,7 @@ const PaymentDashboard = () => {
 
                   <button
                     onClick={() => {
-                      const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+                      const params = getNormalizedSearchParams();
                       params.set('tab', 'refund');
                       params.set('category', 'direct');
                       setSearchParams(params);
@@ -622,15 +626,15 @@ const PaymentDashboard = () => {
           {activeTab === 'history' && (
             <div className="space-y-6">
               <div className="flex flex-wrap gap-3">
-                {new URLSearchParams(window.location.search).get('contractId') && (
+                {getNormalizedSearchParams().get('contractId') && (
                   <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-2 rounded-xl text-xs font-bold border border-indigo-100 dark:border-indigo-800 animate-in fade-in slide-in-from-left-2 shadow-sm">
                     <FaWallet className="text-sm" />
-                    <span>Contract Audit: {new URLSearchParams(window.location.search).get('contractId')}</span>
+                    <span>Contract Audit: {getNormalizedSearchParams().get('contractId')}</span>
                     <button
                       onClick={() => {
-                        const url = new URL(window.location.href);
-                        url.searchParams.delete('contractId');
-                        navigate(url.pathname + url.search);
+                        const params = getNormalizedSearchParams();
+                        params.delete('contractId');
+                        navigate(window.location.pathname + '?' + params.toString());
                         fetchAdminPayments();
                       }}
                       className="ml-2 bg-white dark:bg-gray-800 p-1 rounded-full hover:bg-white/80 dark:hover:bg-gray-700 transition-all text-indigo-500 shadow-sm"
@@ -640,15 +644,15 @@ const PaymentDashboard = () => {
                     </button>
                   </div>
                 )}
-                {new URLSearchParams(window.location.search).get('paymentId') && (
+                {getNormalizedSearchParams().get('paymentId') && (
                   <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-xl text-xs font-bold border border-purple-100 dark:border-purple-800 animate-in fade-in slide-in-from-left-2 shadow-sm">
                     <FaCreditCard className="text-sm" />
-                    <span>Focus Payment: {new URLSearchParams(window.location.search).get('paymentId')}</span>
+                    <span>Focus Payment: {getNormalizedSearchParams().get('paymentId')}</span>
                     <button
                       onClick={() => {
-                        const url = new URL(window.location.href);
-                        url.searchParams.delete('paymentId');
-                        navigate(url.pathname + url.search);
+                        const params = getNormalizedSearchParams();
+                        params.delete('paymentId');
+                        navigate(window.location.pathname + '?' + params.toString());
                         fetchAdminPayments();
                       }}
                       className="ml-2 bg-white dark:bg-gray-800 p-1 rounded-full hover:bg-white/80 dark:hover:bg-gray-700 transition-all text-purple-500 shadow-sm"

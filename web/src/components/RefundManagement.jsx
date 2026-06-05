@@ -5,6 +5,10 @@ import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 
+const getNormalizedSearchParams = () => {
+  return new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+};
+
 const RefundManagement = ({ onRefundProcessed }) => {
   const [payments, setPayments] = useState([]);
   const [refundRequests, setRefundRequests] = useState([]);
@@ -40,7 +44,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
   
   // Sync activeTab with category parameter in URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+    const params = getNormalizedSearchParams();
     const category = params.get('category');
     if (category === 'requests') {
       setActiveTab('requests');
@@ -420,7 +424,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
       <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
         <button
           onClick={() => {
-            const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+            const params = getNormalizedSearchParams();
             params.set('tab', 'refund');
             params.set('category', 'direct');
             setSearchParams(params);
@@ -434,7 +438,7 @@ const RefundManagement = ({ onRefundProcessed }) => {
         </button>
         <button
           onClick={() => {
-            const params = new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+            const params = getNormalizedSearchParams();
             params.set('tab', 'refund');
             params.set('category', 'requests');
             setSearchParams(params);
