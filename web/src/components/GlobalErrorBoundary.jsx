@@ -432,7 +432,7 @@ class GlobalErrorBoundary extends React.Component {
                     </div>
 
                     {/* Persistent Error Recommendations Section */}
-                    {isPersistentError && (
+                    {isPersistentError && !(this.getCurrentUser() && (this.getCurrentUser().role === 'admin' || this.getCurrentUser().role === 'rootadmin')) && (
                         <div className="w-full max-w-6xl animate-fade-in-up z-10" style={{ animationDelay: '0.4s' }}>
                             <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
                                 <div className="bg-slate-900/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-slate-800/50 shadow-xl text-left">

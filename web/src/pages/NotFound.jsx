@@ -174,111 +174,113 @@ export default function NotFound() {
         </div>
 
         {/* Dynamic Property Recommendations Section */}
-        <div className="w-full animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-          <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-                    <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
-                      {currentUser ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
-                    </span>
-                    {currentUser ? "Sentinel Live" : "Explore Properties"}
-                  </h2>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
-                      <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                        {loading ? "GENERATING RECOMMENDATIONS..." : (currentUser ? (recommendations.length > 0 ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS")}
+        {!(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')) && (
+          <div className="w-full animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="relative overflow-hidden p-1 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-[2.5rem]">
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl p-8 rounded-[2.4rem] border border-white/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                      <span className="p-2 bg-blue-600 text-white rounded-xl shadow-lg ring-4 ring-blue-50 dark:ring-blue-900/10">
+                        {currentUser ? <FaRobot className="animate-pulse" /> : <FaRocket className="animate-bounce" />}
                       </span>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
-                      {loading ? "Analyzing your preferences" : (currentUser ? "Tensor-mode active" : "Real-time updates")}
-                    </p>
-                  </div>
-                </div>
-                {!loading && (recommendations.length > 0 || !currentUser) && (
-                  <Link
-                    to={explorePath}
-                    className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
-                  >
-                    View All <FaArrowRight />
-                  </Link>
-                )}
-              </div>
-
-              {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={`skel-${i}`} className="animate-pulse rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
-                      <div className="aspect-[16/10] bg-gray-200 dark:bg-gray-700" />
-                      <div className="p-4 space-y-3">
-                        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4" />
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3" />
-                        <div className="flex gap-3">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
-                        </div>
-                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-full mt-2" />
+                      {currentUser ? "Sentinel Live" : "Explore Properties"}
+                    </h2>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-full w-fit">
+                        <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                          {loading ? "GENERATING RECOMMENDATIONS..." : (currentUser ? (recommendations.length > 0 ? "PERSONALIZED RECOMMENDATIONS BASED ON YOUR ACTIVITY & LIKES" : "AI PERSONALIZATION ENGINE") : "HANDPICKED RECOMMENDATIONS")}
+                        </span>
                       </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1 font-medium italic">
+                        {loading ? "Analyzing your preferences" : (currentUser ? "Tensor-mode active" : "Real-time updates")}
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                  {!loading && (recommendations.length > 0 || !currentUser) && (
+                    <Link
+                      to={explorePath}
+                      className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 transition-all hover:translate-x-1"
+                    >
+                      View All <FaArrowRight />
+                    </Link>
+                  )}
                 </div>
-              ) : recommendations.length > 0 ? (
-                <>
+
+                {loading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {recommendations.slice(0, visibleRecsCount).map((listing, index) => (
-                      <div
-                        key={`rec-${listing._id}`}
-                        className="relative group overflow-visible animate-sentinel-fade-in"
-                        style={{ animationDelay: `${(index % 4) * 120}ms` }}
-                      >
-                        {listing.isLiveMatch && (
-                          <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
-                            {Number.isFinite(listing.sentinelScore) && listing.sentinelScore > 0
-                              ? `${Math.round(listing.sentinelScore * 100)}% MATCH`
-                              : 'TOP PICK'}
+                    {[...Array(4)].map((_, i) => (
+                      <div key={`skel-${i}`} className="animate-pulse rounded-2xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-lg">
+                        <div className="aspect-[16/10] bg-gray-200 dark:bg-gray-700" />
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4" />
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3" />
+                          <div className="flex gap-3">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16" />
                           </div>
-                        )}
-                        <ListingItem listing={listing} />
+                          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-full mt-2" />
+                        </div>
                       </div>
                     ))}
                   </div>
+                ) : recommendations.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {recommendations.slice(0, visibleRecsCount).map((listing, index) => (
+                        <div
+                          key={`rec-${listing._id}`}
+                          className="relative group overflow-visible animate-sentinel-fade-in"
+                          style={{ animationDelay: `${(index % 4) * 120}ms` }}
+                        >
+                          {listing.isLiveMatch && (
+                            <div className="absolute -top-2 -right-2 z-20 bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform">
+                              {Number.isFinite(listing.sentinelScore) && listing.sentinelScore > 0
+                                ? `${Math.round(listing.sentinelScore * 100)}% MATCH`
+                                : 'TOP PICK'}
+                            </div>
+                          )}
+                          <ListingItem listing={listing} />
+                        </div>
+                      ))}
+                    </div>
 
-                  {recommendations.length > visibleRecsCount && (
-                    <div className="mt-8 text-center">
-                      <button
-                        onClick={() => setVisibleRecsCount(prev => prev + 4)}
-                        className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 mx-auto"
+                    {recommendations.length > visibleRecsCount && (
+                      <div className="mt-8 text-center">
+                        <button
+                          onClick={() => setVisibleRecsCount(prev => prev + 4)}
+                          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 mx-auto"
+                        >
+                          <FaRobot className="text-sm" />
+                          View More Recommendations <FaArrowRight />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  currentUser && (
+                    <div className="py-12 px-6 text-center animate-fade-in">
+                      <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
+                        <FaRocket className="text-4xl text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sentinel is getting ready! 🤖</h3>
+                      <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
+                        Explore properties or add them to your wishlist to unlock your personalized **Sentinel Live** recommendations here.
+                      </p>
+                      <Link
+                        to="/search"
+                        className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
                       >
-                        <FaRobot className="text-sm" />
-                        View More Recommendations <FaArrowRight />
-                      </button>
+                        Explore Now <FaArrowRight />
+                      </Link>
                     </div>
-                  )}
-                </>
-              ) : (
-                currentUser && (
-                  <div className="py-12 px-6 text-center animate-fade-in">
-                    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-6">
-                      <FaRocket className="text-4xl text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sentinel is getting ready! 🤖</h3>
-                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto leading-relaxed">
-                      Explore properties or add them to your wishlist to unlock your personalized **Sentinel Live** recommendations here.
-                    </p>
-                    <Link
-                      to="/search"
-                      className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all hover:scale-105 active:scale-95"
-                    >
-                      Explore Now <FaArrowRight />
-                    </Link>
-                  </div>
-                )
-              )}
+                  )
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Simple Footer Links */}
         <div className="text-center pb-10">
