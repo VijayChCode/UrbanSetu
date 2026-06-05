@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate, useParams } from "react-router-dom";
 import React, { useEffect, Suspense, lazy, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, signoutUserSuccess, updateUserSuccess } from "./redux/user/userSlice.js";
+import { verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, signoutUserSuccess, updateUserSuccess, signInSuccess, signoutUserStart } from "./redux/user/userSlice.js";
 import { persistor } from './redux/store';
-import { socket } from "./utils/socket";
+import { socket, reconnectSocket } from "./utils/socket";
 import { authenticatedFetch, isAuthenticated } from './utils/auth';
 import Header from './components/Header';
 import AdminHeader from './components/AdminHeader';
@@ -15,6 +15,8 @@ import { HeaderProvider, useHeader } from "./contexts/HeaderContext";
 import { CallProvider, useCallContext } from "./contexts/CallContext";
 import ContactSupportWrapper from "./components/ContactSupportWrapper";
 import UserAvatar from "./components/UserAvatar";
+import { resetSettingsToDefaults, syncSettingsFromUser } from "./utils/settingsSync";
+import { clearSentinelData } from "./utils/sentinelLiveEngine";
 import NetworkStatus from "./components/NetworkStatus";
 import CookieConsent from "./components/CookieConsent";
 import VisitorTracker from "./components/VisitorTracker";
@@ -538,6 +540,11 @@ function AppRoutes({ bootstrapped }) {
 
         // Show transfer-specific feedback
         if (isTransfer) {
+          try {
+            syncSettingsFromUser(data);
+          } catch (e) {}
+          reconnectSocket();
+
           if (hasSessionConflict) {
             toast.info('Session transferred from another server. Your previous session on this domain was replaced.', { autoClose: 5000 });
           } else {
@@ -690,19 +697,76 @@ function AppRoutes({ bootstrapped }) {
     }
   }, [bootstrapped, dispatch]);
 
-  const handleConfirmTransfer = () => {
+  const handleConfirmTransfer = async () => {
     if (!pendingTransfer) return;
 
-    localStorage.setItem('accessToken', pendingTransfer.token);
-    if (pendingTransfer.session) localStorage.setItem('sessionId', pendingTransfer.session);
-    if (pendingTransfer.refresh) localStorage.setItem('refreshToken', pendingTransfer.refresh);
-    
-    sessionStorage.setItem('transfer_session_conflict', 'true');
-    sessionStorage.setItem('transfer_pending', 'true');
+    // 1. Show Signout loading modal
+    dispatch(signoutUserStart());
 
-    const target = pendingTransfer.targetPath;
-    setPendingTransfer(null);
-    window.location.href = target;
+    // Allow the modal animation to play for at least 1.5 seconds to feel smooth and premium
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    try {
+      // 2. Perform the local cleanups of current session (safely clearing cookies, persist store, sockets, etc.)
+      await persistor.purge();
+
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('refreshToken');
+      localStorage.setItem('logout', Date.now().toString());
+      
+      document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
+      document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
+      document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
+
+      try {
+        resetSettingsToDefaults();
+      } catch (e) {
+        console.warn("resetSettingsToDefaults failed:", e);
+      }
+
+      if (currentUser?._id) {
+        try {
+          clearSentinelData(currentUser._id);
+        } catch (e) {
+          console.warn("clearSentinelData failed:", e);
+        }
+      }
+
+      if (socket && socket.connected) {
+        socket.disconnect();
+      }
+
+      // 3. Clear Redux signing out state
+      dispatch(signoutUserSuccess());
+
+      // 4. Safely sign in to new user B's session
+      localStorage.setItem('accessToken', pendingTransfer.token);
+      if (pendingTransfer.session) localStorage.setItem('sessionId', pendingTransfer.session);
+      if (pendingTransfer.refresh) localStorage.setItem('refreshToken', pendingTransfer.refresh);
+      localStorage.setItem('login', Date.now().toString());
+
+      dispatch(signInSuccess(pendingTransfer.newUser));
+      try {
+        syncSettingsFromUser(pendingTransfer.newUser);
+      } catch (e) {
+        console.warn("syncSettingsFromUser failed:", e);
+      }
+      reconnectSocket();
+
+      sessionStorage.setItem('transfer_session_conflict', 'true');
+      sessionStorage.setItem('transfer_pending', 'true');
+
+      const target = pendingTransfer.targetPath;
+      setPendingTransfer(null);
+
+      // 5. Navigate to target URL
+      window.location.href = target;
+    } catch (err) {
+      console.error("Session switch failed:", err);
+      dispatch(signoutUserSuccess());
+      setPendingTransfer(null);
+    }
   };
 
   const handleCancelTransfer = () => {
