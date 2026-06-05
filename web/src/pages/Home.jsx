@@ -1246,7 +1246,7 @@ export default function Home() {
                               </p>
                             </div>
                             <Link
-                              to={`/user/rent-wallet?contractId=${contract._id}`}
+                              to={`/user/rent-wallet?contractId=${contract._id}&tab=overview`}
                               className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm text-center shadow-lg shadow-red-500/20 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
                             >
                               Pay Rent Now <FaArrowRight />

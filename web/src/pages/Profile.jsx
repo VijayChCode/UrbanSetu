@@ -2805,7 +2805,7 @@ export default function Profile() {
             {(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? (
               <>
                 <Link
-                  to="/admin/payments"
+                  to="/admin/payments?tab=overview"
                   className={`bg-emerald-500 text-white p-3 rounded-lg hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center group ${animationClasses.bounceIn} animation-delay-900`}
                 >
                   <FaCreditCard className={`w-4 h-4 mb-1 transition-transform duration-300 group-hover:${animationClasses.bounce}`} />
