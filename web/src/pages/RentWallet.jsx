@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
 import { FaWallet, FaCalendarAlt, FaHistory, FaCog, FaMoneyBillWave, FaExclamationTriangle, FaCheckCircle, FaClock, FaDownload, FaTrophy, FaArrowRight, FaAward, FaRegGem, FaShieldAlt, FaDove, FaHandshake, FaFire, FaCoins, FaInfoCircle, FaTools, FaHome, FaExternalLinkAlt, FaLock } from "react-icons/fa";
@@ -14,6 +14,10 @@ import { authenticatedFetch } from '../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const getNormalizedSearchParams = () => {
+  return new URLSearchParams(window.location.search.replace(/\?/g, '&').replace(/^&/, '?'));
+};
+
 export default function RentWallet() {
   // Set page title
   usePageTitle("Rent Wallet - Manage Your Rent Payments");
@@ -22,10 +26,10 @@ export default function RentWallet() {
   const currentUserId = currentUser?._id;
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Get contractId from URL params or state
-  const searchParams = new URLSearchParams(location.search);
-  const contractId = searchParams.get('contractId');
+  const contractId = getNormalizedSearchParams().get('contractId');
 
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
@@ -41,6 +45,24 @@ export default function RentWallet() {
   });
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'schedule', 'history', 'settings'
+  
+  // Sync activeTab with URL search parameters
+  useEffect(() => {
+    const params = getNormalizedSearchParams();
+    const tabParam = params.get('tab');
+    if (tabParam === 'overview') {
+      setActiveTab('overview');
+    } else if (tabParam === 'schedule') {
+      setActiveTab('schedule');
+    } else if (tabParam === 'history') {
+      setActiveTab('history');
+    } else if (tabParam === 'settings' && isTenant) {
+      setActiveTab('settings');
+    } else if (!tabParam) {
+      setActiveTab('overview');
+    }
+  }, [searchParams, isTenant]);
+
   const [showSetuCoinInfo, setShowSetuCoinInfo] = useState(false);
 
   const fetchWalletDetails = useCallback(async (showLoading = true) => {
@@ -275,7 +297,11 @@ export default function RentWallet() {
             ].map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  const params = getNormalizedSearchParams();
+                  params.set('tab', tab.id);
+                  setSearchParams(params);
+                }}
                 className={`flex items-center gap-2 px-4 py-2 font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === tab.id
                   ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
