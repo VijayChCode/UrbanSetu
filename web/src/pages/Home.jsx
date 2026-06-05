@@ -188,6 +188,8 @@ export default function Home() {
   const [nearbyListingsLoading, setNearbyListingsLoading] = useState(false);
   const [overdueContracts, setOverdueContracts] = useState([]);
   const [hideOverdueAlerts, setHideOverdueAlerts] = useState(localStorage.getItem('hideOverdueAlerts') === 'true');
+  const [upcomingReminders, setUpcomingReminders] = useState([]);
+  const [hideUpcomingReminders, setHideUpcomingReminders] = useState(localStorage.getItem('hideUpcomingReminders') === 'true');
 
   // Community, Blogs & Guides section state
   const [homeFeaturedBlogs, setHomeFeaturedBlogs] = useState([]);
@@ -503,6 +505,21 @@ export default function Home() {
               });
             });
             setOverdueContracts(overdue);
+
+            const upcoming = data.contracts.filter(contract => {
+              const isTenant = contract.tenantId?._id === currentUser._id || contract.tenantId === currentUser._id;
+              if (!isTenant || !contract.wallet?.paymentSchedule) return false;
+
+              const now = new Date();
+              return contract.wallet.paymentSchedule.some(p => {
+                if (p.status !== 'pending') return false;
+                const dueDate = new Date(p.dueDate);
+                const diffTime = dueDate.getTime() - now.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 && diffDays <= 10;
+              });
+            });
+            setUpcomingReminders(upcoming);
           }
         }
       } catch (e) { console.error("Dashboard: fetchOverdueRent error", e); }
@@ -1248,6 +1265,116 @@ export default function Home() {
                             <Link
                               to={`/user/rent-wallet?contractId=${contract._id}&tab=schedule`}
                               className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm text-center shadow-lg shadow-red-500/20 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+                            >
+                              Pay Rent Now <FaArrowRight />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Rent Payment Upcoming Reminders ─── */}
+              {upcomingReminders.length > 0 && (
+                <div className="mt-6 animate-fade-in space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                      <span className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-lg">
+                        <FaBell className="text-base" />
+                      </span>
+                      Upcoming Rent Reminders
+                      <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-[10px] font-black rounded-full uppercase ml-1">
+                        Upcoming Due
+                      </span>
+                    </h3>
+                    <button
+                      onClick={() => {
+                        const newVal = !hideUpcomingReminders;
+                        setHideUpcomingReminders(newVal);
+                        localStorage.setItem('hideUpcomingReminders', String(newVal));
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-xl transition-all duration-300 shadow-sm border border-gray-200/50 dark:border-gray-700/50 cursor-pointer active:scale-95"
+                    >
+                      {hideUpcomingReminders ? (
+                        <>
+                          <FaEye className="text-sm" /> Show Reminders
+                        </>
+                      ) : (
+                        <>
+                          <FaEyeSlash className="text-sm" /> Hide Reminders
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className={`space-y-4 transition-all duration-500 ease-in-out overflow-hidden transform origin-top ${
+                    hideUpcomingReminders
+                      ? 'max-h-0 opacity-0 scale-95 pointer-events-none'
+                      : 'max-h-[2000px] opacity-100 scale-100'
+                  }`}>
+                    {upcomingReminders.map((contract) => {
+                      const now = new Date();
+                      // Find the next upcoming payment within 10 days
+                      const upcomingPayment = contract.wallet?.paymentSchedule?.find(p => {
+                        if (p.status !== 'pending') return false;
+                        const dueDate = new Date(p.dueDate);
+                        const diffTime = dueDate.getTime() - now.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return diffDays >= 0 && diffDays <= 10;
+                      });
+
+                      if (!upcomingPayment) return null;
+
+                      const dueDate = new Date(upcomingPayment.dueDate);
+                      const diffTime = dueDate.getTime() - now.getTime();
+                      const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                      const maintenance = contract.maintenanceCharges || 0;
+                      const totalDue = upcomingPayment.amount + maintenance;
+
+                      return (
+                        <div
+                          key={contract._id}
+                          className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-blue-100 dark:border-blue-900/50 shadow-md p-5 flex flex-col md:flex-row items-center justify-between gap-6 transform hover:scale-[1.005] hover:shadow-lg transition-all duration-300 animate-in fade-in"
+                        >
+                          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 flex-1 min-w-0">
+                            <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center shrink-0">
+                              <FaClock className="text-2xl animate-pulse" />
+                            </div>
+                            <div className="text-center sm:text-left min-w-0 flex-1">
+                              <span className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-2">
+                                Due in {daysRemaining === 0 ? "Today" : `${daysRemaining} Day${daysRemaining !== 1 ? 's' : ''}`}
+                              </span>
+                              <h4 className="font-extrabold text-gray-900 dark:text-white text-lg truncate">
+                                {contract.listingId?.name || "Property Rent Payment"}
+                              </h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Contract ID: <span className="font-mono text-xs">{contract.contractId}</span>
+                              </p>
+                              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-3">
+                                <span className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-lg font-bold">
+                                  Due Date: {dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                                {contract.maintenanceCharges > 0 && (
+                                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2.5 py-1 rounded-lg font-medium">
+                                    Incl. ₹{contract.maintenanceCharges} Maintenance
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-center md:items-end gap-3 w-full md:w-auto">
+                            <div className="text-center md:text-right">
+                              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-0.5">Upcoming Rent</p>
+                              <p className="text-3xl font-black text-blue-600 dark:text-blue-400 flex items-center justify-center md:justify-end gap-1.5">
+                                ₹{totalDue.toLocaleString('en-IN')}
+                              </p>
+                            </div>
+                            <Link
+                              to={`/user/rent-wallet?contractId=${contract._id}&tab=schedule`}
+                              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm text-center shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
                             >
                               Pay Rent Now <FaArrowRight />
                             </Link>
