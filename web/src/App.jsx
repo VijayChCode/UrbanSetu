@@ -700,6 +700,10 @@ function AppRoutes({ bootstrapped }) {
   const handleConfirmTransfer = async () => {
     if (!pendingTransfer) return;
 
+    // Save configuration locally and immediately close modal to prevent blocking the SignoutModal overlay
+    const transfer = pendingTransfer;
+    setPendingTransfer(null);
+
     // 1. Show Signout loading modal
     dispatch(signoutUserStart());
 
@@ -741,14 +745,14 @@ function AppRoutes({ bootstrapped }) {
       dispatch(signoutUserSuccess());
 
       // 4. Safely sign in to new user B's session
-      localStorage.setItem('accessToken', pendingTransfer.token);
-      if (pendingTransfer.session) localStorage.setItem('sessionId', pendingTransfer.session);
-      if (pendingTransfer.refresh) localStorage.setItem('refreshToken', pendingTransfer.refresh);
+      localStorage.setItem('accessToken', transfer.token);
+      if (transfer.session) localStorage.setItem('sessionId', transfer.session);
+      if (transfer.refresh) localStorage.setItem('refreshToken', transfer.refresh);
       localStorage.setItem('login', Date.now().toString());
 
-      dispatch(signInSuccess(pendingTransfer.newUser));
+      dispatch(signInSuccess(transfer.newUser));
       try {
-        syncSettingsFromUser(pendingTransfer.newUser);
+        syncSettingsFromUser(transfer.newUser);
       } catch (e) {
         console.warn("syncSettingsFromUser failed:", e);
       }
@@ -757,15 +761,13 @@ function AppRoutes({ bootstrapped }) {
       sessionStorage.setItem('transfer_session_conflict', 'true');
       sessionStorage.setItem('transfer_pending', 'true');
 
-      const target = pendingTransfer.targetPath;
-      setPendingTransfer(null);
+      const target = transfer.targetPath;
 
       // 5. Navigate to target URL
       window.location.href = target;
     } catch (err) {
       console.error("Session switch failed:", err);
       dispatch(signoutUserSuccess());
-      setPendingTransfer(null);
     }
   };
 
