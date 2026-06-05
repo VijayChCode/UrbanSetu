@@ -16,6 +16,10 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
     return wallet.paymentSchedule.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
   }, [wallet]);
 
+  const nextPayment = useMemo(() => {
+    return payments.find(p => p.status === 'pending' || p.status === 'overdue');
+  }, [payments]);
+
   const getPaymentStatusIcon = (payment) => {
     switch (payment.status) {
       case 'completed':
@@ -147,6 +151,10 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                   const dueDate = new Date(payment.dueDate);
                   const isOverdue = payment.status === 'pending' && dueDate < new Date();
                   const isUpcoming = payment.status === 'pending' && dueDate >= new Date();
+                  const isNextPayment = nextPayment &&
+                    payment.month === nextPayment.month &&
+                    payment.year === nextPayment.year &&
+                    payment.dueDate === nextPayment.dueDate;
                   const coinsRedeemed = typeof payment.paymentId === 'object' && payment.paymentId?.metadata?.coinsRedeemed
                     ? payment.paymentId.metadata.coinsRedeemed
                     : 0;
@@ -159,7 +167,11 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                   return (
                     <div
                       key={index}
-                      className={`border-2 rounded-lg p-4 transition ${getPaymentStatusColor(payment)}`}
+                      className={`border-2 rounded-lg p-4 transition ${
+                        isNextPayment 
+                          ? 'border-blue-500 dark:border-blue-400 bg-blue-50/30 dark:bg-blue-950/20 shadow-md ring-2 ring-blue-500/20' 
+                          : getPaymentStatusColor(payment)
+                      }`}
                     >
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-start gap-4 flex-1 w-full">
@@ -175,12 +187,17 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                                   year: 'numeric'
                                 })}
                               </p>
-                              {isOverdue && (
+                              {isNextPayment && (
+                                <span className="px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded">
+                                  Next Due
+                                </span>
+                              )}
+                              {isOverdue && !isNextPayment && (
                                 <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
                                   Overdue
                                 </span>
                               )}
-                              {isUpcoming && (
+                              {isUpcoming && !isNextPayment && (
                                 <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-semibold rounded">
                                   Upcoming
                                 </span>
@@ -196,7 +213,7 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                             )}
 
                             {/* SetuCoins Loyalty Program Badge */}
-                            {(coinsRedeemed > 0 || coinsEarned > 0) && (
+                            {isTenant && (coinsRedeemed > 0 || coinsEarned > 0) && (
                               <div className="flex flex-wrap gap-2 pt-1.5">
                                 {coinsRedeemed > 0 && (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900 shadow-sm">
@@ -232,7 +249,7 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                               Total: ₹{(payment.amount + (payment.penaltyAmount || 0)).toLocaleString('en-IN')}
                             </p>
                             {/* SetuCoins Earning Preview */}
-                            {payment.status === 'pending' && payment.amount >= 1000 && (
+                            {isTenant && payment.status === 'pending' && payment.amount >= 1000 && (
                               <p className="text-xs text-yellow-600 font-semibold flex justify-end items-center gap-1 mt-1">
                                 <FaCoins className="text-[10px]" /> Earn {Math.floor(payment.amount / 1000)} Coins
                               </p>
@@ -273,7 +290,7 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
                             </button>
                           )}
 
-                          {(payment.status === 'completed' || payment.status === 'paid') && payment.paymentId && (
+                          {isTenant && (payment.status === 'completed' || payment.status === 'paid') && payment.paymentId && (
                             <button
                               onClick={() => {
                                 const receiptId = typeof payment.paymentId === 'object' ? payment.paymentId.paymentId : payment.paymentId;

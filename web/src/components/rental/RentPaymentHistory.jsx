@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export default function RentPaymentHistory({ wallet, contract }) {
+export default function RentPaymentHistory({ wallet, contract, isTenant }) {
   // No status filter needed as we only show completed payments
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -423,7 +423,7 @@ export default function RentPaymentHistory({ wallet, contract }) {
                         )}
                         
                         {/* SetuCoins Loyalty Program Badge */}
-                        {(coinsRedeemed > 0 || coinsEarned > 0) && (
+                        {isTenant && (coinsRedeemed > 0 || coinsEarned > 0) && (
                           <div className="flex flex-wrap gap-2 pt-1">
                             {coinsRedeemed > 0 && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900 shadow-sm">
@@ -460,7 +460,7 @@ export default function RentPaymentHistory({ wallet, contract }) {
                         Total: ₹{(payment.amount + (payment.penaltyAmount || 0)).toLocaleString('en-IN')}
                       </p>
                     </div>
-                    {payment.status === 'completed' && (
+                    {isTenant && payment.status === 'completed' && (
                       <button
                         onClick={() => handleDownloadReceipt(payment)}
                         className="w-full md:w-auto px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition flex items-center justify-center gap-2"

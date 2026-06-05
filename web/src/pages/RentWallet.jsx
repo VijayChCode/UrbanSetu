@@ -257,6 +257,29 @@ export default function RentWallet() {
   const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
   const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
 
+  const nextPayment = useMemo(() => {
+    if (!wallet?.paymentSchedule) return null;
+    const sorted = [...wallet.paymentSchedule].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    return sorted.find(p => p.status === 'pending' || p.status === 'overdue');
+  }, [wallet]);
+
+  const handlePayNow = (payment) => {
+    if (!contract || !payment || !wallet) {
+      toast.error("Payment information not available.");
+      return;
+    }
+    const scheduleIndex = wallet.paymentSchedule.findIndex(p =>
+      p.month === payment.month &&
+      p.year === payment.year &&
+      p.dueDate === payment.dueDate
+    );
+    if (scheduleIndex === -1) {
+      toast.error("Payment schedule entry not found.");
+      return;
+    }
+    navigate(`/user/pay-monthly-rent?contractId=${contract._id}&scheduleIndex=${scheduleIndex}`);
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 min-h-screen py-10 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
@@ -471,6 +494,80 @@ export default function RentWallet() {
                 </div>
               )}
             </div>
+
+            {/* Next Payment Section */}
+            {nextPayment && (
+              <div className={`rounded-xl shadow-lg p-6 border-l-4 ${
+                nextPayment.status === 'overdue' 
+                  ? 'bg-red-50/50 dark:bg-red-900/10 border-red-500' 
+                  : 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500'
+              }`}>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-lg ${
+                      nextPayment.status === 'overdue' 
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' 
+                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    }`}>
+                      <FaCalendarAlt className="text-2xl" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        Next Due Payment
+                        {nextPayment.status === 'overdue' ? (
+                          <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 text-xs font-bold rounded">
+                            Overdue
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 text-xs font-bold rounded">
+                            Upcoming
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Due Date: <span className="font-semibold text-gray-700 dark:text-gray-200">
+                          {new Date(nextPayment.dueDate).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </p>
+                      {nextPayment.status === 'pending' && nextPayment.amount >= 1000 && isTenant && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 font-semibold flex items-center gap-1 mt-1">
+                          <FaCoins /> Earn {Math.floor(nextPayment.amount / 1000)} SetuCoins upon paying on time!
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center md:items-end justify-between md:flex-col gap-4 w-full md:w-auto">
+                    <div className="text-left md:text-right">
+                      <p className="text-2xl font-black text-gray-800 dark:text-white">
+                        ₹{(nextPayment.amount + (nextPayment.penaltyAmount || 0) + maintenance).toLocaleString('en-IN')}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Base: ₹{nextPayment.amount.toLocaleString('en-IN')} 
+                        {maintenance > 0 && ` + Maintenance: ₹${maintenance.toLocaleString('en-IN')}`}
+                        {nextPayment.penaltyAmount > 0 && ` + Penalty: ₹${nextPayment.penaltyAmount.toLocaleString('en-IN')}`}
+                      </p>
+                    </div>
+                    {isTenant ? (
+                      <button
+                        onClick={() => handlePayNow(nextPayment)}
+                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg shadow-blue-500/20 transition active:scale-95 flex items-center gap-2"
+                      >
+                        <FaMoneyBillWave /> Pay Now
+                      </button>
+                    ) : (
+                      <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold rounded-lg">
+                        Informative: Awaiting Tenant Payment
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Smart Escrow Status */}
             {wallet.escrow?.status !== 'none' && (
