@@ -45,6 +45,12 @@ export default function RentWallet() {
   });
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'schedule', 'history', 'settings'
+
+  const nextPayment = useMemo(() => {
+    if (!wallet?.paymentSchedule) return null;
+    const sorted = [...wallet.paymentSchedule].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    return sorted.find(p => p.status === 'pending' || p.status === 'overdue');
+  }, [wallet]);
   
   // Sync activeTab with URL search parameters
   useEffect(() => {
@@ -257,11 +263,7 @@ export default function RentWallet() {
   const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
   const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
 
-  const nextPayment = useMemo(() => {
-    if (!wallet?.paymentSchedule) return null;
-    const sorted = [...wallet.paymentSchedule].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-    return sorted.find(p => p.status === 'pending' || p.status === 'overdue');
-  }, [wallet]);
+
 
   const handlePayNow = (payment) => {
     if (!contract || !payment || !wallet) {
