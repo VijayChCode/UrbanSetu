@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
-import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaInfoCircle, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaFire, FaAward, FaTrophy } from "react-icons/fa";
+import { FaLock, FaCalendarAlt, FaMoneyBillWave, FaInfoCircle, FaCheckCircle, FaCheck, FaChevronRight, FaHome, FaShieldAlt, FaFileContract, FaTimesCircle, FaCreditCard, FaChevronLeft, FaMapMarkerAlt, FaReceipt, FaDownload, FaCoins, FaFire, FaAward, FaTrophy, FaStar } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePageTitle } from '../hooks/usePageTitle';
 import PaymentModal from '../components/PaymentModal';
@@ -2471,6 +2471,15 @@ export default function RentProperty() {
                 className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
               >
                 Go to My Appointments <FaChevronRight />
+              </button>
+              <button
+                onClick={() => {
+                  const contractIdentifier = contract.contractId || contract._id;
+                  navigate(`/user/rental-ratings?contractId=${contractIdentifier}&role=tenant`);
+                }}
+                className="flex-1 bg-gradient-to-r from-yellow-500 to-amber-500 text-white py-4 rounded-xl font-bold hover:from-yellow-600 hover:to-amber-600 shadow-lg flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+              >
+                Rate Property <FaStar />
               </button>
               <button
                 onClick={() => {

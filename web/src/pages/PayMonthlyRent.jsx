@@ -946,6 +946,12 @@ export default function PayMonthlyRent() {
                   Go to Contracts
                 </button>
                 <button
+                  onClick={() => navigate(`/user/rental-ratings?contractId=${contract._id}&role=tenant`)}
+                  className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center justify-center gap-2 font-semibold shadow-sm transition-colors"
+                >
+                  Rate Property <FaStar />
+                </button>
+                <button
                   onClick={() => navigate(`/user/rent-wallet?contractId=${contract._id}`, { state: { refresh: true } })}
                   className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                 >
