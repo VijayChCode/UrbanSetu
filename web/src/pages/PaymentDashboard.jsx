@@ -591,7 +591,7 @@ const PaymentDashboard = () => {
                     onClick={() => {
                       const params = getNormalizedSearchParams();
                       params.set('tab', 'refund');
-                      params.set('category', 'direct');
+                      params.set('category', 'requests');
                       setSearchParams(params);
                     }}
                     className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 sm:p-4 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-2 sm:gap-3"
