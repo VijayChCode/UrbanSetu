@@ -664,7 +664,7 @@ const MarketTrends = () => {
                                 Close
                             </button>
                             <Link
-                                to="/search"
+                                to={currentUser ? ((currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/explore' : '/user/search') : '/search'}
                                 className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30 transition-all font-semibold"
                             >
                                 Explore Listings
