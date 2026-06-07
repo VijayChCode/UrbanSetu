@@ -3546,18 +3546,17 @@ export const getPublicRentalLoanDocument = async (req, res, next) => {
 export const proxyDocumentDownload = async (req, res, next) => {
   try {
     const { documentId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
-    // Find loan containing this document
     // Find loan containing this document
     let loan = await RentalLoan.findOne({ 'documents._id': documentId });
     let document = null;
 
-    const user = await User.findById(userId);
+    const user = userId ? await User.findById(userId) : null;
     const isAdmin = user?.role === 'admin' || user?.role === 'rootadmin';
 
     if (loan) {
-      if (loan.userId.toString() !== userId && !isAdmin) {
+      if (!userId || (loan.userId.toString() !== userId && !isAdmin)) {
         return res.status(403).json({ message: "Unauthorized." });
       }
       document = loan.documents.id(documentId);
@@ -3570,7 +3569,7 @@ export const proxyDocumentDownload = async (req, res, next) => {
         const isRaisedBy = dispute.raisedBy?.toString() === userId;
         const isRaisedAgainst = dispute.raisedAgainst?.toString() === userId;
 
-        if (!isTenant && !isLandlord && !isRaisedBy && !isRaisedAgainst && !isAdmin) {
+        if (!userId || (!isTenant && !isLandlord && !isRaisedBy && !isRaisedAgainst && !isAdmin)) {
           return res.status(403).json({ message: "Unauthorized." });
         }
         document = dispute.evidence.id(documentId);

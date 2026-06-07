@@ -170,26 +170,6 @@ export default function ViewDocument() {
     // determineFileType removed as it's integrated above or no longer crucial given backend fixes
     // We keep handleDownloadDocument as is.
 
-    if (isPublic && !currentUser) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-950 p-4 transition-colors duration-300">
-                <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full text-center border dark:border-gray-700">
-                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FaLock className="text-2xl text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Restricted Access</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">You must be signed with authorized user account to view this document.</p>
-                    <button
-                        onClick={() => navigate('/sign-in')}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        Sign In to View
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     const handleDownloadDocument = async (docUrl, docName) => {
         try {
             if (!docUrl) return;
@@ -207,7 +187,9 @@ export default function ViewDocument() {
             }
 
             // Fetch from backend proxy to handle Auth headers and Filenames correctly
-            const downloadUrl = `${API_BASE_URL}/api/rental/loans/documents/${documentId}/download`;
+            const downloadUrl = (isPublic && document.category)
+                ? `${API_BASE_URL}/api/rental/public/documents/${documentId}/download`
+                : `${API_BASE_URL}/api/rental/loans/documents/${documentId}/download`;
             // Use _blank to avoid disrupting current page, browser will render it as download if header is set
             window.open(downloadUrl, '_blank');
             return;
@@ -287,6 +269,26 @@ export default function ViewDocument() {
 
     if (!document) return null;
 
+    if (isPublic && !currentUser && !document.category) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-950 p-4 transition-colors duration-300">
+                <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full text-center border dark:border-gray-700">
+                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FaLock className="text-2xl text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Restricted Access</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">You must be signed with authorized user account to view this document.</p>
+                    <button
+                        onClick={() => navigate('/sign-in')}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Sign In to View
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const isImage = fileType === 'image';
     const isPdf = fileType === 'pdf';
 
@@ -311,7 +313,7 @@ export default function ViewDocument() {
                         )}
                     </h1>
                 </div>
-                {isPublic ? (
+                {isPublic && !document.category ? (
                     <button
                         onClick={() => navigate('/sign-in')}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -321,7 +323,7 @@ export default function ViewDocument() {
                     </button>
                 ) : (
                     <button
-                        onClick={() => handleDownloadDocument(document.url, document.type)}
+                        onClick={() => handleDownloadDocument(document.url, document.type || document.category)}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         <FaDownload />

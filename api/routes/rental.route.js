@@ -124,6 +124,7 @@ router.get("/ratings", verifyToken, listRentalRatings);
 
 // Rental Loans Routes
 router.get("/public/documents/:documentId", getPublicRentalLoanDocument);
+router.get("/public/documents/:documentId/download", proxyDocumentDownload);
 router.post("/loans/:contractId", verifyToken, applyForRentalLoan);
 router.get("/loans/documents/:documentId/download", verifyToken, proxyDocumentDownload);
 router.get("/loans/documents/:documentId", verifyToken, getRentalLoanDocument);

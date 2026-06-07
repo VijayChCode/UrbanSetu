@@ -1340,7 +1340,7 @@ export default function AdminDeploymentManagement() {
                               </button>
 
                               <label className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:underline cursor-pointer">
-                                Replace
+                                Update
                                 <input
                                   type="file"
                                   accept=".pdf,.doc,.docx"
