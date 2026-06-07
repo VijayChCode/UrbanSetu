@@ -5,6 +5,8 @@ import { S3Client, ListBucketsCommand, ListObjectsV2Command, CopyObjectCommand, 
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { verifyToken } from '../utils/verify.js';
 import Deployment from '../models/deployment.model.js';
+import cloudinary from 'cloudinary';
+import TrustDocument from '../models/trustDocument.model.js';
 
 const router = express.Router();
 
@@ -658,5 +660,86 @@ function extractVersionFromFilename(filename) {
   const versionMatch = filename.match(/v?(\d+\.\d+\.\d+)/);
   return versionMatch ? versionMatch[1] : '1.0.0';
 }
+
+// Configure Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// --- Trust Documents Endpoints ---
+
+// Get all trust documents (Public)
+router.get('/trust-docs', async (req, res) => {
+  try {
+    const docs = await TrustDocument.find();
+    res.json({
+      success: true,
+      data: docs
+    });
+  } catch (error) {
+    console.error('Error fetching trust documents:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch trust documents' });
+  }
+});
+
+// Create or update a trust document (Admin only)
+router.post('/trust-docs', verifyToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'rootadmin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
+    }
+    const { category, title, url, fileKey } = req.body;
+    if (!category || !title || !url) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const doc = await TrustDocument.findOneAndUpdate(
+      { category },
+      { title, url, fileKey, uploadedBy: req.user.id },
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      success: true,
+      data: doc
+    });
+  } catch (error) {
+    console.error('Error saving trust document:', error);
+    res.status(500).json({ success: false, message: 'Failed to save trust document' });
+  }
+});
+
+// Delete a trust document (Admin only)
+router.delete('/trust-docs/:id', verifyToken, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'rootadmin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Root admin only.' });
+    }
+    const { id } = req.params;
+    const doc = await TrustDocument.findById(id);
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Trust document not found' });
+    }
+
+    if (doc.fileKey) {
+      try {
+        await cloudinary.v2.uploader.destroy(doc.fileKey, { resource_type: 'raw' });
+      } catch (err) {
+        console.warn('Failed to delete raw document from Cloudinary:', err.message);
+      }
+    }
+
+    await TrustDocument.findByIdAndDelete(id);
+    res.json({
+      success: true,
+      message: 'Trust document deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting trust document:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete trust document' });
+  }
+});
 
 export default router;
