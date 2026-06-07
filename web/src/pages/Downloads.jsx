@@ -11,6 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Downloads() {
     const [files, setFiles] = useState([]);
+    const [trustDocs, setTrustDocs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('all'); // all, windows, macos, mobile
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function Downloads() {
 
     useEffect(() => {
         fetchDeploymentFiles();
+        fetchTrustDocs();
     }, []);
 
     const fetchDeploymentFiles = async () => {
@@ -32,6 +34,18 @@ export default function Downloads() {
             toast.error('Failed to load available downloads');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchTrustDocs = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/deployment/trust-docs`);
+            const data = await response.json();
+            if (data.success) {
+                setTrustDocs(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching trust docs:', error);
         }
     };
 
@@ -224,6 +238,98 @@ export default function Downloads() {
                                             <div className="mt-auto py-4 px-4 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-600 rounded-2xl font-bold text-center border border-dashed border-gray-200 dark:border-gray-700">
                                                 Coming Soon
                                             </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Trust & Security Documents Section */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-gray-150/50 dark:border-gray-850">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center">
+                                <FaInfoCircle className="text-blue-600 dark:text-blue-400 text-xl" />
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Trust & Security Documents</h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Official verified safety declarations, privacy protection, and terms guidelines.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[
+                            {
+                                title: "README & Installation Guide",
+                                category: "readme",
+                                file: "README.pdf",
+                                desc: "Step-by-step guidance on how to install the app safely, handle system permissions, and verify digital signatures.",
+                                color: "blue",
+                            },
+                            {
+                                title: "Safety & Clean Declaration",
+                                category: "safety_declaration",
+                                file: "SAFETY_DECLARATION.pdf",
+                                desc: "Official statement detailing signature authenticity, clean build processes, and VirusTotal safety check outcomes.",
+                                color: "green",
+                            },
+                            {
+                                title: "Privacy Policy",
+                                category: "privacy_policy",
+                                file: "PRIVACY_POLICY.pdf",
+                                desc: "Defines location, camera, and local storage access bounds required to run the real estate features.",
+                                color: "purple",
+                            },
+                            {
+                                title: "Terms of Service",
+                                category: "terms_of_service",
+                                file: "TERMS_OF_SERVICE.pdf",
+                                desc: "Explains standard usage guidelines, platform verification rules, and automated Sentinel AI scanning terms.",
+                                color: "amber",
+                            },
+                            {
+                                title: "Digital Checksum Verification",
+                                category: "checksum",
+                                file: "CHECKSUM.pdf",
+                                desc: "Presents SHA-256 and MD5 fingerprint files of active binary releases to ensure exact package authenticity.",
+                                color: "indigo",
+                            }
+                        ].map((doc) => {
+                            const uploaded = trustDocs.find(d => d.category === doc.category);
+                            return (
+                                <div key={doc.category} className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-150 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:translate-y-[-4px] transition-all duration-300 flex flex-col justify-between group">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-6">
+                                            <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-[0.2em] uppercase">VERIFIED REFERENCE</span>
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold ${uploaded ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border border-green-150/50 dark:border-green-850' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-gray-700'}`}>
+                                                {uploaded ? 'Available' : 'Pending Deployment'}
+                                            </span>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{doc.title}</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-8">{doc.desc}</p>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-5 border-t border-gray-100 dark:border-gray-800">
+                                        <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 uppercase">{doc.file}</span>
+                                        {uploaded ? (
+                                            <Link
+                                                to={`/view/${uploaded._id}?source=deployment`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center gap-1.5"
+                                            >
+                                                <FaInfoCircle className="text-[10px]" /> View Document
+                                            </Link>
+                                        ) : (
+                                            <button
+                                                disabled
+                                                className="px-5 py-2.5 bg-gray-100 dark:bg-gray-850 text-gray-400 dark:text-gray-600 rounded-xl text-xs font-bold border border-dashed border-gray-200 dark:border-gray-800 cursor-not-allowed"
+                                            >
+                                                Not Available
+                                            </button>
                                         )}
                                     </div>
                                 </div>

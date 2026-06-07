@@ -56,5 +56,5 @@ We do not sell, trade, or rent your personal information to third parties. We ma
 ## 5. Contact Us
 
 If you have any questions or concerns regarding this Privacy Policy, please reach out to us:
-* **Email:** `privacy@urbansetu.com`
+* **Accounts & Legal:** `auth.urbansetu@gmail.com`
 * **Address:** UrbanSetu HQ, Bangalore, India

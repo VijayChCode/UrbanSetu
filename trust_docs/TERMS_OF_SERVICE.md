@@ -41,4 +41,5 @@ We reserve the right to suspend or terminate accounts that violate these Terms, 
 ## 5. Contact Information
 
 For any legal inquiries, copyright claims, or support needs, contact us at:
-* **Email:** `legal@urbansetu.com`
+* **Legal & Accounts:** `auth.urbansetu@gmail.com`
+* **Support & Feedback:** `urbansetu.noreply@gmail.com`

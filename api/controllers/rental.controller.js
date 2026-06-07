@@ -9,6 +9,7 @@ import RentPrediction from "../models/rentPrediction.model.js";
 import Booking from "../models/booking.model.js";
 import Listing from "../models/listing.model.js";
 import User from "../models/user.model.js";
+import TrustDocument from "../models/trustDocument.model.js";
 import { errorHandler } from "../utils/error.js";
 import { generateRentLockContractPDF } from "../utils/contractPDFGenerator.js";
 import {
@@ -3450,11 +3451,14 @@ export const getRentalLoanDocument = async (req, res, next) => {
         }
         document = dispute.evidence.id(documentId);
       } else {
-        return res.status(404).json({ message: "Document not found." });
+        const trustDoc = await TrustDocument.findById(documentId);
+        if (trustDoc) {
+          document = trustDoc;
+        } else {
+          return res.status(404).json({ message: "Document not found." });
+        }
       }
     }
-
-
 
     let mimeType = null;
     try {
@@ -3471,6 +3475,10 @@ export const getRentalLoanDocument = async (req, res, next) => {
     }
 
     const documentObj = document.toObject();
+    if (documentObj.category) {
+      documentObj.type = documentObj.category;
+      documentObj.name = documentObj.title;
+    }
     documentObj.mimeType = mimeType;
 
     res.json({
@@ -3489,12 +3497,16 @@ export const getPublicRentalLoanDocument = async (req, res, next) => {
 
     // Find loan containing this document
     const loan = await RentalLoan.findOne({ 'documents._id': documentId });
+    let document = null;
 
-    if (!loan) {
-      return res.status(404).json({ message: "Document not found." });
+    if (loan) {
+      document = loan.documents.id(documentId);
+    } else {
+      const trustDoc = await TrustDocument.findById(documentId);
+      if (trustDoc) {
+        document = trustDoc;
+      }
     }
-
-    const document = loan.documents.id(documentId);
 
     if (!document) {
       return res.status(404).json({ message: "Document not found." });
@@ -3515,6 +3527,10 @@ export const getPublicRentalLoanDocument = async (req, res, next) => {
     }
 
     const documentObj = document.toObject();
+    if (documentObj.category) {
+      documentObj.type = documentObj.category;
+      documentObj.name = documentObj.title;
+    }
     documentObj.mimeType = mimeType;
 
     res.json({
@@ -3559,7 +3575,12 @@ export const proxyDocumentDownload = async (req, res, next) => {
         }
         document = dispute.evidence.id(documentId);
       } else {
-        return res.status(404).json({ message: "Document not found." });
+        const trustDoc = await TrustDocument.findById(documentId);
+        if (trustDoc) {
+          document = trustDoc;
+        } else {
+          return res.status(404).json({ message: "Document not found." });
+        }
       }
     }
 
@@ -3596,7 +3617,7 @@ export const proxyDocumentDownload = async (req, res, next) => {
     }
 
     // Handle name
-    let filename = document.type ? document.type.replace(/_/g, ' ') : 'document';
+    let filename = document.type ? document.type.replace(/_/g, ' ') : (document.category ? document.category.replace(/_/g, ' ') : 'document');
     // Sanitize
     filename = filename.replace(/[^a-zA-Z0-9-_ ]/g, '').trim().replace(/\s+/g, '_');
 

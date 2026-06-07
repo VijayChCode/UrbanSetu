@@ -38,4 +38,4 @@ Before publishing, the APK has been cross-scanned across **70+ industry-leading 
 To remain secure, only download UrbanSetu from our official link:
 👉 `https://drive.google.com/file/d/1_v_K77USAFHYUv865yY8AeqcZLDkD_q-/view?usp=drive_link`
 
-* **Important:** UrbanSetu will never contact you via WhatsApp, Telegram, or personal emails asking you to download updates from any other link. If you receive such messages, please report them immediately to `security@urbansetu.com`.
+* **Important:** UrbanSetu will never contact you via WhatsApp, Telegram, or personal emails asking you to download updates from any other link. If you receive such messages, please report them immediately to `urbansetu.noreply@gmail.com`.

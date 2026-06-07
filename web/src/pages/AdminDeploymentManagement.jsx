@@ -52,6 +52,8 @@ export default function AdminDeploymentManagement() {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionModalData, setDescriptionModalData] = useState(null);
   const [expandedIds, setExpandedIds] = useState([]);
+  const [trustDocs, setTrustDocs] = useState([]);
+  const [uploadingDoc, setUploadingDoc] = useState(null);
 
   const toggleDescription = (id) => {
     setExpandedIds(prev =>
@@ -70,6 +72,7 @@ export default function AdminDeploymentManagement() {
   useEffect(() => {
     fetchFiles();
     fetchActiveFiles();
+    fetchTrustDocs();
   }, []);
 
   // Cleanup on unmount
@@ -105,6 +108,85 @@ export default function AdminDeploymentManagement() {
       }
     } catch (error) {
       console.error('Error fetching active files:', error);
+    }
+  };
+
+  const fetchTrustDocs = async () => {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/deployment/trust-docs`);
+      const data = await response.json();
+      if (data.success) {
+        setTrustDocs(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching trust docs:', error);
+    }
+  };
+
+  const handleTrustDocUpload = async (e, category, title) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingDoc(category);
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+
+      const uploadRes = await authenticatedFetch(`${API_BASE_URL}/api/upload/document`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!uploadRes.ok) throw new Error('Cloudinary upload failed');
+
+      const uploadData = await uploadRes.json();
+      const url = uploadData.documentUrl || uploadData.url;
+      const fileKey = uploadData.publicId;
+
+      const saveRes = await authenticatedFetch(`${API_BASE_URL}/api/deployment/trust-docs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category,
+          title,
+          url,
+          fileKey
+        })
+      });
+
+      const saveData = await saveRes.json();
+      if (saveData.success) {
+        toast.success(`${title} uploaded successfully!`);
+        fetchTrustDocs();
+      } else {
+        toast.error(saveData.message || 'Failed to save document reference');
+      }
+    } catch (error) {
+      console.error('Error uploading trust doc:', error);
+      toast.error(`Failed to upload ${title}`);
+    } finally {
+      setUploadingDoc(null);
+      e.target.value = ''; // Reset input element
+    }
+  };
+
+  const handleTrustDocDelete = async (docId, title) => {
+    if (!window.confirm(`Are you sure you want to delete the ${title}?`)) return;
+
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/trust-docs/${docId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`${title} deleted successfully!`);
+        fetchTrustDocs();
+      } else {
+        toast.error(data.message || 'Failed to delete document');
+      }
+    } catch (error) {
+      console.error('Error deleting trust doc:', error);
+      toast.error('Failed to delete document');
     }
   };
 
@@ -1166,65 +1248,125 @@ export default function AdminDeploymentManagement() {
             {[
               {
                 title: "README & Installation Guide",
-                file: "README.md",
+                category: "readme",
+                file: "README.pdf",
                 desc: "Step-by-step guidance on how users can securely install the APK, handle permissions, and bypass Play Protect safely.",
                 color: "blue",
                 icon: FaInfoCircle,
               },
               {
                 title: "Safety & Clean Declaration",
-                file: "SAFETY_DECLARATION.md",
+                category: "safety_declaration",
+                file: "SAFETY_DECLARATION.pdf",
                 desc: "Official statement detailing signature authenticity, clean build processes, and VirusTotal 0/70 clean scanning guarantees.",
                 color: "green",
                 icon: FaCheck,
               },
               {
                 title: "Privacy Policy",
-                file: "PRIVACY_POLICY.md",
+                category: "privacy_policy",
+                file: "PRIVACY_POLICY.pdf",
                 desc: "Covers standard location, camera, and network device permissions required by our smart real estate ecosystem.",
                 color: "purple",
                 icon: FaInfoCircle,
               },
               {
                 title: "Terms of Service",
-                file: "TERMS_OF_SERVICE.md",
+                category: "terms_of_service",
+                file: "TERMS_OF_SERVICE.pdf",
                 desc: "Defines acceptable usage bounds, verification protocols, Sentinel AI scanner rules, and platform service liability limits.",
                 color: "amber",
                 icon: FaFileCode,
               },
               {
                 title: "Digital Checksum File",
-                file: "CHECKSUM.md",
+                category: "checksum",
+                file: "CHECKSUM.pdf",
                 desc: "Provides SHA-256 and MD5 fingerprint values of active binary releases to verify exact package integrity.",
                 color: "indigo",
                 icon: FaRocket,
               }
-            ].map((doc) => (
-              <div key={doc.file} className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-6 border border-gray-150/50 dark:border-gray-700 flex flex-col justify-between hover:shadow-md transition-shadow group">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-wider uppercase">TRUST COMPONENT</span>
-                    <div className={`p-2 rounded-xl bg-${doc.color}-50 dark:bg-${doc.color}-950/20 text-${doc.color}-600 dark:text-${doc.color}-400`}>
-                      <doc.icon className="text-sm" />
+            ].map((doc) => {
+              const uploaded = trustDocs.find(d => d.category === doc.category);
+              const isUploading = uploadingDoc === doc.category;
+
+              return (
+                <div key={doc.category} className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-6 border border-gray-150/50 dark:border-gray-700 flex flex-col justify-between hover:shadow-md transition-shadow group relative">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-wider uppercase">TRUST COMPONENT</span>
+                      <div className={`p-2 rounded-xl bg-${doc.color}-50 dark:bg-${doc.color}-950/20 text-${doc.color}-600 dark:text-${doc.color}-400`}>
+                        <doc.icon className="text-sm" />
+                      </div>
+                    </div>
+                    <h4 className="font-bold text-gray-800 dark:text-white text-lg mb-2">{doc.title}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">{doc.desc}</p>
+                    
+                    {/* Status Badge */}
+                    <div className="mb-6">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${uploaded ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border dark:border-gray-700'}`}>
+                        {uploaded ? 'Active PDF' : 'No Document'}
+                      </span>
                     </div>
                   </div>
-                  <h4 className="font-bold text-gray-800 dark:text-white text-lg mb-2">{doc.title}</h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">{doc.desc}</p>
-                </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
-                  <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{doc.file}</span>
-                  <a
-                    href={`/admin/view/${doc.file.toLowerCase()}?source=deployment`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                  >
-                    View Document
-                  </a>
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{doc.file}</span>
+                    
+                    <div className="flex items-center gap-3">
+                      {isUploading ? (
+                        <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-bold">
+                          <UrbanSetuSpinner size="xs" isBright={true} />
+                          <span>Uploading...</span>
+                        </div>
+                      ) : (
+                        <>
+                          {uploaded ? (
+                            <>
+                              <Link
+                                to={`/admin/view/${uploaded._id}?source=deployment`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                              >
+                                View
+                              </Link>
+                              
+                              <button
+                                onClick={() => handleTrustDocDelete(uploaded._id, doc.title)}
+                                className="text-xs font-bold text-red-650 dark:text-red-400 hover:underline"
+                              >
+                                Delete
+                              </button>
+
+                              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:underline cursor-pointer">
+                                Replace
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx"
+                                  className="hidden"
+                                  onChange={(e) => handleTrustDocUpload(e, doc.category, doc.title)}
+                                />
+                              </label>
+                            </>
+                          ) : (
+                            <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer inline-flex items-center gap-1">
+                              <FaUpload className="text-[8px]" /> Upload PDF
+                              <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx"
+                                  className="hidden"
+                                  onChange={(e) => handleTrustDocUpload(e, doc.category, doc.title)}
+                              />
+                            </label>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

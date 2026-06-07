@@ -63,5 +63,6 @@ You can drag and drop the downloaded APK into secure public hashing tools like [
 
 ## 🤝 Need Support?
 If you have any questions, security concerns, or difficulty installing:
-* Visit our official portal: [UrbanSetu Support](https://urbansetu.com/support)
-* Contact Security Team: `security@urbansetu.com`
+* Visit our official portal: [UrbanSetu Support](https://urbansetu.vercel.app/contact)
+* Support & Feedback: `urbansetu.noreply@gmail.com`
+* Accounts & Legal: `auth.urbansetu@gmail.com`
