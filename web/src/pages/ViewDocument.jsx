@@ -107,6 +107,11 @@ export default function ViewDocument() {
                 const data = await res.json();
 
                 if (res.ok && data.success) {
+                    if (isPublic && !data.document.category && currentUser) {
+                        const pathPrefix = currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user';
+                        navigate(`${pathPrefix}/view/${documentId}${location.search}`, { replace: true });
+                        return;
+                    }
                     setDocument(data.document);
 
                     let mimeType = data.document.mimeType;
@@ -166,7 +171,7 @@ export default function ViewDocument() {
                 URL.revokeObjectURL(pdfBlobUrl);
             }
         };
-    }, [documentId]);
+    }, [documentId, currentUser, navigate]);
 
     // determineFileType removed as it's integrated above or no longer crucial given backend fixes
     // We keep handleDownloadDocument as is.
@@ -188,7 +193,7 @@ export default function ViewDocument() {
             }
 
             // Fetch from backend proxy to handle Auth headers and Filenames correctly
-            const downloadUrl = (isPublic && document.category)
+            const downloadUrl = document.category
                 ? `${API_BASE_URL}/api/rental/public/documents/${documentId}/download`
                 : `${API_BASE_URL}/api/rental/loans/documents/${documentId}/download`;
             // Use _blank to avoid disrupting current page, browser will render it as download if header is set

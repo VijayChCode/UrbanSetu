@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { authenticatedFetch } from '../utils/auth';
 import { FaWindows, FaApple, FaAndroid, FaLinux, FaDownload, FaHistory, FaMobileAlt, FaDesktop, FaInfoCircle, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -12,6 +13,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function Downloads() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { currentUser } = useSelector((state) => state.user) || {};
     const [files, setFiles] = useState([]);
     const [trustDocs, setTrustDocs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -340,7 +342,13 @@ export default function Downloads() {
                                         <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 uppercase">{doc.file}</span>
                                         {uploaded ? (
                                             <Link
-                                                to={`/view/${uploaded._id}?source=downloads`}
+                                                to={
+                                                    !currentUser
+                                                        ? `/view/${uploaded._id}?source=downloads`
+                                                        : currentUser.role === 'admin' || currentUser.role === 'rootadmin'
+                                                        ? `/admin/view/${uploaded._id}?source=downloads`
+                                                        : `/user/view/${uploaded._id}?source=downloads`
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center gap-1.5"
