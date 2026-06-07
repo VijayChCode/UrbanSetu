@@ -54,6 +54,8 @@ export default function AdminDeploymentManagement() {
   const [expandedIds, setExpandedIds] = useState([]);
   const [trustDocs, setTrustDocs] = useState([]);
   const [uploadingDoc, setUploadingDoc] = useState(null);
+  const [showTrustDeleteModal, setShowTrustDeleteModal] = useState(false);
+  const [trustDocToDelete, setTrustDocToDelete] = useState(null); // { id, title }
 
   const toggleDescription = (id) => {
     setExpandedIds(prev =>
@@ -170,8 +172,14 @@ export default function AdminDeploymentManagement() {
     }
   };
 
-  const handleTrustDocDelete = async (docId, title) => {
-    if (!window.confirm(`Are you sure you want to delete the ${title}?`)) return;
+  const handleTrustDocDelete = (docId, title) => {
+    setTrustDocToDelete({ id: docId, title });
+    setShowTrustDeleteModal(true);
+  };
+
+  const handleConfirmTrustDocDelete = async () => {
+    if (!trustDocToDelete) return;
+    const { id: docId, title } = trustDocToDelete;
 
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/deployment/trust-docs/${docId}`, {
@@ -187,6 +195,9 @@ export default function AdminDeploymentManagement() {
     } catch (error) {
       console.error('Error deleting trust doc:', error);
       toast.error('Failed to delete document');
+    } finally {
+      setShowTrustDeleteModal(false);
+      setTrustDocToDelete(null);
     }
   };
 
@@ -508,6 +519,40 @@ export default function AdminDeploymentManagement() {
               </button>
               <button
                 onClick={handleDeleteFile}
+                className="px-5 py-2.5 text-white bg-red-600 rounded-xl hover:bg-red-700 font-bold shadow-lg shadow-red-200 dark:shadow-none transition-all"
+              >
+                Delete Forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trust Document Delete Confirmation Modal */}
+      {showTrustDeleteModal && trustDocToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-100 border border-red-100 dark:border-red-900/30">
+            <div className="flex items-center gap-4 mb-6 text-red-600 dark:text-red-400">
+              <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-full">
+                <FaTrash className="text-2xl" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Confirm Deletion</h3>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+              Are you sure you want to delete the **{trustDocToDelete.title}**? This will permanently remove the document from Cloudinary and the database.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowTrustDeleteModal(false);
+                  setTrustDocToDelete(null);
+                }}
+                className="px-5 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={handleConfirmTrustDocDelete}
                 className="px-5 py-2.5 text-white bg-red-600 rounded-xl hover:bg-red-700 font-bold shadow-lg shadow-red-200 dark:shadow-none transition-all"
               >
                 Delete Forever
