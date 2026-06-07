@@ -3,13 +3,15 @@ import { authenticatedFetch } from '../utils/auth';
 import { FaWindows, FaApple, FaAndroid, FaLinux, FaDownload, FaHistory, FaMobileAlt, FaDesktop, FaInfoCircle, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import DownloadsSkeleton from '../components/skeletons/DownloadsSkeleton';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import Typewriter from '../components/ui/Typewriter';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Downloads() {
+    const location = useLocation();
+    const navigate = useNavigate();
     const [files, setFiles] = useState([]);
     const [trustDocs, setTrustDocs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -21,6 +23,27 @@ export default function Downloads() {
         fetchDeploymentFiles();
         fetchTrustDocs();
     }, []);
+
+    // Handle URL parameters to automatically open the release notes modal (source tracing & state restore)
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const fileIdParam = searchParams.get('fileId') || searchParams.get('changelogId');
+
+        if (fileIdParam && files.length > 0) {
+            const file = files.find(f => f.id === fileIdParam || f.id?.toString() === fileIdParam || f.key === fileIdParam || f._id === fileIdParam);
+            if (file && file.description) {
+                const platformMap = {
+                    'android': 'Android',
+                    'ios': 'iOS',
+                    'windows': 'Windows',
+                    'macos': 'macOS',
+                    'linux': 'Linux'
+                };
+                setModalData({ ...file, platformName: platformMap[file.platform] || file.platform });
+                setIsModalOpen(true);
+            }
+        }
+    }, [location.search, files]);
 
     const fetchDeploymentFiles = async () => {
         try {
@@ -217,6 +240,7 @@ export default function Downloads() {
                                                         onClick={() => {
                                                             setModalData({ ...latest, platformName: platform.name });
                                                             setIsModalOpen(true);
+                                                            window.history.pushState({}, '', `/downloads?fileId=${latest.id || latest._id}`);
                                                         }}
                                                         className="bg-gray-50/50 dark:bg-gray-800/30 p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800 transition-all duration-300 group/whatsnew relative cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                                                     >
@@ -316,7 +340,7 @@ export default function Downloads() {
                                         <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 uppercase">{doc.file}</span>
                                         {uploaded ? (
                                             <Link
-                                                to={`/view/${uploaded._id}?source=deployment`}
+                                                to={`/view/${uploaded._id}?source=downloads`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all flex items-center gap-1.5"
@@ -526,7 +550,10 @@ export default function Downloads() {
                     {/* Backdrop */}
                     <div
                         className="absolute inset-0 bg-black/85 backdrop-blur-md"
-                        onClick={() => setIsModalOpen(false)}
+                        onClick={() => {
+                            setIsModalOpen(false);
+                            window.history.pushState({}, '', '/downloads');
+                        }}
                     ></div>
 
                     {/* Modal Content */}
@@ -545,7 +572,10 @@ export default function Downloads() {
                                 </div>
                             </div>
                             <button
-                                onClick={() => setIsModalOpen(false)}
+                                onClick={() => {
+                                    setIsModalOpen(false);
+                                    window.history.pushState({}, '', '/downloads');
+                                }}
                                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
                             >
                                 <FaTimes className="text-sm sm:text-base group-hover:rotate-90 transition-transform duration-300" />
@@ -579,6 +609,7 @@ export default function Downloads() {
                                 onClick={() => {
                                     handleDownload(modalData);
                                     setIsModalOpen(false);
+                                    window.history.pushState({}, '', '/downloads');
                                 }}
                                 className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                             >

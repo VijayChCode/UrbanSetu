@@ -32,6 +32,7 @@ export default function ViewDocument() {
             'loans': 'Loan Documents',
             'verification': 'User Verification',
             'deployment': 'Deployment Management',
+            'downloads': 'Downloads Portal',
         };
         return mapping[src] || src.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     };
