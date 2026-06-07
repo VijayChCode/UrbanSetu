@@ -539,7 +539,7 @@ export default function AdminDeploymentManagement() {
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Confirm Deletion</h3>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-              Are you sure you want to delete the **{trustDocToDelete.title}**? This will permanently remove the document from Cloudinary and the database.
+              Are you sure you want to delete the {trustDocToDelete.title}? This will permanently remove the document from database.
             </p>
             <div className="flex justify-end gap-3">
               <button
