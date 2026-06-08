@@ -287,6 +287,92 @@ export default function Home() {
     };
   }, [recentlyViewedListings]);
 
+  // Properties Near You Slider State
+  const nearbyScrollRef = useRef(null);
+  const [showNearbyLeftArrow, setShowNearbyLeftArrow] = useState(false);
+  const [showNearbyRightArrow, setShowNearbyRightArrow] = useState(true);
+  const [nearbyNumDots, setNearbyNumDots] = useState(0);
+  const [nearbyActiveDot, setNearbyActiveDot] = useState(0);
+
+  const updateNearbyDots = () => {
+    if (!nearbyScrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = nearbyScrollRef.current;
+    
+    setShowNearbyLeftArrow(scrollLeft > 10);
+    setShowNearbyRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+
+    const cards = nearbyScrollRef.current.children;
+    if (cards && cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 24; // gap-6 is 24px
+      const step = cardWidth + gap;
+      
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll <= 0) {
+        setNearbyNumDots(0);
+        setNearbyActiveDot(0);
+        return;
+      }
+
+      const stepsCount = Math.round(maxScroll / step);
+      const totalDots = stepsCount + 1;
+      setNearbyNumDots(totalDots > 1 ? totalDots : 0);
+
+      const currentStep = Math.round(scrollLeft / step);
+      setNearbyActiveDot(Math.min(currentStep, stepsCount));
+    }
+  };
+
+  const handleNearbyScroll = () => {
+    updateNearbyDots();
+  };
+
+  const scrollNearbyDirection = (direction) => {
+    if (!nearbyScrollRef.current) return;
+    const cards = nearbyScrollRef.current.children;
+    if (cards && cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 24;
+      const step = cardWidth + gap;
+      const currentScroll = nearbyScrollRef.current.scrollLeft;
+      
+      const targetScroll = direction === 'left' 
+        ? currentScroll - step 
+        : currentScroll + step;
+        
+      nearbyScrollRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollNearbyToDot = (index) => {
+    if (!nearbyScrollRef.current) return;
+    const cards = nearbyScrollRef.current.children;
+    if (cards && cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 24;
+      const step = cardWidth + gap;
+      nearbyScrollRef.current.scrollTo({
+        left: index * step,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateNearbyDots();
+    }, 100);
+
+    window.addEventListener('resize', updateNearbyDots);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateNearbyDots);
+    };
+  }, [nearbyListings]);
+
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
   // Original code checked window.location.pathname.startsWith('/user'). 
@@ -1714,10 +1800,62 @@ export default function Home() {
                   <ListingSkeletonGrid count={4} />
                 </div>
               ) : nearbyListings.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {nearbyListings.map((listing) => (
-                    <ListingItem key={listing._id} listing={listing} />
-                  ))}
+                <div className="relative group/slider select-none">
+                  {/* Left Arrow */}
+                  {showNearbyLeftArrow && (
+                    <button
+                      onClick={() => scrollNearbyDirection('left')}
+                      className="absolute left-0 top-[40%] -translate-y-1/2 -ml-4 z-20 hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-white/95 dark:bg-gray-800/95 text-gray-800 dark:text-white shadow-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 hover:scale-105 transition-all duration-300 cursor-pointer"
+                      aria-label="Previous properties"
+                    >
+                      <FaChevronLeft className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                    </button>
+                  )}
+
+                  {/* Scroll Container */}
+                  <div
+                    ref={nearbyScrollRef}
+                    onScroll={handleNearbyScroll}
+                    className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  >
+                    {nearbyListings.map((listing) => (
+                      <div 
+                        key={listing._id} 
+                        className="w-[280px] sm:w-[320px] md:w-[290px] lg:w-[280px] xl:w-[270px] shrink-0 snap-start"
+                      >
+                        <ListingItem listing={listing} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Right Arrow */}
+                  {showNearbyRightArrow && (
+                    <button
+                      onClick={() => scrollNearbyDirection('right')}
+                      className="absolute right-0 top-[40%] -translate-y-1/2 -mr-4 z-20 hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-white/95 dark:bg-gray-800/95 text-gray-800 dark:text-white shadow-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 hover:scale-105 transition-all duration-300 cursor-pointer"
+                      aria-label="Next properties"
+                    >
+                      <FaChevronRight className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                    </button>
+                  )}
+
+                  {/* Dots Pagination */}
+                  {nearbyNumDots > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-4">
+                      {Array.from({ length: nearbyNumDots }).map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => scrollNearbyToDot(idx)}
+                          className={`h-2.5 rounded-full transition-all duration-300 ${
+                            nearbyActiveDot === idx
+                              ? 'w-6 bg-gradient-to-r from-rose-500 to-pink-600 dark:from-rose-400 dark:to-pink-400 shadow-md shadow-rose-500/20'
+                              : 'w-2.5 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+                          }`}
+                          aria-label={`Go to slide ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-12 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl border border-gray-100 dark:border-gray-700">
