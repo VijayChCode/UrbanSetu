@@ -1862,8 +1862,8 @@ export default function Home() {
                   <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <FaMapMarkerAlt className="text-2xl text-rose-400 dark:text-rose-500" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 font-semibold">No properties found near {detectedCity} yet</p>
-                  <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Check back soon or explore other locations</p>
+                  <p className="text-gray-700 dark:text-gray-200 font-semibold">No properties found near {detectedCity} yet</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Check back soon or explore other locations</p>
                   <Link
                     to={`${linkPrefix}/search`}
                     className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-rose-500/20 hover:shadow-xl hover:scale-105 transition-all duration-300"
