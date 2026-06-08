@@ -604,8 +604,8 @@ export const chatWithGemini = async (req, res) => {
             6. **VISUAL RECOMMENDATION CARDS (MANDATORY)**: 
                - UrbanSetu is a visual-first platform. Whenever a user asks for properties, suggestions, advice, tips, or market trends, you MUST use the corresponding tools ("search_properties" or "search_blogs_and_guides").
                - **NEVER** just list properties/articles in plain text if a tool can provide a visual card. 
-               - If you find results via tools, ALWAYS include this exact phrase at the end of your response: "I've generated some detailed cards for you below! ↓"
-               - If tools return no results, then and only then explain that no direct match was found and suggest general links.
+               - If you find results via tools AND they are non-empty (i.e. you are actually recommending properties or articles), ALWAYS include this exact phrase at the end of your response: "I've generated some detailed cards for you below! ↓".
+               - If the tools return no results, or if you are not recommending anything, do NOT include this phrase. Explain that no direct match was found and suggest general links.
                - PRO TIP: You can suggest links from the ROUTE MAP if the specific search fails.
             7. **SENTINEL IMAGE AUDIT**:
                - When a user provides an image URL or mentions an uploaded photo/layout/document, you MUST use the "sentinel_image_auditor" tool for EACH distinct image URL provided in the prompt.
@@ -897,6 +897,12 @@ export const chatWithGemini = async (req, res) => {
                     }
                 }
 
+                if (recommendations.length === 0) {
+                    fullResponse = fullResponse
+                        .replace(/I've generated some detailed cards for you below!\s*[↓👇]?/gi, '')
+                        .trim();
+                }
+
                 // Send the collected recommendations at the end of the stream
                 res.write(`data: ${JSON.stringify({
                     type: 'done',
@@ -1012,7 +1018,12 @@ export const chatWithGemini = async (req, res) => {
         // --- STANDARD RESPONSE HANDLING (No tools or Final Answer) ---
         // Reuse existing logic for non-streaming response if we are here
         if (!res.headersSent) {
-            const responseText = responseMessage.content || '';
+            let responseText = responseMessage.content || '';
+            if (recommendations.length === 0) {
+                responseText = responseText
+                    .replace(/I've generated some detailed cards for you below!\s*[↓👇]?/gi, '')
+                    .trim();
+            }
 
             // Save chat history
             if (userId) {

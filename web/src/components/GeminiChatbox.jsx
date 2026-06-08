@@ -6557,13 +6557,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const renderTextWithMarkdownAndLinks = (text, isSentMessage = false, message = null) => {
         if (!text || typeof text !== 'string') return text;
 
+        // Clean up the text if it claims to have generated cards but no recommendations are present
+        let cleanedText = text;
+        if (message && message.role === 'assistant' && (!message.recommendations || message.recommendations.length === 0)) {
+            // Remove "I've generated some detailed cards for you below! ↓" or "👇" or similar endings
+            cleanedText = cleanedText
+                .replace(/I've generated some detailed cards for you below!\s*[↓👇]?/gi, '')
+                .trim();
+        }
+
         // If markdown is disabled, just use link formatting
         if (!enableMarkdown) {
-            return formatTextWithLinks(text, isSentMessage);
+            return formatTextWithLinks(cleanedText, isSentMessage);
         }
 
         // First process markdown
-        const markdownProcessed = renderMarkdown(text);
+        const markdownProcessed = renderMarkdown(cleanedText);
 
         // Protect functionality: Extract generated <a> tags and other HTML from the string
         // We only want to auto-link URLs that appear in clear text, not inside existing tags
