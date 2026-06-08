@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { FaDownload, FaArrowLeft, FaFilePdf, FaImage, FaFileAlt, FaLock } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -229,18 +228,23 @@ export default function ViewChatDocument() {
             try {
                 // Verify against backend
                 // Extract clean URL for backend if needed, but passing full URL is safer for logging/matching
-                const response = await axios.post(`${API_BASE_URL}/api/bookings/verify-document-access`,
-                    {
+                const response = await authenticatedFetch(`${API_BASE_URL}/api/bookings/verify-document-access`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
                         appointmentId,
                         documentUrl: url
-                    },
-                    { withCredentials: true }
-                );
+                    })
+                });
 
-                if (response.data.allowed) {
+                const data = await response.json();
+
+                if (response.ok && data.allowed) {
                     setIsRestricted(false);
                 } else {
-                    console.warn("Access denied by backend:", response.data.message);
+                    console.warn("Access denied by backend:", data.message);
                     setIsRestricted(true);
                 }
             } catch (err) {
