@@ -7928,7 +7928,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     e.target.style.height = e.target.scrollHeight + 'px';
                                                                 }}
                                                                 onKeyDown={(e) => handleEditKeyDown(e, index)}
-                                                                className={`w-full max-w-full box-border md:min-w-[300px] p-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} placeholder-gray-500 shadow-inner ${editingMessageContent.length > 1800 ? 'pr-20' : ''}`}
+                                                                className={`w-full max-w-full box-border md:min-w-[300px] p-3 text-sm rounded-xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} shadow-inner ${editingMessageContent.length > 1800 ? 'pr-20' : ''} ${isDarkMode
+                                                                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+                                                                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                                                                    }`}
                                                                 style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }} // Ensure visibility and scrolling
                                                                 placeholder="Edit your message..."
                                                             // Removed autoFocus - don't auto-focus input
@@ -8723,8 +8726,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     role="textbox"
                                                     rows={1}
                                                     className={`w-full pl-12 ${inputMessage.length > 1800 ? 'pr-24' : 'pr-12'} py-3 border rounded-2xl resize-none focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} focus:border-transparent text-sm transition-all duration-200 ${isDarkMode
-                                                        ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-400 backdrop-blur-sm'
-                                                        : 'bg-white border-gray-200 text-gray-900 shadow-sm hover:border-gray-300'
+                                                        ? 'bg-gray-800/50 border-gray-700 text-white placeholder-gray-500 backdrop-blur-sm'
+                                                        : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 shadow-sm hover:border-gray-300'
                                                         } ${isBlockedByPolicy ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     style={{ minHeight: '48px', maxHeight: '250px' }}
                                                     disabled={isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
@@ -9345,7 +9348,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         type="text"
                                         value={renameInput}
                                         onChange={(e) => setRenameInput(e.target.value)}
-                                        className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white' : 'border-gray-300 bg-white text-gray-900'} rounded mb-4`}
+                                        className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-500' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400'} rounded mb-4`}
                                         placeholder="Enter chat name"
                                         maxLength={80}
                                     // Removed autoFocus - don't auto-focus input
@@ -10225,8 +10228,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             }}
                                             placeholder="Search messages..."
                                             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${themeColors.accent.replace('text-', 'focus:ring-').replace('-600', '-500')} ${isDarkMode
-                                                ? 'bg-gray-800 border-gray-600 text-white'
-                                                : 'bg-white border-gray-300 text-gray-900'
+                                                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500'
+                                                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                                                 }`}
                                         />
 
@@ -10290,7 +10293,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         onChange={(e) => setDislikeFeedbackText(e.target.value)}
                                         placeholder="Please describe the issue"
                                         rows={3}
-                                        className={`w-full p-2 rounded border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-300'}`}
+                                        className={`w-full p-2 rounded border ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`}
                                     />
                                 )}
                             </div>
@@ -11845,7 +11848,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <textarea
                                 value={adminNoteText}
                                 onChange={e => setAdminNoteText(e.target.value)}
-                                className={`w-full border rounded-lg p-3 h-32 focus:ring-2 focus:ring-blue-500 outline-none resize-none mb-4 ${isDarkMode ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
+                                className={`w-full border rounded-lg p-3 h-32 focus:ring-2 focus:ring-blue-500 outline-none resize-none mb-4 ${isDarkMode ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'}`}
                                 placeholder="Enter internal notes about this report..."
                             />
                             <div className="flex justify-end gap-2">
@@ -12184,8 +12187,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         onChange={(e) => setImageLinkInput(e.target.value)}
                                         placeholder="https://example.com/image.jpg"
                                         className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
-                                            ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50'
-                                            : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50'
+                                            ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50 placeholder-gray-500'
+                                            : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50 placeholder-gray-400'
                                             }`}
                                         autoFocus
                                     />
