@@ -1248,7 +1248,6 @@ function AppRoutes({ bootstrapped }) {
             <Route path="/v/:token" element={<VideoEmbed />} />
             <Route path="/i/:token" element={<ImageEmbed />} />
             <Route path="/view/:documentId" element={<ViewDocument />} />
-            <Route path="/view-chat/preview" element={<ViewChatDocument />} />
             <Route path="/security/lock-account/:token" element={<LockAccount />} />
             <Route path="/security/unlock-account/:token" element={<UnlockAccount />} />
             <Route path="/download" element={currentUser ? <Navigate to={currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? "/admin/download" : "/user/download"} /> : <Downloads />} />
