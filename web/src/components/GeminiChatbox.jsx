@@ -304,6 +304,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [placeholderSubIndex, setPlaceholderSubIndex] = useState(0);
     const [placeholderIsDeleting, setPlaceholderIsDeleting] = useState(false);
     const [placeholderText, setPlaceholderText] = useState("Ask anything...");
+    const touchStartXRef = useRef(0);
+    const touchStartYRef = useRef(0);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -8718,6 +8720,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             }
                                                         }
 
+                                                        // Tab key autofills typewriter placeholder tag
+                                                        if (e.key === 'Tab' && !inputMessage && !isBlockedByPolicy && !(rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')) {
+                                                            e.preventDefault();
+                                                            const words = [
+                                                                "Ask anything...",
+                                                                "Find homes...",
+                                                                "Check rental...",
+                                                                "Compare loans...",
+                                                                "Ask legal help...",
+                                                                "Ask ESG index...",
+                                                                "Chat with SetuAI..."
+                                                            ];
+                                                            const currentWord = words[placeholderIndex];
+                                                            const cleanWord = currentWord.replace(/\.\.\.$/, '');
+                                                            setInputMessage(cleanWord + " ");
+                                                        }
+
                                                         handleKeyDown(e);
                                                     }}
                                                     placeholder={isBlockedByPolicy ? `Policy Restricted: ${remainingCooldownText || 'Checking status...'}` : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to chat..." : placeholderText}
@@ -8731,6 +8750,36 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         } ${isBlockedByPolicy ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                     style={{ minHeight: '48px', maxHeight: '250px' }}
                                                     disabled={isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
+                                                    onTouchStart={(e) => {
+                                                        touchStartXRef.current = e.touches[0].clientX;
+                                                        touchStartYRef.current = e.touches[0].clientY;
+                                                    }}
+                                                    onTouchEnd={(e) => {
+                                                        if (inputMessage || isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')) return;
+                                                        const touchEndX = e.changedTouches[0].clientX;
+                                                        const touchEndY = e.changedTouches[0].clientY;
+                                                        const diffX = touchEndX - touchStartXRef.current;
+                                                        const diffY = touchEndY - touchStartYRef.current;
+
+                                                        // Detect horizontal swipe right: diffX > 60 and vertical movement is minor
+                                                        if (diffX > 60 && Math.abs(diffY) < 40) {
+                                                            const words = [
+                                                                "Ask anything...",
+                                                                "Find homes...",
+                                                                "Check rental...",
+                                                                "Compare loans...",
+                                                                "Ask legal help...",
+                                                                "Ask ESG index...",
+                                                                "Chat with SetuAI..."
+                                                            ];
+                                                            const currentWord = words[placeholderIndex];
+                                                            const cleanWord = currentWord.replace(/\.\.\.$/, '');
+                                                            setInputMessage(cleanWord + " ");
+                                                            if (inputRef.current) {
+                                                                inputRef.current.focus();
+                                                            }
+                                                        }
+                                                    }}
                                                 />
                                             </div>
                                             {inputMessage.length > 1800 && (
