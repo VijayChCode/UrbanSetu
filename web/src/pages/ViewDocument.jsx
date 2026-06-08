@@ -288,7 +288,10 @@ export default function ViewDocument() {
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Restricted Access</h2>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">You must be signed with authorized user account to view this document.</p>
                     <button
-                        onClick={() => navigate('/sign-in')}
+                        onClick={() => {
+                            const redirectPath = location.pathname.replace(/^\/view\//, '/user/view/') + location.search;
+                            navigate(`/sign-in?redirect=${encodeURIComponent(redirectPath)}`);
+                        }}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         Sign In to View
@@ -328,7 +331,10 @@ export default function ViewDocument() {
                 </div>
                 {isPublic && !document.category ? (
                     <button
-                        onClick={() => navigate('/sign-in')}
+                        onClick={() => {
+                            const redirectPath = location.pathname.replace(/^\/view\//, '/user/view/') + location.search;
+                            navigate(`/sign-in?redirect=${encodeURIComponent(redirectPath)}`);
+                        }}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         <span className="hidden sm:inline">Sign in to Download</span>
