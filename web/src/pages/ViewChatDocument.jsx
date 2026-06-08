@@ -39,7 +39,9 @@ export default function ViewChatDocument() {
         return mapping[src] || src.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     };
 
-    const pageTitle = document?.name || (document?.type ? `${document.type.charAt(0).toUpperCase() + document.type.slice(1)} Preview` : 'Document Preview');
+    const pageTitle = isRestricted
+        ? 'Restricted Document'
+        : (document?.name || (document?.type ? `${document.type.charAt(0).toUpperCase() + document.type.slice(1)} Preview` : 'Document Preview'));
     usePageTitle(`${pageTitle} - UrbanSetu`);
 
     const isPublic = location.pathname.startsWith('/view/');
@@ -307,7 +309,7 @@ export default function ViewChatDocument() {
                     </button>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0 pr-2">
                         <h1 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white truncate w-full sm:w-auto">
-                            {document.name || 'Document View'}
+                            {isRestricted ? 'Restricted Document' : (document.name || 'Document View')}
                         </h1>
                         <div className="flex flex-wrap items-center gap-1.5">
                             <span
@@ -327,17 +329,28 @@ export default function ViewChatDocument() {
                     </div>
                 </div>
                 {isRestricted ? (
-                    <button
-                        onClick={() => navigate('/sign-in')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        <span className="hidden sm:inline">Sign in to Download</span>
-                        <span className="sm:hidden">Sign in</span>
-                    </button>
+                    currentUser ? (
+                        <button
+                            disabled
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 rounded-lg cursor-not-allowed border dark:border-gray-700 shrink-0"
+                        >
+                            <FaLock className="text-xs" />
+                            <span className="hidden sm:inline">Download Restricted</span>
+                            <span className="sm:hidden">Restricted</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => navigate('/sign-in')}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shrink-0"
+                        >
+                            <span className="hidden sm:inline">Sign in to Download</span>
+                            <span className="sm:hidden">Sign in</span>
+                        </button>
+                    )
                 ) : (
                     <button
                         onClick={() => handleDownloadDocument(document.url, document.name)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shrink-0"
                     >
                         <FaDownload />
                         <span className="hidden sm:inline">Download</span>
