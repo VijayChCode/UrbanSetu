@@ -121,35 +121,94 @@ const RecommendationSlider = ({ recommendations }) => {
     const scrollRef = React.useRef(null);
     const [showLeftArrow, setShowLeftArrow] = React.useState(false);
     const [showRightArrow, setShowRightArrow] = React.useState(true);
+    const [numDots, setNumDots] = React.useState(0);
+    const [activeDot, setActiveDot] = React.useState(0);
 
-    const checkScroll = () => {
+    const updateDots = () => {
         if (!scrollRef.current) return;
         const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        
         setShowLeftArrow(scrollLeft > 10);
-        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+        setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+
+        const cards = scrollRef.current.children;
+        if (cards && cards.length > 0) {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 16; // gap-4 is 16px
+            const step = cardWidth + gap;
+            
+            const maxScroll = scrollWidth - clientWidth;
+            if (maxScroll <= 0) {
+                setNumDots(0);
+                setActiveDot(0);
+                return;
+            }
+
+            const stepsCount = Math.round(maxScroll / step);
+            const totalDots = stepsCount + 1;
+            setNumDots(totalDots > 1 ? totalDots : 0);
+
+            const currentStep = Math.round(scrollLeft / step);
+            setActiveDot(Math.min(currentStep, stepsCount));
+        }
+    };
+
+    const handleScroll = () => {
+        updateDots();
     };
 
     React.useEffect(() => {
-        checkScroll();
-        window.addEventListener('resize', checkScroll);
-        return () => window.removeEventListener('resize', checkScroll);
-    }, []);
+        const timer = setTimeout(() => {
+            updateDots();
+        }, 100);
 
-    const scroll = (direction) => {
+        window.addEventListener('resize', updateDots);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', updateDots);
+        };
+    }, [recommendations]);
+
+    const scrollDirection = (direction) => {
         if (!scrollRef.current) return;
-        const scrollAmount = 300;
-        scrollRef.current.scrollBy({
-            left: direction === 'left' ? -scrollAmount : scrollAmount,
-            behavior: 'smooth'
-        });
+        const cards = scrollRef.current.children;
+        if (cards && cards.length > 0) {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 16;
+            const step = cardWidth + gap;
+            const currentScroll = scrollRef.current.scrollLeft;
+            
+            const targetScroll = direction === 'left' 
+                ? currentScroll - step 
+                : currentScroll + step;
+                
+            scrollRef.current.scrollTo({
+                left: targetScroll,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    const scrollToDot = (index) => {
+        if (!scrollRef.current) return;
+        const cards = scrollRef.current.children;
+        if (cards && cards.length > 0) {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 16;
+            const step = cardWidth + gap;
+            scrollRef.current.scrollTo({
+                left: index * step,
+                behavior: 'smooth'
+            });
+        }
     };
 
     return (
-        <div className="relative group/slider">
+        <div className="relative group/slider select-none">
             {showLeftArrow && (
                 <button
-                    onClick={() => scroll('left')}
-                    className="absolute left-[-15px] sm:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                    onClick={() => scrollDirection('left')}
+                    className="absolute left-[-15px] sm:left-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 hidden md:flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90 cursor-pointer"
                     aria-label="Previous properties"
                 >
                     <FaChevronLeft size={12} />
@@ -158,11 +217,10 @@ const RecommendationSlider = ({ recommendations }) => {
 
             <div
                 ref={scrollRef}
-                onScroll={checkScroll}
-                className="flex overflow-x-auto pb-4 gap-4 no-scrollbar scroll-smooth snap-x"
+                onScroll={handleScroll}
+                className="flex overflow-x-auto pb-4 gap-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory"
             >
                 {recommendations.map((item, pIdx) => {
-                    // Determine if it's a property (ListingItem) or a blog/guide (BlogGuideItem)
                     const isProperty = item.bedrooms !== undefined || item.bathrooms !== undefined || item.type === 'rent' || item.type === 'sale';
                     const isBlogGuide = item.category || item.excerpt || item.type === 'blog' || item.type === 'guide';
 
@@ -173,7 +231,7 @@ const RecommendationSlider = ({ recommendations }) => {
                             ) : isBlogGuide ? (
                                 <BlogGuideItem item={item} type={item.type || 'blog'} />
                             ) : (
-                                <ListingItem listing={item} /> // Fallback to property if uncertain
+                                <ListingItem listing={item} />
                             )}
                         </div>
                     );
@@ -182,12 +240,30 @@ const RecommendationSlider = ({ recommendations }) => {
 
             {showRightArrow && (
                 <button
-                    onClick={() => scroll('right')}
-                    className="absolute right-[-15px] sm:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                    onClick={() => scrollDirection('right')}
+                    className="absolute right-[-15px] sm:right-[-20px] top-1/2 -translate-y-1/2 z-10 w-8 h-8 hidden md:flex items-center justify-center bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110 active:scale-90 cursor-pointer"
                     aria-label="Next properties"
                 >
                     <FaChevronRight size={12} />
                 </button>
+            )}
+
+            {/* Dynamic Dots Pagination */}
+            {numDots > 1 && (
+                <div className="flex justify-center items-center gap-1.5 mt-2">
+                    {Array.from({ length: numDots }).map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => scrollToDot(idx)}
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                                activeDot === idx
+                                    ? 'w-5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 shadow-md shadow-blue-500/20'
+                                    : 'w-2 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+                            }`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                        />
+                      ))}
+                </div>
             )}
         </div>
     );
@@ -8037,12 +8113,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     </div>
 
                                                                     <RecommendationSlider recommendations={message.recommendations} />
-
-                                                                    <div className="flex items-center justify-center gap-1.5 mt-1 opacity-40">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                                                                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                                                                        <div className="w-1 h-1 rounded-full bg-gray-400"></div>
-                                                                    </div>
                                                                 </div>
                                                             )}
                                                         </div>
