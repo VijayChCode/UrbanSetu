@@ -299,6 +299,49 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showTryPrompt, setShowTryPrompt] = useState(false);
     const [hasShownPrompt, setHasShownPrompt] = useState(false);
 
+    // Typewriter effect for input placeholder
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const [placeholderSubIndex, setPlaceholderSubIndex] = useState(0);
+    const [placeholderIsDeleting, setPlaceholderIsDeleting] = useState(false);
+    const [placeholderText, setPlaceholderText] = useState("Ask anything...");
+
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const words = [
+            "Ask anything...",
+            "Find homes...",
+            "Check rental...",
+            "Compare loans...",
+            "Ask legal help...",
+            "Ask ESG index...",
+            "Chat with SetuAI..."
+        ];
+
+        const word = words[placeholderIndex];
+
+        if (placeholderSubIndex === word.length + 1 && !placeholderIsDeleting) {
+            const timeout = setTimeout(() => {
+                setPlaceholderIsDeleting(true);
+            }, 2000);
+            return () => clearTimeout(timeout);
+        }
+
+        if (placeholderSubIndex === 0 && placeholderIsDeleting) {
+            setPlaceholderIsDeleting(false);
+            setPlaceholderIndex((prev) => (prev + 1) % words.length);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            const nextSub = placeholderSubIndex + (placeholderIsDeleting ? -1 : 1);
+            setPlaceholderSubIndex(nextSub);
+            setPlaceholderText(word.substring(0, nextSub));
+        }, placeholderIsDeleting ? 50 : 100);
+
+        return () => clearTimeout(timeout);
+    }, [placeholderSubIndex, placeholderIndex, placeholderIsDeleting, isOpen]);
+
     // Read prompt from URL
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -8674,7 +8717,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                         handleKeyDown(e);
                                                     }}
-                                                    placeholder={isBlockedByPolicy ? `Policy Restricted: ${remainingCooldownText || 'Checking status...'}` : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to chat..." : "Ask anything..."}
+                                                    placeholder={isBlockedByPolicy ? `Policy Restricted: ${remainingCooldownText || 'Checking status...'}` : (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin') ? "Sign in to chat..." : placeholderText}
                                                     aria-label="Type your message"
                                                     aria-describedby="input-help"
                                                     role="textbox"
