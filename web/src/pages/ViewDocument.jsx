@@ -37,14 +37,14 @@ export default function ViewDocument() {
         return mapping[src] || src.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     };
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isPublic = location.pathname.startsWith('/view/');
+
     const isRestricted = isPublic && !currentUser && (!document || !document.category);
     const docType = isRestricted
         ? 'Restricted Document'
         : (document?.type?.replace(/_/g, ' ') || 'Document');
     usePageTitle(`${docType.charAt(0).toUpperCase() + docType.slice(1)} - UrbanSetu`);
-
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isPublic = location.pathname.startsWith('/view/');
 
     useEffect(() => {
         if (documentId === 'preview') {
