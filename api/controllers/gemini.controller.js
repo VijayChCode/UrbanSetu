@@ -623,6 +623,7 @@ export const chatWithGemini = async (req, res) => {
             - Always provide accurate, helpful, and professional responses.
             - When uncertain, recommend consulting with licensed real estate professionals.
             - Return the response in Markdown format.
+            - EMOJIS: Use relevant emojis in your responses where appropriate (e.g. 🏠, 📍, 🤝, 🚀, 💬, ⚠️) to make your output more visually attractive, dynamic, engaging, and readable for the user. Do not over-use them, but use them contextually to highlight sections or options.
             `;
 
             const toneInstructions = {
