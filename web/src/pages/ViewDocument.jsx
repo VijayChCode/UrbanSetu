@@ -309,15 +309,19 @@ export default function ViewDocument() {
                     >
                         <FaArrowLeft />
                     </button>
-                    <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white capitalize truncate pr-2 flex items-center gap-2">
-                        <span>{document.type?.replace(/_/g, ' ') || 'Document View'}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0 pr-2">
+                        <h1 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white capitalize truncate w-full sm:w-auto">
+                            {document.type?.replace(/_/g, ' ') || 'Document View'}
+                        </h1>
                         {source && (
-                            <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
-                                {formatSourceLabel(source)}
-                            </span>
+                            <div className="flex flex-wrap items-center">
+                                <span className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
+                                    {formatSourceLabel(source)}
+                                </span>
+                            </div>
                         )}
-                    </h1>
+                    </div>
                 </div>
                 {isPublic && !document.category ? (
                     <button

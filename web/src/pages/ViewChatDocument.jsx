@@ -305,22 +305,26 @@ export default function ViewChatDocument() {
                     >
                         <FaArrowLeft />
                     </button>
-                    <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate pr-2 flex items-center gap-2">
-                        <span>{document.name || 'Document View'}</span>
-                        <span
-                            title="This document is from an end-to-end encrypted chat and is accessible only by you and the other participant. Anyone else attempting to view this link will be denied access."
-                            className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 shadow-sm cursor-help"
-                        >
-                            <FaLock className="w-2.5 h-2.5 mr-1 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>Encrypted & Secure</span>
-                        </span>
-                        {source && (
-                            <span className="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
-                                {formatSourceLabel(source)}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0 pr-2">
+                        <h1 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white truncate w-full sm:w-auto">
+                            {document.name || 'Document View'}
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                                title="This document is from an end-to-end encrypted chat and is accessible only by you and the other participant. Anyone else attempting to view this link will be denied access."
+                                className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 shadow-sm cursor-help"
+                            >
+                                <FaLock className="w-2 h-2 mr-1 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span>Encrypted & Secure</span>
                             </span>
-                        )}
-                    </h1>
+                            {source && (
+                                <span className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 shadow-sm">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span>
+                                    {formatSourceLabel(source)}
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
                 {isRestricted ? (
                     <button
