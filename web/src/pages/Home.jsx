@@ -15,7 +15,7 @@ import AdvancedImage from "../components/AdvancedImage";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { usePageTitle } from '../hooks/usePageTitle';
 import Typewriter from "../components/ui/Typewriter";
-import { FaEye, FaEyeSlash, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaChevronLeft, FaChevronRight, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
@@ -200,6 +200,92 @@ export default function Home() {
   // Animation states for dashboard
   const [isVisible, setIsVisible] = useState(false);
   const [statsAnimated, setStatsAnimated] = useState(false);
+
+  // Recently Viewed Slider State
+  const scrollRef = useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const [numDots, setNumDots] = useState(0);
+  const [activeDot, setActiveDot] = useState(0);
+
+  const updateDots = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    
+    setShowLeftArrow(scrollLeft > 10);
+    setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+
+    const cards = scrollRef.current.children;
+    if (cards && cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 24; // gap-6 is 24px
+      const step = cardWidth + gap;
+      
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll <= 0) {
+        setNumDots(0);
+        setActiveDot(0);
+        return;
+      }
+
+      const stepsCount = Math.round(maxScroll / step);
+      const totalDots = stepsCount + 1;
+      setNumDots(totalDots > 1 ? totalDots : 0);
+
+      const currentStep = Math.round(scrollLeft / step);
+      setActiveDot(Math.min(currentStep, stepsCount));
+    }
+  };
+
+  const handleScroll = () => {
+    updateDots();
+  };
+
+  const scrollDirection = (direction) => {
+    if (!scrollRef.current) return;
+    const cards = scrollRef.current.children;
+    if (cards && cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 24;
+      const step = cardWidth + gap;
+      const currentScroll = scrollRef.current.scrollLeft;
+      
+      const targetScroll = direction === 'left' 
+        ? currentScroll - step 
+        : currentScroll + step;
+        
+      scrollRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollToDot = (index) => {
+    if (!scrollRef.current) return;
+    const cards = scrollRef.current.children;
+    if (cards && cards.length > 0) {
+      const cardWidth = cards[0].offsetWidth;
+      const gap = 24;
+      const step = cardWidth + gap;
+      scrollRef.current.scrollTo({
+        left: index * step,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateDots();
+    }, 100);
+
+    window.addEventListener('resize', updateDots);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateDots);
+    };
+  }, [recentlyViewedListings]);
 
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
@@ -1400,10 +1486,63 @@ export default function Home() {
                       Browse More <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {recentlyViewedListings.map((listing) => (
-                      <ListingItem key={listing._id} listing={listing} />
-                    ))}
+                  
+                  <div className="relative group/slider select-none">
+                    {/* Left Arrow */}
+                    {showLeftArrow && (
+                      <button
+                        onClick={() => scrollDirection('left')}
+                        className="absolute left-0 top-[40%] -translate-y-1/2 -ml-4 z-20 hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-white/95 dark:bg-gray-800/95 text-gray-800 dark:text-white shadow-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 hover:scale-105 transition-all duration-300 cursor-pointer"
+                        aria-label="Previous properties"
+                      >
+                        <FaChevronLeft className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </button>
+                    )}
+
+                    {/* Scroll Container */}
+                    <div
+                      ref={scrollRef}
+                      onScroll={handleScroll}
+                      className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {recentlyViewedListings.map((listing) => (
+                        <div 
+                          key={listing._id} 
+                          className="w-[280px] sm:w-[320px] md:w-[290px] lg:w-[280px] xl:w-[270px] shrink-0 snap-start"
+                        >
+                          <ListingItem listing={listing} />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Right Arrow */}
+                    {showRightArrow && (
+                      <button
+                        onClick={() => scrollDirection('right')}
+                        className="absolute right-0 top-[40%] -translate-y-1/2 -mr-4 z-20 hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-white/95 dark:bg-gray-800/95 text-gray-800 dark:text-white shadow-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 hover:scale-105 transition-all duration-300 cursor-pointer"
+                        aria-label="Next properties"
+                      >
+                        <FaChevronRight className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </button>
+                    )}
+
+                    {/* Dots Pagination */}
+                    {numDots > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-4">
+                        {Array.from({ length: numDots }).map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => scrollToDot(idx)}
+                            className={`h-2.5 rounded-full transition-all duration-300 ${
+                              activeDot === idx
+                                ? 'w-6 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 shadow-md shadow-blue-500/20'
+                                : 'w-2.5 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+                            }`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
