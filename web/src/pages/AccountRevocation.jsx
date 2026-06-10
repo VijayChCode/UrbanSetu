@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, Clock, User, Shield, AlertTriangle, ArrowRight, RefreshCw, Home, Mail, Calendar, HelpCircle, AlertCircle } from 'lucide-react';
 
 import { useSelector } from 'react-redux';
+import { getErrorCode } from '../utils/errorRegistry';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
@@ -160,7 +161,8 @@ export default function AccountRevocation() {
                 <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 dark:text-red-400" />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2">Link Invalid or Expired</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-8 text-sm leading-relaxed font-medium">{error}</p>
+               <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm leading-relaxed font-medium">{error}</p>
+              <p className="text-red-600 dark:text-red-400 font-mono text-xs mb-8 transition-colors">Error Code: {getErrorCode(error)}</p>
 
               {/* Retry with manual token entry */}
               <div className="mb-8">

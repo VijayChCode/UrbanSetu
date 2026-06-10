@@ -323,7 +323,7 @@ class GlobalErrorBoundary extends React.Component {
                             {isPersistentError ? 'Persistent Server Issue' : 'Something went wrong'}
                         </h1>
 
-                        <div className="text-red-500 font-mono text-xs font-semibold mb-4 tracking-wide">
+                         <div className="text-red-500 dark:text-red-400 font-mono text-xs font-semibold mb-4 tracking-wide transition-colors">
                             Error Code: {errCode}
                         </div>
 

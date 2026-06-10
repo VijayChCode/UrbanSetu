@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { calculatePasswordStrength, getPasswordStrengthColor, getPasswordStrengthBgColor, getPasswordStrengthText, meetsMinimumRequirements } from "../utils/passwordStrength.js";
 import { authenticatedFetch, getCSRFToken } from '../utils/csrf';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { getErrorCode } from '../utils/errorRegistry';
 import { UserPlus, Mail, Lock, User, Phone } from "lucide-react";
 import PrimaryButton from "../components/ui/PrimaryButton";
 import AuthFormLayout from "../components/ui/AuthFormLayout";
@@ -1241,10 +1242,13 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                       }}
                     />
 
-                    {error && (
-                      <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
-                        <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <p className="text-red-700 text-sm font-medium">{error}</p>
+                     {error && (
+                      <div className="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl p-4 flex items-start gap-3 animate-fade-in transition-colors">
+                        <svg className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div className="flex-1">
+                          <p className="text-red-700 dark:text-red-300 text-sm font-medium transition-colors">{error}</p>
+                          <p className="text-red-600 dark:text-red-400 font-mono text-xs mt-1 transition-colors">Error Code: {getErrorCode(error)}</p>
+                        </div>
                       </div>
                     )}
                   </form>

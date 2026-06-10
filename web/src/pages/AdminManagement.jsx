@@ -2124,7 +2124,7 @@ export default function AdminManagement() {
                   <FaExclamationCircle className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Failed to Load Details</h3>
-                <div className="text-red-500 font-mono text-xs font-semibold tracking-wide">
+                 <div className="text-red-600 dark:text-red-400 font-mono text-xs font-semibold tracking-wide transition-colors">
                   Error Code: {getErrorCode("Failed to load details")}
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">

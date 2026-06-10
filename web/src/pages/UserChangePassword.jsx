@@ -12,6 +12,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import { useSignout } from '../hooks/useSignout';
 
 import { usePageTitle } from '../hooks/usePageTitle';
+import { getErrorCode } from '../utils/errorRegistry';
 import { Lock } from "lucide-react";
 import FormField from "../components/ui/FormField";
 import PrimaryButton from "../components/ui/PrimaryButton";
@@ -464,9 +465,10 @@ export default function UserChangePassword() {
                 Update Password
               </PrimaryButton>
 
-              {error && (
-                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <p className="text-red-600 dark:text-red-300 text-sm">{error}</p>
+               {error && (
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 transition-colors">
+                  <p className="text-red-600 dark:text-red-300 text-sm transition-colors">{error}</p>
+                  <p className="text-red-600 dark:text-red-400 font-mono text-xs mt-1 transition-colors">Error Code: {getErrorCode(error)}</p>
                 </div>
               )}
 

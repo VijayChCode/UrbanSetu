@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { signInSuccess } from '../redux/user/userSlice.js';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/csrf';
+import { getErrorCode } from '../utils/errorRegistry';
 import { syncSettingsFromUser } from '../utils/settingsSync';
 import { reconnectSocket } from '../utils/socket';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
@@ -334,9 +335,12 @@ export default function AccountConflictResolution() {
           )}
 
           {error && !success && (
-            <div className="mb-6 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-300 text-sm flex items-start gap-2">
+            <div className="mb-6 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-red-700 dark:text-red-300 text-sm flex items-start gap-2 animate-fade-in">
               <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>{error}</span>
+              <div className="flex-1">
+                 <p className="font-medium">{error}</p>
+                <p className="text-red-600 dark:text-red-400 font-mono text-xs mt-1 transition-colors">Error Code: {getErrorCode(error)}</p>
+              </div>
             </div>
           )}
 
