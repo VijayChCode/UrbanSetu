@@ -1444,12 +1444,7 @@ export default function AdminManagement() {
                 </h2>
                 {filteredUsers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
-                    <div className="w-20 h-20 bg-blue-100/50 dark:bg-blue-950/30 rounded-3xl flex items-center justify-center mb-6 relative shadow-inner animate-pulse">
-                      <span className="text-4xl">🕵️</span>
-                      <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1.5 shadow border-2 border-blue-50 dark:border-gray-950">
-                        <FaSearch className="text-xs text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                    </div>
+                    <div className="text-6xl mb-4">🕵️</div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
                       {(searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all") ? `No users found matching your filters` : "No users found."}
                     </p>
@@ -1573,12 +1568,7 @@ export default function AdminManagement() {
                 </h2>
                 {filteredAdmins.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
-                    <div className="w-20 h-20 bg-purple-100/50 dark:bg-purple-950/30 rounded-3xl flex items-center justify-center mb-6 relative shadow-inner animate-pulse">
-                      <span className="text-4xl">🕵️</span>
-                      <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1.5 shadow border-2 border-purple-50 dark:border-gray-950">
-                        <FaSearch className="text-xs text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                    </div>
+                    <div className="text-6xl mb-4">🕵️</div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
                       {(searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all" || adminApprovalFilter !== "all") ? `No admins found matching your filters` : "No admins found."}
                     </p>
@@ -1702,7 +1692,23 @@ export default function AdminManagement() {
                 {softbannedLoading ? (
                   <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
                 ) : softbannedAccounts.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">No softbanned accounts found</div>
+                  <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm animate-fadeIn">
+                    <div className="text-6xl mb-4">🕵️</div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      {(softbannedFilters.q || softbannedFilters.role !== "all" || softbannedFilters.softbannedBy || softbannedFilters.from || softbannedFilters.to) ? "No softbanned accounts found matching your filters" : "No softbanned accounts found."}
+                    </p>
+                    {(softbannedFilters.q || softbannedFilters.role !== "all" || softbannedFilters.softbannedBy || softbannedFilters.from || softbannedFilters.to) && (
+                      <button
+                        onClick={() => {
+                          setSoftbannedFilters({ q: '', role: 'all', softbannedBy: '', from: '', to: '' });
+                          setTimeout(fetchSoftbannedAccounts, 0);
+                        }}
+                        className="mt-4 text-blue-500 hover:text-blue-600 underline"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                     <table className="min-w-full text-sm">
@@ -1768,7 +1774,23 @@ export default function AdminManagement() {
                 {purgedLoading ? (
                   <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
                 ) : purgedAccounts.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">No purged accounts found</div>
+                  <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm animate-fadeIn">
+                    <div className="text-6xl mb-4">🕵️</div>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+                      {(purgedFilters.q || purgedFilters.role !== "all" || purgedFilters.purgedBy || purgedFilters.from || purgedFilters.to) ? "No purged accounts found matching your filters" : "No purged accounts found."}
+                    </p>
+                    {(purgedFilters.q || purgedFilters.role !== "all" || purgedFilters.purgedBy || purgedFilters.from || purgedFilters.to) && (
+                      <button
+                        onClick={() => {
+                          setPurgedFilters({ q: '', role: 'all', purgedBy: '', from: '', to: '' });
+                          setTimeout(fetchPurgedAccounts, 0);
+                        }}
+                        className="mt-4 text-blue-500 hover:text-blue-600 underline"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                     <table className="min-w-full text-sm">
