@@ -1445,7 +1445,7 @@ export default function AdminManagement() {
                 {filteredUsers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                     <div className="w-20 h-20 bg-blue-100/50 dark:bg-blue-950/30 rounded-3xl flex items-center justify-center mb-6 relative shadow-inner animate-pulse">
-                      <FaUser className="text-4xl text-blue-500 dark:text-blue-400" />
+                      <span className="text-4xl">🕵️</span>
                       <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1.5 shadow border-2 border-blue-50 dark:border-gray-950">
                         <FaSearch className="text-xs text-indigo-600 dark:text-indigo-400" />
                       </div>
@@ -1574,7 +1574,7 @@ export default function AdminManagement() {
                 {filteredAdmins.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                     <div className="w-20 h-20 bg-purple-100/50 dark:bg-purple-950/30 rounded-3xl flex items-center justify-center mb-6 relative shadow-inner animate-pulse">
-                      <FaUserShield className="text-4xl text-purple-500 dark:text-purple-400" />
+                      <span className="text-4xl">🕵️</span>
                       <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1.5 shadow border-2 border-purple-50 dark:border-gray-950">
                         <FaSearch className="text-xs text-indigo-600 dark:text-indigo-400" />
                       </div>

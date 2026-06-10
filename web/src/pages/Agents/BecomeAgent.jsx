@@ -196,14 +196,14 @@ const BecomeAgent = () => {
                                         <label htmlFor="agencyName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Agency Name (Optional)</label>
                                         <div className="relative">
                                             <FaBuilding className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                            <input id="agencyName" type="text" className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.agencyName} />
+                                            <input id="agencyName" type="text" placeholder="e.g. UrbanSetu Realty Group" className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.agencyName} />
                                         </div>
                                     </div>
                                     <div>
                                         <label htmlFor="reraId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">RERA ID (Optional)</label>
                                         <div className="relative">
                                             <FaIdCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                            <input id="reraId" type="text" className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.reraId} />
+                                            <input id="reraId" type="text" placeholder="e.g. RAJ/A/2026/000123" className="w-full pl-10 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.reraId} />
                                         </div>
                                     </div>
                                 </div>
@@ -222,7 +222,7 @@ const BecomeAgent = () => {
                                         {loading ? <UrbanSetuSpinner size="xs" isBright={true} /> : 'Submit Application'}
                                     </button>
                                     <p className="text-xs text-gray-500 mt-4 text-center">
-                                        By submitting, you agree to our <a href="/user/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms and Conditions for Partners</a>.
+                                        By submitting, you agree to our <a href="/user/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms and Conditions</a> for Partners.
                                     </p>
                                 </div>
                             </form>
