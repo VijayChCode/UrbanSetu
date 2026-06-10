@@ -294,12 +294,20 @@ const ErrorCodes = () => {
           <p className="text-gray-650 dark:text-gray-400 mb-4 font-medium">
             Encountering a code not listed here, or still need assistance?
           </p>
-          <Link
-            to={!currentUser ? '/contact' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/support' : '/user/contact')}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
-          >
-            Contact Support Team
-          </Link>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+            <Link
+              to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')}
+              className="inline-flex items-center px-6 py-3 bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border border-gray-250 dark:border-gray-850 font-bold rounded-xl transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Read More in Help Center
+            </Link>
+            <Link
+              to={!currentUser ? '/contact' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/support' : '/user/contact')}
+              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+            >
+              Contact Support Team
+            </Link>
+          </div>
         </div>
       </div>
 
