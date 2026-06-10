@@ -452,7 +452,7 @@ export default function Unsubscribe() {
                         <div className="flex gap-6">
                             <Link to="/privacy" className="text-sm text-slate-400 hover:text-emerald-500 transition-colors">Privacy</Link>
                             <Link to="/terms" className="text-sm text-slate-400 hover:text-emerald-500 transition-colors">Terms</Link>
-                            <Link to="/contact" className="text-sm text-slate-400 hover:text-emerald-500 transition-colors">Support</Link>
+                            <Link to={currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/support' : '/contact'} className="text-sm text-slate-400 hover:text-emerald-500 transition-colors">Support</Link>
                         </div>
                     </div>
                 </div>

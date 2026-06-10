@@ -1368,21 +1368,6 @@ export default function AdminManagement() {
                 </div>
               )}
 
-              {/* Clear All Filters */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setStatusFilter("all");
-                    setPromoSubscriptionFilter("all");
-                    setAdminApprovalFilter("all");
-                  }}
-                  className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <FaTimes className="text-sm" />
-                  Clear All Filters
-                </button>
-              </div>
             </div>
           ) : tab === 'softbanned' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
