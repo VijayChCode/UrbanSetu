@@ -158,6 +158,7 @@ const ClientErrorMonitoring = lazy(() => import('./pages/ClientErrorMonitoring')
 const HelpCenter = lazy(() => import('./pages/HelpCenter/HelpCenter'));
 const ArticleView = lazy(() => import('./pages/HelpCenter/ArticleView'));
 const AdminHelpCenter = lazy(() => import('./pages/HelpCenter/AdminHelpCenter'));
+const ErrorCodes = lazy(() => import('./pages/ErrorCodes'));
 const FindAgent = lazy(() => import('./pages/Agents/FindAgent'));
 const BecomeAgent = lazy(() => import('./pages/Agents/BecomeAgent'));
 const AgentProfile = lazy(() => import('./pages/Agents/AgentProfile'));
@@ -289,7 +290,7 @@ function normalizeRoute(path, role) {
   }
 
   // List of base routes that have public-facing versions
-  const publicBases = ["about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", "cookie-policy", "listing", "home", "contact", "ai", "community-guidelines", "community", "help-center", "agents", "market-trends"];
+  const publicBases = ["about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", "cookie-policy", "listing", "home", "contact", "ai", "community-guidelines", "community", "help-center", "agents", "market-trends", "error-codes"];
 
   // List of base routes that exist for both user and admin but are NOT public
   const parallelBases = [
@@ -1216,6 +1217,7 @@ function AppRoutes({ bootstrapped }) {
             {/* Simpler approach: Make HelpCenter component handle the redirect if mounted on public route with auth? No, typically App.jsx handles it. */}
             {/* Let's use a wrapper component for the redirect to extract params correctly */}
             <Route path="/help-center/article/:slug" element={<ArticleViewRedirect />} />
+            <Route path="/error-codes" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/error-codes" : "/user/error-codes"} /> : <ErrorCodes />} />
             <Route path="/" element={<PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/home" element={<PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
@@ -1315,6 +1317,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/user/download" element={<Downloads />} />
               <Route path="/user/help-center" element={<HelpCenter />} />
               <Route path="/user/help-center/article/:slug" element={<ArticleView />} />
+              <Route path="/user/error-codes" element={<ErrorCodes />} />
               <Route path="/user/agents" element={<FindAgent />} />
               <Route path="/user/agents/:id" element={<AgentProfile />} />
               <Route path="/user/market-trends" element={<MarketTrends />} />
@@ -1402,6 +1405,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/ai" element={<Navigate to="/admin/ai" />} />
               <Route path="/user/ai" element={<Navigate to="/admin/ai" />} />
               <Route path="/admin/help-center" element={<AdminHelpCenter />} />
+              <Route path="/admin/error-codes" element={<ErrorCodes />} />
               <Route path="/admin/market-trends" element={<MarketTrends />} />
             </Route>
 
