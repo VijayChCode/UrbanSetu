@@ -82,6 +82,7 @@ export default function AdminManagement() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [promoSubscriptionFilter, setPromoSubscriptionFilter] = useState("all");
   const [adminApprovalFilter, setAdminApprovalFilter] = useState("all");
   const [passwordLockouts, setPasswordLockouts] = useState([]); // { email, unlockAt }
   const [showPasswordModal, setShowPasswordModal] = useState(true);
@@ -862,6 +863,14 @@ export default function AdminManagement() {
       }
     }
 
+    // Promotional email subscription filter
+    if (promoSubscriptionFilter !== "all") {
+      filtered = filtered.filter(account => {
+        const isSubscribed = account.isSubscribed !== false;
+        return promoSubscriptionFilter === "subscribed" ? isSubscribed : !isSubscribed;
+      });
+    }
+
     // Admin approval status filter (only for admin tab)
     if (tab === "admins" && adminApprovalFilter !== "all") {
       filtered = filtered.filter(account => account.adminApprovalStatus === adminApprovalFilter);
@@ -1214,6 +1223,7 @@ export default function AdminManagement() {
               setShowRestriction(false);
               setSearchTerm("");
               setStatusFilter("all");
+              setPromoSubscriptionFilter("all");
               setAdminApprovalFilter("all");
             }}
           >
@@ -1227,6 +1237,7 @@ export default function AdminManagement() {
                 setTab("admins");
                 setSearchTerm("");
                 setStatusFilter("all");
+                setPromoSubscriptionFilter("all");
                 setAdminApprovalFilter("all");
               }}
             >
@@ -1239,6 +1250,7 @@ export default function AdminManagement() {
               setTab("softbanned");
               setSearchTerm("");
               setStatusFilter("all");
+              setPromoSubscriptionFilter("all");
               setAdminApprovalFilter("all");
               fetchSoftbannedAccounts();
             }}
@@ -1252,6 +1264,7 @@ export default function AdminManagement() {
               setTab("purged");
               setSearchTerm("");
               setStatusFilter("all");
+              setPromoSubscriptionFilter("all");
               setAdminApprovalFilter("all");
               fetchPurgedAccounts();
             }}
@@ -1264,7 +1277,7 @@ export default function AdminManagement() {
         {/* Enhanced Search and Filters */}
         <div className="mb-6 animate-fadeIn bg-gray-50/50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
           {tab !== 'softbanned' && tab !== 'purged' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {/* Main Search */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1310,6 +1323,27 @@ export default function AdminManagement() {
                 </div>
               </div>
 
+              {/* Promo Email Subscription Filter Dropdown */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaEnvelope className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-200" />
+                </div>
+                <select
+                  value={promoSubscriptionFilter}
+                  onChange={(e) => setPromoSubscriptionFilter(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm appearance-none cursor-pointer"
+                >
+                  <option value="all">All Subscriptions</option>
+                  <option value="subscribed">Promo Subscribed</option>
+                  <option value="unsubscribed">Promo Unsubscribed</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+
               {/* Admin Approval Status Filter (only for admin tab) */}
               {tab === "admins" && (
                 <div className="relative">
@@ -1340,6 +1374,7 @@ export default function AdminManagement() {
                   onClick={() => {
                     setSearchTerm("");
                     setStatusFilter("all");
+                    setPromoSubscriptionFilter("all");
                     setAdminApprovalFilter("all");
                   }}
                   className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors duration-200 flex items-center justify-center gap-2"
@@ -1390,12 +1425,13 @@ export default function AdminManagement() {
           )}
 
           {/* Results Summary */}
-          {tab !== 'softbanned' && tab !== 'purged' && (searchTerm || statusFilter !== "all" || adminApprovalFilter !== "all") && (
+          {tab !== 'softbanned' && tab !== 'purged' && (searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all" || adminApprovalFilter !== "all") && (
             <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="text-sm text-blue-800 dark:text-blue-300">
                 <span className="font-semibold">Active Filters:</span>
                 {searchTerm && <span className="ml-2 px-2 py-1 bg-blue-200 dark:bg-blue-800 rounded text-xs">Search: "{searchTerm}"</span>}
                 {statusFilter !== "all" && <span className="ml-2 px-2 py-1 bg-green-200 dark:bg-green-800/50 rounded text-xs">Status: {statusFilter}</span>}
+                {promoSubscriptionFilter !== "all" && <span className="ml-2 px-2 py-1 bg-blue-200 dark:bg-blue-800/50 rounded text-xs">Promo: {promoSubscriptionFilter}</span>}
                 {tab === "admins" && adminApprovalFilter !== "all" && <span className="ml-2 px-2 py-1 bg-purple-200 dark:bg-purple-800/50 rounded text-xs">Approval: {adminApprovalFilter}</span>}
               </div>
               <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
@@ -1425,13 +1461,14 @@ export default function AdminManagement() {
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                     <FaUserLock className="text-6xl text-gray-300 dark:text-gray-600 mb-4" />
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      {(searchTerm || statusFilter !== "all") ? `No users found matching your filters` : "No users found."}
+                      {(searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all") ? `No users found matching your filters` : "No users found."}
                     </p>
-                    {(searchTerm || statusFilter !== "all") && (
+                    {(searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all") && (
                       <button
                         onClick={() => {
                           setSearchTerm("");
                           setStatusFilter("all");
+                          setPromoSubscriptionFilter("all");
                         }}
                         className="mt-4 text-blue-500 hover:text-blue-600 underline"
                       >
@@ -1548,13 +1585,14 @@ export default function AdminManagement() {
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
                     <FaUserLock className="text-6xl text-gray-300 dark:text-gray-600 mb-4" />
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                      {(searchTerm || statusFilter !== "all" || adminApprovalFilter !== "all") ? `No admins found matching your filters` : "No admins found."}
+                      {(searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all" || adminApprovalFilter !== "all") ? `No admins found matching your filters` : "No admins found."}
                     </p>
-                    {(searchTerm || statusFilter !== "all" || adminApprovalFilter !== "all") && (
+                    {(searchTerm || statusFilter !== "all" || promoSubscriptionFilter !== "all" || adminApprovalFilter !== "all") && (
                       <button
                         onClick={() => {
                           setSearchTerm("");
                           setStatusFilter("all");
+                          setPromoSubscriptionFilter("all");
                           setAdminApprovalFilter("all");
                         }}
                         className="mt-4 text-blue-500 hover:text-blue-600 underline"
