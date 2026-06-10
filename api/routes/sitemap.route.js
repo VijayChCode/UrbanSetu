@@ -83,7 +83,8 @@ router.get('/sitemap-pages.xml', (req, res) => {
         '', '/about', '/blogs', '/guides', '/market-trends', '/help-center',
         '/community', '/community-guidelines', '/download', '/faqs',
         '/search', '/contact', '/sign-in', '/sign-up', '/forgot-password',
-        '/updates', '/ai', '/terms', '/privacy', '/cookie-policy', '/agents'
+        '/updates', '/ai', '/terms', '/privacy', '/cookie-policy', '/agents',
+        '/error-codes'
     ];
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>';

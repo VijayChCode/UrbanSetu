@@ -253,6 +253,7 @@ const LoadingSpinner = () => (
         <a href="/cookie-policy">Cookie Policy</a>
         <a href="/community-guidelines">Community Guidelines</a>
         <a href="/agents">Find Agents</a>
+        <a href="/error-codes">Error Codes Reference</a>
       </nav>
     </div>
 

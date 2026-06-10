@@ -27,7 +27,8 @@ const SitemapNav = () => {
         { name: 'Community Guidelines', path: '/community-guidelines' },
         { name: 'Sign In', path: '/sign-in' },
         { name: 'Sign Up', path: '/sign-up' },
-        { name: 'Forgot Password', path: '/forgot-password' }
+        { name: 'Forgot Password', path: '/forgot-password' },
+        { name: 'Error Codes Reference', path: '/error-codes' }
     ];
 
     return (
