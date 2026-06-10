@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Shield, AlertCircle, RefreshCw, Wifi, WifiOff, FileText, Search, Lock, HelpCircle, HardDrive } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { Shield, AlertCircle, RefreshCw, Wifi, WifiOff, FileText, Search, Lock, HelpCircle, HardDrive, ChevronLeft } from 'lucide-react';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import SEO from '../components/SEO';
 import { ERROR_CODES } from '../utils/errorRegistry';
@@ -137,6 +139,7 @@ const errorCodeDetails = {
 };
 
 const ErrorCodes = () => {
+  const { currentUser } = useSelector((state) => state.user);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -167,6 +170,16 @@ const ErrorCodes = () => {
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1567&q=80')] opacity-5 bg-cover bg-center"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30"></div>
         
+        <div className="max-w-7xl mx-auto px-4 mb-4 relative z-10 text-left">
+          <Link
+            to={!currentUser ? '/' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user')}
+            className="inline-flex items-center text-blue-200 hover:text-white transition-colors text-sm font-semibold gap-1.5"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {!currentUser ? 'Back to Home' : 'Back to Dashboard'}
+          </Link>
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
           <div className="inline-flex items-center justify-center p-3.5 bg-white/10 backdrop-blur-md rounded-2xl mb-6 ring-4 ring-white/20">
             <AlertCircle className="w-10 h-10 text-blue-300" />
@@ -281,12 +294,12 @@ const ErrorCodes = () => {
           <p className="text-gray-650 dark:text-gray-400 mb-4 font-medium">
             Encountering a code not listed here, or still need assistance?
           </p>
-          <a
-            href="/contact"
+          <Link
+            to={!currentUser ? '/contact' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/support' : '/user/contact')}
             className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             Contact Support Team
-          </a>
+          </Link>
         </div>
       </div>
 
