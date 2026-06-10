@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
+import { getErrorCode } from '../../utils/errorRegistry';
 
 const ArticleView = () => {
     const { currentUser } = useSelector((state) => state.user);
@@ -128,8 +129,11 @@ const ArticleView = () => {
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         Article Not Found
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                    <p className="text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">
                         {error || "The article you are looking for does not exist or may have been moved."}
+                    </p>
+                    <p className="text-red-600 dark:text-red-400 font-mono text-xs mb-8 transition-colors">
+                        Error Code: {getErrorCode(error || "Article not found")}
                     </p>
                     <Link
                         to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')}
