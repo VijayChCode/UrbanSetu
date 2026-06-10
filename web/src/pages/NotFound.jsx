@@ -135,9 +135,12 @@ export default function NotFound() {
             />
           </div>
 
-          <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-4 tracking-tighter">
+          <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-1 tracking-tighter">
             404
           </h1>
+          <div className="text-xs font-mono text-gray-500 dark:text-gray-400 mb-4 tracking-wide font-semibold">
+            Error Code: ERR_API_NOT_FOUND
+          </div>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Oops! You've gone off the map.
           </h2>

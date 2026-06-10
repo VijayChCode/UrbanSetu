@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
 import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle, FaCoins, FaComments, FaMapMarkedAlt, FaChartLine, FaCreditCard, FaHeart, FaEye } from "react-icons/fa";
+import { getErrorCode } from "../utils/errorRegistry";
 import { socket } from "../utils/socket";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import { authenticatedFetch } from "../utils/auth";
@@ -2123,6 +2124,9 @@ export default function AdminManagement() {
                   <FaExclamationCircle className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Failed to Load Details</h3>
+                <div className="text-red-500 font-mono text-xs font-semibold tracking-wide">
+                  Error Code: {getErrorCode("Failed to load details")}
+                </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
                   We encountered an error trying to fetch the account details. Please try again.
                 </p>

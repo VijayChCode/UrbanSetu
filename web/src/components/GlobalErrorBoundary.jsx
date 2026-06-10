@@ -8,6 +8,7 @@ import SEO from './SEO';
 import { BrowserRouter, Link } from 'react-router-dom';
 import WishlistProvider from '../WishlistContext';
 import ContactSupportWrapper from './ContactSupportWrapper';
+import { getErrorCode } from '../utils/errorRegistry';
 
 class GlobalErrorBoundary extends React.Component {
     constructor(props) {
@@ -281,6 +282,9 @@ class GlobalErrorBoundary extends React.Component {
         if (this.state.hasError) {
             const altUrl = this.getAlternativeUrl(this.state.switchCount + 1);
             const { reloadCount, isPersistentError } = this.state;
+            const errCode = isPersistentError 
+                ? 'ERR_NET_CONNECT' 
+                : (this.state.error ? getErrorCode(this.state.error) : 'ERR_SYS_REACT_CRASH');
 
             return (
                 <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 gap-12 py-12 relative overflow-hidden font-sans">
@@ -315,9 +319,13 @@ class GlobalErrorBoundary extends React.Component {
                             <FaExclamationTriangle className="text-3xl text-red-500" />
                         </div>
 
-                        <h1 className="text-2xl font-bold text-white mb-3">
+                        <h1 className="text-2xl font-bold text-white mb-1">
                             {isPersistentError ? 'Persistent Server Issue' : 'Something went wrong'}
                         </h1>
+
+                        <div className="text-red-500 font-mono text-xs font-semibold mb-4 tracking-wide">
+                            Error Code: {errCode}
+                        </div>
 
                         <p className="text-slate-400 text-sm leading-relaxed mb-8">
                             {isPersistentError
