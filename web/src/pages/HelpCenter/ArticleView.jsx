@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaThumbsUp, FaThumbsDown, FaChevronLeft, FaCalendarAlt } from 'react-icons/fa';
+import { FaThumbsUp, FaThumbsDown, FaChevronLeft, FaCalendarAlt, FaFileAlt } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { usePageTitle } from '../../hooks/usePageTitle';
@@ -107,10 +107,24 @@ const ArticleView = () => {
 
     if (error || !article) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Article Not Found</h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-8">{error || "The article you are looking for does not exist."}</p>
-                <Link to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')} className="text-blue-600 hover:underline">Return to Help Center</Link>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 transition-colors duration-300">
+                <div className="max-w-md w-full text-center bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-300">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 mb-6">
+                        <FaFileAlt className="w-8 h-8" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                        Article Not Found
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                        {error || "The article you are looking for does not exist or may have been moved."}
+                    </p>
+                    <Link
+                        to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')}
+                        className="inline-flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all duration-200"
+                    >
+                        Return to Help Center
+                    </Link>
+                </div>
             </div>
         );
     }
