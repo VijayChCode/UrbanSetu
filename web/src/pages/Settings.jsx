@@ -1773,6 +1773,12 @@ export default function Settings() {
             >
               {t('settings.community_guidelines') || 'Community Guidelines'}
             </Link>
+            <Link
+              to={currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/error-codes' : '/user/error-codes'}
+              className="block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+            >
+              {t('settings.error_directory') || 'Error Directory'}
+            </Link>
           </div>
         </SettingSection>
 
