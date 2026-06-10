@@ -74,6 +74,15 @@ const HelpCenter = () => {
             />
             {/* Hero Section */}
             <div className="bg-blue-600 dark:bg-blue-800 py-16 px-4 sm:px-6 lg:px-8 text-center transition-colors relative">
+                <div className="max-w-7xl mx-auto px-4 mb-4 text-left relative z-10">
+                    <Link
+                        to={!currentUser ? '/' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user')}
+                        className="inline-flex items-center text-blue-100 hover:text-white transition-colors text-sm font-semibold gap-1.5"
+                    >
+                        <FaChevronLeft className="w-4 h-4" />
+                        {!currentUser ? 'Back to Home' : 'Back to Dashboard'}
+                    </Link>
+                </div>
                 {currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
                     <Link
                         to="/admin/help-center"
@@ -226,7 +235,7 @@ const HelpCenter = () => {
                                 Still can't find what you're looking for?
                             </p>
                             <Link
-                                to="/contact" // Standard contact page
+                                to={!currentUser ? '/contact' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/support' : '/user/contact')}
                                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                             >
                                 Contact Support
