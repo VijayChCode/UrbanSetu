@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaHome, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCookie, FaShieldAlt, FaFileContract, FaEye, FaHandshake, FaRobot } from 'react-icons/fa';
+import { FaHome, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCookie, FaShieldAlt, FaFileContract, FaEye, FaHandshake, FaRobot, FaExclamationTriangle } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 
 import { API_BASE_URL } from '../config/api';
@@ -361,6 +361,21 @@ const Footer = () => {
                 >
                   <FaCookie className="text-xs" />
                   Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={
+                    currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')
+                      ? "/admin/error-codes"
+                      : currentUser
+                        ? "/user/error-codes"
+                        : "/error-codes"
+                  }
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
+                >
+                  <FaExclamationTriangle className="text-xs text-red-500" />
+                  Error Directory
                 </Link>
               </li>
               <li>
