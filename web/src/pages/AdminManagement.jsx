@@ -2118,8 +2118,14 @@ export default function AdminManagement() {
                 </div>
               </>
             ) : (
-              <div className="text-center py-12 text-red-500 font-bold">
-                Failed to load details.
+              <div className="w-full min-h-[380px] flex flex-col justify-center items-center gap-4 p-8 animate-fadeIn text-center">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400">
+                  <FaExclamationCircle className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Failed to Load Details</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                  We encountered an error trying to fetch the account details. Please try again.
+                </p>
               </div>
             )}
           </div>
