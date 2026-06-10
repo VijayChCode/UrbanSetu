@@ -109,8 +109,21 @@ const ArticleView = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 transition-colors duration-300">
                 <div className="max-w-md w-full text-center bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-300">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 mb-6">
-                        <FaFileAlt className="w-8 h-8" />
+                    <div className="inline-flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="64" height="64" viewBox="0 0 64 64">
+                            <path fill="#008aa9" d="M55,47.491H44V18h8c1.657,0,3,1.343,3,3V47.491z"></path>
+                            <ellipse cx="32" cy="61" opacity=".3" rx="18.75" ry="3"></ellipse>
+                            <path fill="#37d0ee" d="M49.994,53H15c-3.314,0-6-2.686-6-6V14c0-1.657,1.343-3,3-3h29c1.657,0,3,1.343,3,3v33.505L49.994,53z"></path>
+                            <circle cx="49.5" cy="47.5" r="5.5" fill="#008aa9"></circle>
+                            <path d="M50,28l0,19.491c0,0.069,0.001,0.14,0.004,0.21c0.073,1.858,1.173,3.437,2.737,4.236C54.108,50.936,55,49.324,55,47.5c0-0.003,0-0.006,0-0.009h0V23C52.239,23,50,25.239,50,28z" opacity=".15"></path>
+                            <path fill="#fff" d="M30,11C30,11,30,11,30,11l-18,0c-1.657,0-3,1.343-3,3v17c2.761,0,5-2.239,5-5V16h11C27.761,16,30,13.761,30,11z" opacity=".3"></path>
+                            <rect width="25" height="10" x="14" y="16" fill="#a0effe"></rect>
+                            <rect width="10" height="4" x="14" y="30" fill="#a0effe"></rect>
+                            <rect width="11" height="4" x="28" y="30" fill="#a0effe"></rect>
+                            <rect width="10" height="4" x="14" y="38" fill="#a0effe"></rect>
+                            <rect width="11" height="4" x="28" y="38" fill="#a0effe"></rect>
+                            <polyline fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeMiterlimit="10" strokeWidth="3" points="12.5,20.5 12.5,14.5 16.5,14.5"></polyline>
+                        </svg>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         Article Not Found
