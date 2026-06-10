@@ -1,12 +1,106 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaEnvelopeOpenText, FaCheckCircle, FaExclamationCircle, FaArrowLeft, FaHome, FaPaperPlane, FaInfoCircle } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FaEnvelopeOpenText, FaCheckCircle, FaExclamationCircle, FaArrowLeft, FaArrowRight, FaHome, FaPaperPlane, FaInfoCircle } from 'react-icons/fa';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+function DragSlider({ onConfirm, loading }) {
+    const containerRef = useRef(null);
+    const [dragWidth, setDragWidth] = useState(0);
+    const x = useMotionValue(0);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current) {
+                const containerWidth = containerRef.current.clientWidth;
+                // w-14 is 56px, p-1 is 4px on each side (total 8px)
+                setDragWidth(Math.max(0, containerWidth - 56 - 8));
+            }
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Transform opacity of helper text based on drag progress
+    const textOpacity = useTransform(x, [0, dragWidth || 1], [1, 0.15]);
+    const bgFillWidth = useTransform(x, [0, dragWidth || 1], ['0%', '100%']);
+
+    const handleDragEnd = () => {
+        if (x.get() >= dragWidth * 0.9 && !loading) {
+            onConfirm();
+        } else {
+            x.set(0);
+        }
+    };
+
+    useEffect(() => {
+        if (!loading) {
+            x.set(0);
+        }
+    }, [loading]);
+
+    return (
+        <div 
+            ref={containerRef}
+            className="relative w-full h-16 bg-slate-100/90 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl p-1 border border-slate-200/80 dark:border-slate-800 flex items-center overflow-hidden select-none transition-colors duration-300"
+        >
+            <motion.div 
+                style={{ width: bgFillWidth }}
+                className="absolute left-0 top-0 bottom-0 bg-emerald-500/10 dark:bg-emerald-500/20 pointer-events-none rounded-l-2xl"
+            />
+
+            <motion.div 
+                style={{ opacity: textOpacity }}
+                className="absolute inset-0 flex items-center justify-center gap-3 text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wide pointer-events-none select-none"
+            >
+                <span>Swipe to Unsubscribe</span>
+                
+                <div className="flex items-center gap-1">
+                    <motion.span
+                        animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", times: [0, 0.5, 1] }}
+                    >
+                        <FaArrowRight className="text-emerald-600 dark:text-emerald-400 text-xs" />
+                    </motion.span>
+                    <motion.span
+                        animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.3, times: [0, 0.5, 1] }}
+                    >
+                        <FaArrowRight className="text-emerald-600/75 dark:text-emerald-400/75 text-xs" />
+                    </motion.span>
+                    <motion.span
+                        animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
+                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.6, times: [0, 0.5, 1] }}
+                    >
+                        <FaArrowRight className="text-emerald-600/50 dark:text-emerald-400/50 text-xs" />
+                    </motion.span>
+                </div>
+            </motion.div>
+
+            <motion.div
+                drag="x"
+                dragElastic={0.1}
+                dragMomentum={false}
+                dragConstraints={{ left: 0, right: dragWidth }}
+                onDragEnd={handleDragEnd}
+                style={{ x }}
+                className="w-14 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-emerald-500/25 z-10 transition-colors duration-200"
+            >
+                {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                    <FaArrowRight className="text-lg" />
+                )}
+            </motion.div>
+        </div>
+    );
+}
+
 
 const reasons = [
     { id: 'no_longer_want', label: 'I no longer want to receive these emails' },
@@ -151,25 +245,10 @@ export default function Unsubscribe() {
                                     <span className="font-semibold text-slate-700 dark:text-slate-300">Note:</span> You will still receive essential account-related emails like OTPs, password resets and reports (if any).
                                 </div>
 
-                                <button
-                                    onClick={handleUnsubscribe}
-                                    disabled={loading}
-                                    className="group relative flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-emerald-500/20 active:scale-[0.98] disabled:opacity-50"
-                                >
-                                    {loading ? (
-                                        <UrbanSetuSpinner size="xs" isBright={true} />
-                                    ) : (
-                                        <>
-                                            Unsubscribe Me
-                                            <motion.div
-                                                animate={{ x: [0, 5, 0] }}
-                                                transition={{ repeat: Infinity, duration: 1.5 }}
-                                            >
-                                                <FaArrowLeft className="rotate-180" />
-                                            </motion.div>
-                                        </>
-                                    )}
-                                </button>
+                                <DragSlider 
+                                    onConfirm={handleUnsubscribe}
+                                    loading={loading}
+                                />
                             </motion.div>
                         )}
 
@@ -197,7 +276,8 @@ export default function Unsubscribe() {
 
                                     <form onSubmit={handleSubmitReason} className="space-y-3">
                                         {reasons.map((reason) => (
-                                            <label
+                                            <motion.label
+                                                whileTap={{ scale: 0.98 }}
                                                 key={reason.id}
                                                 className={`flex items-center p-4 rounded-2xl border-2 transition-all cursor-pointer group ${selectedReason === reason.label || selectedReason === reason.id
                                                     ? 'bg-emerald-500/5 border-emerald-500 ring-4 ring-emerald-500/10'
@@ -212,17 +292,23 @@ export default function Unsubscribe() {
                                                     onChange={() => setSelectedReason(reason.id)}
                                                     className="hidden"
                                                 />
-                                                <div className={`w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center transition-all ${selectedReason === reason.id
-                                                    ? 'border-emerald-500 bg-emerald-500'
-                                                    : 'border-slate-300 dark:border-slate-600'
+                                                <div className={`w-5 h-5 rounded-full border-2 mr-4 flex items-center justify-center transition-all flex-shrink-0 ${selectedReason === reason.id
+                                                    ? 'border-emerald-500 bg-emerald-500 dark:border-emerald-400 dark:bg-emerald-400 shadow-md shadow-emerald-500/20'
+                                                    : 'border-slate-300 dark:border-slate-600 bg-transparent'
                                                     }`}>
-                                                    {selectedReason === reason.id && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                                                    {selectedReason === reason.id && (
+                                                        <motion.div 
+                                                            initial={{ scale: 0 }}
+                                                            animate={{ scale: 1 }}
+                                                            className="w-2 h-2 bg-white dark:bg-slate-950 rounded-full"
+                                                        />
+                                                    )}
                                                 </div>
-                                                <span className={`font-medium transition-colors ${selectedReason === reason.id ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
+                                                <span className={`font-medium transition-colors text-left ${selectedReason === reason.id ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
                                                     }`}>
                                                     {reason.label}
                                                 </span>
-                                            </label>
+                                            </motion.label>
                                         ))}
 
                                         {selectedReason === 'other' && (
