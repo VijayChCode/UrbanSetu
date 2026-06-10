@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { FaThumbsUp, FaThumbsDown, FaChevronLeft, FaCalendarAlt } from 'react-icons/fa';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
 
 const ArticleView = () => {
+    const { currentUser } = useSelector((state) => state.user);
     const { slug } = useParams();
     const [title, setTitle] = useState('Help Center - UrbanSetu');
     usePageTitle(title);
@@ -106,7 +108,7 @@ const ArticleView = () => {
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Article Not Found</h1>
                 <p className="text-gray-600 dark:text-gray-400 mb-8">{error || "The article you are looking for does not exist."}</p>
-                <Link to="/help-center" className="text-blue-600 hover:underline">Return to Help Center</Link>
+                <Link to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')} className="text-blue-600 hover:underline">Return to Help Center</Link>
             </div>
         );
     }
@@ -115,7 +117,7 @@ const ArticleView = () => {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
-                    <Link to="/help-center" className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
                         <FaChevronLeft className="mr-2" />
                         Back to Help Center
                     </Link>
@@ -181,7 +183,7 @@ const ArticleView = () => {
 
                 {/* Contact CTA */}
                 <div className="mt-8 text-center text-gray-600 dark:text-gray-400">
-                    Need more help? <Link to="/contact" className="text-blue-600 dark:text-blue-400 hover:underline">Contact our support team</Link>
+                    Need more help? <Link to={!currentUser ? '/contact' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/support' : '/user/contact')} className="text-blue-600 dark:text-blue-400 hover:underline">Contact our support team</Link>
                 </div>
             </div>
         </div>
