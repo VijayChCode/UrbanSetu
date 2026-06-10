@@ -1384,7 +1384,7 @@ export default function AdminManagement() {
                 <button onClick={fetchSoftbannedAccounts} className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors">Apply</button>
                 <button onClick={() => { setSoftbannedFilters({ q: '', role: 'all', softbannedBy: '', from: '', to: '' }); setTimeout(fetchSoftbannedAccounts, 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
               </div>
-              <div className="col-span-full text-sm text-gray-600">
+              <div className="col-span-full text-sm text-gray-500 dark:text-gray-400">
                 {isRootOrDefault ? 'You are viewing all softbanned accounts (users + admins).' : 'You are viewing only softbanned user accounts.'}
               </div>
             </div>
@@ -1403,7 +1403,7 @@ export default function AdminManagement() {
                 <button onClick={fetchPurgedAccounts} className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors">Apply</button>
                 <button onClick={() => { setPurgedFilters({ q: '', role: 'all', purgedBy: '', from: '', to: '' }); setTimeout(fetchPurgedAccounts, 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
               </div>
-              <div className="col-span-full text-sm text-gray-600">
+              <div className="col-span-full text-sm text-gray-500 dark:text-gray-400">
                 {isRootOrDefault ? 'You are viewing all purged accounts (users + admins). These accounts are permanently removed.' : 'You are viewing only purged user accounts. These accounts are permanently removed.'}
               </div>
             </div>
@@ -1425,7 +1425,7 @@ export default function AdminManagement() {
             </div>
           )}
 
-          <div className="mt-2 text-xs text-gray-400">
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             💡 Tip: Press Ctrl+F to quickly focus the search box • Use status filter to view active or suspended accounts
           </div>
         </div>
@@ -1490,7 +1490,7 @@ export default function AdminManagement() {
                               <span className="truncate" title={user.email}>{highlightMatch(user.email)}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-                              <FaPhone className="text-gray-400 dark:text-gray-500" /> {user.mobileNumber ? highlightMatch(user.mobileNumber) : <span className="italic text-gray-300 dark:text-gray-600">No mobile</span>}
+                              <FaPhone className="text-gray-400 dark:text-gray-500" /> {user.mobileNumber ? highlightMatch(user.mobileNumber) : <span className="italic text-gray-400 dark:text-gray-500">No mobile</span>}
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
                               <FaCalendarAlt className="text-gray-400 dark:text-gray-500" /> {new Date(user.createdAt).toLocaleDateString('en-GB')}
@@ -1620,7 +1620,7 @@ export default function AdminManagement() {
                               <span className="truncate" title={admin.email}>{highlightMatch(admin.email)}</span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-                              <FaPhone className="text-gray-400 dark:text-gray-500" /> {admin.mobileNumber ? highlightMatch(admin.mobileNumber) : <span className="italic text-gray-300 dark:text-gray-600">No mobile</span>}
+                              <FaPhone className="text-gray-400 dark:text-gray-500" /> {admin.mobileNumber ? highlightMatch(admin.mobileNumber) : <span className="italic text-gray-400 dark:text-gray-500">No mobile</span>}
                             </div>
                             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
                               <FaCalendarAlt className="text-gray-400 dark:text-gray-500" /> {new Date(admin.createdAt).toLocaleDateString('en-GB')}
