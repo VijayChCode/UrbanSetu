@@ -799,6 +799,7 @@ const AgentProfile = () => {
                                                 value={editFormData.name}
                                                 onChange={handleEditChange}
                                                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="e.g. Mana Shankara Vara Prasad Garu"
                                                 required
                                             />
                                         </div>
@@ -810,6 +811,7 @@ const AgentProfile = () => {
                                                 value={editFormData.mobileNumber}
                                                 onChange={handleEditChange}
                                                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="e.g. 4444444447"
                                                 required
                                             />
                                         </div>
@@ -821,6 +823,7 @@ const AgentProfile = () => {
                                                 value={editFormData.city}
                                                 onChange={handleEditChange}
                                                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="e.g. Hyderabad"
                                                 required
                                             />
                                         </div>
@@ -832,6 +835,7 @@ const AgentProfile = () => {
                                                 value={editFormData.experience}
                                                 onChange={handleEditChange}
                                                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="e.g. 5"
                                                 required
                                             />
                                         </div>
@@ -843,6 +847,7 @@ const AgentProfile = () => {
                                                 value={editFormData.agencyName}
                                                 onChange={handleEditChange}
                                                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="e.g. UrbanSetu Realty Group"
                                             />
                                         </div>
                                         <div>
@@ -853,6 +858,7 @@ const AgentProfile = () => {
                                                 value={editFormData.reraId}
                                                 onChange={handleEditChange}
                                                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="e.g. RAJ/A/2026/000123"
                                             />
                                         </div>
                                     </div>
@@ -865,7 +871,7 @@ const AgentProfile = () => {
                                             value={editFormData.areas}
                                             onChange={handleEditChange}
                                             className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="e.g. Area1, Area2"
+                                            placeholder="e.g. Gachibowli, Hitech City, Madhapur"
                                         />
                                     </div>
 
@@ -877,6 +883,7 @@ const AgentProfile = () => {
                                             value={editFormData.about}
                                             onChange={handleEditChange}
                                             className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                            placeholder="Briefly describe your expertise..."
                                         ></textarea>
                                     </div>
 
@@ -897,7 +904,7 @@ const AgentProfile = () => {
                                         </button>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-4 text-center">
-                                        By saving changes, you agree to our <a href="/user/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms and Conditions for Partners</a>.
+                                        By saving changes, you agree to our <a href="/user/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms and Conditions</a> for Partners.
                                     </p>
                                 </form>
                             </div>
