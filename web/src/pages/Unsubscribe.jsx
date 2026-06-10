@@ -49,54 +49,72 @@ function DragSlider({ onConfirm, loading }) {
             ref={containerRef}
             className="relative w-full h-16 bg-slate-100/90 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl p-1 border border-slate-200/80 dark:border-slate-800 flex items-center overflow-hidden select-none transition-colors duration-300"
         >
-            <motion.div 
-                style={{ width: bgFillWidth }}
-                className="absolute left-0 top-0 bottom-0 bg-emerald-500/10 dark:bg-emerald-500/20 pointer-events-none rounded-l-2xl"
-            />
+            {!loading && (
+                <motion.div 
+                    style={{ width: bgFillWidth }}
+                    className="absolute left-0 top-0 bottom-0 bg-emerald-500/10 dark:bg-emerald-500/20 pointer-events-none rounded-l-2xl"
+                />
+            )}
 
-            <motion.div 
-                style={{ opacity: textOpacity }}
-                className="absolute inset-0 flex items-center justify-center gap-3 text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wide pointer-events-none select-none"
-            >
-                <span>Swipe to Unsubscribe</span>
-                
-                <div className="flex items-center gap-1">
-                    <motion.span
-                        animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", times: [0, 0.5, 1] }}
+            <AnimatePresence mode="wait">
+                {!loading ? (
+                    <motion.div 
+                        key="content"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{ opacity: textOpacity }}
+                        className="absolute inset-0 flex items-center justify-center gap-3 text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wide pointer-events-none select-none"
                     >
-                        <FaArrowRight className="text-emerald-600 dark:text-emerald-400 text-xs" />
-                    </motion.span>
-                    <motion.span
-                        animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.3, times: [0, 0.5, 1] }}
-                    >
-                        <FaArrowRight className="text-emerald-600/75 dark:text-emerald-400/75 text-xs" />
-                    </motion.span>
-                    <motion.span
-                        animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
-                        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.6, times: [0, 0.5, 1] }}
-                    >
-                        <FaArrowRight className="text-emerald-600/50 dark:text-emerald-400/50 text-xs" />
-                    </motion.span>
-                </div>
-            </motion.div>
-
-            <motion.div
-                drag="x"
-                dragElastic={0.1}
-                dragMomentum={false}
-                dragConstraints={{ left: 0, right: dragWidth }}
-                onDragEnd={handleDragEnd}
-                style={{ x }}
-                className="w-14 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-emerald-500/25 z-10 transition-colors duration-200"
-            >
-                {loading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Swipe to Unsubscribe</span>
+                        
+                        <div className="flex items-center gap-1">
+                            <motion.span
+                                animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
+                                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", times: [0, 0.5, 1] }}
+                            >
+                                <FaArrowRight className="text-emerald-600 dark:text-emerald-400 text-xs" />
+                            </motion.span>
+                            <motion.span
+                                animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
+                                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.3, times: [0, 0.5, 1] }}
+                            >
+                                <FaArrowRight className="text-emerald-600/75 dark:text-emerald-400/75 text-xs" />
+                            </motion.span>
+                            <motion.span
+                                animate={{ opacity: [0.3, 1, 0.3], x: [-2, 2, -2] }}
+                                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.6, times: [0, 0.5, 1] }}
+                            >
+                                <FaArrowRight className="text-emerald-600/50 dark:text-emerald-400/50 text-xs" />
+                            </motion.span>
+                        </div>
+                    </motion.div>
                 ) : (
-                    <FaArrowRight className="text-lg" />
+                    <motion.div 
+                        key="spinner"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+                    >
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                    </motion.div>
                 )}
-            </motion.div>
+            </AnimatePresence>
+
+            {!loading && (
+                <motion.div
+                    drag="x"
+                    dragElastic={0.1}
+                    dragMomentum={false}
+                    dragConstraints={{ left: 0, right: dragWidth }}
+                    onDragEnd={handleDragEnd}
+                    style={{ x }}
+                    className="w-14 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-emerald-500/25 z-10 transition-colors duration-200"
+                >
+                    <FaArrowRight className="text-lg" />
+                </motion.div>
+            )}
         </div>
     );
 }
