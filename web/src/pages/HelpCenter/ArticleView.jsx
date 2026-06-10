@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaThumbsUp, FaThumbsDown, FaChevronLeft, FaCalendarAlt } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
 
@@ -140,8 +142,8 @@ const ArticleView = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="prose prose-lg dark:prose-invert max-w-none mb-12 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                            {article.content}
+                        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-black prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-650 dark:prose-p:text-gray-300 prose-li:text-gray-650 dark:prose-li:text-gray-300 prose-strong:text-gray-900 dark:prose-strong:text-white prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-img:rounded-2xl transition-colors mb-12">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{article.content}</ReactMarkdown>
                         </div>
 
                         {/* Voting Section */}
