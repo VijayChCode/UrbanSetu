@@ -212,6 +212,7 @@ If you'd like to improve UrbanSetu, follow these guidelines:
 ## 📩 For contribution discussions, contact:
 - auth.urbansetu@gmail.com
 - urbansetu.noreply@gmail.com
+- info.urbansetu@gmail.com
 
 ## 📄 License
 
