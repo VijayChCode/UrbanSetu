@@ -4,7 +4,7 @@ import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import LocationSelector from "../components/LocationSelector";
 import ESGManagement from "../components/ESGManagement";
 import { toast } from 'react-toastify';
-import { FaCompass, FaPlay, FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb, FaShieldAlt } from "react-icons/fa";
+import { FaCompass, FaPlay, FaBrain, FaExclamationTriangle, FaCheckCircle, FaLightbulb, FaShieldAlt, FaInfoCircle } from "react-icons/fa";
 import VideoPreview from '../components/VideoPreview';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
@@ -101,6 +101,7 @@ export default function EditListing() {
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
   const isAuthorized = isOwner || isAdmin;
   const [consent, setConsent] = useState(false);
+  const [showSecurityInfo, setShowSecurityInfo] = useState(false);
   const [locationState, setLocationState] = useState({ state: "", district: "", city: "", cities: [] });
   const [previewVideo, setPreviewVideo] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
@@ -895,7 +896,17 @@ export default function EditListing() {
         <form onSubmit={onSubmitForm} className="space-y-6">
           {/* Basic Information */}
           <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors">
-            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 transition-colors">Basic Information</h4>
+            <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 transition-colors flex items-center gap-2">
+              <span>Basic Information</span>
+              <button
+                type="button"
+                onClick={() => setShowSecurityInfo(true)}
+                className="text-blue-500 hover:text-blue-600 transition-colors focus:outline-none flex items-center"
+                title="View Sentinel Security Guidelines"
+              >
+                <FaInfoCircle className="text-base cursor-pointer" />
+              </button>
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"
@@ -1807,7 +1818,7 @@ export default function EditListing() {
                 required
               />
               <label htmlFor="consent" className="text-sm text-gray-700 dark:text-gray-300 select-none transition-colors">
-                I confirm that <span className="font-semibold text-blue-700 dark:text-blue-400 transition-colors">all the information provided in this listing is true and genuine to the best of my knowledge</span>. Providing false information may result in account suspension or legal action.
+                I confirm that <span className="font-semibold text-blue-700 dark:text-blue-400 transition-colors">all the information provided in this listing is true and genuine to the best of my knowledge</span>, and I agree to abide by the <Link to="/user/terms" target="_blank" className="underline font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500">Terms and Conditions</Link>. Providing false information may result in account suspension or legal action.
               </label>
             </div>
           )}
@@ -1864,6 +1875,48 @@ export default function EditListing() {
         cancelText="Stay Here"
         isDestructive={true}
       />
+
+      {showSecurityInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl relative text-left animate-duration-300">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <FaShieldAlt className="text-blue-600 dark:text-blue-500" />
+              Sentinel Security Guidelines
+            </h2>
+            <div className="space-y-3 text-sm text-slate-650 dark:text-slate-305 max-h-[60vh] overflow-y-auto pr-2">
+              <p>
+                To maintain a safe and trust-based rental platform, our **Sentinel AI engine** monitors listing details in real-time. Please avoid including any suspicious patterns:
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong className="text-slate-900 dark:text-white">Direct Contact Info:</strong> Do not include phone numbers or email addresses in the title or description. Direct users to use the platform's chat and appointment tools.
+                </li>
+                <li>
+                  <strong className="text-slate-900 dark:text-white">Escrow Bypass:</strong> Do not suggest direct payment methods (e.g. <em>WhatsApp, BHIM UPI, GPay, Paytm, Wire Transfer, Crypto</em>) or ask for advance deposits before visits.
+                </li>
+                <li>
+                  <strong className="text-slate-900 dark:text-white">Pricing Anomaly:</strong> Avoid setting unrealistically low rent values (e.g. under ₹1,000) or massive price inconsistencies.
+                </li>
+                <li>
+                  <strong className="text-slate-900 dark:text-white">Duplicate Listings:</strong> Ensure the property flat/property number is accurate. Creating multiple active listings for the same address is flagged.
+                </li>
+              </ul>
+              <div className="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 p-4 rounded-2xl border border-red-150 dark:border-red-900/30 text-xs font-bold mt-4 leading-relaxed">
+                ⚠️ Listings flagged for severe fraud risks will be automatically unpublished for manual review, and account trust scores will be penalized.
+              </div>
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={() => setShowSecurityInfo(false)}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all text-sm shadow-lg shadow-blue-500/20"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
