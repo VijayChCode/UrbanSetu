@@ -2175,6 +2175,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [savingComment, setSavingComment] = useState(null);
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
+
+  useEffect(() => {
+    if (showChatModal) {
+      const isSeller = currentUser?._id === appt.sellerId?._id || currentUser?._id === appt.sellerId;
+      const otherPartyUser = isSeller ? appt.buyerId : appt.sellerId;
+      const otherPartyName = otherPartyUser?.username || 'User';
+      document.title = `Chat with ${otherPartyName} · UrbanSetu`;
+    } else {
+      if (document.title.includes("Chat with")) {
+        document.title = "My Appointments - Bookings · UrbanSetu";
+      }
+    }
+    return () => {
+      if (showChatModal) {
+        document.title = "My Appointments - Bookings · UrbanSetu";
+      }
+    };
+  }, [showChatModal, appt.buyerId, appt.sellerId, currentUser?._id]);
+
   const [callHistory, setCallHistory] = useState([]);
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);

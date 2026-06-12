@@ -2864,6 +2864,24 @@ function AdminAppointmentRow({
   const [savingComment, setSavingComment] = useLocalState(null);
   const [replyTo, setReplyTo] = useLocalState(null);
   const [showChatModal, setShowChatModal] = useLocalState(false);
+
+  React.useEffect(() => {
+    if (showChatModal) {
+      const buyerName = appt.buyerId?.username || 'Buyer';
+      const sellerName = appt.sellerId?.username || 'Seller';
+      document.title = `Audit Chat: ${buyerName} & ${sellerName} · UrbanSetu`;
+    } else {
+      if (document.title.includes("Audit Chat:")) {
+        document.title = "Appointment Management - Admin Panel · UrbanSetu";
+      }
+    }
+    return () => {
+      if (showChatModal) {
+        document.title = "Appointment Management - Admin Panel · UrbanSetu";
+      }
+    };
+  }, [showChatModal, appt.buyerId, appt.sellerId]);
+
   const [showPasswordModal, setShowPasswordModal] = useLocalState(false);
   const [adminPassword, setAdminPassword] = useLocalState("");
   const [passwordError, setPasswordError] = useLocalState("");
