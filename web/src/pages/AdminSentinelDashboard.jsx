@@ -93,7 +93,7 @@ export default function AdminSentinelDashboard() {
   const fetchAlerts = async () => {
     try {
       setLoading(true);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/sentinel/alerts?status=${statusFilter}`);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/sentinel/alerts?status=${statusFilter}&limit=1000`);
       const data = await res.json();
       if (data.success) {
         setAlerts(data.alerts);
