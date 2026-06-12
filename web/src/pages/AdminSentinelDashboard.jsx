@@ -220,14 +220,14 @@ export default function AdminSentinelDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-10">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-              <span className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-500/20">
-                <FaShieldAlt className="text-white text-3xl" />
+            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white flex items-center gap-2 sm:gap-3">
+              <span className="p-2 sm:p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center">
+                <FaShieldAlt className="text-white text-xl sm:text-3xl" />
               </span>
               Sentinel AI Command
             </h1>
@@ -402,55 +402,55 @@ function FilterChip({ label, active, onClick }) {
 
 function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSeverityColor, getTypeIcon }) {
   return (
-    <div className={`group bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border-l-8 ${getSeverityColor(alert.severity).split(' ')[0]} border dark:border-slate-800 transition-all hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none`}>
-      <div className="flex flex-col md:flex-row justify-between gap-6">
-        <div className="flex gap-5">
-          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl h-fit">
+    <div className={`group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl shadow-sm border-l-8 ${getSeverityColor(alert.severity).split(' ')[0]} border dark:border-slate-800 transition-all hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none`}>
+      <div className="flex flex-col md:flex-row justify-between gap-4 md:gap-6">
+        <div className="flex gap-3 md:gap-5">
+          <div className="p-3 md:p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl h-fit">
             {getTypeIcon(alert.type)}
           </div>
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${getSeverityColor(alert.severity)}`}>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-tighter border ${getSeverityColor(alert.severity)}`}>
                 {alert.severity}
               </span>
               <span className="text-slate-400 text-xs font-medium">
                 {formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })}
               </span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+            <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-1 break-words">
               {alert.reason}
             </h3>
-            <div className="flex flex-wrap gap-4 mt-3">
+            <div className="flex flex-wrap gap-2 md:gap-4 mt-3">
               {alert.userId && (
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                  <FaUserShield className="text-indigo-500" />
-                  {alert.userId.username || alert.userId.email}
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-2 py-1 md:px-3 md:py-1.5 rounded-lg">
+                  <FaUserShield className="text-indigo-500 flex-shrink-0" />
+                  <span className="truncate max-w-[150px]">{alert.userId.username || alert.userId.email}</span>
                 </div>
               )}
               {alert.listingId && (
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                  <FaMapMarkerAlt className="text-orange-500" />
-                  {alert.listingId.name}
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-2 py-1 md:px-3 md:py-1.5 rounded-lg">
+                  <FaMapMarkerAlt className="text-orange-500 flex-shrink-0" />
+                  <span className="truncate max-w-[150px]">{alert.listingId.name}</span>
                 </div>
               )}
               {alert.ipAddress && (
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
-                  <FaHistory className="text-blue-500" />
-                  {alert.ipAddress}
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold bg-slate-50 dark:bg-slate-800 px-2 py-1 md:px-3 md:py-1.5 rounded-lg">
+                  <FaHistory className="text-blue-500 flex-shrink-0" />
+                  <span>{alert.ipAddress}</span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-end md:self-center">
+        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 mt-4 md:mt-0 justify-start md:justify-end w-full md:w-auto">
           {alert.status === 'pending' && (
             <>
               {alert.listingId && (
                 <button
                   onClick={() => onUnpublishClick(alert._id, alert.listingId._id || alert.listingId)}
                   disabled={actionLoading}
-                  className="px-6 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all text-sm shadow-lg shadow-red-500/20 disabled:opacity-50"
+                  className="px-4 py-2.5 md:px-6 md:py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all text-xs md:text-sm shadow-lg shadow-red-500/20 disabled:opacity-50"
                 >
                   Unpublish
                 </button>
@@ -458,14 +458,14 @@ function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSever
               <button
                 onClick={() => onResolve(alert._id, 'dismissed')}
                 disabled={actionLoading}
-                className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm disabled:opacity-50"
+                className="px-4 py-2.5 md:px-6 md:py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-xs md:text-sm disabled:opacity-50"
               >
                 Dismiss
               </button>
               <button
                 onClick={() => onResolve(alert._id, 'resolved')}
                 disabled={actionLoading}
-                className="px-6 py-3 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all text-sm shadow-lg shadow-green-500/20 flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2.5 md:px-6 md:py-3 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all text-xs md:text-sm shadow-lg shadow-green-500/20 flex items-center gap-1.5 disabled:opacity-50 animate-fadeIn"
               >
                 {actionLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaCheckCircle />}
                 Mark Resolved
@@ -473,7 +473,7 @@ function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSever
             </>
           )}
           {alert.status !== 'pending' && (
-            <div className="flex items-center gap-2 text-green-500 font-bold text-sm bg-green-50 dark:bg-green-900/20 px-4 py-2 rounded-xl">
+            <div className="flex items-center gap-2 text-green-500 font-bold text-xs md:text-sm bg-green-50 dark:bg-green-900/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl">
               <FaCheckCircle />
               {alert.status.toUpperCase()}
             </div>
@@ -481,7 +481,7 @@ function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSever
           {alert.listingId && (
             <button
               onClick={() => window.open(`/admin/listing/${alert.listingId._id || alert.listingId}`, '_blank')}
-              className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all"
+              className="p-2.5 md:p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all"
               title="View Property Details"
             >
               <FaEye />
