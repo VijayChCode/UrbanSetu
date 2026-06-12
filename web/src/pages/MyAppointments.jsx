@@ -3913,6 +3913,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setShowChatLockModal(false);
       setLockPassword('');
       setLockConfirmPassword('');
+      
+      // Update appt prop reference to stay synced
+      const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+      if (isBuyer) {
+        appt.buyerChatLocked = true;
+        appt.buyerChatAccessGranted = false;
+      } else {
+        appt.sellerChatLocked = true;
+        appt.sellerChatAccessGranted = false;
+      }
+
       toast.success('Chat locked successfully.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to lock chat');
@@ -3940,6 +3951,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setChatAccessGranted(true);
       setShowChatUnlockModal(false);
       setUnlockPassword('');
+      
+      // Update appt prop reference to stay synced
+      const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+      if (isBuyer) {
+        appt.buyerChatAccessGranted = true;
+      } else {
+        appt.sellerChatAccessGranted = true;
+      }
+
       toast.success('Chat access granted.');
 
       // Open chat modal after successful unlock
@@ -3982,6 +4002,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setChatAccessGranted(false);
       setShowChatUnlockModal(false);
       setUnlockPassword('');
+
+      // Update appt prop reference to stay synced
+      const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+      if (isBuyer) {
+        appt.buyerChatLocked = false;
+        appt.buyerChatPassword = null;
+        appt.buyerChatAccessGranted = false;
+      } else {
+        appt.sellerChatLocked = false;
+        appt.sellerChatPassword = null;
+        appt.sellerChatAccessGranted = false;
+      }
+
       toast.success('Chat lock removed successfully.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Incorrect password');
@@ -4011,6 +4044,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setShowRemoveLockModal(false);
       setRemoveLockPassword('');
       setShowRemoveLockPassword(false);
+
+      // Update appt prop reference to stay synced
+      const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+      if (isBuyer) {
+        appt.buyerChatLocked = false;
+        appt.buyerChatPassword = null;
+        appt.buyerChatAccessGranted = false;
+      } else {
+        appt.sellerChatLocked = false;
+        appt.sellerChatPassword = null;
+        appt.sellerChatAccessGranted = false;
+      }
+
       toast.success('Chat lock removed.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Incorrect password');
@@ -4040,6 +4086,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setShowForgotPasswordModal(false);
       setLoginPasswordForReset('');
       setShowLoginPasswordForReset(false);
+
+      // Update appt prop reference to stay synced
+      const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+      if (isBuyer) {
+        appt.buyerChatLocked = false;
+        appt.buyerChatPassword = null;
+        appt.buyerChatAccessGranted = false;
+      } else {
+        appt.sellerChatLocked = false;
+        appt.sellerChatPassword = null;
+        appt.sellerChatAccessGranted = false;
+      }
+
       toast.success('Chat lock removed successfully.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to remove chat lock');
@@ -4067,6 +4126,14 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           body: JSON.stringify({})
         });
         setChatAccessGranted(false);
+        
+        // Update appt prop reference to stay synced
+        const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+        if (isBuyer) {
+          appt.buyerChatAccessGranted = false;
+        } else {
+          appt.sellerChatAccessGranted = false;
+        }
       } catch (err) {
         console.error('Error resetting chat access:', err);
       }
@@ -4083,6 +4150,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           const data = await res.json();
           setChatLocked(data.chatLocked);
           setChatAccessGranted(data.accessGranted);
+          
+          // Update appt prop reference to stay synced
+          const isBuyer = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+          if (isBuyer) {
+            appt.buyerChatLocked = data.chatLocked;
+            appt.buyerChatAccessGranted = data.accessGranted;
+          } else {
+            appt.sellerChatLocked = data.chatLocked;
+            appt.sellerChatAccessGranted = data.accessGranted;
+          }
         }
       } catch (err) {
         console.error('Error fetching chat lock status:', err);
@@ -8438,15 +8515,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       {(chatLocked || chatLockStatusLoading) && (
                         <div
                           title="This chat is Locked"
-                          className={`flex items-center justify-center bg-orange-500 text-white rounded-full flex-shrink-0 shadow transition-all duration-300 ${
-                            chatLockStatusLoading ? 'px-2 py-1 gap-1 text-xs font-bold' : 'p-2'
-                          }`}
+                          className="flex items-center justify-center bg-orange-500 text-white rounded-full flex-shrink-0 shadow transition-all duration-300 p-2"
                         >
                           {chatLockStatusLoading ? (
-                            <>
-                              <UrbanSetuSpinner size="sm" isBright={true} />
-                              <span className="hidden sm:inline">Loading...</span>
-                            </>
+                            <UrbanSetuSpinner size="sm" isBright={true} />
                           ) : (
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
