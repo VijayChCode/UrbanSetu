@@ -479,6 +479,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Dynamic browser tab title handling based on chat title
     const originalTitleRef = useRef(document.title);
+    const wasOpenRef = useRef(false);
     useEffect(() => {
         // Skip title handling if we are on a shared chat view page to avoid flickering/overwriting
         if (location.pathname.includes('/share/')) {
@@ -487,7 +488,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         if (isOpen) {
             // Store original title if we haven't already (or update it if it's not a chat title)
-            if (!document.title.includes(' - SetuAI')) {
+            if (!document.title.includes(' - SetuAI') && document.title !== "AI Assistant - Smart Property Search") {
                 originalTitleRef.current = document.title;
             }
 
@@ -496,10 +497,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             } else {
                 document.title = "AI Assistant - Smart Property Search";
             }
+            wasOpenRef.current = true;
         } else {
-            // Restore original title when closed
-            if (originalTitleRef.current) {
+            // Restore original title only if it was actually opened first
+            if (wasOpenRef.current && originalTitleRef.current) {
                 document.title = originalTitleRef.current;
+                wasOpenRef.current = false;
             }
         }
     }, [currentChatName, isOpen, location.pathname]);
