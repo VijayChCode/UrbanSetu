@@ -866,7 +866,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                             <div className="text-right mt-2">
                                                 <Link
                                                     to={`/forgot-password?email=${encodeURIComponent(formData.email || '')}`}
-                                                    className={`text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress === 'google' || loading) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                    className={`text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
                                                 >
                                                     Forgot Password?
                                                 </Link>
@@ -907,7 +907,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                             <div className="text-right mt-2">
                                                 <Link
                                                     to={`/forgot-password?email=${encodeURIComponent(formData.email)}`}
-                                                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
+                                                    className={`text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
                                                 >
                                                     Forgot Password?
                                                 </Link>

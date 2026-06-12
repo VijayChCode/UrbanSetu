@@ -11736,6 +11736,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   type={showLockPassword ? "text" : "password"}
                   value={lockConfirmPassword}
                   onChange={(e) => setLockConfirmPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleChatLock();
+                    }
+                  }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   placeholder="Confirm password"
                 />
@@ -11828,7 +11833,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   setShowChatUnlockModal(false);
                   setShowForgotPasswordModal(true);
                 }}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                disabled={unlockingChat}
+                className={`text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline ${unlockingChat ? 'opacity-50 cursor-not-allowed no-underline' : ''}`}
               >
                 Forgot password?
               </button>
@@ -12004,7 +12010,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     setRemoveLockPassword('');
                     setShowRemoveLockPassword(false);
                   }}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                  disabled={removingLock}
+                  className={`text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline ${removingLock ? 'opacity-50 cursor-not-allowed no-underline' : ''}`}
                 >
                   Forgot password?
                 </button>
