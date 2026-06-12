@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import GeminiAIWrapper from '../components/GeminiAIWrapper';
 import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import {
   FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle,
   FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight,
@@ -69,6 +70,11 @@ export default function AdminSentinelDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
 
+  // Unpublish Modal States
+  const [unpublishModal, setUnpublishModal] = useState({ open: false, alertId: null, listingId: null });
+  const [unpublishReason, setUnpublishReason] = useState("");
+  const [unpublishLoading, setUnpublishLoading] = useState(false);
+
   const fetchAlerts = async () => {
     try {
       setLoading(true);
@@ -131,6 +137,44 @@ export default function AdminSentinelDashboard() {
       console.error("Failed to resolve alert:", error);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleUnpublishSubmit = async (e) => {
+    e.preventDefault();
+    if (!unpublishReason || !unpublishReason.trim()) {
+      toast.error("A reason is required to unpublish this listing");
+      return;
+    }
+
+    try {
+      setUnpublishLoading(true);
+      const { alertId, listingId } = unpublishModal;
+      
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/root-unpublish/${listingId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: unpublishReason.trim() })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        toast.success("Property has been unpublished and owner notified.");
+        
+        // Auto-resolve the Sentinel alert
+        await handleResolve(alertId, 'resolved');
+        
+        // Close modal and reset state
+        setUnpublishModal({ open: false, alertId: null, listingId: null });
+        setUnpublishReason("");
+      } else {
+        toast.error(data.message || "Failed to unpublish property");
+      }
+    } catch (error) {
+      console.error("Error unpublishing property:", error);
+      toast.error("Error connecting to server");
+    } finally {
+      setUnpublishLoading(false);
     }
   };
 
@@ -258,6 +302,7 @@ export default function AdminSentinelDashboard() {
                 key={alert._id}
                 alert={alert}
                 onResolve={handleResolve}
+                onUnpublishClick={(alertId, listingId) => setUnpublishModal({ open: true, alertId, listingId })}
                 actionLoading={actionLoading === alert._id}
                 getSeverityColor={getSeverityColor}
                 getTypeIcon={getTypeIcon}
@@ -276,6 +321,51 @@ export default function AdminSentinelDashboard() {
       </div>
       <ContactSupportWrapper />
       <GeminiAIWrapper />
+
+      {unpublishModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl relative">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Confirm Action</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Unpublish this property?</p>
+            
+            <form onSubmit={handleUnpublishSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+                  Reason for Unpublishing (Required):
+                </label>
+                <textarea
+                  required
+                  rows="4"
+                  placeholder="Explain why this property is being unpublished (sent to owner)..."
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-red-500 placeholder-slate-400 text-sm resize-none"
+                  value={unpublishReason}
+                  onChange={(e) => setUnpublishReason(e.target.value)}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUnpublishModal({ open: false, alertId: null, listingId: null });
+                    setUnpublishReason("");
+                  }}
+                  className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-2xl transition-all text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={unpublishLoading}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition-all text-sm shadow-lg shadow-red-500/20 disabled:opacity-50"
+                >
+                  {unpublishLoading ? 'Unpublishing...' : 'Confirm'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -310,7 +400,7 @@ function FilterChip({ label, active, onClick }) {
   );
 }
 
-function AlertItem({ alert, onResolve, actionLoading, getSeverityColor, getTypeIcon }) {
+function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSeverityColor, getTypeIcon }) {
   return (
     <div className={`group bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border-l-8 ${getSeverityColor(alert.severity).split(' ')[0]} border dark:border-slate-800 transition-all hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none`}>
       <div className="flex flex-col md:flex-row justify-between gap-6">
@@ -356,6 +446,15 @@ function AlertItem({ alert, onResolve, actionLoading, getSeverityColor, getTypeI
         <div className="flex items-center gap-3 self-end md:self-center">
           {alert.status === 'pending' && (
             <>
+              {alert.listingId && (
+                <button
+                  onClick={() => onUnpublishClick(alert._id, alert.listingId._id || alert.listingId)}
+                  disabled={actionLoading}
+                  className="px-6 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all text-sm shadow-lg shadow-red-500/20 disabled:opacity-50"
+                >
+                  Unpublish
+                </button>
+              )}
               <button
                 onClick={() => onResolve(alert._id, 'dismissed')}
                 disabled={actionLoading}
