@@ -114,11 +114,18 @@ export default function AdminSentinelDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        setAlerts(prev => prev.filter(a => a._id !== alertId));
-        setStats(prev => ({
-          ...prev,
-          pending: prev.pending - 1
-        }));
+        const resolvedAlert = alerts.find(a => a._id === alertId);
+        setAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: action } : a));
+        setStats(prev => {
+          const newStats = {
+            ...prev,
+            pending: Math.max(0, prev.pending - 1)
+          };
+          if (resolvedAlert && resolvedAlert.severity) {
+            newStats[resolvedAlert.severity] = Math.max(0, (prev[resolvedAlert.severity] || 0) - 1);
+          }
+          return newStats;
+        });
       }
     } catch (error) {
       console.error("Failed to resolve alert:", error);
@@ -372,9 +379,15 @@ function AlertItem({ alert, onResolve, actionLoading, getSeverityColor, getTypeI
               {alert.status.toUpperCase()}
             </div>
           )}
-          <button className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all">
-            <FaEye />
-          </button>
+          {alert.listingId && (
+            <button
+              onClick={() => window.open(`/admin/listing/${alert.listingId._id || alert.listingId}`, '_blank')}
+              className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all"
+              title="View Property Details"
+            >
+              <FaEye />
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -5,7 +5,11 @@ export const getAlerts = async (req, res, next) => {
   try {
     const { status = 'pending', limit = 50 } = req.query;
     
-    const alerts = await SentinelAlert.find({ status })
+    const query = status === 'resolved' 
+      ? { status: { $in: ['resolved', 'dismissed'] } } 
+      : { status };
+
+    const alerts = await SentinelAlert.find(query)
       .populate('userId', 'username email avatar')
       .populate('listingId', 'name type regularPrice')
       .sort({ createdAt: -1 })
