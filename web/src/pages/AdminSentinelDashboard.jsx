@@ -404,6 +404,7 @@ export default function AdminSentinelDashboard() {
               <div className="relative flex-1">
                 <input
                   type="date"
+                  max={new Date().toISOString().split('T')[0]}
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                   className="w-full px-3 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-xs dark:text-white outline-none transition-all"
@@ -413,6 +414,7 @@ export default function AdminSentinelDashboard() {
               <div className="relative flex-1">
                 <input
                   type="date"
+                  max={new Date().toISOString().split('T')[0]}
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                   className="w-full px-3 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-xs dark:text-white outline-none transition-all"
