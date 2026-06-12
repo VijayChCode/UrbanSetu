@@ -3566,11 +3566,16 @@ router.patch('/:id/chat/reset-access', verifyToken, async (req, res) => {
   }
 });
 
-// PATCH: Forgot password - clear chat and remove lock
+// PATCH: Forgot password - validate login password and remove lock (no chat clearing)
 router.patch('/:id/chat/forgot-password', verifyToken, async (req, res) => {
   try {
+    const { loginPassword } = req.body;
     const appointmentId = req.params.id;
     const userId = req.user.id;
+
+    if (!loginPassword || loginPassword.trim().length === 0) {
+      return res.status(400).json({ message: 'Login password is required to verify identity.' });
+    }
 
     const appointment = await booking.findById(appointmentId);
     if (!appointment) {
@@ -3585,38 +3590,37 @@ router.patch('/:id/chat/forgot-password', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to unlock this chat.' });
     }
 
-    // Clear chat and remove lock for the current user
+    // Verify identity using login password
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const isPasswordValid = bcryptjs.compareSync(loginPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Incorrect login password.' });
+    }
+
+    // Remove lock for the current user
     if (isBuyer) {
       appointment.buyerChatLocked = false;
       appointment.buyerChatPassword = null;
       appointment.buyerChatAccessGranted = false;
-      appointment.buyerChatClearedAt = new Date();
     } else {
       appointment.sellerChatLocked = false;
       appointment.sellerChatPassword = null;
       appointment.sellerChatAccessGranted = false;
-      appointment.sellerChatClearedAt = new Date();
     }
-
-    // Clear all chat messages using Mongoose methods
-    appointment.comments.splice(0, appointment.comments.length);
-
-    // Mark the comments field as modified to ensure Mongoose saves it
-    appointment.markModified('comments');
-
-    console.log(`Clearing chat for appointment ${appointmentId}. Comments before clear: ${appointment.comments.length}`);
 
     await appointment.save();
 
-    console.log(`Chat cleared successfully. Comments after clear: ${appointment.comments.length}`);
-
     return res.status(200).json({
-      message: 'Chat unlocked and cleared successfully.',
+      message: 'Chat lock removed successfully.',
       chatLocked: false,
       accessGranted: false
     });
   } catch (err) {
-    console.error('Error unlocking chat via forgot password:', err);
+    console.error('Error unlocking chat via login password validation:', err);
     return res.status(500).json({ message: 'Failed to unlock chat.' });
   }
 });

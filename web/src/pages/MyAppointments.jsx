@@ -2733,6 +2733,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [unlockingChat, setUnlockingChat] = useState(false);
   const [removingLock, setRemovingLock] = useState(false);
   const [forgotPasswordProcessing, setForgotPasswordProcessing] = useState(false);
+  const [loginPasswordForReset, setLoginPasswordForReset] = useState('');
+  const [showLoginPasswordForReset, setShowLoginPasswordForReset] = useState(false);
 
   // Refund and appeal modal states
   const [showRefundRequestModal, setShowRefundRequestModal] = useState(false);
@@ -4018,11 +4020,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   };
 
   const handleForgotPassword = async () => {
+    if (!loginPasswordForReset.trim()) {
+      toast.error('Please enter your login password');
+      return;
+    }
     setForgotPasswordProcessing(true);
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/forgot-password`, {
         method: 'PATCH',
-        body: JSON.stringify({})
+        body: JSON.stringify({ loginPassword: loginPasswordForReset })
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -4032,10 +4038,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setChatLocked(false);
       setChatAccessGranted(false);
       setShowForgotPasswordModal(false);
-      setComments([]); // Clear chat messages locally
-      toast.success('Chat lock removed and cleared successfully.');
+      setLoginPasswordForReset('');
+      setShowLoginPasswordForReset(false);
+      toast.success('Chat lock removed successfully.');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to reset chat');
+      toast.error(err.response?.data?.message || 'Failed to remove chat lock');
     } finally {
       setForgotPasswordProcessing(false);
     }
@@ -11793,41 +11800,47 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-red-600">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-blue-600 dark:text-blue-400">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" />
                 </svg>
-                Forgot Password
+                Reset Chat Lock
               </h3>
 
-              <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 mb-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Warning</h3>
-                    <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                      <p>This action will permanently:</p>
-                      <ul className="list-disc list-inside mt-1">
-                        <li>Clear all chat messages</li>
-                        <li>Remove the chat lock</li>
-                        <li>Clear the passcode if set</li>
-                      </ul>
-                    </div>
-                  </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                Enter your account login password to confirm your identity and permanently remove the chat lock. Your chat history will not be cleared.
+              </p>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Account Login Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showLoginPasswordForReset ? "text" : "password"}
+                    value={loginPasswordForReset}
+                    onChange={(e) => setLoginPasswordForReset(e.target.value)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                    placeholder="Enter your account login password"
+                    onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPasswordForReset(!showLoginPasswordForReset)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    {showLoginPasswordForReset ? '👁️' : '👁️‍🗨️'}
+                  </button>
                 </div>
               </div>
-
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                This action cannot be undone. Are you sure you want to proceed?
-              </p>
 
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowForgotPasswordModal(false)}
+                  onClick={() => {
+                    setShowForgotPasswordModal(false);
+                    setLoginPasswordForReset('');
+                    setShowLoginPasswordForReset(false);
+                  }}
                   className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                   Cancel
@@ -11835,16 +11848,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  disabled={forgotPasswordProcessing}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  disabled={forgotPasswordProcessing || !loginPasswordForReset.trim()}
+                  className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {forgotPasswordProcessing ? (
                     <div className="flex items-center gap-2">
                       <UrbanSetuSpinner size="sm" isBright={true} />
-                      Processing...
+                      Removing...
                     </div>
                   ) : (
-                    'Continue'
+                    'Remove Lock'
                   )}
                 </button>
               </div>
@@ -11905,9 +11918,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     onClick={() => setShowRemoveLockPassword(!showRemoveLockPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showRemoveLockPassword ? '👁️' : '👁️‍🗨️'}
+                    {showRemoveLockPassword ? '👁' : '👁️‍🗨️'}
                   </button>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-end mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRemoveLockModal(false);
+                    setShowForgotPasswordModal(true);
+                    setRemoveLockPassword('');
+                    setShowRemoveLockPassword(false);
+                  }}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                >
+                  Forgot password?
+                </button>
               </div>
 
               <div className="flex gap-3 justify-end">
