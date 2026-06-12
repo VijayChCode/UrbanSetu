@@ -8,7 +8,7 @@ import React from 'react';
  * @param {boolean} isBright - Standardized bright variant
  * @param {string} className - Additional classes
  */
-const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => {
+const UrbanSetuSpinner = ({ size = 'md', isBright = false, text = '', className = '' }) => {
     // REFINED RADII: Significantly reduced based on visual feedback while maintaining high-thickness logic
     const sizeClasses = {
         xs: 'w-4 h-4',
@@ -26,7 +26,7 @@ const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => 
     const endColor = isBright ? '#f472b6' : '#ec407a';   
     const highlightColor = isBright ? '#ffffff' : '#f06292'; 
 
-    return (
+    const spinnerElement = (
         <div className={`relative flex items-center justify-center ${currentSize} ${className}`}>
             {/* Soft background glow to match the reference's atmospheric feel */}
             <div className={`absolute inset-0 rounded-full blur-xl animate-pulse 
@@ -58,6 +58,19 @@ const UrbanSetuSpinner = ({ size = 'md', isBright = false, className = '' }) => 
             ></div>
         </div>
     );
+
+    if (text) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-3">
+                {spinnerElement}
+                <span className={`text-sm font-bold tracking-wide animate-pulse ${isBright ? 'text-slate-300 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                    {text}
+                </span>
+            </div>
+        );
+    }
+
+    return spinnerElement;
 };
 
 export default UrbanSetuSpinner;

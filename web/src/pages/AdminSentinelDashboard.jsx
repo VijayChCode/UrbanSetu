@@ -250,7 +250,7 @@ export default function AdminSentinelDashboard() {
         <div className="space-y-4">
           {loading ? (
             <div className="flex justify-center p-20">
-              <UrbanSetuSpinner size="xl" isBright={true} />
+              <UrbanSetuSpinner size="xl" isBright={true} text="Auditing Governance Logs & Alerts..." />
             </div>
           ) : filteredAlerts.length > 0 ? (
             filteredAlerts.map((alert) => (
