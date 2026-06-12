@@ -13,7 +13,22 @@ class SentinelSecurityService {
     constructor() {
         // Thresholds
         this.LOCATION_MISMATCH_THRESHOLD_KM = 500; // Flag if user IP is very far from listing
-        this.BYPASS_ATTEMPT_KEYWORDS = ['gpay', 'phonepe', 'paytm', 'direct transfer', 'offline payment', 'whatsapp me'];
+        this.BYPASS_ATTEMPT_KEYWORDS = [
+            // Payment systems / Gateways (escrow bypass)
+            'gpay', 'google pay', 'phonepe', 'paytm', 'bhim', 'upi', 'pay directly', 
+            'offline payment', 'bank transfer', 'wire transfer', 'direct transfer', 
+            'cash payment', 'pay cash', 'western union', 'moneygram', 'crypto', 
+            'bitcoin', 'usdt', 'solana', 'ether', 'wallet address',
+            
+            // Suspicious payment conditions / Scam terms
+            'advance payment', 'deposit first', 'pay before visit', 'send money first',
+            'online deal only', 'no site visit', 'booking amount first', 'token amount first',
+            'refundable deposit first',
+            
+            // Messaging / Off-platform contact redirection
+            'whatsapp me', 'whatsapp no', 'ping me on', 'contact on whatsapp',
+            'chat on whatsapp', 'dm me on', 'telegram user', 'connect on telegram'
+        ];
         this.MAX_BOOKING_ATTEMPTS_PER_HOUR = 3;
         this.io = null;
     }
@@ -33,13 +48,29 @@ class SentinelSecurityService {
             let fraudScore = 0;
             const reasons = [];
 
-            // 1. Check for contact info / bypass keywords in description
-            const desc = listing.description.toLowerCase();
-            const foundKeywords = this.BYPASS_ATTEMPT_KEYWORDS.filter(k => desc.includes(k));
+            // 1. Check for contact info / bypass keywords in name and description
+            const textToScan = `${listing.name || ''} ${listing.description || ''}`.toLowerCase();
+            const foundKeywords = this.BYPASS_ATTEMPT_KEYWORDS.filter(k => textToScan.includes(k));
 
             if (foundKeywords.length > 0) {
-                fraudScore += 0.4 * foundKeywords.length;
+                fraudScore += Math.min(0.8, 0.4 * foundKeywords.length);
                 reasons.push(`Escrow bypass keywords detected: ${foundKeywords.join(', ')}`);
+            }
+
+            // 1b. Check for phone number formats (matches common mobile/intl structures to avoid raw price false-positives)
+            const phoneRegex = /(?:\+?91[\s-]?)?[6-9]\d{9}\b|\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
+            const foundPhones = textToScan.match(phoneRegex) || [];
+            if (foundPhones.length > 0) {
+                fraudScore += Math.min(0.8, 0.4 * foundPhones.length);
+                reasons.push(`Direct contact phone numbers detected: ${foundPhones.join(', ')}`);
+            }
+
+            // 1c. Check for email formats
+            const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+            const foundEmails = textToScan.match(emailRegex) || [];
+            if (foundEmails.length > 0) {
+                fraudScore += Math.min(0.8, 0.4 * foundEmails.length);
+                reasons.push(`Direct email contact details detected: ${foundEmails.join(', ')}`);
             }
 
             // 2. Check for duplicate listings (same property number/address)
