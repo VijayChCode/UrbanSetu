@@ -35,13 +35,6 @@ const ExportChatModal = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Export Chat Transcript
           </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            disabled={isExporting}
-          >
-            <FaTimes size={20} />
-          </button>
         </div>
 
         {/* Content */}

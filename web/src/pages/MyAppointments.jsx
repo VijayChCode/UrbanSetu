@@ -8429,15 +8429,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       </div>
                       {/* Lock indicator */}
                       {(chatLocked || chatLockStatusLoading) && (
-                        <div className="flex items-center gap-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold flex-shrink-0">
+                        <div
+                          title="This chat is Locked"
+                          className={`flex items-center justify-center bg-orange-500 text-white rounded-full flex-shrink-0 shadow transition-all duration-300 ${
+                            chatLockStatusLoading ? 'px-2 py-1 gap-1 text-xs font-bold' : 'p-2'
+                          }`}
+                        >
                           {chatLockStatusLoading ? (
-                            <UrbanSetuSpinner size="sm" isBright={true} />
+                            <>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
+                              <span className="hidden sm:inline">Loading...</span>
+                            </>
                           ) : (
-                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
                             </svg>
                           )}
-                          {chatLockStatusLoading ? <span className="hidden sm:inline">Loading...</span> : 'Locked'}
                         </div>
                       )}
 
@@ -8447,34 +8454,44 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       <div className="relative flex items-center gap-2">
                         {/* Audio Call Button */}
                         <button
-                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
+                          className={`text-white rounded-full p-2 transition-all duration-300 shadow ${
+                            isChatSendBlocked
+                              ? 'opacity-40 cursor-not-allowed bg-black/10'
+                              : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
+                          }`}
                           onClick={() => {
+                            if (isChatSendBlocked) return;
                             const receiverId = appt.buyerId._id === currentUser._id
                               ? appt.sellerId._id
                               : appt.buyerId._id;
 
                             onInitiateCall(appt, 'audio', receiverId);
                           }}
-                          title="Audio Call"
-                          aria-label="Audio Call"
-                          disabled={callState === 'active' || callState === 'ringing'}
+                          title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
+                          aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
+                          disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
                         >
                           <FaPhone className="text-sm" />
                         </button>
 
                         {/* Video Call Button */}
                         <button
-                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
+                          className={`text-white rounded-full p-2 transition-all duration-300 shadow ${
+                            isChatSendBlocked
+                              ? 'opacity-40 cursor-not-allowed bg-black/10'
+                              : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
+                          }`}
                           onClick={() => {
+                            if (isChatSendBlocked) return;
                             const receiverId = appt.buyerId._id === currentUser._id
                               ? appt.sellerId._id
                               : appt.buyerId._id;
 
                             onInitiateCall(appt, 'video', receiverId);
                           }}
-                          title="Video Call"
-                          aria-label="Video Call"
-                          disabled={callState === 'active' || callState === 'ringing'}
+                          title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
+                          aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
+                          disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
                         >
                           <FaVideo className="text-sm" />
                         </button>
@@ -8695,6 +8712,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       {/* Tips & Guidelines popup */}
                       {showShortcutTip && (
                         <div className="absolute top-full right-0 mt-2 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-20 max-w-xs animate-fadeIn">
+                          <button
+                            type="button"
+                            onClick={() => setShowShortcutTip(false)}
+                            className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors p-0.5 rounded-full hover:bg-gray-750"
+                            title="Close"
+                            aria-label="Close"
+                          >
+                            <FaTimes size={10} />
+                          </button>
                           <div className="font-semibold mb-2">⌨️ Keyboard Shortcuts:</div>
                           <div>• Press Ctrl + / to quickly focus and type your message</div>
                           <div>• @ mention any property/blog/guide</div>
@@ -11624,7 +11650,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Confirm Password
                 </label>
                 <input
@@ -11634,7 +11660,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   placeholder="Confirm password"
                 />
-                <p className="text-xs text-gray-500 mt-1">Note: This is a separate password, not your login password.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Note: This is a separate password, not your login password.</p>
               </div>
             </div>
 
