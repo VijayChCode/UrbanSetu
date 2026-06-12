@@ -1,13 +1,13 @@
 import express from 'express';
-import { verifyToken } from '../utils/verify.js';
+import { verifyToken, verifyAdmin } from '../utils/verify.js';
 import { getAlerts, updateAlertStatus } from '../controllers/sentinel.controller.js';
 import SentinelPreference from '../models/sentinelPreference.model.js';
 
 const router = express.Router();
 
 // ─── Admin Alert Routes ───
-router.get('/alerts', verifyToken, getAlerts);
-router.patch('/alerts/:id', verifyToken, updateAlertStatus);
+router.get('/alerts', verifyToken, verifyAdmin, getAlerts);
+router.patch('/alerts/:id', verifyToken, verifyAdmin, updateAlertStatus);
 
 // ─── User Preference Routes (Sentinel Live persistence) ───
 
