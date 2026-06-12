@@ -629,7 +629,7 @@ function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSever
         <div className="flex flex-wrap md:flex-nowrap items-center gap-2 mt-4 md:mt-0 justify-start md:justify-end w-full md:w-auto">
           {alert.status === 'pending' && (
             <>
-              {alert.listingId && (
+              {alert.listingId && alert.listingId.isVerified && (
                 <button
                   onClick={() => onUnpublishClick(alert._id, alert.listingId._id || alert.listingId)}
                   disabled={actionLoading}

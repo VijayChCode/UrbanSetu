@@ -11,7 +11,7 @@ export const getAlerts = async (req, res, next) => {
 
     const alerts = await SentinelAlert.find(query)
       .populate('userId', 'username email avatar')
-      .populate('listingId', 'name type regularPrice')
+      .populate('listingId', 'name type regularPrice isVerified')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
 
