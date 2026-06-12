@@ -75,6 +75,16 @@ export default function AdminSentinelDashboard() {
   const [unpublishReason, setUnpublishReason] = useState("");
   const [unpublishLoading, setUnpublishLoading] = useState(false);
 
+  // Confirm Modal States
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    confirmText: "",
+    confirmColor: ""
+  });
+
   const fetchAlerts = async () => {
     try {
       setLoading(true);
@@ -138,6 +148,31 @@ export default function AdminSentinelDashboard() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleResolveClick = (alertId, action) => {
+    const actionText = action === 'resolved' ? 'mark this alert as resolved' : 'dismiss this alert';
+    const confirmColor = action === 'resolved' ? 'bg-green-600 hover:bg-green-700 shadow-green-500/20' : 'bg-slate-600 hover:bg-slate-700 shadow-slate-500/20 dark:bg-slate-800 dark:hover:bg-slate-700';
+    const title = action === 'resolved' ? 'Confirm Resolution' : 'Confirm Dismissal';
+    
+    setConfirmModal({
+      open: true,
+      title,
+      message: `Are you sure you want to ${actionText}? This action cannot be undone.`,
+      confirmText: action === 'resolved' ? 'Resolve' : 'Dismiss',
+      confirmColor,
+      onConfirm: () => {
+        handleResolve(alertId, action);
+        setConfirmModal({
+          open: false,
+          title: "",
+          message: "",
+          onConfirm: null,
+          confirmText: "",
+          confirmColor: ""
+        });
+      }
+    });
   };
 
   const handleUnpublishSubmit = async (e) => {
@@ -301,7 +336,7 @@ export default function AdminSentinelDashboard() {
               <AlertItem
                 key={alert._id}
                 alert={alert}
-                onResolve={handleResolve}
+                onResolve={handleResolveClick}
                 onUnpublishClick={(alertId, listingId) => setUnpublishModal({ open: true, alertId, listingId })}
                 actionLoading={actionLoading === alert._id}
                 getSeverityColor={getSeverityColor}
@@ -363,6 +398,34 @@ export default function AdminSentinelDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl relative">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{confirmModal.title}</h2>
+            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+              {confirmModal.message}
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal({ open: false, title: "", message: "", onConfirm: null, confirmText: "", confirmColor: "" })}
+                className="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-2xl transition-all text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className={`px-6 py-3 text-white font-bold rounded-2xl transition-all text-sm shadow-lg ${confirmModal.confirmColor}`}
+              >
+                {confirmModal.confirmText}
+              </button>
+            </div>
           </div>
         </div>
       )}
