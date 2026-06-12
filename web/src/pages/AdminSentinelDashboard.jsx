@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import {
   FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle,
-  FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight,
+  FaUserShield, FaHistory, FaFilter, FaSearch, FaArrowRight, FaArrowLeft,
   FaLock, FaUnlock, FaWallet, FaMapMarkerAlt, FaEye, FaRedo
 } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
@@ -85,6 +85,11 @@ export default function AdminSentinelDashboard() {
     confirmColor: ""
   });
 
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const fetchAlerts = async () => {
     try {
       setLoading(true);
@@ -119,6 +124,11 @@ export default function AdminSentinelDashboard() {
       socket.off('sentinel_alert');
     };
   }, [statusFilter]);
+
+  useEffect(() => {
+    // Reset to first page when filtering
+    setCurrentPage(1);
+  }, [filter, statusFilter, severityFilter, searchQuery, dateRange]);
 
   const handleResolve = async (alertId, action = 'resolved') => {
     try {
@@ -215,7 +225,14 @@ export default function AdminSentinelDashboard() {
 
   const filteredAlerts = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    return alerts.filter(alert => {
+    const severityPriority = {
+      critical: 4,
+      high: 3,
+      medium: 2,
+      low: 1
+    };
+
+    const filtered = alerts.filter(alert => {
       const matchesSearch =
         alert.reason.toLowerCase().includes(query) ||
         (alert.userId?.username || '').toLowerCase().includes(query) ||
@@ -225,10 +242,39 @@ export default function AdminSentinelDashboard() {
         alert.severity.toLowerCase().includes(query);
 
       const matchesType = filter === 'all' || alert.type === filter;
+      const matchesSeverity = severityFilter === 'all' || alert.severity === severityFilter;
 
-      return matchesSearch && matchesType;
+      let matchesDate = true;
+      if (dateRange.start) {
+        matchesDate = matchesDate && new Date(alert.createdAt) >= new Date(dateRange.start);
+      }
+      if (dateRange.end) {
+        const endDate = new Date(dateRange.end);
+        endDate.setHours(23, 59, 59, 999);
+        matchesDate = matchesDate && new Date(alert.createdAt) <= endDate;
+      }
+
+      return matchesSearch && matchesType && matchesSeverity && matchesDate;
     });
-  }, [alerts, searchQuery, filter]);
+
+    // Sort: Critical/High latest first (Priority descending, then Date descending)
+    return filtered.sort((a, b) => {
+      const aPriority = severityPriority[a.severity] || 0;
+      const bPriority = severityPriority[b.severity] || 0;
+      if (bPriority !== aPriority) {
+        return bPriority - aPriority;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+  }, [alerts, searchQuery, filter, severityFilter, dateRange]);
+
+  const paginatedAlerts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAlerts.slice(startIndex, endIndex);
+  }, [filteredAlerts, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredAlerts.length / itemsPerPage) || 1;
 
   const getSeverityColor = (severity) => {
     switch (severity) {
@@ -303,24 +349,75 @@ export default function AdminSentinelDashboard() {
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="relative w-full md:w-96">
-              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 mb-8 transition-colors duration-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-4 relative">
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search alerts, users, or properties..."
-                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white"
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:text-white dark:placeholder-slate-400 transition-all text-sm outline-none"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-              <FilterChip label="All" active={filter === 'all'} onClick={() => setFilter('all')} />
-              <FilterChip label="Fraud" active={filter === 'fraud_listing'} onClick={() => setFilter('fraud_listing')} />
-              <FilterChip label="Security" active={filter === 'security_anomaly'} onClick={() => setFilter('security_anomaly')} />
-              <FilterChip label="Wallet" active={filter === 'wallet_anomaly'} onClick={() => setFilter('wallet_anomaly')} />
-              <FilterChip label="Policy" active={filter === 'policy_violation'} onClick={() => setFilter('policy_violation')} />
+
+            {/* Category Dropdown */}
+            <div className="lg:col-span-2 relative">
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:text-white appearance-none cursor-pointer text-sm outline-none transition-all"
+              >
+                <option value="all">All Categories</option>
+                <option value="fraud_listing">Fraud Listings</option>
+                <option value="security_anomaly">Security Anomalies</option>
+                <option value="wallet_anomaly">Wallet Anomalies</option>
+                <option value="policy_violation">Policy Violations</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+
+            {/* Severity Dropdown */}
+            <div className="lg:col-span-2 relative">
+              <select
+                value={severityFilter}
+                onChange={(e) => setSeverityFilter(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:text-white appearance-none cursor-pointer text-sm outline-none transition-all"
+              >
+                <option value="all">All Severities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+
+            {/* Date Range */}
+            <div className="lg:col-span-4 flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                  className="w-full px-3 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-xs dark:text-white outline-none transition-all"
+                />
+              </div>
+              <span className="text-slate-400 font-bold">-</span>
+              <div className="relative flex-1">
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                  className="w-full px-3 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-xs dark:text-white outline-none transition-all"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -331,8 +428,8 @@ export default function AdminSentinelDashboard() {
             <div className="flex justify-center p-20">
               <UrbanSetuSpinner size="xl" isBright={true} text="Auditing Governance Logs & Alerts..." />
             </div>
-          ) : filteredAlerts.length > 0 ? (
-            filteredAlerts.map((alert) => (
+          ) : paginatedAlerts.length > 0 ? (
+            paginatedAlerts.map((alert, index) => (
               <AlertItem
                 key={alert._id}
                 alert={alert}
@@ -341,6 +438,7 @@ export default function AdminSentinelDashboard() {
                 actionLoading={actionLoading === alert._id}
                 getSeverityColor={getSeverityColor}
                 getTypeIcon={getTypeIcon}
+                index={index}
               />
             ))
           ) : (
@@ -353,6 +451,31 @@ export default function AdminSentinelDashboard() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200 dark:border-slate-800">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+              Showing page <span className="font-bold text-slate-950 dark:text-white">{currentPage}</span> of <span className="font-bold text-slate-950 dark:text-white">{totalPages}</span>
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
+              >
+                <FaArrowLeft size={12} /> Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
+              >
+                Next <FaArrowRight size={12} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <ContactSupportWrapper />
       <GeminiAIWrapper />
@@ -429,6 +552,12 @@ export default function AdminSentinelDashboard() {
           </div>
         </div>
       )}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -449,23 +578,12 @@ function StatCard({ title, value, icon, color }) {
   );
 }
 
-function FilterChip({ label, active, onClick }) {
+function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSeverityColor, getTypeIcon, index }) {
   return (
-    <button
-      onClick={onClick}
-      className={`px-6 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${active
-          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-        }`}
+    <div
+      className={`group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl shadow-sm border-l-8 ${getSeverityColor(alert.severity).split(' ')[0]} border dark:border-slate-800 transition-all hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none`}
+      style={{ animation: `fadeIn 0.3s ease-out ${index * 0.05}s backwards` }}
     >
-      {label}
-    </button>
-  );
-}
-
-function AlertItem({ alert, onResolve, onUnpublishClick, actionLoading, getSeverityColor, getTypeIcon }) {
-  return (
-    <div className={`group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl shadow-sm border-l-8 ${getSeverityColor(alert.severity).split(' ')[0]} border dark:border-slate-800 transition-all hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none`}>
       <div className="flex flex-col md:flex-row justify-between gap-4 md:gap-6">
         <div className="flex gap-3 md:gap-5">
           <div className="p-3 md:p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl h-fit">
