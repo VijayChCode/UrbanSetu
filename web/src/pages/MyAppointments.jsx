@@ -10587,6 +10587,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     }}
                     placeholder={isChatSendBlocked ? "Sending disabled for this appointment status. Chat history is available." : (editingComment ? "Edit your message..." : "Type a message...")}
                     value={comment}
+                    onSelect={(e) => {
+                      const start = e.target.selectionStart;
+                      const end = e.target.selectionEnd;
+                      if (start !== end) {
+                        setShowTextStylingPanel(true);
+                      }
+                    }}
                     onChange={e => {
                       if (isChatSendBlocked) { return; }
                       const value = e.target.value;

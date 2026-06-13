@@ -9475,6 +9475,13 @@ function AdminAppointmentRow({
                     }}
                     placeholder={editingComment ? "Edit your message..." : "Type a message..."}
                     value={newComment}
+                    onSelect={(e) => {
+                      const start = e.target.selectionStart;
+                      const end = e.target.selectionEnd;
+                      if (start !== end) {
+                        setShowTextStylingPanel(true);
+                      }
+                    }}
                     onChange={(e) => {
                       const value = e.target.value;
                       setNewComment(value);
