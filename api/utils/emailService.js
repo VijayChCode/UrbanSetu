@@ -17641,3 +17641,64 @@ export const sendCoinTransactionNotificationEmail = async (email, username, tran
   }
 };
 
+// Send Chat Locked Email
+export const sendChatLockedEmail = async (email, username, appointmentId, isBuyer) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const chatLink = `${clientBaseUrl}/user/my-appointments/chat/${appointmentId}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Your Chat has been Locked - UrbanSetu',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Chat Lock Activation</p>
+          </div>
+          
+          <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb;">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Chat Locked Successfully</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              Hello ${username || 'User'},
+            </p>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              This email confirms that you have successfully set a password lock on your chat conversation. To access this chat in the future, you will need the password you just created.
+            </p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${chatLink}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Access Locked Chat</a>
+            </div>
+            
+            <div style="background: #fff; padding: 10px; border: 1px solid #e5e7eb; border-radius: 4px; word-break: break-all; color: #4b5563; font-size: 12px; font-family: monospace; text-align: center;">
+              ${chatLink}
+            </div>
+
+            <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">
+              <strong>Note:</strong> This chat lock password is separate from your main account login password. If you forget your chat lock password, you can reset it by validating your main account login password.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved. • <a href="${clientBaseUrl}/privacy" style="color: #9ca3af; text-decoration: underline;">Privacy</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions, 3, 1000, 'essential');
+    return result.success ?
+      createSuccessResponse(result.messageId, 'chat_locked_email') :
+      createErrorResponse(new Error(result.error), 'chat_locked_email');
+  } catch (error) {
+    console.error('Error sending chat locked email:', error);
+    return createErrorResponse(error, 'chat_locked_email');
+  }
+};
+
+

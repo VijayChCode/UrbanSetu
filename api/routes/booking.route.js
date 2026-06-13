@@ -21,7 +21,8 @@ import {
   sendNewMessageNotificationEmail,
   sendTokenReceivedEmail,
   sendPropertySoldEmail,
-  sendDisputeAlertEmail
+  sendDisputeAlertEmail,
+  sendChatLockedEmail
 } from '../utils/emailService.js';
 import { rejectContractForBooking } from '../controllers/rental.controller.js';
 import bcryptjs from 'bcryptjs';
@@ -3362,6 +3363,18 @@ router.patch('/:id/chat/lock', verifyToken, async (req, res) => {
     }
 
     await appointment.save();
+
+    // Fetch user details and send email in the background
+    try {
+      const user = await User.findById(userId);
+      if (user && user.email) {
+        sendChatLockedEmail(user.email, user.username || user.name, appointmentId, isBuyer).catch(emailErr => {
+          console.error('Error sending chat locked email in background:', emailErr);
+        });
+      }
+    } catch (userErr) {
+      console.error('Error fetching user for chat locked email:', userErr);
+    }
 
     return res.status(200).json({
       message: 'Chat locked successfully.',
