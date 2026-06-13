@@ -273,6 +273,16 @@ router.get("/my", verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Reset temporary chat access permissions to enforce password input on reloads
+    await booking.updateMany(
+      { buyerId: userId, buyerChatAccessGranted: true },
+      { $set: { buyerChatAccessGranted: false } }
+    );
+    await booking.updateMany(
+      { sellerId: userId, sellerChatAccessGranted: true },
+      { $set: { sellerChatAccessGranted: false } }
+    );
+
     // Find all appointments where user is either buyer or seller, excluding archived ones
     const bookings = await booking.find({
       $or: [
@@ -2771,6 +2781,15 @@ router.get('/:id', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'You do not have access to this appointment.' });
     }
 
+    // Reset temporary access for this booking if it's the current user
+    if (isBuyer && bookingDoc.buyerChatAccessGranted) {
+      bookingDoc.buyerChatAccessGranted = false;
+      await bookingDoc.save();
+    } else if (isSeller && bookingDoc.sellerChatAccessGranted) {
+      bookingDoc.sellerChatAccessGranted = false;
+      await bookingDoc.save();
+    }
+
     // Return both formats for backward compatibility
     // Some code expects { success: true, booking: ... }, others expect the booking directly
     const response = { ...bookingDoc.toObject(), success: true, booking: bookingDoc };
@@ -3372,7 +3391,7 @@ router.patch('/:id/chat/lock', verifyToken, async (req, res) => {
         const otherParty = await User.findById(otherPartyId);
         const otherPartyName = otherParty ? (otherParty.username || otherParty.name) : 'the other party';
 
-        sendChatLockedEmail(user.email, user.username || user.name, appointmentId, otherPartyName).catch(emailErr => {
+        sendChatLockedEmail(user.email, user.username || user.name, appointmentId, otherPartyName, appointment.propertyName).catch(emailErr => {
           console.error('Error sending chat locked email in background:', emailErr);
         });
       }

@@ -2813,8 +2813,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Handle notification-triggered chat opening
   useEffect(() => {
     if (shouldOpenChatFromNotification && activeChatAppointmentId === appt._id) {
+      // If lock status is still loading from the API, wait until it finishes
+      if (chatLockStatusLoading) {
+        return;
+      }
+
       // Check if chat is locked/encrypted
-      const isChatLocked = appt.buyerChatLocked || appt.sellerChatLocked;
+      const isChatLocked = chatLocked || appt.buyerChatLocked || appt.sellerChatLocked;
       const currentUserId = currentUser._id;
       const isBuyer = appt.buyerId?._id === currentUserId || appt.buyerId === currentUserId;
       const isSeller = appt.sellerId?._id === currentUserId || appt.sellerId === currentUserId;
@@ -2842,7 +2847,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       if (isChatLocked) {
         if (chatAccessGranted) {
           openChat();
-        } else if ((isBuyer && appt.buyerChatLocked) || (isSeller && appt.sellerChatLocked)) {
+        } else if ((isBuyer && (chatLocked || appt.buyerChatLocked)) || (isSeller && (chatLocked || appt.sellerChatLocked))) {
           setShowChatUnlockModal(true);
         }
       } else {
@@ -2850,7 +2855,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         openChat();
       }
     }
-  }, [shouldOpenChatFromNotification, activeChatAppointmentId, appt._id, appt.buyerChatLocked, appt.sellerChatLocked, appt.buyerId, appt.sellerId, currentUser._id, onChatOpened, preferUnreadForAppointmentId, onConsumePreferUnread, chatAccessGranted, navigate]);
+  }, [shouldOpenChatFromNotification, activeChatAppointmentId, appt._id, appt.buyerChatLocked, appt.sellerChatLocked, appt.buyerId, appt.sellerId, currentUser._id, onChatOpened, preferUnreadForAppointmentId, onConsumePreferUnread, chatAccessGranted, navigate, chatLocked, chatLockStatusLoading]);
 
   // Ensure unlock modal closes when chat opens
   useEffect(() => {
@@ -7343,7 +7348,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               }`}
             title={"Open Chat"}
             onClick={() => {
-              if ((chatLocked || chatLockStatusLoading) && !chatAccessGranted) {
+              if (chatLockStatusLoading) {
+                return; // Wait for security check to complete
+              }
+              if (chatLocked && !chatAccessGranted) {
                 setShowChatUnlockModal(true);
               } else {
                 setShowChatModal(true);
