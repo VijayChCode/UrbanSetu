@@ -381,7 +381,7 @@ export default function PublicHome() {
               </Link>
               <button
                 onClick={() => setShowDemoVideo(true)}
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-red-500/20 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-purple-500/35 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
               >
                 <FaPlay className="text-sm" /> Watch Demo Video
               </button>

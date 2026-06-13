@@ -382,6 +382,16 @@ export default function PublicHomeSkeleton() {
                   }}
                 />
               </div>
+              <div className="w-full sm:w-48 h-14 rounded-xl bg-gradient-to-r from-violet-500/20 to-purple-500/20 dark:from-violet-500/10 dark:to-purple-500/10 border border-violet-200/30 dark:border-purple-800/20 relative overflow-hidden">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.1), transparent)',
+                    backgroundSize: '200% 100%',
+                    animation: 'phsk-shimmer 2s infinite linear',
+                  }}
+                />
+              </div>
               <div className="w-full sm:w-48 h-14 rounded-xl bg-white/60 dark:bg-gray-800/40 border border-gray-200/50 dark:border-gray-700/30 relative overflow-hidden">
                 <div
                   className="absolute inset-0 phsk-shimmer"
