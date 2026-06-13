@@ -40,6 +40,47 @@ const BlogEditModal = ({
   const isGuide = formData.type === 'guide';
   const contentLabel = isGuide ? 'Guide' : 'Blog';
 
+  const [initialData, setInitialData] = useState(null);
+  const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
+
+  const hasChanges = () => {
+    if (!initialData) return false;
+    const keys = [
+      'title', 'content', 'excerpt', 'thumbnail', 
+      'propertyId', 'category', 'type', 'featured', 
+      'published', 'scheduledAt'
+    ];
+    for (const key of keys) {
+      const initialVal = initialData[key] ?? '';
+      const currentVal = formData[key] ?? '';
+      if (key === 'scheduledAt') {
+        const d1 = initialData[key] ? new Date(initialData[key]).getTime() : 0;
+        const d2 = formData[key] ? new Date(formData[key]).getTime() : 0;
+        if (d1 !== d2) return true;
+      } else if (initialVal !== currentVal) {
+        return true;
+      }
+    }
+    const arrayKeys = ['tags', 'imageUrls', 'videoUrls'];
+    for (const key of arrayKeys) {
+      const arr1 = initialData[key] || [];
+      const arr2 = formData[key] || [];
+      if (arr1.length !== arr2.length) return true;
+      for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) return true;
+      }
+    }
+    return false;
+  };
+
+  const handleClose = () => {
+    if (hasChanges()) {
+      setShowConfirmDiscard(true);
+    } else {
+      onClose();
+    }
+  };
+
   // --- Handlers for List-based Media Input (Like CreateListing) ---
 
   const handleMediaUrlChange = (index, value, type) => {
@@ -190,17 +231,22 @@ const BlogEditModal = ({
     }
   };
 
-  // Lock body scroll when modal is open
+  // Lock body scroll and snapshot initial form data when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // Snapshot the initial form data
+      setInitialData(JSON.parse(JSON.stringify(formData)));
+      setShowConfirmDiscard(false);
     } else {
       document.body.style.overflow = 'unset';
+      setInitialData(null);
     }
 
     return () => {
       document.body.style.overflow = 'unset';
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -221,7 +267,7 @@ const BlogEditModal = ({
               </h2>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all duration-300 active:scale-95 shadow-sm hover:shadow"
             >
               <FaTimes className="text-xl" />
@@ -674,7 +720,7 @@ const BlogEditModal = ({
         <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-800/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-700 p-5 sm:p-7 flex flex-col sm:flex-row justify-end gap-3 z-10 transition-colors duration-300">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 sm:flex-none px-8 py-4 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-black hover:bg-gray-100 dark:hover:bg-gray-600 transition-all active:scale-95 border border-gray-200 dark:border-gray-600 shadow-sm"
           >
             DISCARD
@@ -715,6 +761,36 @@ const BlogEditModal = ({
           />
         )
       }
+      {showConfirmDiscard && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[70] p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-scale-in border border-gray-100 dark:border-gray-700 p-6 text-center">
+            <div className="w-16 h-16 bg-yellow-50 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-200 dark:border-yellow-800 text-2xl">
+              ⚠️
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Unsaved Changes</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              You have unsaved changes in this {contentLabel.toLowerCase()}. Are you sure you want to discard them?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirmDiscard(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all"
+              >
+                Keep Editing
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmDiscard(false);
+                  onClose();
+                }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-md hover:shadow-lg"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 };

@@ -1290,7 +1290,7 @@ const AdminBlogs = ({ type }) => {
                     </span>
                     <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Published Time:</span>
+                        <span className="text-gray-500 dark:text-gray-400">Published Time:</span>
                         <span className="font-bold text-gray-800 dark:text-gray-200">
                           {new Date(blogToToggle.publishedAt || blogToToggle.createdAt).toLocaleString()}
                         </span>
@@ -1304,13 +1304,13 @@ const AdminBlogs = ({ type }) => {
                     </span>
                     <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
                       <div className="flex justify-between flex-wrap gap-1">
-                        <span className="text-gray-500">Scheduled Time:</span>
+                        <span className="text-gray-500 dark:text-gray-400">Scheduled Time:</span>
                         <span className="font-bold text-blue-600 dark:text-blue-400">
                           {new Date(blogToToggle.scheduledAt).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between flex-wrap gap-1 border-t border-gray-100 dark:border-gray-700/50 pt-2">
-                        <span className="text-gray-500">Drafted Time:</span>
+                        <span className="text-gray-500 dark:text-gray-400">Drafted Time:</span>
                         <span className="font-bold text-gray-800 dark:text-gray-200">
                           {new Date(blogToToggle.createdAt).toLocaleString()}
                         </span>
@@ -1324,14 +1324,14 @@ const AdminBlogs = ({ type }) => {
                     </span>
                     <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Drafted Time:</span>
+                        <span className="text-gray-500 dark:text-gray-400">Drafted Time:</span>
                         <span className="font-bold text-gray-800 dark:text-gray-200">
                           {new Date(blogToToggle.createdAt).toLocaleString()}
                         </span>
                       </div>
                       {blogToToggle.publishedAt && (
                         <div className="flex justify-between border-t border-gray-100 dark:border-gray-700/50 pt-2">
-                          <span className="text-gray-500">Previously Published:</span>
+                          <span className="text-gray-500 dark:text-gray-400">Previously Published:</span>
                           <span className="font-bold text-gray-800 dark:text-gray-200">
                             {new Date(blogToToggle.publishedAt).toLocaleString()}
                           </span>
