@@ -11696,83 +11696,84 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               Create a password to lock your chat. You'll need this password to access the chat later.
             </p>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Password (minimum 4 characters)
-                </label>
-                <div className="relative">
+            <form onSubmit={(e) => { e.preventDefault(); handleChatLock(); }}>
+              {/* Fake username to prevent browser autofill from using the search bar */}
+              <input type="text" name="username" style={{ display: 'none' }} autoComplete="username" defaultValue={currentUser?.email || ''} />
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Password (minimum 4 characters)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showLockPassword ? "text" : "password"}
+                      value={lockPassword}
+                      onChange={(e) => setLockPassword(e.target.value)}
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                      placeholder="Enter password"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLockPassword(!showLockPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      {showLockPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Confirm Password
+                  </label>
                   <input
                     type={showLockPassword ? "text" : "password"}
-                    value={lockPassword}
-                    onChange={(e) => setLockPassword(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                    placeholder="Enter password"
+                    value={lockConfirmPassword}
+                    onChange={(e) => setLockConfirmPassword(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                    placeholder="Confirm password"
+                    autoComplete="new-password"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowLockPassword(!showLockPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
-                  >
-                    {showLockPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Note: This is a separate password, not your login password.</p>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Confirm Password
-                </label>
-                <input
-                  type={showLockPassword ? "text" : "password"}
-                  value={lockConfirmPassword}
-                  onChange={(e) => setLockConfirmPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleChatLock();
-                    }
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowChatLockModal(false);
+                    setLockPassword('');
+                    setLockConfirmPassword('');
+                    setShowLockPassword(false);
                   }}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                  placeholder="Confirm password"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Note: This is a separate password, not your login password.</p>
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={lockingChat}
+                  className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {lockingChat ? (
+                    <div className="flex items-center gap-2">
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      Locking...
+                    </div>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
+                      </svg>
+                      Lock Chat
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
-
-            <div className="flex gap-3 justify-end mt-6">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowChatLockModal(false);
-                  setLockPassword('');
-                  setLockConfirmPassword('');
-                  setShowLockPassword(false);
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleChatLock}
-                disabled={lockingChat}
-                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {lockingChat ? (
-                  <div className="flex items-center gap-2">
-                    <UrbanSetuSpinner size="sm" isBright={true} />
-                    Locking...
-                  </div>
-                ) : (
-                  <>
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
-                    </svg>
-                    Lock Chat
-                  </>
-                )}
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       ), document.body)}
@@ -11792,78 +11793,80 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               This chat is protected with a password. Enter your password to access the chat.
             </p>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  ref={unlockPasswordRef}
-                  type={showUnlockPassword ? "text" : "password"}
-                  value={unlockPassword}
-                  onChange={(e) => setUnlockPassword(e.target.value)}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                  placeholder="Enter password"
-                  onKeyPress={(e) => e.key === 'Enter' && handleChatUnlock()}
-                  autoComplete="new-password"
-                />
+            <form onSubmit={(e) => { e.preventDefault(); handleChatUnlock(); }}>
+              {/* Fake username to prevent browser autofill from using the search bar */}
+              <input type="text" name="username" style={{ display: 'none' }} autoComplete="username" defaultValue={currentUser?.email || ''} />
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    ref={unlockPasswordRef}
+                    type={showUnlockPassword ? "text" : "password"}
+                    value={unlockPassword}
+                    onChange={(e) => setUnlockPassword(e.target.value)}
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                    placeholder="Enter password"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowUnlockPassword(!showUnlockPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    {showUnlockPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Note: This is a separate password, not your login password.</p>
+              </div>
+
+              <div className="flex items-center justify-end mb-4">
                 <button
                   type="button"
-                  onClick={() => setShowUnlockPassword(!showUnlockPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                  onClick={() => {
+                    setShowChatUnlockModal(false);
+                    setShowForgotPasswordModal(true);
+                  }}
+                  disabled={unlockingChat}
+                  className={`text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline ${unlockingChat ? 'opacity-50 cursor-not-allowed no-underline' : ''}`}
                 >
-                  {showUnlockPassword ? '👁️' : '👁️‍🗨️'}
+                  Forgot password?
                 </button>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Note: This is a separate password, not your login password.</p>
-            </div>
 
-            <div className="flex items-center justify-end mb-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowChatUnlockModal(false);
-                  setShowForgotPasswordModal(true);
-                }}
-                disabled={unlockingChat}
-                className={`text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline ${unlockingChat ? 'opacity-50 cursor-not-allowed no-underline' : ''}`}
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowChatUnlockModal(false);
-                  setUnlockPassword('');
-                  setShowUnlockPassword(false);
-                }}
-                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleChatUnlock}
-                disabled={unlockingChat}
-                className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {unlockingChat ? (
-                  <div className="flex items-center gap-2">
-                    <UrbanSetuSpinner size="sm" isBright={true} />
-                    Unlocking...
-                  </div>
-                ) : (
-                  'Unlock Chat'
-                )}
-              </button>
-            </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowChatUnlockModal(false);
+                    setUnlockPassword('');
+                    setShowUnlockPassword(false);
+                  }}
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={unlockingChat || !unlockPassword}
+                  className="px-4 py-2 rounded bg-orange-600 hover:bg-orange-700 text-white font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  {unlockingChat ? (
+                    <>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      Unlocking...
+                    </>
+                  ) : (
+                    'Unlock Chat'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-        </div >
-      ), document.body)
-      }
+        </div>
+      ), document.body)}
       {/* Forgot Password Modal */}
       {
         showForgotPasswordModal && createPortal((
@@ -11880,58 +11883,61 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 Enter your account login password to confirm your identity and permanently remove the chat lock. Your chat history will not be cleared.
               </p>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Account Login Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showLoginPasswordForReset ? "text" : "password"}
-                    value={loginPasswordForReset}
-                    onChange={(e) => setLoginPasswordForReset(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                    placeholder="Enter your account login password"
-                    onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
-                    autoComplete="new-password"
-                  />
+              <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(); }}>
+                {/* Fake username to prevent browser autofill from using the search bar */}
+                <input type="text" name="username" style={{ display: 'none' }} autoComplete="username" defaultValue={currentUser?.email || ''} />
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Account Login Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showLoginPasswordForReset ? "text" : "password"}
+                      value={loginPasswordForReset}
+                      onChange={(e) => setLoginPasswordForReset(e.target.value)}
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                      placeholder="Enter your account login password"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPasswordForReset(!showLoginPasswordForReset)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      {showLoginPasswordForReset ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end">
                   <button
                     type="button"
-                    onClick={() => setShowLoginPasswordForReset(!showLoginPasswordForReset)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
+                    onClick={() => {
+                      setShowForgotPasswordModal(false);
+                      setLoginPasswordForReset('');
+                      setShowLoginPasswordForReset(false);
+                    }}
+                    className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                   >
-                    {showLoginPasswordForReset ? '👁️' : '👁️‍🗨️'}
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotPasswordProcessing || !loginPasswordForReset.trim()}
+                    className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {forgotPasswordProcessing ? (
+                      <div className="flex items-center gap-2">
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        Removing...
+                      </div>
+                    ) : (
+                      'Remove Lock'
+                    )}
                   </button>
                 </div>
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForgotPasswordModal(false);
-                    setLoginPasswordForReset('');
-                    setShowLoginPasswordForReset(false);
-                  }}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={forgotPasswordProcessing || !loginPasswordForReset.trim()}
-                  className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors flex items-center gap-2 disabled:opacity-50"
-                >
-                  {forgotPasswordProcessing ? (
-                    <div className="flex items-center gap-2">
-                      <UrbanSetuSpinner size="sm" isBright={true} />
-                      Removing...
-                    </div>
-                  ) : (
-                    'Remove Lock'
-                  )}
-                </button>
-              </div>
+              </form>
             </div>
           </div>
         ), document.body)
@@ -11970,80 +11976,83 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 Enter your chat lock password to confirm this action.
               </p>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    ref={removeLockPasswordRef}
-                    type={showRemoveLockPassword ? "text" : "password"}
-                    value={removeLockPassword}
-                    onChange={(e) => setRemoveLockPassword(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 pr-10"
-                    placeholder="Enter your chat lock password"
-                    onKeyPress={(e) => e.key === 'Enter' && handleRemoveLockFromMenu()}
-                    autoComplete="new-password"
-                  />
+              <form onSubmit={(e) => { e.preventDefault(); handleRemoveLockFromMenu(); }}>
+                {/* Fake username to prevent browser autofill from using the search bar */}
+                <input type="text" name="username" style={{ display: 'none' }} autoComplete="username" defaultValue={currentUser?.email || ''} />
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      ref={removeLockPasswordRef}
+                      type={showRemoveLockPassword ? "text" : "password"}
+                      value={removeLockPassword}
+                      onChange={(e) => setRemoveLockPassword(e.target.value)}
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 pr-10"
+                      placeholder="Enter your chat lock password"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRemoveLockPassword(!showRemoveLockPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showRemoveLockPassword ? '👁' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end mb-4">
                   <button
                     type="button"
-                    onClick={() => setShowRemoveLockPassword(!showRemoveLockPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    onClick={() => {
+                      setShowRemoveLockModal(false);
+                      setShowForgotPasswordModal(true);
+                      setRemoveLockPassword('');
+                      setShowRemoveLockPassword(false);
+                    }}
+                    disabled={removingLock}
+                    className={`text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline ${removingLock ? 'opacity-50 cursor-not-allowed no-underline' : ''}`}
                   >
-                    {showRemoveLockPassword ? '👁' : '👁️‍🗨️'}
+                    Forgot password?
                   </button>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-end mb-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowRemoveLockModal(false);
-                    setShowForgotPasswordModal(true);
-                    setRemoveLockPassword('');
-                    setShowRemoveLockPassword(false);
-                  }}
-                  disabled={removingLock}
-                  className={`text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline ${removingLock ? 'opacity-50 cursor-not-allowed no-underline' : ''}`}
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowRemoveLockModal(false);
-                    setRemoveLockPassword('');
-                    setShowRemoveLockPassword(false);
-                  }}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRemoveLockFromMenu}
-                  disabled={removingLock}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-                >
-                  {removingLock ? (
-                    <>
-                      <UrbanSetuSpinner size="sm" isBright={true} />
-                      Removing...
-                    </>
-                  ) : (
-                    <>
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
-                      </svg>
-                      Remove Lock
-                    </>
-                  )}
-                </button>
-              </div>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRemoveLockModal(false);
+                      setRemoveLockPassword('');
+                      setShowRemoveLockPassword(false);
+                    }}
+                    className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={removingLock}
+                    className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {removingLock ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        Removing...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4H4v10h16V10h-2zM8 6c0-2.206 1.794-4 4-4s4 1.794 4 4v4H8V6z" />
+                        </svg>
+                        Remove Lock
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         ), document.body)
