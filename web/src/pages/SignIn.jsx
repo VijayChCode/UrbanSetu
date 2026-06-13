@@ -83,16 +83,18 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         if (redirectUrl && redirectUrl.startsWith('/')) {
             if (redirectUrl.startsWith('/ai/share/')) {
                 const prefix = (data.role === "admin" || data.role === "rootadmin") ? "/admin" : "/user";
-                navigate(`${prefix}${redirectUrl}`, { replace: true });
+                searchParams.set('redirect', `${prefix}${redirectUrl}`);
             } else {
-                navigate(redirectUrl, { replace: true });
+                searchParams.set('redirect', redirectUrl);
             }
+        }
+
+        searchParams.set('syncsettings', '1');
+
+        if (data.role === "admin" || data.role === "rootadmin") {
+            navigate(`/admin?${searchParams.toString()}`, { replace: true });
         } else {
-            if (data.role === "admin" || data.role === "rootadmin") {
-                navigate("/admin");
-            } else {
-                navigate("/user");
-            }
+            navigate(`/user?${searchParams.toString()}`, { replace: true });
         }
     };
 

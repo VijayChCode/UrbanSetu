@@ -112,10 +112,13 @@ const GoogleOneTap = () => {
                 syncSettingsFromUser(data);
                 reconnectSocket();
 
+                const searchParams = new URLSearchParams(location.search);
+                searchParams.set('syncsettings', '1');
+
                 if (data.role === "admin" || data.role === "rootadmin") {
-                    navigate("/admin");
+                    navigate(`/admin?${searchParams.toString()}`);
                 } else {
-                    navigate("/user");
+                    navigate(`/user?${searchParams.toString()}`);
                 }
 
             } catch (error) {

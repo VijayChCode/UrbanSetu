@@ -83,9 +83,9 @@ export default function AccountConflictResolution() {
         sessionStorage.removeItem('signupConflictData');
 
         if (loginData.role === 'admin' || loginData.role === 'rootadmin') {
-          navigate('/admin', { replace: true });
+          navigate('/admin?syncsettings=1', { replace: true });
         } else {
-          navigate('/user', { replace: true });
+          navigate('/user?syncsettings=1', { replace: true });
         }
       } else {
         // Fallback: redirect to sign-in
@@ -256,9 +256,9 @@ export default function AccountConflictResolution() {
           localStorage.removeItem('urbansetu_ref');
 
           if (data.role === 'admin' || data.role === 'rootadmin') {
-            navigate('/admin', { replace: true });
+            navigate('/admin?syncsettings=1', { replace: true });
           } else {
-            navigate('/user', { replace: true });
+            navigate('/user?syncsettings=1', { replace: true });
           }
         } else {
           autoLogin(conflictData.signupFormData.email, conflictData.signupFormData.password);

@@ -107,10 +107,12 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             reconnectSocket();
 
             // Navigate based on user role
+            const searchParams = new URLSearchParams(location.search);
+            searchParams.set('syncsettings', '1');
             if (data.role === "admin" || data.role === "rootadmin") {
-                navigate("/admin");
+                navigate(`/admin?${searchParams.toString()}`);
             } else {
-                navigate("/user");
+                navigate(`/user?${searchParams.toString()}`);
             }
         } catch (error) {
             console.error('Error processing Google authentication:', error);

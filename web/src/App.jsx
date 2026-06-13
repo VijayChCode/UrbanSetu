@@ -891,6 +891,40 @@ function AppRoutes({ bootstrapped }) {
     };
   }, [dispatch, navigate, currentUser]);
 
+  // Settings sync listener for ?syncsettings=1 URL param
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const isSyncingSettings = searchParams.get('syncsettings') === '1';
+
+  useEffect(() => {
+    if (isSyncingSettings && currentUser) {
+      const timer = setTimeout(() => {
+        try {
+          syncSettingsFromUser(currentUser);
+        } catch (e) {
+          console.warn("syncSettingsFromUser failed:", e);
+        }
+
+        // Remove syncsettings=1 from URL query parameters and redirect if needed
+        const newParams = new URLSearchParams(location.search);
+        newParams.delete('syncsettings');
+        const redirectUrl = newParams.get('redirect');
+
+        if (redirectUrl && redirectUrl.startsWith('/')) {
+          newParams.delete('redirect');
+          const searchStr = newParams.toString();
+          const target = redirectUrl + (searchStr ? `?${searchStr}` : '');
+          navigate(target, { replace: true });
+        } else {
+          const searchStr = newParams.toString();
+          const target = location.pathname + (searchStr ? `?${searchStr}` : '');
+          navigate(target, { replace: true });
+        }
+      }, 1200); // 1.2s delay for a premium transition look
+
+      return () => clearTimeout(timer);
+    }
+  }, [isSyncingSettings, currentUser, location.pathname, location.search, navigate]);
+
   // Track currently open chat
   const [currentlyOpenChat, setCurrentlyOpenChat] = useState(null);
 
@@ -1125,6 +1159,30 @@ function AppRoutes({ bootstrapped }) {
   return (
     <>
       <NetworkStatus />
+
+      {/* Settings Syncing Loader Overlay */}
+      {isSyncingSettings && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-4 animate-fadeIn animate-duration-200">
+          <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full filter blur-2xl"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full filter blur-2xl"></div>
+
+            {/* Spinner */}
+            <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+              <UrbanSetuSpinner size="lg" className="!w-full !h-full" isBright={true} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <FaHome className="text-2xl text-blue-500 animate-pulse" />
+              </div>
+            </div>
+
+            <h2 className="text-xl font-black text-white mb-2">Syncing Settings</h2>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Applying your personalized settings and preferences...
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Session Transfer Confirmation Modal */}
       {pendingTransfer && (

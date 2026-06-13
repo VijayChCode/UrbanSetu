@@ -90,11 +90,14 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
     const searchParams = new URLSearchParams(location.search);
     let redirectUrl = searchParams.get('redirect');
     if (redirectUrl && redirectUrl.startsWith('/')) {
-      navigate(redirectUrl, { replace: true });
-    } else if (data.role === 'admin' || data.role === 'rootadmin') {
-      navigate('/admin', { replace: true });
+      searchParams.set('redirect', redirectUrl);
+    }
+    searchParams.set('syncsettings', '1');
+
+    if (data.role === 'admin' || data.role === 'rootadmin') {
+      navigate(`/admin?${searchParams.toString()}`, { replace: true });
     } else {
-      navigate('/user', { replace: true });
+      navigate(`/user?${searchParams.toString()}`, { replace: true });
     }
   };
 
