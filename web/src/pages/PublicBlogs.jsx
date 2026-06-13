@@ -697,7 +697,7 @@ const PublicBlogs = () => {
               <h3 className="text-xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
                 Next Story Arriving Soon!
               </h3>
-              <p className="text-gray-300 font-medium text-sm md:text-base line-clamp-1 max-w-xl">
+              <p className="text-gray-300 font-medium text-sm md:text-base break-words">
                 "{upcomingPost.title}"
               </p>
             </div>
