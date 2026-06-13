@@ -195,6 +195,7 @@ export const getBlogs = async (req, res, next) => {
             published,
             type,
             featured,
+            scheduled,
             page = 1,
             limit = 10
         } = req.query;
@@ -203,7 +204,10 @@ export const getBlogs = async (req, res, next) => {
         const query = {};
 
 
-        if (published === 'true') {
+        if (scheduled === 'true') {
+            query.published = false;
+            query.scheduledAt = { $gt: new Date() };
+        } else if (published === 'true') {
             query.published = true;
         } else if (published === 'false') {
             query.published = false;
@@ -286,11 +290,16 @@ export const getBlogs = async (req, res, next) => {
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
 
+        let sortCriteria = { publishedAt: -1, createdAt: -1 };
+        if (scheduled === 'true') {
+            sortCriteria = { scheduledAt: 1 };
+        }
+
         // Get blogs with pagination
         const blogs = await Blog.find(query)
             .populate('propertyId', 'name city state')
             .populate('author', 'username role email')
-            .sort({ publishedAt: -1, createdAt: -1 })
+            .sort(sortCriteria)
             .skip(skip)
             .limit(parseInt(limit));
 

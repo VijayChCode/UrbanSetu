@@ -22,6 +22,8 @@ const PublicGuides = () => {
     usePageTitle("Real Estate Guides - Learning Hub");
 
     const [guides, setGuides] = useState([]);
+    const [upcomingPost, setUpcomingPost] = useState(null);
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [featuredGuides, setFeaturedGuides] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -105,6 +107,8 @@ const PublicGuides = () => {
         fetchFeaturedGuides();
         fetchTags();
         fetchGuides();
+        fetchUpcomingPost();
+
         if (currentUser) {
             fetchSubscriptionStatus();
             setEmail(currentUser.email); // Default to current user's email but allow editing
@@ -115,6 +119,31 @@ const PublicGuides = () => {
             }
         }
     }, [currentUser]);
+
+    useEffect(() => {
+        if (!upcomingPost || !upcomingPost.scheduledAt) return;
+
+        const timer = setInterval(() => {
+            const now = new Date().getTime();
+            const target = new Date(upcomingPost.scheduledAt).getTime();
+            const diff = target - now;
+
+            if (diff <= 0) {
+                clearInterval(timer);
+                setUpcomingPost(null);
+                fetchGuides();
+                fetchFeaturedGuides();
+            } else {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                setTimeLeft({ days, hours, minutes, seconds });
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [upcomingPost]);
 
     // Debounced search effect
     useEffect(() => {
@@ -460,6 +489,22 @@ const PublicGuides = () => {
         }
     };
 
+    const fetchUpcomingPost = async () => {
+        try {
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs?scheduled=true&type=guide&limit=1`, { autoRedirect: false });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.data && data.data.length > 0) {
+                    setUpcomingPost(data.data[0]);
+                } else {
+                    setUpcomingPost(null);
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching upcoming post:', err);
+        }
+    };
+
     const fetchGuides = async (showLoading = true) => {
         try {
             if (showLoading && guides.length === 0) setLoading(true);
@@ -622,6 +667,49 @@ const PublicGuides = () => {
             </div>
 
             <main className="flex-grow max-w-7xl mx-auto px-4 w-full -mt-16 relative z-10 pb-20">
+
+                {/* Stay Tuned Countdown for Scheduled Post */}
+                {upcomingPost && (
+                    <div className="bg-gradient-to-r from-purple-900/60 via-indigo-900/60 to-blue-900/60 backdrop-blur-md border border-purple-500/30 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl animate-fade-in-up">
+                        {/* Background glowing decorations */}
+                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse"></div>
+                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                        
+                        <div className="relative z-10 text-center md:text-left flex-1">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 animate-pulse uppercase tracking-wider mb-4">
+                                <Clock className="w-3.5 h-3.5 animate-spin-slow" /> STAY TUNED
+                            </span>
+                            <h3 className="text-xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
+                                Next Guide Arriving Soon!
+                            </h3>
+                            <p className="text-gray-300 font-medium text-sm md:text-base line-clamp-1 max-w-xl">
+                                "{upcomingPost.title}"
+                            </p>
+                        </div>
+
+                        <div className="relative z-10 flex items-center gap-2 md:gap-3">
+                            <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                                <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{timeLeft.days}</span>
+                                <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Days</span>
+                            </div>
+                            <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                            <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                                <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{timeLeft.hours}</span>
+                                <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Hours</span>
+                            </div>
+                            <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                            <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                                <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{timeLeft.minutes}</span>
+                                <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Mins</span>
+                            </div>
+                            <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                            <div className="flex flex-col items-center bg-pink-600/20 border border-pink-500/30 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg animate-pulse">
+                                <span className="text-2xl md:text-3xl font-black text-pink-400 tracking-tight leading-none mb-1">{timeLeft.seconds}</span>
+                                <span className="text-[9px] md:text-[10px] uppercase font-bold text-pink-300 tracking-wider">Secs</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 2. Category Tabs */}
                 <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-4 mb-12 flex flex-wrap justify-center gap-2 overflow-x-auto custom-scrollbar animate-fade-in-up">

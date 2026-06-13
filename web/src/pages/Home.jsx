@@ -199,6 +199,10 @@ export default function Home() {
   const [homeFeaturedGuides, setHomeFeaturedGuides] = useState([]);
   const [homeTrendingPosts, setHomeTrendingPosts] = useState([]);
   const [insightsTab, setInsightsTab] = useState('community');
+  const [upcomingBlog, setUpcomingBlog] = useState(null);
+  const [upcomingGuide, setUpcomingGuide] = useState(null);
+  const [blogTimeLeft, setBlogTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [guideTimeLeft, setGuideTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   // Animation states for dashboard
   const [isVisible, setIsVisible] = useState(false);
@@ -444,7 +448,9 @@ export default function Home() {
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&limit=30`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/forum?limit=3`).then(r => r.ok ? r.json() : null),
-        ]).then(([featBlogsR, allBlogsR, featGuidesR, allGuidesR, postsResult]) => {
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?scheduled=true&type=blog&limit=1`).then(r => r.ok ? r.json() : null),
+          authenticatedFetch(`${API_BASE_URL}/api/blogs?scheduled=true&type=guide&limit=1`).then(r => r.ok ? r.json() : null),
+        ]).then(([featBlogsR, allBlogsR, featGuidesR, allGuidesR, postsResult, upcomingBlogR, upcomingGuideR]) => {
           // Helper: merge featured first + fill remaining slots with randomized (shuffled) non-featured items, deduplicated, max 3
           const mergeAndFill = (featuredResult, allResult) => {
             const featured = featuredResult.status === 'fulfilled' && featuredResult.value?.data ? featuredResult.value.data : [];
@@ -469,9 +475,35 @@ export default function Home() {
             return merged.slice(0, 3);
           };
 
-          setHomeFeaturedBlogs(mergeAndFill(featBlogsR, allBlogsR));
-          setHomeFeaturedGuides(mergeAndFill(featGuidesR, allGuidesR));
-          if (postsResult.status === 'fulfilled' && postsResult.value?.posts) setHomeTrendingPosts(postsResult.value.posts);
+          const fBlogs = mergeAndFill(featBlogsR, allBlogsR);
+          const fGuides = mergeAndFill(featGuidesR, allGuidesR);
+          setHomeFeaturedBlogs(fBlogs);
+          setHomeFeaturedGuides(fGuides);
+          
+          const hasCommunity = postsResult.status === 'fulfilled' && postsResult.value?.posts && postsResult.value.posts.length > 0;
+          if (hasCommunity) {
+            setHomeTrendingPosts(postsResult.value.posts);
+          }
+          
+          let uBlog = null;
+          let uGuide = null;
+          if (upcomingBlogR.status === 'fulfilled' && upcomingBlogR.value?.data?.[0]) {
+            uBlog = upcomingBlogR.value.data[0];
+            setUpcomingBlog(uBlog);
+          }
+          if (upcomingGuideR.status === 'fulfilled' && upcomingGuideR.value?.data?.[0]) {
+            uGuide = upcomingGuideR.value.data[0];
+            setUpcomingGuide(uGuide);
+          }
+
+          // Fallback initial tab if community is empty
+          if (!hasCommunity) {
+            if (fBlogs.length > 0 || uBlog) {
+              setInsightsTab('blogs');
+            } else if (fGuides.length > 0 || uGuide) {
+              setInsightsTab('guides');
+            }
+          }
         }).catch(() => { /* silent – insights section is enhancement only */ });
 
       } catch (error) {
@@ -884,6 +916,69 @@ export default function Home() {
       setStatsAnimated(true);
     }
   }, [loading, recentlyViewed.length, wishlistItems.length, watchlistItems.length, myListingsCount, upcomingAppointments.length]);
+
+  // Countdown timers for scheduled blog & guide posts
+  useEffect(() => {
+    if (!upcomingBlog || !upcomingBlog.scheduledAt) return;
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const target = new Date(upcomingBlog.scheduledAt).getTime();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        clearInterval(timer);
+        setUpcomingBlog(null);
+        // Refresh home featured blogs list
+        authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&featured=true&limit=3`)
+          .then(r => r.ok ? r.json() : null)
+          .then(res => {
+            if (res && res.data) {
+              setHomeFeaturedBlogs(res.data);
+            }
+          });
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setBlogTimeLeft({ days, hours, minutes, seconds });
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [upcomingBlog]);
+
+  useEffect(() => {
+    if (!upcomingGuide || !upcomingGuide.scheduledAt) return;
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const target = new Date(upcomingGuide.scheduledAt).getTime();
+      const diff = target - now;
+
+      if (diff <= 0) {
+        clearInterval(timer);
+        setUpcomingGuide(null);
+        // Refresh home featured guides list
+        authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=guide&featured=true&limit=3`)
+          .then(r => r.ok ? r.json() : null)
+          .then(res => {
+            if (res && res.data) {
+              setHomeFeaturedGuides(res.data);
+            }
+          });
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setGuideTimeLeft({ days, hours, minutes, seconds });
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [upcomingGuide]);
 
   const handleSlideChange = (swiper) => {
     setCurrentSlideIndex(swiper.realIndex);
@@ -2163,7 +2258,7 @@ export default function Home() {
           )}
 
           {/* ─── Explore & Learn: Community, Blogs & Guides ─── */}
-          {(homeTrendingPosts.length > 0 || homeFeaturedBlogs.length > 0 || homeFeaturedGuides.length > 0) && (
+          {(homeTrendingPosts.length > 0 || homeFeaturedBlogs.length > 0 || homeFeaturedGuides.length > 0 || upcomingBlog || upcomingGuide) && (
             <section className="animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
                 <div>
@@ -2181,8 +2276,8 @@ export default function Home() {
               <div className="flex gap-2 mb-8 overflow-x-auto pb-1 hide-scrollbar">
                 {[
                   { id: 'community', label: 'Community', icon: FaUsers, count: homeTrendingPosts.length, bg: '#2563eb', shadow: 'rgba(37,99,235,0.25)' },
-                  { id: 'blogs', label: 'Blog Insights', icon: FaNewspaper, count: homeFeaturedBlogs.length, bg: '#4f46e5', shadow: 'rgba(79,70,229,0.25)' },
-                  { id: 'guides', label: 'Guides', icon: FaGraduationCap, count: homeFeaturedGuides.length, bg: '#9333ea', shadow: 'rgba(147,51,234,0.25)' },
+                  { id: 'blogs', label: 'Blog Insights', icon: FaNewspaper, count: homeFeaturedBlogs.length + (upcomingBlog ? 1 : 0), bg: '#4f46e5', shadow: 'rgba(79,70,229,0.25)' },
+                  { id: 'guides', label: 'Guides', icon: FaGraduationCap, count: homeFeaturedGuides.length + (upcomingGuide ? 1 : 0), bg: '#9333ea', shadow: 'rgba(147,51,234,0.25)' },
                 ].filter(t => t.count > 0).map(tab => (
                   <button
                     key={tab.id}
@@ -2273,41 +2368,86 @@ export default function Home() {
               )}
 
               {/* Featured Blog Insights */}
-              {insightsTab === 'blogs' && homeFeaturedBlogs.length > 0 && (
+              {insightsTab === 'blogs' && (homeFeaturedBlogs.length > 0 || upcomingBlog) && (
                 <div className="animate-fade-in">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {homeFeaturedBlogs.map((blog, idx) => (
-                      <Link
-                        to={`/blog/${blog.slug || blog._id}`}
-                        key={blog._id}
-                        className="group relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800"
-                        style={{ animationDelay: `${idx * 120}ms` }}
-                      >
-                        <AdvancedImage
-                          src={blog.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
-                          alt={blog.title}
-                          className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 p-6 w-full">
-                          <div className="flex items-center gap-3 text-xs font-bold text-blue-300 uppercase tracking-wider mb-3">
-                            <span className="bg-blue-600/90 backdrop-blur-md px-2 py-1 rounded-md">{blog.category}</span>
-                            <span>•</span>
-                            <span>{Math.ceil((blog.content ? blog.content.split(/\s+/).length : 0) / 200)} min read</span>
-                          </div>
-                          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors leading-tight line-clamp-2">
-                            {blog.title}
-                          </h3>
-                          <p className="text-gray-300 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                            {blog.excerpt || (blog.content ? blog.content.substring(0, 100) : '')}
-                          </p>
-                          <div className="flex items-center gap-2 text-white font-bold text-sm">
-                            Read Article <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-                          </div>
+                  {/* Stay Tuned Countdown for Scheduled Blog */}
+                  {upcomingBlog && (
+                    <div className="bg-gradient-to-r from-blue-900/60 via-indigo-900/60 to-purple-900/60 backdrop-blur-md border border-indigo-500/30 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl animate-fade-in-up text-left">
+                      {/* Background glowing decorations */}
+                      <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse"></div>
+                      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                      
+                      <div className="relative z-10 text-center md:text-left flex-1">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 animate-pulse uppercase tracking-wider mb-4">
+                          <FaClock className="w-3.5 h-3.5 text-pink-400 animate-[spin_8s_linear_infinite]" /> STAY TUNED
+                        </span>
+                        <h3 className="text-xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
+                          Next Story Arriving Soon!
+                        </h3>
+                        <p className="text-gray-300 font-medium text-sm md:text-base line-clamp-1 max-w-xl">
+                          "{upcomingBlog.title}"
+                        </p>
+                      </div>
+
+                      <div className="relative z-10 flex items-center gap-2 md:gap-3">
+                        <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                          <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{blogTimeLeft.days}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Days</span>
                         </div>
-                      </Link>
-                    ))}
-                  </div>
+                        <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                        <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                          <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{blogTimeLeft.hours}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Hours</span>
+                        </div>
+                        <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                        <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                          <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{blogTimeLeft.minutes}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Mins</span>
+                        </div>
+                        <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                        <div className="flex flex-col items-center bg-pink-600/20 border border-pink-500/30 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg animate-pulse">
+                          <span className="text-2xl md:text-3xl font-black text-pink-400 tracking-tight leading-none mb-1">{blogTimeLeft.seconds}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-pink-300 tracking-wider">Secs</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {homeFeaturedBlogs.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {homeFeaturedBlogs.map((blog, idx) => (
+                        <Link
+                          to={`/blog/${blog.slug || blog._id}`}
+                          key={blog._id}
+                          className="group relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800"
+                          style={{ animationDelay: `${idx * 120}ms` }}
+                        >
+                          <AdvancedImage
+                            src={blog.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
+                            alt={blog.title}
+                            className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                          <div className="absolute bottom-0 left-0 p-6 w-full">
+                            <div className="flex items-center gap-3 text-xs font-bold text-blue-300 uppercase tracking-wider mb-3">
+                              <span className="bg-blue-600/90 backdrop-blur-md px-2 py-1 rounded-md">{blog.category}</span>
+                              <span>•</span>
+                              <span>{Math.ceil((blog.content ? blog.content.split(/\s+/).length : 0) / 200)} min read</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors leading-tight line-clamp-2">
+                              {blog.title}
+                            </h3>
+                            <p className="text-gray-300 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                              {blog.excerpt || (blog.content ? blog.content.substring(0, 100) : '')}
+                            </p>
+                            <div className="flex items-center gap-2 text-white font-bold text-sm">
+                              Read Article <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   <div className="text-center mt-6">
                     <Link
                       to="/user/blogs"
@@ -2320,41 +2460,86 @@ export default function Home() {
               )}
 
               {/* Featured Guide Collections */}
-              {insightsTab === 'guides' && homeFeaturedGuides.length > 0 && (
+              {insightsTab === 'guides' && (homeFeaturedGuides.length > 0 || upcomingGuide) && (
                 <div className="animate-fade-in">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {homeFeaturedGuides.map((guide, idx) => (
-                      <Link
-                        to={`/guide/${guide.slug || guide._id}`}
-                        key={guide._id}
-                        className="group relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800"
-                        style={{ animationDelay: `${idx * 120}ms` }}
-                      >
-                        <AdvancedImage
-                          src={guide.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
-                          alt={guide.title}
-                          className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 p-6 w-full">
-                          <div className="flex items-center gap-3 text-xs font-bold text-purple-300 uppercase tracking-wider mb-3">
-                            <span className="bg-purple-600/90 backdrop-blur-md px-2 py-1 rounded-md">{guide.category}</span>
-                            <span>•</span>
-                            <span>{Math.ceil((guide.content ? guide.content.split(/\s+/).length : 0) / 200)} min read</span>
-                          </div>
-                          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors leading-tight line-clamp-2">
-                            {guide.title}
-                          </h3>
-                          <p className="text-gray-300 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                            {guide.excerpt || (guide.content ? guide.content.substring(0, 100) : '')}
-                          </p>
-                          <div className="flex items-center gap-2 text-white font-bold text-sm">
-                            Read Guide <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-                          </div>
+                  {/* Stay Tuned Countdown for Scheduled Guide */}
+                  {upcomingGuide && (
+                    <div className="bg-gradient-to-r from-purple-900/60 via-indigo-900/60 to-blue-900/60 backdrop-blur-md border border-purple-500/30 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl animate-fade-in-up text-left">
+                      {/* Background glowing decorations */}
+                      <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse"></div>
+                      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                      
+                      <div className="relative z-10 text-center md:text-left flex-1">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 animate-pulse uppercase tracking-wider mb-4">
+                          <FaClock className="w-3.5 h-3.5 text-pink-400 animate-[spin_8s_linear_infinite]" /> STAY TUNED
+                        </span>
+                        <h3 className="text-xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
+                          Next Guide Arriving Soon!
+                        </h3>
+                        <p className="text-gray-300 font-medium text-sm md:text-base line-clamp-1 max-w-xl">
+                          "{upcomingGuide.title}"
+                        </p>
+                      </div>
+
+                      <div className="relative z-10 flex items-center gap-2 md:gap-3">
+                        <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                          <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{guideTimeLeft.days}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Days</span>
                         </div>
-                      </Link>
-                    ))}
-                  </div>
+                        <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                        <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                          <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{guideTimeLeft.hours}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Hours</span>
+                        </div>
+                        <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                        <div className="flex flex-col items-center bg-black/40 border border-white/10 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg">
+                          <span className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">{guideTimeLeft.minutes}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-gray-400 tracking-wider">Mins</span>
+                        </div>
+                        <span className="text-2xl font-bold text-white/40 leading-none -translate-y-1">:</span>
+                        <div className="flex flex-col items-center bg-pink-600/20 border border-pink-500/30 px-3.5 md:px-5 py-3 rounded-2xl min-w-[64px] md:min-w-[76px] shadow-lg animate-pulse">
+                          <span className="text-2xl md:text-3xl font-black text-pink-400 tracking-tight leading-none mb-1">{guideTimeLeft.seconds}</span>
+                          <span className="text-[9px] md:text-[10px] uppercase font-bold text-pink-300 tracking-wider">Secs</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {homeFeaturedGuides.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {homeFeaturedGuides.map((guide, idx) => (
+                        <Link
+                          to={`/guide/${guide.slug || guide._id}`}
+                          key={guide._id}
+                          className="group relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer border border-gray-100 dark:border-gray-800"
+                          style={{ animationDelay: `${idx * 120}ms` }}
+                        >
+                          <AdvancedImage
+                            src={guide.thumbnail || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80'}
+                            alt={guide.title}
+                            className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                          <div className="absolute bottom-0 left-0 p-6 w-full">
+                            <div className="flex items-center gap-3 text-xs font-bold text-purple-300 uppercase tracking-wider mb-3">
+                              <span className="bg-purple-600/90 backdrop-blur-md px-2 py-1 rounded-md">{guide.category}</span>
+                              <span>•</span>
+                              <span>{Math.ceil((guide.content ? guide.content.split(/\s+/).length : 0) / 200)} min read</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors leading-tight line-clamp-2">
+                              {guide.title}
+                            </h3>
+                            <p className="text-gray-300 text-sm line-clamp-2 mb-3 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                              {guide.excerpt || (guide.content ? guide.content.substring(0, 100) : '')}
+                            </p>
+                            <div className="flex items-center gap-2 text-white font-bold text-sm">
+                              Read Guide <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   <div className="text-center mt-6">
                     <Link
                       to="/user/guides"
