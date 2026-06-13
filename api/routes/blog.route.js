@@ -12,7 +12,8 @@ import {
     updateComment,
     getBlogCategories,
     getBlogTags,
-    getBlogAnalytics
+    getBlogAnalytics,
+    getLikedBlogs
 } from '../controllers/blog.controller.js';
 import { verifyToken, optionalAuth } from '../utils/verify.js';
 
@@ -22,6 +23,7 @@ const router = express.Router();
 router.get('/', optionalAuth, getBlogs); // GET /api/blogs?propertyId=123&category=Real Estate Tips&tag=investment
 router.get('/categories', getBlogCategories); // GET /api/blogs/categories
 router.get('/tags', getBlogTags); // GET /api/blogs/tags
+router.get('/user/liked', verifyToken, getLikedBlogs); // GET /api/blogs/user/liked
 router.get('/:id', optionalAuth, getBlog); // GET /api/blogs/:id (by ID or slug)
 
 // Protected routes (require authentication)

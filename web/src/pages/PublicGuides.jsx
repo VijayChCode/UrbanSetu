@@ -6,7 +6,8 @@ import { toast } from 'react-hot-toast';
 import {
     Search as SearchIcon, Filter, BookOpen, Clock, Lightbulb,
     ArrowRight, ChevronLeft, ChevronRight, Mail, Star, MapPin,
-    TrendingUp, GraduationCap, Home, FileText, CheckCircle, Info, X, Tag, RotateCcw
+    TrendingUp, GraduationCap, Home, FileText, CheckCircle, Info, X, Tag, RotateCcw,
+    Heart
 } from 'lucide-react';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -32,6 +33,7 @@ const PublicGuides = () => {
 
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [showLikedOnly, setShowLikedOnly] = useState(false);
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
@@ -149,6 +151,7 @@ const PublicGuides = () => {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (searchTerm.trim().length > 0) {
+                setShowLikedOnly(false);
                 fetchSuggestions();
             } else {
                 setSuggestions([]);
@@ -182,7 +185,7 @@ const PublicGuides = () => {
         } else {
             setPagination(prev => ({ ...prev, current: 1 }));
         }
-    }, [selectedCategory, selectedTags]);
+    }, [selectedCategory, selectedTags, showLikedOnly]);
 
     // Pagination effect
     useEffect(() => {
@@ -210,6 +213,7 @@ const PublicGuides = () => {
     };
 
     const toggleCategory = (categoryName) => {
+        setShowLikedOnly(false);
         if (categoryName === 'All') {
             setSelectedCategory('All');
         } else {
@@ -218,6 +222,7 @@ const PublicGuides = () => {
     };
 
     const toggleTag = (tag) => {
+        setShowLikedOnly(false);
         if (tag === 'all') {
             setSelectedTags([]);
             return;
@@ -510,24 +515,28 @@ const PublicGuides = () => {
             if (showLoading && guides.length === 0) setLoading(true);
 
             const params = new URLSearchParams({
-                published: 'true',
-                type: 'guide', // IMPORTANT: Filter for guides
                 page: pagination.current,
                 limit: 9
             });
 
-            if (searchTerm) params.append('search', searchTerm);
+            let endpoint = `${API_BASE_URL}/api/blogs`;
 
-            if (selectedCategory !== 'All') {
-                // Map UI names to DB categories if not exact match (Assuming DB has 'Home Buying', 'Rent', etc. matches)
-                params.append('category', selectedCategory);
+            if (showLikedOnly) {
+                endpoint = `${API_BASE_URL}/api/blogs/user/liked`;
+                params.append('type', 'guide');
+            } else {
+                params.append('published', 'true');
+                params.append('type', 'guide');
+                if (searchTerm) params.append('search', searchTerm);
+                if (selectedCategory !== 'All') {
+                    params.append('category', selectedCategory);
+                }
+                if (selectedTags.length > 0) {
+                    params.append('tag', selectedTags.join(','));
+                }
             }
 
-            if (selectedTags.length > 0) {
-                params.append('tag', selectedTags.join(','));
-            }
-
-            const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs?${params}`, { autoRedirect: false });
+            const response = await authenticatedFetch(`${endpoint}?${params}`, { autoRedirect: false });
 
             if (response.ok) {
                 const data = await response.json();
@@ -717,7 +726,7 @@ const PublicGuides = () => {
                         <button
                             key={cat.name}
                             onClick={() => toggleCategory(cat.name)}
-                            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${selectedCategory === cat.name
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${selectedCategory === cat.name && !showLikedOnly
                                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
                                 : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400'
                                 }`}
@@ -726,6 +735,22 @@ const PublicGuides = () => {
                             {cat.name}
                         </button>
                     ))}
+                    {currentUser && (
+                        <button
+                            onClick={() => {
+                                setSelectedCategory('All');
+                                setSelectedTags([]);
+                                setShowLikedOnly(!showLikedOnly);
+                            }}
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${showLikedOnly
+                                ? 'bg-red-600 text-white shadow-lg shadow-red-500/30'
+                                : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400'
+                                }`}
+                        >
+                            <Heart className={`w-4 h-4 ${showLikedOnly ? 'fill-current' : ''}`} />
+                            Liked Guides
+                        </button>
+                    )}
                 </div>
 
                 {/* 2.5 Tags */}
@@ -800,7 +825,7 @@ const PublicGuides = () => {
                 <div>
                     <div className="flex items-center justify-between mb-8">
                         <h2 className="text-2xl font-black text-gray-800 dark:text-white capitalize">
-                            {selectedCategory === 'All' ? 'Latest Guides' : `${selectedCategory} Guides`}
+                            {showLikedOnly ? 'My Liked Guides' : (selectedCategory === 'All' ? 'Latest Guides' : `${selectedCategory} Guides`)}
                         </h2>
                         <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                             {pagination.total} articles found
@@ -808,12 +833,30 @@ const PublicGuides = () => {
                     </div>
 
                     {guides.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-gray-900 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
-                            <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                                <BookOpen className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                        <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-gray-900 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800 text-center animate-fade-in-up w-full">
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${showLikedOnly ? 'bg-red-50 dark:bg-red-950/30' : 'bg-gray-50 dark:bg-gray-800'}`}>
+                                {showLikedOnly ? (
+                                    <Heart className="w-10 h-10 text-red-500" />
+                                ) : (
+                                    <BookOpen className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                                )}
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">No guides found</h3>
-                            <p className="text-gray-500">Try adjusting your filters or search terms.</p>
+                            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                                {showLikedOnly ? 'No liked guides yet' : 'No guides found'}
+                            </h3>
+                            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                                {showLikedOnly 
+                                    ? 'Guides you like will appear here. Start exploring and click the heart icon on any guide detail page!'
+                                    : 'Try adjusting your filters or search terms.'}
+                            </p>
+                            {showLikedOnly && (
+                                <button
+                                    onClick={() => setShowLikedOnly(false)}
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-red-200 dark:shadow-red-900/40"
+                                >
+                                    Explore Guides
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

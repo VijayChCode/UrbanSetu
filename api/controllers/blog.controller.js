@@ -1097,3 +1097,56 @@ export const getBlogAnalytics = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get blogs/guides liked by logged-in user
+export const getLikedBlogs = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const { type, page = 1, limit = 9 } = req.query;
+
+        // Find all likes for the user
+        const likes = await BlogLike.find({ userId }).select('blogId');
+        const blogIds = likes.map(like => like.blogId);
+
+        // Find matching published posts
+        const query = { _id: { $in: blogIds }, published: true };
+        if (type && type !== 'all') {
+            query.type = type;
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const blogs = await Blog.find(query)
+            .populate('propertyId', 'name city state')
+            .populate('author', 'username role email')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const total = await Blog.countDocuments(query);
+
+        // Transform author names to mask admin/rootadmin user details
+        const transformedBlogs = blogs.map(blog => {
+            const blogObj = blog.toObject();
+            if (!req.user || req.user.role !== 'rootadmin') {
+                if (blogObj.author && (blogObj.author.role === 'admin' || blogObj.author.role === 'rootadmin')) {
+                    blogObj.author.username = 'UrbanSetuBlogManagement';
+                    delete blogObj.author.email;
+                }
+            }
+            return blogObj;
+        });
+
+        res.status(200).json({
+            success: true,
+            data: transformedBlogs,
+            pagination: {
+                current: parseInt(page),
+                pages: Math.ceil(total / parseInt(limit)),
+                total,
+                limit: parseInt(limit)
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};

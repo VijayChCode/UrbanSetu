@@ -34,6 +34,7 @@ const PublicBlogs = () => {
   const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 });
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showLikedOnly, setShowLikedOnly] = useState(false);
 
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -140,6 +141,7 @@ const PublicBlogs = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchTerm.trim().length > 0) {
+        setShowLikedOnly(false);
         fetchSuggestions();
       } else {
         setSuggestions([]);
@@ -166,14 +168,14 @@ const PublicBlogs = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Immediate filter effects for category and tag changes
+  // Immediate filter effects for category, tag, and liked feed changes
   useEffect(() => {
     if (pagination.current === 1) {
       fetchBlogs(false); // Don't show loading for immediate filter changes
     } else {
       setPagination(prev => ({ ...prev, current: 1 }));
     }
-  }, [selectedCategories, selectedTags]);
+  }, [selectedCategories, selectedTags, showLikedOnly]);
 
   // Pagination effect
   useEffect(() => {
@@ -181,6 +183,7 @@ const PublicBlogs = () => {
   }, [pagination.current]);
 
   const toggleCategory = (category) => {
+    setShowLikedOnly(false);
     if (category === 'all') {
       setSelectedCategories([]);
       return;
@@ -195,6 +198,7 @@ const PublicBlogs = () => {
   };
 
   const toggleTag = (tag) => {
+    setShowLikedOnly(false);
     if (tag === 'all') {
       setSelectedTags([]);
       return;
@@ -456,21 +460,28 @@ const PublicBlogs = () => {
     try {
       if (showLoading) setLoading(true);
       const params = new URLSearchParams({
-        published: 'true',
-        type: 'blog',
         page: pagination.current,
         limit: 9
       });
 
-      if (searchTerm) params.append('search', searchTerm);
-      if (selectedCategories.length > 0) {
-        params.append('category', selectedCategories.join(','));
-      }
-      if (selectedTags.length > 0) {
-        params.append('tag', selectedTags.join(','));
+      let endpoint = `${API_BASE_URL}/api/blogs`;
+
+      if (showLikedOnly) {
+        endpoint = `${API_BASE_URL}/api/blogs/user/liked`;
+        params.append('type', 'blog');
+      } else {
+        params.append('published', 'true');
+        params.append('type', 'blog');
+        if (searchTerm) params.append('search', searchTerm);
+        if (selectedCategories.length > 0) {
+          params.append('category', selectedCategories.join(','));
+        }
+        if (selectedTags.length > 0) {
+          params.append('tag', selectedTags.join(','));
+        }
       }
 
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs?${params}`, { autoRedirect: false });
+      const response = await authenticatedFetch(`${endpoint}?${params}`, { autoRedirect: false });
 
       if (response.ok) {
         const data = await response.json();
@@ -738,13 +749,28 @@ const PublicBlogs = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => toggleCategory('all')}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${selectedCategories.length === 0
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${selectedCategories.length === 0 && !showLikedOnly
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/40'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                     }`}
                 >
                   All
                 </button>
+                {currentUser && (
+                  <button
+                    onClick={() => {
+                      setSelectedCategories([]);
+                      setSelectedTags([]);
+                      setShowLikedOnly(!showLikedOnly);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 ${showLikedOnly
+                      ? 'bg-red-600 text-white shadow-md shadow-red-200 dark:shadow-red-900/40'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400'
+                      }`}
+                  >
+                    <Heart className={`w-4 h-4 ${showLikedOnly ? 'fill-current' : ''}`} /> Liked Blogs
+                  </button>
+                )}
                 {categories.map(category => (
                   <button
                     key={category}
@@ -833,22 +859,38 @@ const PublicBlogs = () => {
         {/* Blogs Grid */}
         {blogs.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-16 text-center animate-fade-in-up transition-colors">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 dark:bg-blue-900/30 rounded-full mb-6">
-              <SearchIcon className="w-10 h-10 text-blue-400 dark:text-blue-300" />
+            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${showLikedOnly ? 'bg-red-50 dark:bg-red-950/30' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+              {showLikedOnly ? (
+                <Heart className="w-10 h-10 text-red-500" />
+              ) : (
+                <SearchIcon className="w-10 h-10 text-blue-400 dark:text-blue-300" />
+              )}
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">No articles found</h3>
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">
+              {showLikedOnly ? 'No liked blogs yet' : 'No articles found'}
+            </h3>
             <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto transition-colors">
-              We couldn't find any blog posts matching your criteria. Try different keywords or filters.
+              {showLikedOnly 
+                ? 'Articles you like will appear here. Start exploring and click the heart icon on any blog detail page!'
+                : "We couldn't find any blog posts matching your criteria. Try different keywords or filters."}
             </p>
             <button
               onClick={() => {
-                setSearchTerm('');
-                setSelectedCategories([]);
-                setSelectedTags([]);
+                if (showLikedOnly) {
+                  setShowLikedOnly(false);
+                } else {
+                  setSearchTerm('');
+                  setSelectedCategories([]);
+                  setSelectedTags([]);
+                }
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+              className={`inline-flex items-center gap-2 px-6 py-3 text-white rounded-xl font-semibold transition-colors shadow-lg ${
+                showLikedOnly 
+                  ? 'bg-red-600 hover:bg-red-700 shadow-red-200 dark:shadow-red-900/40' 
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-blue-900/40'
+              }`}
             >
-              Clear Filters
+              {showLikedOnly ? 'Explore Blogs' : 'Clear Filters'}
             </button>
           </div>
         ) : (
