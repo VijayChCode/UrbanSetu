@@ -362,11 +362,14 @@ const PublicBlogDetail = () => {
             {unpublishedStatus === 'scheduled' ? (
               <>
                 The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is scheduled to go public on:
-                <span className="block font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/30 py-2 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                <span className="block font-bold text-blue-600 dark:text-blue-400 mt-2 mb-3 bg-blue-50 dark:bg-blue-900/30 py-2 rounded-xl border border-blue-100 dark:border-blue-900/50">
                   {new Date(unpublishedBlogData?.scheduledAt).toLocaleString(undefined, {
                     dateStyle: 'long',
                     timeStyle: 'short'
                   })}
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400 mt-3 italic font-medium">
+                  Subscribers will receive a notification email the moment this article goes live.
                 </span>
               </>
             ) : (
