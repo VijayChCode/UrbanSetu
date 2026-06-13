@@ -677,7 +677,7 @@ const PublicGuides = () => {
                         
                         <div className="relative z-10 text-center md:text-left flex-1">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 animate-pulse uppercase tracking-wider mb-4">
-                                <Clock className="w-3.5 h-3.5 animate-spin-slow" /> STAY TUNED
+                                <Clock className="w-3.5 h-3.5 animate-[spin_8s_linear_infinite]" /> STAY TUNED
                             </span>
                             <h3 className="text-xl md:text-3xl font-black text-white leading-tight mb-2 tracking-tight">
                                 Next Guide Arriving Soon!
