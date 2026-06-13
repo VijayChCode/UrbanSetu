@@ -2894,6 +2894,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const unlockPasswordRef = useRef(null);
   const removeLockPasswordRef = useRef(null);
 
+  // Autofocus unlock password when modal opens (Desktop only)
+  useEffect(() => {
+    if (showChatUnlockModal && !isMobile && unlockPasswordRef.current) {
+      setTimeout(() => unlockPasswordRef.current?.focus(), 100);
+    }
+  }, [showChatUnlockModal, isMobile]);
+
+  // Autofocus remove lock password when modal opens (Desktop only)
+  useEffect(() => {
+    if (showRemoveLockModal && !isMobile && removeLockPasswordRef.current) {
+      setTimeout(() => removeLockPasswordRef.current?.focus(), 100);
+    }
+  }, [showRemoveLockModal, isMobile]);
+
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
   const [selectedMessageForInfo, setSelectedMessageForInfo] = useState(null);
