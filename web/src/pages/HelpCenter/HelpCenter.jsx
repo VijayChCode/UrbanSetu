@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaSearch, FaArrowRight, FaChevronLeft, FaEdit } from 'react-icons/fa';
+import { FaSearch, FaArrowRight, FaChevronLeft, FaEdit, FaPlay } from 'react-icons/fa';
 import { helpCategories } from '../../utils/helpCategories';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import HelpCenterChat from '../../components/HelpCenterChat';
 import { authenticatedFetch } from '../../utils/auth';
 import SEO from '../../components/SEO';
+import DemoVideoModal from '../../components/DemoVideoModal';
 
 const HelpCenter = () => {
     usePageTitle('Help Center - UrbanSetu');
@@ -14,6 +15,7 @@ const HelpCenter = () => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [articles, setArticles] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [showDemoVideo, setShowDemoVideo] = useState(false);
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -209,6 +211,38 @@ const HelpCenter = () => {
                 ) : (
                     /* Categories Grid View */
                     <>
+                        {/* Getting Started Video Walkthrough Banner */}
+                        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl p-6 sm:p-8 md:p-10 text-white mb-12 shadow-xl relative overflow-hidden group">
+                            {/* Backdrop highlight */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)]"></div>
+                            
+                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                                <div className="max-w-xl text-left">
+                                    <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-white/20">
+                                        Feature Video Guide
+                                    </span>
+                                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 leading-tight tracking-tight">
+                                        Complete Platform Walkthrough
+                                    </h2>
+                                    <p className="text-blue-100 text-sm sm:text-base leading-relaxed">
+                                        New to UrbanSetu? Watch our 5-minute video guide to master AI property searches, real-time owner chat, route planning, and secure RentLock agreement setups.
+                                    </p>
+                                </div>
+                                
+                                <div className="flex-shrink-0 w-full md:w-auto">
+                                    <button
+                                        onClick={() => setShowDemoVideo(true)}
+                                        className="w-full md:w-auto px-8 py-4 bg-white text-indigo-700 hover:text-indigo-800 rounded-2xl font-bold text-lg hover:bg-gray-50 hover:scale-105 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg group-hover:bg-blue-50"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 shadow-inner group-hover:scale-110 transition-transform">
+                                            <FaPlay className="text-sm translate-x-0.5" />
+                                        </div>
+                                        Watch Video Tutorial
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
                             {helpCategories.map((category) => (
                                 <button
@@ -275,6 +309,7 @@ const HelpCenter = () => {
             </div>
             {/* Floating Chat Widget */}
             <HelpCenterChat />
+            <DemoVideoModal isOpen={showDemoVideo} onClose={() => setShowDemoVideo(false)} />
         </div>
     );
 };

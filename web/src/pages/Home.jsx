@@ -15,11 +15,12 @@ import AdvancedImage from "../components/AdvancedImage";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
 import { usePageTitle } from '../hooks/usePageTitle';
 import Typewriter from "../components/ui/Typewriter";
-import { FaEye, FaEyeSlash, FaChevronLeft, FaChevronRight, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaChevronLeft, FaChevronRight, FaCalendarAlt, FaListAlt, FaBell, FaCommentDots, FaExclamationTriangle, FaArrowDown, FaSearch, FaHome, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem, FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe, FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaRobot, FaThumbsUp, FaComment, FaBookOpen, FaNewspaper, FaGraduationCap, FaFire, FaTimes, FaPlay } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme";
 import ThemeDetailModal from "../components/ThemeDetailModal";
+import DemoVideoModal from "../components/DemoVideoModal";
 import { authenticatedFetch } from "../utils/auth";
 import { getLiveRecommendations, getInteractionHistory, restoreFromServer } from "../utils/sentinelLiveEngine";
 
@@ -163,6 +164,8 @@ export default function Home() {
   const swiperRef = useRef(null);
   const navigate = useNavigate();
   const [showThemeInfo, setShowThemeInfo] = useState(false);
+  const [showDemoVideo, setShowDemoVideo] = useState(false);
+  const [showDashboardWalkthrough, setShowDashboardWalkthrough] = useState(localStorage.getItem('dismissedDashboardWalkthrough') !== 'true');
 
   // New State for Enhanced Recommendations
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -1173,6 +1176,42 @@ export default function Home() {
           {/* ─── Quick Activity Dashboard (logged-in regular users) ─── */}
           {currentUser && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && (
             <section className="animate-fade-in">
+              {showDashboardWalkthrough && (
+                <div className="relative mb-8 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-500/20 dark:via-indigo-500/20 dark:to-purple-500/20 backdrop-blur-md rounded-2xl p-6 border border-blue-500/20 dark:border-blue-400/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
+                  <button
+                    onClick={() => {
+                      localStorage.setItem('dismissedDashboardWalkthrough', 'true');
+                      setShowDashboardWalkthrough(false);
+                    }}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition-colors"
+                    aria-label="Dismiss banner"
+                  >
+                    <FaTimes className="text-xs" />
+                  </button>
+
+                  <div className="flex items-center gap-4 text-left">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/15 dark:bg-blue-400/20 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl flex-shrink-0 animate-pulse">
+                      <FaLightbulb />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        New to UrbanSetu?
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Watch our 5-minute walkthrough video guide to master AI property searches, route planning, RentLock, and more!
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowDemoVideo(true)}
+                    className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm shadow-md hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <FaPlay className="text-xs" /> Watch Walkthrough
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center gap-3 mb-6">
                 <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
                   <span className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-lg">
@@ -2479,6 +2518,10 @@ export default function Home() {
         themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
+      />
+      <DemoVideoModal
+        isOpen={showDemoVideo}
+        onClose={() => setShowDemoVideo(false)}
       />
     </div>
   );

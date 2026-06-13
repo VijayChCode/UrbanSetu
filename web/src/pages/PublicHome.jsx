@@ -16,12 +16,13 @@ import {
   FaHome, FaSearch, FaHeart, FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope,
   FaShieldAlt, FaAward, FaUsers, FaChartLine, FaLightbulb, FaRocket, FaGem,
   FaQuoteLeft, FaQuoteRight, FaCheckCircle, FaClock, FaHandshake, FaGlobe,
-  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight
+  FaMobile, FaDesktop, FaTablet, FaInfoCircle, FaArrowRight, FaPlay
 } from "react-icons/fa";
 import SeasonalEffects from "../components/SeasonalEffects";
 import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
 import ThemeDetailModal from "../components/ThemeDetailModal";
+import DemoVideoModal from "../components/DemoVideoModal";
 
 import { authenticatedFetch } from '../utils/auth';
 
@@ -52,6 +53,7 @@ export default function PublicHome() {
   const [stats, setStats] = useState({ properties: 0, users: 0, transactions: 0, satisfaction: 0 });
   const swiperRef = useRef(null);
   const [showThemeInfo, setShowThemeInfo] = useState(false);
+  const [showDemoVideo, setShowDemoVideo] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -377,6 +379,12 @@ export default function PublicHome() {
               >
                 <FaRocket /> Start Exploring
               </Link>
+              <button
+                onClick={() => setShowDemoVideo(true)}
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-bold text-lg shadow-lg shadow-red-500/20 hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <FaPlay className="text-sm" /> Watch Demo Video
+              </button>
               <Link
                 to="/about"
                 className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-lg hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-sm"
@@ -689,6 +697,10 @@ export default function PublicHome() {
         themes={allThemes}
         isOpen={showThemeInfo}
         onClose={() => setShowThemeInfo(false)}
+      />
+      <DemoVideoModal
+        isOpen={showDemoVideo}
+        onClose={() => setShowDemoVideo(false)}
       />
     </div>
   );
