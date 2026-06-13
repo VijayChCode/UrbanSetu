@@ -2856,6 +2856,7 @@ function AdminAppointmentRow({
   const [newComment, setNewComment] = useLocalState("");
   const [detectedUrl, setDetectedUrl] = useState(null);
   const [previewDismissed, setPreviewDismissed] = useState(false);
+  const [lastDismissedUrl, setLastDismissedUrl] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [sending, setSending] = useLocalState(false);
   const [editingComment, setEditingComment] = useLocalState(null);
@@ -5495,6 +5496,7 @@ function AdminAppointmentRow({
     } catch (_) { }
     setDetectedUrl(null);
     setPreviewDismissed(false);
+    setLastDismissedUrl(null);
     setReplyTo(null);
     // Reset textarea height to normal after sending
     resetTextareaHeight();
@@ -5631,6 +5633,7 @@ function AdminAppointmentRow({
       }, 100);
       setDetectedUrl(null);
       setPreviewDismissed(false);
+      setLastDismissedUrl(null);
       // Auto-resize textarea for restored draft
       setTimeout(() => {
         if (inputRef.current) {
@@ -9189,6 +9192,7 @@ function AdminAppointmentRow({
                         }, 100);
                         setDetectedUrl(null);
                         setPreviewDismissed(false);
+                        setLastDismissedUrl(null);
                         // Auto-resize textarea for restored draft with proper timing
                         setTimeout(() => {
                           if (inputRef.current) {
@@ -9229,6 +9233,7 @@ function AdminAppointmentRow({
                       <LinkPreview
                         url={detectedUrl}
                         onRemove={() => {
+                          setLastDismissedUrl(detectedUrl);
                           setDetectedUrl(null);
                           setPreviewDismissed(true);
                         }}
@@ -9491,11 +9496,15 @@ function AdminAppointmentRow({
                       const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]{2,}(?:\/[^\s]*)?|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/gi;
                       const urls = value.match(urlRegex);
                       if (urls && urls.length > 0) {
-                        setDetectedUrl(urls[0]);
-                        setPreviewDismissed(false); // Reset dismissed flag for new URL
+                        const newUrl = urls[0];
+                        if (newUrl !== lastDismissedUrl) {
+                          setDetectedUrl(newUrl);
+                          setPreviewDismissed(false); // Reset dismissed flag for new URL
+                        }
                       } else {
                         setDetectedUrl(null);
                         setPreviewDismissed(false);
+                        setLastDismissedUrl(null);
                       }
 
                       if (editingComment) {

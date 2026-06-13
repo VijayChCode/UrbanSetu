@@ -3010,6 +3010,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const currentUploadControllerRef = useRef(null);
   const [detectedUrl, setDetectedUrl] = useState(null);
   const [previewDismissed, setPreviewDismissed] = useState(false);
+  const [lastDismissedUrl, setLastDismissedUrl] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const videoInputRef = useRef(null);
   const documentInputRef = useRef(null);
@@ -4914,6 +4915,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     } catch (_) { }
     setDetectedUrl(null);
     setPreviewDismissed(false);
+    setLastDismissedUrl(null);
     setReplyTo(null);
     // Reset textarea height to normal after sending
     resetTextareaHeight();
@@ -5059,6 +5061,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       }, 100);
       setDetectedUrl(null);
       setPreviewDismissed(false);
+      setLastDismissedUrl(null);
       // Auto-resize textarea for restored draft
       setTimeout(() => {
         if (inputRef.current) {
@@ -10263,6 +10266,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         }, 100);
                         setDetectedUrl(null);
                         setPreviewDismissed(false);
+                        setLastDismissedUrl(null);
                         // Auto-resize textarea for restored draft with proper timing
                         setTimeout(() => {
                           if (inputRef.current) {
@@ -10301,6 +10305,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       <LinkPreview
                         url={detectedUrl}
                         onRemove={() => {
+                          setLastDismissedUrl(detectedUrl);
                           setDetectedUrl(null);
                           setPreviewDismissed(true);
                         }}
@@ -10603,11 +10608,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]{2,}(?:\/[^\s]*)?|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/gi;
                       const urls = value.match(urlRegex);
                       if (urls && urls.length > 0) {
-                        setDetectedUrl(urls[0]);
-                        setPreviewDismissed(false); // Reset dismissed flag for new URL
+                        const newUrl = urls[0];
+                        if (newUrl !== lastDismissedUrl) {
+                          setDetectedUrl(newUrl);
+                          setPreviewDismissed(false); // Reset dismissed flag for new URL
+                        }
                       } else {
                         setDetectedUrl(null);
                         setPreviewDismissed(false);
+                        setLastDismissedUrl(null);
                       }
 
                       if (editingComment) {
