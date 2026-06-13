@@ -417,7 +417,7 @@ export default function MyAppointments() {
     const handleNotificationClick = (e) => {
       const { appointmentId } = e.detail || {};
       if (appointmentId) {
-        navigate(`/user/my-appointments/chat/${appointmentId}`, { replace: false });
+        navigate(`/user/my-appointments/chat/${appointmentId}?chatopen=true`, { replace: false });
       }
     };
 
@@ -753,7 +753,7 @@ export default function MyAppointments() {
   useEffect(() => {
     if (location.state?.fromNotification && location.state?.openChatForAppointment) {
       const appointmentId = location.state.openChatForAppointment;
-      navigate(`/user/my-appointments/chat/${appointmentId}`, { replace: true, state: {} });
+      navigate(`/user/my-appointments/chat/${appointmentId}?chatopen=true`, { replace: true, state: {} });
     }
   }, [location.state, navigate]);
 
@@ -2826,7 +2826,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         setShowChatUnlockModal(false);
         setShowChatModal(true);
         // Update URL when opening chatbox
-        navigate(`/user/my-appointments/chat/${appt._id}`, { replace: false });
+        navigate(`/user/my-appointments/chat/${appt._id}?chatopen=true`, { replace: false });
         // Dispatch event to notify App.jsx that chat is opened
         window.dispatchEvent(new CustomEvent('chatOpened', {
           detail: { appointmentId: appt._id }
@@ -3977,7 +3977,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       // Open chat modal after successful unlock
       setShowChatModal(true);
       // Update URL when opening chatbox
-      navigate(`/user/my-appointments/chat/${appt._id}`, { replace: false });
+      navigate(`/user/my-appointments/chat/${appt._id}?chatopen=true`, { replace: false });
       // Dispatch event to notify App.jsx that chat is opened
       window.dispatchEvent(new CustomEvent('chatOpened', {
         detail: { appointmentId: appt._id }
@@ -7365,7 +7365,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               } else {
                 setShowChatModal(true);
                 // Update URL when opening chatbox
-                navigate(`/user/my-appointments/chat/${appt._id}`, { replace: false });
+                navigate(`/user/my-appointments/chat/${appt._id}?chatopen=true`, { replace: false });
                 // Dispatch event to notify App.jsx that chat is opened
                 window.dispatchEvent(new CustomEvent('chatOpened', {
                   detail: { appointmentId: appt._id }

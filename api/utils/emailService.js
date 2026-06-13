@@ -11165,7 +11165,7 @@ export const sendNewMessageNotificationEmail = async (email, messageDetails) => 
       senderImage
     } = messageDetails;
 
-    const chatUrl = `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/my-appointments/chat/${appointmentId}`;
+    const chatUrl = `${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/user/my-appointments/chat/${appointmentId}?chatopen=true`;
     const subject = `💬 New Message from ${senderName} - ${propertyName}`;
 
     const html = `
@@ -11419,8 +11419,8 @@ export const sendCallInitiatedEmail = async (toEmail, { callType, callerName, pr
   try {
     const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
     const chatLink = isReceiverAdmin
-      ? `${clientUrl}/admin/appointments/chat/${appointmentId}`
-      : `${clientUrl}/user/my-appointments/chat/${appointmentId}`;
+      ? `${clientUrl}/admin/appointments/chat/${appointmentId}?chatopen=true`
+      : `${clientUrl}/user/my-appointments/chat/${appointmentId}?chatopen=true`;
 
     const subject = `${callerName} is calling you - ${callType === 'video' ? 'Video' : 'Audio'} Call`;
     const html = `
@@ -11524,8 +11524,8 @@ export const sendCallEndedEmail = async (toEmail, { callType, duration, callerNa
   try {
     const clientUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
     const chatLink = isReceiverAdmin
-      ? `${clientUrl}/admin/appointments/chat/${appointmentId}`
-      : `${clientUrl}/user/my-appointments/chat/${appointmentId}`;
+      ? `${clientUrl}/admin/appointments/chat/${appointmentId}?chatopen=true`
+      : `${clientUrl}/user/my-appointments/chat/${appointmentId}?chatopen=true`;
     const callHistoryLink = isReceiverAdmin
       ? `${clientUrl}/admin/call-history`
       : `${clientUrl}/user/call-history`;
@@ -17644,7 +17644,7 @@ export const sendCoinTransactionNotificationEmail = async (email, username, tran
 // Send Chat Locked Email
 export const sendChatLockedEmail = async (email, username, appointmentId, otherPartyName, propertyName) => {
   const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
-  const chatLink = `${clientBaseUrl}/user/my-appointments/chat/${appointmentId}`;
+  const chatLink = `${clientBaseUrl}/user/my-appointments/chat/${appointmentId}?chatopen=true`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,

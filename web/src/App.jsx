@@ -993,7 +993,7 @@ function AppRoutes({ bootstrapped }) {
 
         toast.info(`New message from ${senderName}`, {
           onClick: () => {
-            navigate(`/user/my-appointments/chat/${data.appointmentId}`, { replace: false });
+            navigate(`/user/my-appointments/chat/${data.appointmentId}?chatopen=true`, { replace: false });
           },
           autoClose: 5000,
           closeOnClick: true,
