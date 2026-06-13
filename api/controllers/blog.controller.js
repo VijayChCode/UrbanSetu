@@ -360,12 +360,18 @@ export const getBlog = async (req, res, next) => {
         }
 
         // Only show published blogs to non-admin users
-        if (!blog.published && req.user?.role !== 'admin') {
-            return res.status(404).json({
+        const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'rootadmin' || req.user.isDefaultAdmin);
+        if (!blog.published && !isAdmin) {
+            return res.status(403).json({
                 success: false,
-                message: 'Blog not found'
+                message: blog.scheduledAt ? 'This post is scheduled for a future publication.' : 'This post is currently a draft.',
+                status: blog.scheduledAt ? 'scheduled' : 'draft',
+                scheduledAt: blog.scheduledAt,
+                type: blog.type || 'blog',
+                title: blog.title
             });
         }
+
 
         // Handle view counting with role-based logic
         const viewResult = await handleViewCount(blog._id, req);

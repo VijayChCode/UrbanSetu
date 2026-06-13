@@ -78,6 +78,8 @@ const PublicBlogDetail = () => {
     confirmText: 'Confirm'
   });
   const [shareModal, setShareModal] = useState({ isOpen: false, url: '', title: '', description: '' });
+  const [unpublishedStatus, setUnpublishedStatus] = useState(null); // 'draft' or 'scheduled'
+  const [unpublishedBlogData, setUnpublishedBlogData] = useState(null); // { title, type, scheduledAt }
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
@@ -102,12 +104,25 @@ const PublicBlogDetail = () => {
         setComments(data.data.comments || []);
         fetchRelatedBlogs(data.data.category, data.data._id);
       } else {
+        if (response.status === 403) {
+          const errData = await response.json();
+          if (errData.status === 'draft' || errData.status === 'scheduled') {
+            setUnpublishedStatus(errData.status);
+            setUnpublishedBlogData({
+              title: errData.title,
+              type: errData.type,
+              scheduledAt: errData.scheduledAt
+            });
+            setLoading(false);
+            return;
+          }
+        }
         console.log(`Blog with slug "${slug}" not found`);
-        navigate('/blogs');
+        navigate(window.location.pathname.includes('/guide/') ? '/guides' : '/blogs');
       }
     } catch (error) {
       console.error('Error fetching blog:', error);
-      navigate('/blogs');
+      navigate(window.location.pathname.includes('/guide/') ? '/guides' : '/blogs');
     } finally {
       setLoading(false);
     }
@@ -328,6 +343,47 @@ const PublicBlogDetail = () => {
     return <BlogDetailSkeleton />;
   }
 
+  if (unpublishedStatus) {
+    const isGuide = unpublishedBlogData?.type === 'guide';
+    const redirectPath = isGuide ? '/guides' : '/blogs';
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col justify-center items-center p-4 transition-colors duration-300">
+        <SEO title={`${unpublishedStatus === 'scheduled' ? 'Scheduled' : 'Draft'} - UrbanSetu`} description="This post is not published yet." />
+        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-8 text-center animate-fade-in-up">
+          <div className="w-20 h-20 bg-yellow-50 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-200 dark:border-yellow-800 text-3xl">
+            {unpublishedStatus === 'scheduled' ? '📅' : '📝'}
+          </div>
+          <h2 className="text-2xl font-black text-gray-800 dark:text-white mb-3 tracking-tight">
+            {unpublishedStatus === 'scheduled' ? 'Scheduled Publication' : 'Draft Content'}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm">
+            {unpublishedStatus === 'scheduled' ? (
+              <>
+                The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is scheduled to go public on:
+                <span className="block font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/30 py-2 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                  {new Date(unpublishedBlogData?.scheduledAt).toLocaleString(undefined, {
+                    dateStyle: 'long',
+                    timeStyle: 'short'
+                  })}
+                </span>
+              </>
+            ) : (
+              <>
+                The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is currently a draft and has not been published yet.
+              </>
+            )}
+          </p>
+          <button
+            onClick={() => navigate(redirectPath)}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" /> Back to {isGuide ? 'Guides' : 'Blogs'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!blog) {
     return null; // Redirects handled in fetchBlog
   }
@@ -342,6 +398,15 @@ const PublicBlogDetail = () => {
         keywords={`${blog?.category}, ${blog?.tags?.join(', ')}, real estate insights`}
         schema={blogSchema}
       />
+      {!blog.published && (
+        <div className="bg-yellow-500 text-black py-3 px-4 font-bold text-center flex items-center justify-center gap-2 z-50 sticky top-0 shadow-md">
+          {blog.scheduledAt ? (
+            <span>📅 This is a SCHEDULED {blog.type === 'guide' ? 'guide' : 'blog'} post. It is scheduled to publish on {new Date(blog.scheduledAt).toLocaleString()}.</span>
+          ) : (
+            <span>📝 This is a DRAFT {blog.type === 'guide' ? 'guide' : 'blog'} post. It is not visible to the public.</span>
+          )}
+        </div>
+      )}
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white relative overflow-hidden">
         {/* Abstract Background Shapes */}
