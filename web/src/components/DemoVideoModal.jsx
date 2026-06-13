@@ -91,7 +91,7 @@ export default function DemoVideoModal({ isOpen, onClose, videoId }) {
 
           {/* Footer Info bar */}
           <div className="px-6 py-4 bg-white/5 text-gray-400 text-xs sm:text-sm flex flex-wrap justify-between items-center gap-3">
-            <span>Learn how to search properties, plan routes, lock rent agreements and more!</span>
+            <span>Learn how to search and book properties, plan routes, lock rent agreements and more!</span>
             <span className="text-blue-400 font-semibold cursor-pointer hover:underline" onClick={onClose}>
               Get Started Now &rarr;
             </span>
