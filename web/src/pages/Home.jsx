@@ -1198,7 +1198,7 @@ export default function Home() {
                         New to UrbanSetu?
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Watch our 5-minute walkthrough video guide to master AI property searches, route planning, RentLock, and more!
+                        Watch our 5-minute walkthrough video guide to master AI property searches, booking, route planning, RentLock, and more!
                       </p>
                     </div>
                   </div>

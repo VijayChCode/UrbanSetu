@@ -225,7 +225,7 @@ const HelpCenter = () => {
                                         Complete Platform Walkthrough
                                     </h2>
                                     <p className="text-blue-100 text-sm sm:text-base leading-relaxed">
-                                        New to UrbanSetu? Watch our 5-minute video guide to master AI property searches, real-time owner chat, route planning, and secure RentLock agreement setups.
+                                        New to UrbanSetu? Watch our 5-minute video guide to master AI property searches, booking, real-time owner chat, route planning, and secure RentLock agreement setups.
                                     </p>
                                 </div>
                                 
