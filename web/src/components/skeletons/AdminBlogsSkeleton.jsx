@@ -45,6 +45,8 @@ const AdminBlogsSkeleton = () => {
                         <div className="w-1/6 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                         <div className="w-1/6 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                         <div className="w-1/12 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="w-1/12 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="w-1/12 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                     </div>
 
                     {/* Table Rows */}
@@ -82,6 +84,16 @@ const AdminBlogsSkeleton = () => {
                                 </div>
 
                                 {/* Views */}
+                                <div className="w-full lg:w-1/12 text-center hidden lg:block">
+                                    <div className="h-4 w-8 bg-gray-200 dark:bg-gray-700 rounded mx-auto animate-pulse"></div>
+                                </div>
+
+                                {/* Likes */}
+                                <div className="w-full lg:w-1/12 text-center hidden lg:block">
+                                    <div className="h-4 w-8 bg-gray-200 dark:bg-gray-700 rounded mx-auto animate-pulse"></div>
+                                </div>
+
+                                {/* Comments */}
                                 <div className="w-full lg:w-1/12 text-center hidden lg:block">
                                     <div className="h-4 w-8 bg-gray-200 dark:bg-gray-700 rounded mx-auto animate-pulse"></div>
                                 </div>

@@ -747,6 +747,8 @@ const AdminBlogs = ({ type }) => {
                           <th className="px-6 py-4 text-left">Property</th>
                           <th className="px-6 py-4 text-center">Status</th>
                           <th className="px-6 py-4 text-center">Views</th>
+                          <th className="px-6 py-4 text-center">Likes</th>
+                          <th className="px-6 py-4 text-center">Comments</th>
                           <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -836,6 +838,12 @@ const AdminBlogs = ({ type }) => {
                             <td className="px-6 py-4 text-center">
                               <span className="text-sm font-black text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-600">{blog.views || 0}</span>
                             </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-sm font-black text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-600">{blog.likes || 0}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-sm font-black text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-600">{blog.comments?.length || 0}</span>
+                            </td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <button onClick={() => handleViewDetails(blog)} className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-transparent hover:border-blue-100 dark:hover:border-blue-800" title={`View ${contentLabel}`}>
@@ -872,10 +880,14 @@ const AdminBlogs = ({ type }) => {
                             </div>
                             <div>
                               <h3 className="font-black text-gray-800 dark:text-white line-clamp-1">{blog.title}</h3>
-                              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 mt-1 font-bold">
+                              <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 mt-1 font-bold">
                                 <span className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{new Date(blog.createdAt).toLocaleDateString()}</span>
                                 <span>•</span>
                                 <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded">{blog.views || 0} views</span>
+                                <span>•</span>
+                                <span className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded">{blog.likes || 0} likes</span>
+                                <span>•</span>
+                                <span className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-1.5 py-0.5 rounded">{blog.comments?.length || 0} comments</span>
                               </div>
                             </div>
                           </div>
