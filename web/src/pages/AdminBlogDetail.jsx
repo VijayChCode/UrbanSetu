@@ -30,6 +30,7 @@ const AdminBlogDetail = () => {
   const [blog, setBlog] = useState(null);
   const [unpublishedStatus, setUnpublishedStatus] = useState(null); // 'draft' or 'scheduled'
   const [unpublishedBlogData, setUnpublishedBlogData] = useState(null); // { title, type, scheduledAt }
+  const [notFound, setNotFound] = useState(false);
 
   // Set page title
   usePageTitle(blog ? `${blog.title} - Admin Panel` : "Loading - Admin Panel");
@@ -101,6 +102,7 @@ const AdminBlogDetail = () => {
   const fetchBlog = async () => {
     try {
       setLoading(true);
+      setNotFound(false);
       const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${slug}`);
 
       if (response.ok) {
@@ -123,11 +125,11 @@ const AdminBlogDetail = () => {
           }
         }
         console.log(`Blog with slug "${slug}" not found`);
-        navigate(window.location.pathname.includes('/guide/') ? '/admin/guides' : '/admin/blogs');
+        setNotFound(true);
       }
     } catch (error) {
       console.error('Error fetching blog:', error);
-      navigate(window.location.pathname.includes('/guide/') ? '/admin/guides' : '/admin/blogs');
+      setNotFound(true);
     } finally {
       setLoading(false);
     }
@@ -501,6 +503,33 @@ const AdminBlogDetail = () => {
                 The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is currently a draft and has not been published yet.
               </>
             )}
+          </p>
+          <button
+            onClick={() => navigate(redirectPath)}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" /> Back to {isGuide ? 'Guides' : 'Blogs'} Management
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    const isGuide = window.location.pathname.includes('/guide/');
+    const redirectPath = isGuide ? '/admin/guides' : '/admin/blogs';
+    const contentTypeLabel = isGuide ? 'Guide' : 'Blog';
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col justify-center items-center p-4 transition-colors duration-300">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 text-center animate-fade-in-up">
+          <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-200 dark:border-red-800 text-3xl">
+            🔍
+          </div>
+          <h2 className="text-2xl font-black text-gray-800 dark:text-white mb-3 tracking-tight">
+            Article Unavailable
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm">
+            The {contentTypeLabel.toLowerCase()} post you are looking for does not exist, has been removed, or the link is incorrect.
           </p>
           <button
             onClick={() => navigate(redirectPath)}

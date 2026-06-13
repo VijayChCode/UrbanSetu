@@ -9,7 +9,7 @@ import { Navigation } from 'swiper/modules';
 import { toast } from 'react-toastify';
 import {
   Calendar, User, Eye, Heart, Tag, ArrowLeft, Share2, MessageSquare,
-  Home, Maximize2, X, ThumbsUp, Send, Clock, Play, Image as ImageIcon, Trash, Edit, Check, Star
+  Home, Maximize2, X, ThumbsUp, Send, Clock, Play, Image as ImageIcon, Trash, Edit, Check, Star, AlertTriangle
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import ImagePreview from '../components/ImagePreview';
@@ -80,6 +80,7 @@ const PublicBlogDetail = () => {
   const [shareModal, setShareModal] = useState({ isOpen: false, url: '', title: '', description: '' });
   const [unpublishedStatus, setUnpublishedStatus] = useState(null); // 'draft' or 'scheduled'
   const [unpublishedBlogData, setUnpublishedBlogData] = useState(null); // { title, type, scheduledAt }
+  const [notFound, setNotFound] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
 
@@ -96,6 +97,7 @@ const PublicBlogDetail = () => {
   const fetchBlog = async () => {
     try {
       setLoading(true);
+      setNotFound(false);
       const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${slug}`, { autoRedirect: false });
 
       if (response.ok) {
@@ -118,11 +120,11 @@ const PublicBlogDetail = () => {
           }
         }
         console.log(`Blog with slug "${slug}" not found`);
-        navigate(window.location.pathname.includes('/guide/') ? '/guides' : '/blogs');
+        setNotFound(true);
       }
     } catch (error) {
       console.error('Error fetching blog:', error);
-      navigate(window.location.pathname.includes('/guide/') ? '/guides' : '/blogs');
+      setNotFound(true);
     } finally {
       setLoading(false);
     }
@@ -384,8 +386,36 @@ const PublicBlogDetail = () => {
     );
   }
 
+  if (notFound) {
+    const isGuide = window.location.pathname.includes('/guide/');
+    const redirectPath = isGuide ? '/guides' : '/blogs';
+    const contentTypeLabel = isGuide ? 'Guide' : 'Blog';
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col justify-center items-center p-4 transition-colors duration-300">
+        <SEO title="Article Unavailable - UrbanSetu" description="The article you are looking for does not exist or has been removed." />
+        <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-8 text-center animate-fade-in-up">
+          <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-200 dark:border-red-850 text-3xl">
+            🔍
+          </div>
+          <h2 className="text-2xl font-black text-gray-800 dark:text-white mb-3 tracking-tight">
+            Article Unavailable
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm">
+            The {contentTypeLabel.toLowerCase()} post you are looking for does not exist, has been removed, or the link is incorrect.
+          </p>
+          <button
+            onClick={() => navigate(redirectPath)}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" /> Back to {isGuide ? 'Guides' : 'Blogs'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!blog) {
-    return null; // Redirects handled in fetchBlog
+    return null;
   }
 
   return (

@@ -6,7 +6,7 @@ import AdminBlogsSkeleton from '../components/skeletons/AdminBlogsSkeleton';
 import {
   Plus, Edit, Trash, Search, Filter, Globe, Home, Eye, EyeOff,
   ExternalLink, ChevronLeft, ChevronRight, FileText, LayoutTemplate,
-  CheckCircle, RefreshCw, XCircle, Ban, UserX
+  CheckCircle, RefreshCw, XCircle, Ban, UserX, Clock
 } from 'lucide-react';
 import BlogEditModal from '../components/BlogEditModal';
 import BlogAnalytics from '../components/BlogAnalytics';
@@ -50,6 +50,7 @@ const AdminBlogs = ({ type }) => {
   // Status Confirmation State
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [blogToToggle, setBlogToToggle] = useState(null);
+  const [statusActionLoading, setStatusActionLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -420,21 +421,19 @@ const AdminBlogs = ({ type }) => {
     setShowStatusModal(true);
   };
 
-  const confirmTogglePublish = async () => {
-    if (!blogToToggle) return;
+  const updateBlogStatus = async (blogId, updates) => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${blogToToggle._id}`, {
+      setStatusActionLoading(true);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${blogId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          published: !blogToToggle.published
-        })
+        body: JSON.stringify(updates)
       });
 
       if (response.ok) {
-        toast.success(`${contentLabel} ${!blogToToggle.published ? 'published' : 'unpublished'} successfully`);
+        toast.success(`${contentLabel} status updated successfully`);
         fetchBlogs();
         setShowStatusModal(false);
         setBlogToToggle(null);
@@ -442,8 +441,10 @@ const AdminBlogs = ({ type }) => {
         toast.error(`Failed to update ${contentLabel.toLowerCase()} status`);
       }
     } catch (error) {
-      console.error(`Error toggling ${contentLabel.toLowerCase()} status:`, error);
+      console.error(`Error updating ${contentLabel.toLowerCase()} status:`, error);
       toast.error(`Failed to update ${contentLabel.toLowerCase()} status`);
+    } finally {
+      setStatusActionLoading(false);
     }
   };
 
@@ -828,7 +829,7 @@ const AdminBlogs = ({ type }) => {
                                     : 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800'
                                   }`}
                               >
-                                {blog.published ? <Eye className="w-3 h-3" /> : (blog.scheduledAt ? <UrbanSetuSpinner size="sm" className="inline-block" /> : <EyeOff className="w-3 h-3" />)}
+                                {blog.published ? <Eye className="w-3 h-3" /> : (blog.scheduledAt ? <Clock className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />)}
                                 {blog.published ? 'Published' : (blog.scheduledAt ? 'Scheduled' : 'Draft')}
                               </button>
                             </td>
@@ -883,10 +884,12 @@ const AdminBlogs = ({ type }) => {
                               onClick={() => togglePublish(blog)}
                               className={`p-2 rounded-full shadow-sm border transition-all active:scale-95 ${blog.published
                                 ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 border-green-100 dark:border-green-800'
-                                : 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-100 dark:border-yellow-800'
+                                : blog.scheduledAt
+                                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800'
+                                  : 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-100 dark:border-yellow-800'
                                 }`}
                             >
-                              {blog.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              {blog.published ? <Eye className="w-4 h-4" /> : (blog.scheduledAt ? <Clock className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />)}
                             </button>
                           </div>
                         </div>
@@ -1249,20 +1252,150 @@ const AdminBlogs = ({ type }) => {
         isDestructive={true}
       />
 
-      <ConfirmationModal
-        isOpen={showStatusModal}
-        onClose={() => {
-          setShowStatusModal(false);
-          setBlogToToggle(null);
-        }}
-        onConfirm={confirmTogglePublish}
-        title={`Change ${contentLabel} Status`}
-        message={`Are you sure you want to ${blogToToggle?.published ? 'unpublish' : 'publish'} this ${contentLabel.toLowerCase()}?`}
-        confirmText={blogToToggle?.published ? 'Unpublish' : 'Publish'}
-        isDestructive={blogToToggle?.published}
-        confirmIcon={blogToToggle?.published ? EyeOff : Eye}
-        headerIcon={blogToToggle?.published ? EyeOff : Eye}
-      />
+      {showStatusModal && blogToToggle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-scale-in border border-gray-100 dark:border-gray-700 transition-all">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-700/30">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                Manage Status
+              </h3>
+              <button
+                onClick={() => {
+                  setShowStatusModal(false);
+                  setBlogToToggle(null);
+                }}
+                disabled={statusActionLoading}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              <div>
+                <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Title</span>
+                <h4 className="font-extrabold text-base text-gray-800 dark:text-white line-clamp-2">{blogToToggle.title}</h4>
+              </div>
+
+              {/* Status Section */}
+              <div>
+                <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Current Status</span>
+                {blogToToggle.published ? (
+                  <div className="space-y-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                      <Eye className="w-3.5 h-3.5" /> Published
+                    </span>
+                    <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Published Time:</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-200">
+                          {new Date(blogToToggle.publishedAt || blogToToggle.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : blogToToggle.scheduledAt ? (
+                  <div className="space-y-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                      <Clock className="w-3.5 h-3.5" /> Scheduled
+                    </span>
+                    <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
+                      <div className="flex justify-between flex-wrap gap-1">
+                        <span className="text-gray-500">Scheduled Time:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">
+                          {new Date(blogToToggle.scheduledAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between flex-wrap gap-1 border-t border-gray-100 dark:border-gray-700/50 pt-2">
+                        <span className="text-gray-500">Drafted Time:</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-200">
+                          {new Date(blogToToggle.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+                      <EyeOff className="w-3.5 h-3.5" /> Draft
+                    </span>
+                    <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Drafted Time:</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-200">
+                          {new Date(blogToToggle.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      {blogToToggle.publishedAt && (
+                        <div className="flex justify-between border-t border-gray-100 dark:border-gray-700/50 pt-2">
+                          <span className="text-gray-500">Previously Published:</span>
+                          <span className="font-bold text-gray-800 dark:text-gray-200">
+                            {new Date(blogToToggle.publishedAt).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Actions Footer */}
+            <div className="p-6 bg-gray-50 dark:bg-gray-700/20 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+              {statusActionLoading ? (
+                <div className="flex items-center justify-center py-2 text-blue-600 font-bold text-sm gap-2">
+                  <UrbanSetuSpinner size="sm" /> Updating status...
+                </div>
+              ) : (
+                <>
+                  {blogToToggle.published ? (
+                    <button
+                      onClick={() => updateBlogStatus(blogToToggle._id, { published: false })}
+                      className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-2xl font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                      <EyeOff className="w-4 h-4" /> Unpublish to Draft
+                    </button>
+                  ) : blogToToggle.scheduledAt ? (
+                    <>
+                      <button
+                        onClick={() => updateBlogStatus(blogToToggle._id, { published: true, scheduledAt: null })}
+                        className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <Eye className="w-4 h-4" /> Publish Now
+                      </button>
+                      <button
+                        onClick={() => updateBlogStatus(blogToToggle._id, { published: false, scheduledAt: null })}
+                        className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-2xl font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <XCircle className="w-4 h-4" /> Cancel Scheduling (Draft)
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => updateBlogStatus(blogToToggle._id, { published: true, scheduledAt: null })}
+                      className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                      <Eye className="w-4 h-4" /> Publish Now
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowStatusModal(false);
+                      setBlogToToggle(null);
+                    }}
+                    className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-2xl font-bold transition-colors text-sm"
+                  >
+                    Close
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reject Modal */}
       {showRejectModal && (
