@@ -1420,7 +1420,6 @@ export default function MyAppointments() {
                 className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
-                max={endDate || undefined}
               />
               <label className="font-semibold text-sm dark:text-gray-300">To:</label>
               <input
@@ -1428,7 +1427,6 @@ export default function MyAppointments() {
                 className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
-                min={startDate || undefined}
               />
             </div>
             <div className="flex items-center gap-2">
@@ -2895,13 +2893,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const unlockPasswordRef = useRef(null);
   const removeLockPasswordRef = useRef(null);
-
-  // Autofocus remove lock password when modal opens (Desktop only)
-  useEffect(() => {
-    if (showRemoveLockModal && !isMobile && removeLockPasswordRef.current) {
-      setTimeout(() => removeLockPasswordRef.current?.focus(), 100);
-    }
-  }, [showRemoveLockModal, isMobile]);
 
   // Message info modal state
   const [showMessageInfoModal, setShowMessageInfoModal] = useState(false);
@@ -11901,6 +11892,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
                     placeholder="Enter your account login password"
                     onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -11991,6 +11983,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 pr-10"
                     placeholder="Enter your chat lock password"
                     onKeyPress={(e) => e.key === 'Enter' && handleRemoveLockFromMenu()}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
