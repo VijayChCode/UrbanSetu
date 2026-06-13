@@ -74,6 +74,9 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
 
     // Navigation helper — called after successful auth to redirect to the right page
     const navigateAfterLogin = (data) => {
+        // Show success toast notification with user's name
+        toast.success(`Signed in as ${data.username || 'User'}`);
+
         const searchParams = new URLSearchParams(location.search);
         let redirectUrl = searchParams.get('redirect');
 
