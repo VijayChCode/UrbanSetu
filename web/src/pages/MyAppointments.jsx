@@ -8576,18 +8576,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         </button>
                       </div>
 
-                      {/* Search functionality */}
-                      <div className="relative search-container">
-                        <button
-                          className="text-white hover:text-gray-200 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all duration-300 transform hover:scale-110 shadow"
-                          onClick={() => setShowSearchBox(true)}
-                          title="Search messages"
-                          aria-label="Search messages"
-                        >
-                          <FaSearch className="text-sm" />
-                        </button>
-                      </div>
-
                       {/* Chat options menu */}
                       <div className="relative flex items-center gap-2">
                         {/* Loading icon when refreshing messages */}
@@ -8625,6 +8613,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 Contact Information
                               </button>
                             )}
+                            {/* Search Messages option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-2 search-container"
+                              onClick={() => {
+                                setShowSearchBox(true);
+                                setShowChatOptionsMenu(false);
+                              }}
+                            >
+                              <FaSearch className="text-sm" />
+                              Search Messages
+                            </button>
                             {/* Refresh option */}
                             <button
                               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-2"
