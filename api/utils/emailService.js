@@ -17642,7 +17642,7 @@ export const sendCoinTransactionNotificationEmail = async (email, username, tran
 };
 
 // Send Chat Locked Email
-export const sendChatLockedEmail = async (email, username, appointmentId, isBuyer) => {
+export const sendChatLockedEmail = async (email, username, appointmentId, otherPartyName) => {
   const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
   const chatLink = `${clientBaseUrl}/user/my-appointments/chat/${appointmentId}`;
 
@@ -17664,15 +17664,11 @@ export const sendChatLockedEmail = async (email, username, appointmentId, isBuye
               Hello ${username || 'User'},
             </p>
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
-              This email confirms that you have successfully set a password lock on your chat conversation. To access this chat in the future, you will need the password you just created.
+              This email confirms that you have successfully set a password lock on the chat conversation between you and <strong>${otherPartyName || 'the other party'}</strong>. To access this chat in the future, you will need the password you just created.
             </p>
             
             <div style="text-align: center; margin: 25px 0;">
               <a href="${chatLink}" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Access Locked Chat</a>
-            </div>
-            
-            <div style="background: #fff; padding: 10px; border: 1px solid #e5e7eb; border-radius: 4px; word-break: break-all; color: #4b5563; font-size: 12px; font-family: monospace; text-align: center;">
-              ${chatLink}
             </div>
 
             <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">

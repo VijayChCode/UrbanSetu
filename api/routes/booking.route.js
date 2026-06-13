@@ -3368,12 +3368,16 @@ router.patch('/:id/chat/lock', verifyToken, async (req, res) => {
     try {
       const user = await User.findById(userId);
       if (user && user.email) {
-        sendChatLockedEmail(user.email, user.username || user.name, appointmentId, isBuyer).catch(emailErr => {
+        const otherPartyId = isBuyer ? appointment.sellerId : appointment.buyerId;
+        const otherParty = await User.findById(otherPartyId);
+        const otherPartyName = otherParty ? (otherParty.username || otherParty.name) : 'the other party';
+
+        sendChatLockedEmail(user.email, user.username || user.name, appointmentId, otherPartyName).catch(emailErr => {
           console.error('Error sending chat locked email in background:', emailErr);
         });
       }
     } catch (userErr) {
-      console.error('Error fetching user for chat locked email:', userErr);
+      console.error('Error fetching user or other party for chat locked email:', userErr);
     }
 
     return res.status(200).json({
