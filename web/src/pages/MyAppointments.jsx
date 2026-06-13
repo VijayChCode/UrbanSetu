@@ -2896,13 +2896,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const unlockPasswordRef = useRef(null);
   const removeLockPasswordRef = useRef(null);
 
-  // Autofocus unlock password when modal opens (Desktop only)
-  useEffect(() => {
-    if (showChatUnlockModal && !isMobile && unlockPasswordRef.current) {
-      setTimeout(() => unlockPasswordRef.current?.focus(), 100);
-    }
-  }, [showChatUnlockModal, isMobile]);
-
   // Autofocus remove lock password when modal opens (Desktop only)
   useEffect(() => {
     if (showRemoveLockModal && !isMobile && removeLockPasswordRef.current) {
@@ -11821,6 +11814,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 pr-10 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                   placeholder="Enter password"
                   onKeyPress={(e) => e.key === 'Enter' && handleChatUnlock()}
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
