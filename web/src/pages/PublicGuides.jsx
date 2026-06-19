@@ -678,7 +678,7 @@ const PublicGuides = () => {
             <main className="flex-grow max-w-7xl mx-auto px-4 w-full -mt-16 relative z-10 pb-20">
 
                 {/* Stay Tuned Countdown for Scheduled Post */}
-                {upcomingPost && (
+                {upcomingPost && (new Date(upcomingPost.scheduledAt).getTime() - new Date().getTime() < 24 * 60 * 60 * 1000) && (
                     <div className="bg-gradient-to-r from-purple-900/60 via-indigo-900/60 to-blue-900/60 backdrop-blur-md border border-purple-500/30 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl animate-fade-in-up">
                         {/* Background glowing decorations */}
                         <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse"></div>

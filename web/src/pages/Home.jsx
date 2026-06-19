@@ -1006,6 +1006,9 @@ export default function Home() {
     return <HomeSkeleton />;
   }
 
+  const isBlogCountdownVisible = upcomingBlog && (new Date(upcomingBlog.scheduledAt).getTime() - new Date().getTime() < 24 * 60 * 60 * 1000);
+  const isGuideCountdownVisible = upcomingGuide && (new Date(upcomingGuide.scheduledAt).getTime() - new Date().getTime() < 24 * 60 * 60 * 1000);
+
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen relative overflow-hidden font-sans transition-colors duration-300">
       <SeasonalEffects />
@@ -2258,7 +2261,7 @@ export default function Home() {
           )}
 
           {/* ─── Explore & Learn: Community, Blogs & Guides ─── */}
-          {(homeTrendingPosts.length > 0 || homeFeaturedBlogs.length > 0 || homeFeaturedGuides.length > 0 || upcomingBlog || upcomingGuide) && (
+          {(homeTrendingPosts.length > 0 || homeFeaturedBlogs.length > 0 || homeFeaturedGuides.length > 0 || isBlogCountdownVisible || isGuideCountdownVisible) && (
             <section className="animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
                 <div>
@@ -2276,8 +2279,8 @@ export default function Home() {
               <div className="flex gap-2 mb-8 overflow-x-auto pb-1 hide-scrollbar">
                 {[
                   { id: 'community', label: 'Community', icon: FaUsers, count: homeTrendingPosts.length, bg: '#2563eb', shadow: 'rgba(37,99,235,0.25)' },
-                  { id: 'blogs', label: 'Blog Insights', icon: FaNewspaper, count: homeFeaturedBlogs.length + (upcomingBlog ? 1 : 0), bg: '#4f46e5', shadow: 'rgba(79,70,229,0.25)' },
-                  { id: 'guides', label: 'Guides', icon: FaGraduationCap, count: homeFeaturedGuides.length + (upcomingGuide ? 1 : 0), bg: '#9333ea', shadow: 'rgba(147,51,234,0.25)' },
+                  { id: 'blogs', label: 'Blog Insights', icon: FaNewspaper, count: homeFeaturedBlogs.length + (isBlogCountdownVisible ? 1 : 0), bg: '#4f46e5', shadow: 'rgba(79,70,229,0.25)' },
+                  { id: 'guides', label: 'Guides', icon: FaGraduationCap, count: homeFeaturedGuides.length + (isGuideCountdownVisible ? 1 : 0), bg: '#9333ea', shadow: 'rgba(147,51,234,0.25)' },
                 ].filter(t => t.count > 0).map(tab => (
                   <button
                     key={tab.id}
@@ -2368,10 +2371,10 @@ export default function Home() {
               )}
 
               {/* Featured Blog Insights */}
-              {insightsTab === 'blogs' && (homeFeaturedBlogs.length > 0 || upcomingBlog) && (
+              {insightsTab === 'blogs' && (homeFeaturedBlogs.length > 0 || isBlogCountdownVisible) && (
                 <div className="animate-fade-in">
                   {/* Stay Tuned Countdown for Scheduled Blog */}
-                  {upcomingBlog && (
+                  {isBlogCountdownVisible && (
                     <div className="bg-gradient-to-r from-blue-900/60 via-indigo-900/60 to-purple-900/60 backdrop-blur-md border border-indigo-500/30 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl animate-fade-in-up text-left">
                       {/* Background glowing decorations */}
                       <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse"></div>
@@ -2460,10 +2463,10 @@ export default function Home() {
               )}
 
               {/* Featured Guide Collections */}
-              {insightsTab === 'guides' && (homeFeaturedGuides.length > 0 || upcomingGuide) && (
+              {insightsTab === 'guides' && (homeFeaturedGuides.length > 0 || isGuideCountdownVisible) && (
                 <div className="animate-fade-in">
                   {/* Stay Tuned Countdown for Scheduled Guide */}
-                  {upcomingGuide && (
+                  {isGuideCountdownVisible && (
                     <div className="bg-gradient-to-r from-purple-900/60 via-indigo-900/60 to-blue-900/60 backdrop-blur-md border border-purple-500/30 rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl animate-fade-in-up text-left">
                       {/* Background glowing decorations */}
                       <div className="absolute -top-10 -left-10 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl animate-pulse"></div>
