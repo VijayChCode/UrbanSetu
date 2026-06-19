@@ -7,7 +7,7 @@ const SEO = ({ title, description, keywords, image, url, type = 'website', schem
     const fullTitle = title ? title : siteTitle;
     const defaultDescription = "UrbanSetu is India's No.1 verified real estate platform. Buy, sell, and rent properties with confidence using our Rent Lock and trust-verified listings.";
     const metaDescription = description || defaultDescription;
-    const metaImage = image || `${currentOrigin}/og-image.png`;
+    const metaImage = image || `${currentOrigin}/assets/images/og-image.png`;
     const metaUrl = url || (typeof window !== 'undefined' ? window.location.origin + window.location.pathname : currentOrigin);
     const metaKeywords = keywords || "UrbanSetu, real estate platform India, buy verified property, rent verified home, smart real estate searching, rent lock India, Hyderabad property portal, Mumbai real estate, Bangalore apartments";
 

@@ -1090,7 +1090,7 @@ function AppRoutes({ bootstrapped }) {
 
       // Play notification sound
       try {
-        const audio = new Audio('/sounds/notification.mp3');
+        const audio = new Audio('/assets/sounds/notification.mp3');
         audio.volume = 0.7; // Set volume to 70%
         audio.play().catch(err => {
           console.log('Could not play notification sound:', err);

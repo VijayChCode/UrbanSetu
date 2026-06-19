@@ -223,7 +223,7 @@ export default function About() {
               {/* Left: Main Profile */}
               <div className="flex-1 text-center lg:text-left">
                 <div className="w-56 h-56 mx-auto lg:mx-0 relative rounded-full overflow-hidden border-4 border-purple-500 shadow-2xl mb-6 transform hover:scale-105 transition-transform duration-300">
-                  <img src="/images/bhavith_ceo.png" alt="Bhavith Tungena" className="w-full h-full object-cover" />
+                  <img src="/assets/images/bhavith_ceo.png" alt="Bhavith Tungena" className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-3xl font-extrabold text-gray-800 dark:text-white mb-2">Bhavith Tungena</h3>
                 <div className="inline-block bg-blue-100 dark:bg-blue-900/30 px-4 py-1 rounded-full mb-4">
@@ -251,10 +251,10 @@ export default function About() {
               <div className="flex-1 w-full max-w-md lg:max-w-none">
                 <div className="grid grid-cols-2 gap-4 relative">
                   <div className="col-span-1 row-span-2 rounded-2xl overflow-hidden shadow-xl h-80 transform rotate-2 hover:rotate-0 transition-all duration-500 border-2 border-white dark:border-gray-800">
-                    <img src="/images/bhavith_ceo_2.jpg" alt="Bhavith Tungena - Speaking" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
+                    <img src="/assets/images/bhavith_ceo_2.jpg" alt="Bhavith Tungena - Speaking" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
                   </div>
                   <div className="col-span-1 rounded-2xl overflow-hidden shadow-xl h-36 transform -rotate-2 hover:rotate-0 transition-all duration-500 border-2 border-white dark:border-gray-800 mt-4">
-                    <img src="/images/bhavith_ceo_3.jpg" alt="Bhavith Tungena - Event" className="w-full h-full object-cover object-top hover:scale-110 transition-transform duration-700" />
+                    <img src="/assets/images/bhavith_ceo_3.jpg" alt="Bhavith Tungena - Event" className="w-full h-full object-cover object-top hover:scale-110 transition-transform duration-700" />
                   </div>
                   <div className="col-span-1 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center text-white h-36 border-2 border-white dark:border-gray-800 shadow-xl transform rotate-1 hover:rotate-0 transition-all duration-500">
                     <div className="text-center p-4">

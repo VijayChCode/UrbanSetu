@@ -248,7 +248,7 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                             {/* UrbanSetu Logo */}
                             <div className="flex items-center justify-center w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transform transition-transform hover:scale-105 duration-300">
                                 <img 
-                                    src="/favicon.png" 
+                                    src="/assets/images/favicon.png" 
                                     alt="UrbanSetu Logo" 
                                     className="w-10 h-10 rounded-lg object-contain"
                                 />

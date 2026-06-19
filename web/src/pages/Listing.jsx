@@ -106,7 +106,7 @@ export default function Listing() {
   const seoTitle = listing ? `${listing.name} in ${listing.city} - For ${listing.type === 'rent' ? 'Rent' : 'Sale'}` : "Property Details";
   const seoDescription = listing ? `${listing.description?.substring(0, 150)}... Buy or rent verified properties on UrbanSetu.` : "View verified property details on UrbanSetu.";
   const seoUrl = listing ? `${window.location.origin}/listing/${listing._id}` : window.location.href;
-  const seoImage = listing?.imageUrls?.[0] || `${window.location.origin}/og-image.png`;
+  const seoImage = listing?.imageUrls?.[0] || `${window.location.origin}/assets/images/og-image.png`;
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showReasonModal, setShowReasonModal] = useState(false);

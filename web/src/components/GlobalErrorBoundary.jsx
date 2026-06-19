@@ -303,7 +303,7 @@ class GlobalErrorBoundary extends React.Component {
                         <a href={this.getHomePath()} className="flex flex-col items-center mb-8 group cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]">
                             <div className="flex items-center gap-3">
                                 <img
-                                    src="/favicon.png"
+                                    src="/assets/images/favicon.png"
                                     alt="UrbanSetu Logo"
                                     className="w-12 h-12 rounded-xl object-contain shadow-lg group-hover:shadow-blue-500/20 transition-all duration-300"
                                 />

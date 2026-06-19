@@ -6056,7 +6056,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const playSound = (soundFile) => {
         if (!soundEnabled) return;
         try {
-            const audio = new Audio(`/sounds/${soundFile}`);
+            const audio = new Audio(`/assets/sounds/${soundFile}`);
             audio.volume = 0.3; // Lower volume to not be intrusive
             audio.play().catch(error => {
                 console.warn('Could not play sound:', error);
@@ -6069,7 +6069,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const playTypingSound = () => {
         if (!soundEnabled || !typingSounds) return;
         try {
-            const audio = new Audio('/sounds/typing.mp3');
+            const audio = new Audio('/assets/sounds/typing.mp3');
             audio.volume = 0.2; // Even lower volume for typing
             audio.play().catch(error => {
                 console.warn('Could not play typing sound:', error);

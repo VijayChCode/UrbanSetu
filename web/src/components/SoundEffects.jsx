@@ -2,13 +2,13 @@ import React, { useRef, useEffect } from 'react';
 
 // Sound URLs - you can replace these with your own sound files
 const SOUNDS = {
-  messageSent: '/sounds/message-sent.mp3',
-  messageReceived: '/sounds/message-received.mp3',
-  notification: '/sounds/notification.mp3',
-  typing: '/sounds/typing.mp3',
-  calling: '/sounds/Dailing.mp3',
-  ringtone: '/sounds/ringtone.mp3',
-  endCall: '/sounds/endcall.mp3'
+  messageSent: '/assets/sounds/message-sent.mp3',
+  messageReceived: '/assets/sounds/message-received.mp3',
+  notification: '/assets/sounds/notification.mp3',
+  typing: '/assets/sounds/typing.mp3',
+  calling: '/assets/sounds/Dailing.mp3',
+  ringtone: '/assets/sounds/ringtone.mp3',
+  endCall: '/assets/sounds/endcall.mp3'
 };
 
 // Fallback sounds using Web Audio API if files aren't available
