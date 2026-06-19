@@ -42,6 +42,20 @@ const BlogEditModal = ({
 
   const [initialData, setInitialData] = useState(null);
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmitWrapper = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(e);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const hasChanges = () => {
     if (!initialData) return false;
@@ -679,8 +693,7 @@ const BlogEditModal = ({
                       const isPublished = e.target.checked;
                       setFormData(prev => ({
                         ...prev,
-                        published: isPublished,
-                        scheduledAt: isPublished ? null : prev.scheduledAt
+                        published: isPublished
                       }));
                     }}
                     className="sr-only peer"
@@ -728,20 +741,20 @@ const BlogEditModal = ({
           <button
             type="submit"
             form="blog-form"
-            onClick={(e) => {
-              // The form is handled by onSubmit of the form element
-              // But since we scroll the form, we might need a reference or just triggers it
-            }}
-            className="flex-1 sm:flex-none px-12 py-4 bg-blue-600 dark:bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/30 active:scale-95 tracking-widest uppercase text-sm"
+            disabled={submitting}
+            className="flex-1 sm:flex-none px-12 py-4 bg-blue-600 dark:bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/30 active:scale-95 tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isEdit ? 'Update Details' : `Launch ${contentLabel}`}
+            {submitting && <UrbanSetuSpinner size="sm" isBright={true} />}
+            {submitting 
+              ? (isEdit ? 'Updating...' : 'Launching...') 
+              : (isEdit ? 'Update Details' : `Launch ${contentLabel}`)}
           </button>
         </div>
 
         {/* Hidden form trigger for footer button */}
         <form
           id="blog-form"
-          onSubmit={onSubmit}
+          onSubmit={handleSubmitWrapper}
           className="hidden"
         />
       </div >
