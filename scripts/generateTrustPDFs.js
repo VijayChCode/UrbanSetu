@@ -7,7 +7,7 @@ const SRC_DIR = path.resolve('trust_docs');
 const LOGO_PATHS = [
     path.resolve('mobile/assets/images/icon.png'),
     path.resolve('app_icon.png'),
-    path.resolve('web/public/favicon.png'),
+    path.resolve('web/public/assets/images/favicon.png'),
     path.resolve('mobile/assets/images/favicon.png')
 ];
 
