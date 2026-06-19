@@ -183,6 +183,7 @@ const AdminBlogs = ({ type }) => {
       if (filterCategory !== 'all') params.append('category', filterCategory);
       if (filterStatus === 'published') params.append('published', 'true');
       if (filterStatus === 'draft') params.append('published', 'false');
+      if (filterStatus === 'scheduled') params.append('scheduled', 'true');
       if (filterStatus === 'all') params.append('published', 'all');
 
       const response = await authenticatedFetch(`${API_BASE_URL}/api/blogs?${params}`);
@@ -642,22 +643,6 @@ const AdminBlogs = ({ type }) => {
                   )}
                 </div>
 
-                {/* Post Type Filter */}
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <select
-                    value={filterPostType}
-                    onChange={(e) => setFilterPostType(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-200 dark:border-gray-600 rounded-xl leading-5 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/50 focus:border-blue-400 dark:focus:border-blue-500 transition-all appearance-none cursor-pointer font-medium"
-                  >
-                    <option value="all">All Content</option>
-                    <option value="blog">Blogs</option>
-                    <option value="guide">Guides</option>
-                  </select>
-                </div>
-
                 {/* Property Scope Filter (Renamed from Type) */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -704,6 +689,7 @@ const AdminBlogs = ({ type }) => {
                     <option value="all">All Status</option>
                     <option value="published">Published</option>
                     <option value="draft">Draft</option>
+                    <option value="scheduled">Scheduled</option>
                   </select>
                 </div>
               </div>
