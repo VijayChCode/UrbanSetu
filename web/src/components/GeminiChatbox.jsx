@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -47,7 +47,7 @@ const THINKING_TAGS = [
     "Ensuring accuracy..."
 ];
 
-const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false }) => {
+const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, isDeepThinking = false, isWebSearch = false }) => {
     const [index, setIndex] = useState(0);
 
     const schedulerTags = [
@@ -57,7 +57,43 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
         "Finalizing Task Creation..."
     ];
 
-    const tagsToUse = isScheduler ? schedulerTags : THINKING_TAGS;
+    const deepThinkingTags = [
+        "Initiating deep thinking mode...",
+        "Analyzing complex layers...",
+        "Structuring reasoning steps...",
+        "Exploring edge cases...",
+        "Evaluating alternative paths...",
+        "Formulating logical proofs...",
+        "Refining conceptual model...",
+        "Verifying structural validity...",
+        "Synthesizing deep insights...",
+        "Polishing final argument..."
+    ];
+
+    const webSearchTags = [
+        "Accessing real estate indexes...",
+        "Crawling web directories...",
+        "Querying latest property listings...",
+        "Retrieving market analysis...",
+        "Comparing live database records...",
+        "Synthesizing online findings...",
+        "Filtering search results...",
+        "Extracting relevant details...",
+        "Validating source accuracy..."
+    ];
+
+    let tagsToUse = THINKING_TAGS;
+    if (isScheduler) {
+        tagsToUse = schedulerTags;
+    } else if (isDeepThinking) {
+        tagsToUse = deepThinkingTags;
+    } else if (isWebSearch) {
+        tagsToUse = webSearchTags;
+    }
+
+    useEffect(() => {
+        setIndex(0);
+    }, [isScheduler, isDeepThinking, isWebSearch]);
 
     useEffect(() => {
         let timer;
@@ -66,6 +102,10 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
 
             if (isScheduler) {
                 delay = 2500; // Cycle slightly faster for scheduler
+            } else if (isDeepThinking) {
+                delay = 5000; // Think longer!
+            } else if (isWebSearch) {
+                delay = 3500; // Web search tags
             } else if (index === 5) { // "Finalizing answer..."
                 delay = 8000; // Stay much longer on this one
             } else if (index > 5) {
@@ -82,7 +122,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
 
         processTags();
         return () => clearTimeout(timer);
-    }, [index, isScheduler, tagsToUse.length]);
+    }, [index, isScheduler, isDeepThinking, isWebSearch, tagsToUse.length]);
 
     return (
         <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
@@ -356,6 +396,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isCurrentRequestScheduler, setIsCurrentRequestScheduler] = useState(false);
+    const [activeRetryMenu, setActiveRetryMenu] = useState(null);
+    const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
+    const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [currentChatName, setCurrentChatName] = useState('');
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -1148,12 +1191,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (showInputOptions && inputOptionsRef.current && !inputOptionsRef.current.contains(event.target)) {
                 setShowInputOptions(false);
             }
+            if (activeRetryMenu !== null && !event.target.closest('.retry-menu-container')) {
+                setActiveRetryMenu(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [openMessageMenuIndex, showInputOptions]);
+    }, [openMessageMenuIndex, showInputOptions, activeRetryMenu]);
 
     // Speech Synthesis State
     const [speakingMessageIndex, setSpeakingMessageIndex] = useState(null);
@@ -3960,7 +4006,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return () => document.removeEventListener('click', handleCopyClick);
     }, []);
 
-    const retryMessage = async (originalMessage, messageIndex) => {
+    const retryMessage = async (originalMessage, messageIndex, options = {}) => {
         if (!originalMessage || isLoading) return;
 
         // Check rate limit
@@ -3977,6 +4023,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         setIsLoading(true);
 
+        if (options.thinkLonger) {
+            setIsCurrentRequestDeepThinking(true);
+        }
+        if (options.searchWeb) {
+            setIsCurrentRequestWebSearch(true);
+        }
+
         const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(originalMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
@@ -3992,13 +4045,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             abortControllerRef.current?.abort();
             abortControllerRef.current = new AbortController();
 
+            let messagePayload = originalMessage;
+            if (options.thinkLonger) {
+                messagePayload += "\n\n[System Directive: Think longer and provide deep step-by-step reasoning]";
+            } else if (options.searchWeb) {
+                messagePayload += "\n\n[System Directive: Search the web for latest listings, guides, and real estate information]";
+            }
+
             const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: originalMessage,
+                    message: messagePayload,
                     history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10), // Send context window messages
                     sessionId: currentSessionId,
                     tone: currentUser ? tone : 'neutral', // Send current tone setting or default for public users
@@ -4099,6 +4159,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } finally {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
+            setIsCurrentRequestDeepThinking(false);
+            setIsCurrentRequestWebSearch(false);
         }
     };
 
@@ -7262,7 +7324,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {hasChatError ? (
                                             <span>Chat Error Detected</span>
                                         ) : isLoading ? (
-                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} />
+                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
                                         ) : showTypingIndicator ? (
                                             <span>Answering...</span>
                                         ) : (
@@ -8404,25 +8466,93 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                             {/* Retry buttons - hidden for policy violation and restricted messages */}
                                                             {message.role === 'assistant' && !message.isViolation && !message.isRestricted && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const previousUserMessage = (() => {
-                                                                            for (let i = index - 1; i >= 0; i--) {
-                                                                                if (messages[i]?.role === 'user') return messages[i].content;
+                                                                <div className="relative retry-menu-container">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const previousUserMessage = (() => {
+                                                                                for (let i = index - 1; i >= 0; i--) {
+                                                                                    if (messages[i]?.role === 'user') return messages[i].content;
+                                                                                }
+                                                                                return lastUserMessageRef.current;
+                                                                            })();
+                                                                            if (previousUserMessage) {
+                                                                                setActiveRetryMenu(
+                                                                                    activeRetryMenu?.index === index
+                                                                                        ? null
+                                                                                        : { index, previousUserMessage }
+                                                                                );
                                                                             }
-                                                                            return lastUserMessageRef.current;
-                                                                        })();
-                                                                        if (previousUserMessage) retryMessage(previousUserMessage, index);
-                                                                    }}
-                                                                    disabled={isLoading || isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
-                                                                    className={`p-1 ${themeColors.accent} hover:opacity-80 hover:${themeColors.secondary} rounded transition-all duration-200 disabled:opacity-50`}
-                                                                    title="Try Again"
-                                                                    aria-label="Try Again"
-                                                                >
-                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                                                        <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26l1.46-1.46C6.26 13.86 6 12.97 6 12c0-3.31 2.69-6 6-6zm5.76 1.74L16.3 9.2C17.74 10.14 18.5 11.49 18.5 13c0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z" />
-                                                                    </svg>
-                                                                </button>
+                                                                        }}
+                                                                        disabled={isLoading || isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
+                                                                        className={`p-1 ${themeColors.accent} hover:opacity-80 hover:${themeColors.secondary} rounded transition-all duration-200 disabled:opacity-50`}
+                                                                        title="Change Response"
+                                                                        aria-label="Change Response"
+                                                                    >
+                                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                                                            <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26l1.46-1.46C6.26 13.86 6 12.97 6 12c0-3.31 2.69-6 6-6zm5.76 1.74L16.3 9.2C17.74 10.14 18.5 11.49 18.5 13c0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z" />
+                                                                        </svg>
+                                                                    </button>
+
+                                                                    {activeRetryMenu?.index === index && (
+                                                                        <div 
+                                                                            className={`absolute bottom-full right-0 mb-2 w-56 rounded-xl shadow-2xl p-1.5 z-20 border backdrop-blur-md transition-all duration-205 ${
+                                                                                isDarkMode 
+                                                                                    ? 'bg-gray-900/95 border-gray-700/80 text-gray-100' 
+                                                                                    : 'bg-white/95 border-gray-200 text-gray-800'
+                                                                            }`}
+                                                                        >
+                                                                            <div className={`flex items-center justify-between px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400 border-b border-gray-800/80' : 'text-gray-500 border-b border-gray-100'} mb-1.5`}>
+                                                                                <span>Ask to change response</span>
+                                                                                <FaArrowUp size={10} className="opacity-70" />
+                                                                            </div>
+                                                                            
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    retryMessage(activeRetryMenu.previousUserMessage, index, {});
+                                                                                    setActiveRetryMenu(null);
+                                                                                }}
+                                                                                className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 transition-colors ${
+                                                                                    isDarkMode 
+                                                                                        ? 'hover:bg-gray-800 text-gray-200' 
+                                                                                        : 'hover:bg-gray-100 text-gray-750'
+                                                                                }`}
+                                                                            >
+                                                                                <FaSync size={11} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+                                                                                <span>Try again</span>
+                                                                            </button>
+                                                                            
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    retryMessage(activeRetryMenu.previousUserMessage, index, { thinkLonger: true });
+                                                                                    setActiveRetryMenu(null);
+                                                                                }}
+                                                                                className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 transition-colors ${
+                                                                                    isDarkMode 
+                                                                                        ? 'hover:bg-gray-800 text-gray-200' 
+                                                                                        : 'hover:bg-gray-100 text-gray-750'
+                                                                                }`}
+                                                                            >
+                                                                                <FaBrain size={11} className={isDarkMode ? 'text-purple-400' : 'text-purple-500'} />
+                                                                                <span>Think longer</span>
+                                                                            </button>
+                                                                            
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    retryMessage(activeRetryMenu.previousUserMessage, index, { searchWeb: true });
+                                                                                    setActiveRetryMenu(null);
+                                                                                }}
+                                                                                className={`w-full text-left px-2.5 py-2 rounded-lg text-xs font-medium flex items-center gap-2.5 transition-colors ${
+                                                                                    isDarkMode 
+                                                                                        ? 'hover:bg-gray-800 text-gray-200' 
+                                                                                        : 'hover:bg-gray-100 text-gray-750'
+                                                                                }`}
+                                                                            >
+                                                                                <FaGlobe size={11} className={isDarkMode ? 'text-blue-400' : 'text-blue-500'} />
+                                                                                <span>Search the web</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             )}
 
                                                             {message.role === 'assistant' && message.isError && (
@@ -8499,7 +8629,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.2s' }}></div>
                                             </div>
                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium flex items-center gap-2`}>
-                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} />
+                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
                                             </span>
                                         </div>
                                     </div>
