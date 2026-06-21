@@ -2069,6 +2069,28 @@ export default function AdminManagement() {
                             </>
                           ) : admin.adminApprovalStatus === 'rejected' ? (
                             <>
+                              <button
+                                className={`flex-1 px-2 py-1 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${admin.status === "active" ? "bg-yellow-400 dark:bg-yellow-500/80 text-white hover:bg-yellow-500" : "bg-green-500 dark:bg-green-600/80 text-white hover:bg-green-600"}`}
+                                onClick={e => { e.stopPropagation(); handleSuspend(admin._id, "admin"); }}
+                              >
+                                {actionLoading.suspend[admin._id] ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    {admin.status === "active" ? "Suspending..." : "Activating..."}
+                                  </>
+                                ) : (
+                                  <>
+                                    {admin.status === "active" ? <FaBan /> : <FaCheckCircle />}
+                                    {admin.status === "active" ? "Suspend" : "Activate"}
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
+                                onClick={e => { e.stopPropagation(); handleDelete(admin._id, "admin"); }}
+                              >
+                                <FaTrash /> Softban
+                              </button>
                               {isRootOrDefault && (
                                 <button
                                   className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
@@ -2087,12 +2109,6 @@ export default function AdminManagement() {
                                   )}
                                 </button>
                               )}
-                              <button
-                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
-                                onClick={e => { e.stopPropagation(); handleDelete(admin._id, "admin"); }}
-                              >
-                                <FaTrash /> Softban
-                              </button>
                             </>
                           ) : (
                             <>
