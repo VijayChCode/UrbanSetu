@@ -991,88 +991,116 @@ export default function AdminManagement() {
     }
   };
 
-  const handleApproveAdmin = async (userId) => {
-    setActionLoading(prev => ({
-      ...prev,
-      promote: { ...prev.promote, [userId]: true }
-    }));
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/approve/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentUserId: currentUser._id,
-          rootAdminPassword: 'Salendra@2004' // Root admin password
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to approve request');
-      }
-
-      setAdmins(prev => prev.map(admin =>
-        admin._id === userId
-          ? { ...admin, adminApprovalStatus: 'approved', role: 'admin', status: 'active' }
-          : admin
-      ));
-      if (selectedAccount && selectedAccount._id === userId) {
-        setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'approved', role: 'admin', status: 'active' }));
-      }
-      toast.success('Admin request approved successfully!');
-      fetchTabCounts();
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
+  const handleApproveAdmin = (userId) => {
+    const performApprove = async () => {
       setActionLoading(prev => ({
         ...prev,
-        promote: { ...prev.promote, [userId]: false }
+        promote: { ...prev.promote, [userId]: true }
       }));
-    }
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/approve/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUserId: currentUser._id,
+            rootAdminPassword: 'Salendra@2004' // Root admin password
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to approve request');
+        }
+
+        setAdmins(prev => prev.map(admin =>
+          admin._id === userId
+            ? { ...admin, adminApprovalStatus: 'approved', role: 'admin', status: 'active' }
+            : admin
+        ));
+        if (selectedAccount && selectedAccount._id === userId) {
+          setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'approved', role: 'admin', status: 'active' }));
+        }
+        toast.success('Admin request approved successfully!');
+        fetchTabCounts();
+        setShowConfirmModal(false);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setActionLoading(prev => ({
+          ...prev,
+          promote: { ...prev.promote, [userId]: false }
+        }));
+      }
+    };
+
+    showConfirmation(
+      'Approve Admin Request',
+      'Are you sure you want to approve this admin request? They will be granted administrative access to the platform.',
+      performApprove,
+      {
+        confirmText: 'Approve',
+        confirmButtonClass: 'bg-green-500 hover:bg-green-600',
+        userId: userId
+      }
+    );
   };
 
-  const handleRejectAdmin = async (userId) => {
-    setActionLoading(prev => ({
-      ...prev,
-      demote: { ...prev.demote, [userId]: true }
-    }));
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reject/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentUserId: currentUser._id,
-          rootAdminPassword: 'Salendra@2004' // Root admin password
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to reject request');
-      }
-
-      setAdmins(prev => prev.map(admin =>
-        admin._id === userId
-          ? { ...admin, adminApprovalStatus: 'rejected', role: 'user' }
-          : admin
-      ));
-      if (selectedAccount && selectedAccount._id === userId) {
-        setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'rejected', role: 'user' }));
-      }
-      toast.success('Admin request rejected successfully!');
-      fetchTabCounts();
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
+  const handleRejectAdmin = (userId) => {
+    const performReject = async () => {
       setActionLoading(prev => ({
         ...prev,
-        demote: { ...prev.demote, [userId]: false }
+        demote: { ...prev.demote, [userId]: true }
       }));
-    }
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reject/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUserId: currentUser._id,
+            rootAdminPassword: 'Salendra@2004' // Root admin password
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to reject request');
+        }
+
+        setAdmins(prev => prev.map(admin =>
+          admin._id === userId
+            ? { ...admin, adminApprovalStatus: 'rejected', role: 'user' }
+            : admin
+        ));
+        if (selectedAccount && selectedAccount._id === userId) {
+          setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'rejected', role: 'user' }));
+        }
+        toast.success('Admin request rejected successfully!');
+        fetchTabCounts();
+        setShowConfirmModal(false);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setActionLoading(prev => ({
+          ...prev,
+          demote: { ...prev.demote, [userId]: false }
+        }));
+      }
+    };
+
+    showConfirmation(
+      'Reject Admin Request',
+      'Are you sure you want to reject this admin request? They will not be granted admin access.',
+      performReject,
+      {
+        confirmText: 'Reject',
+        confirmButtonClass: 'bg-red-500 hover:bg-red-600',
+        userId: userId
+      }
+    );
   };
 
   // Filter accounts based on search term and status (now handled on backend)
@@ -1796,11 +1824,11 @@ export default function AdminManagement() {
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap justify-center gap-8 animate-fadeIn">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-fadeIn w-full">
                     {filteredUsers.map((user, index) => (
                       <div
                         key={user._id}
-                        className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.334rem)] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-blue-200 dark:hover:border-blue-800"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-blue-200 dark:hover:border-blue-800"
                         onClick={() => handleAccountClick(user, 'user')}
                         title="Click to view full details"
                         style={{ animation: `staggerFadeIn 0.25s ease-out ${index * 0.03}s backwards` }}
@@ -1923,11 +1951,11 @@ export default function AdminManagement() {
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap justify-center gap-8 animate-fadeIn">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-fadeIn w-full">
                     {filteredAdmins.map((admin, index) => (
                       <div
                         key={admin._id}
-                        className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.334rem)] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-purple-200 dark:hover:border-purple-800"
+                        className="w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-purple-200 dark:hover:border-purple-800"
                         onClick={() => handleAccountClick(admin, 'admin')}
                         title="Click to view full details"
                         style={{ animation: `staggerFadeIn 0.25s ease-out ${index * 0.03}s backwards` }}
@@ -2596,11 +2624,14 @@ export default function AdminManagement() {
                     {(actionLoading.promote[confirmModalData.userId] || actionLoading.demote[confirmModalData.userId] || actionLoading.restore || actionLoading.purge || actionLoading.suspend[confirmModalData.userId] || actionLoading.softban) ? (
                       <>
                         <UrbanSetuSpinner size="sm" isBright={true} />
-                        {actionLoading.promote[confirmModalData.userId] ? 'Promoting...' :
-                          actionLoading.demote[confirmModalData.userId] ? 'Demoting...' :
-                            actionLoading.suspend[confirmModalData.userId] ? 'Activating...' :
-                              actionLoading.softban ? 'Processing...' :
-                                actionLoading.restore ? 'Restoring...' : 'Purging...'}
+                        {confirmModalData.confirmText === 'Promote' ? 'Promoting...' :
+                          confirmModalData.confirmText === 'Approve' ? 'Approving...' :
+                            confirmModalData.confirmText === 'Reject' ? 'Rejecting...' :
+                              confirmModalData.confirmText === 'Suspend' ? 'Suspending...' :
+                                confirmModalData.confirmText === 'Activate' ? 'Activating...' :
+                                  confirmModalData.confirmText === 'Softban' ? 'Softbanning...' :
+                                    confirmModalData.confirmText === 'Restore' ? 'Restoring...' :
+                                      confirmModalData.confirmText === 'Purge' ? 'Purging...' : 'Processing...'}
                       </>
                     ) : (
                       confirmModalData.confirmText

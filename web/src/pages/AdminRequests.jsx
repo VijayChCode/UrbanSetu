@@ -21,6 +21,22 @@ const AdminRequests = () => {
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalData, setConfirmModalData] = useState({
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    confirmButtonClass: 'bg-green-500 hover:bg-green-600',
+    userId: null
+  });
+  const [actionLoading, setActionLoading] = useState({
+    approve: {},
+    reject: {},
+    reapprove: {}
+  });
+
   useEffect(() => {
     // Wait for currentUser to be loaded
     if (!currentUser) {
@@ -53,103 +69,154 @@ const AdminRequests = () => {
     }
   };
 
-  const handleApprove = async (userId) => {
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/approve/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentUserId: currentUser._id,
-          rootAdminPassword: 'Salendra@2004' // Root admin password
-        }),
-      });
+  const handleApprove = (userId) => {
+    const performApprove = async () => {
+      setActionLoading(prev => ({ ...prev, approve: { ...prev.approve, [userId]: true } }));
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/approve/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUserId: currentUser._id,
+            rootAdminPassword: 'Salendra@2004' // Root admin password
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to approve request');
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to approve request');
+        }
+
+        // Update the request in the list
+        setAllRequests(prev => prev.map(request =>
+          request._id === userId
+            ? { ...request, adminApprovalStatus: 'approved', role: 'admin' }
+            : request
+        ));
+
+        // Show success message
+        toast.success('Admin request approved successfully!');
+        setShowConfirmModal(false);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setActionLoading(prev => ({ ...prev, approve: { ...prev.approve, [userId]: false } }));
       }
+    };
 
-      // Update the request in the list
-      setAllRequests(prev => prev.map(request =>
-        request._id === userId
-          ? { ...request, adminApprovalStatus: 'approved', role: 'admin' }
-          : request
-      ));
-
-      // Show success message
-      toast.success('Admin request approved successfully!');
-    } catch (error) {
-      toast.error(error.message);
-    }
+    setConfirmModalData({
+      title: 'Approve Admin Request',
+      message: 'Are you sure you want to approve this admin request? They will be granted administrative access to the platform.',
+      onConfirm: performApprove,
+      confirmText: 'Approve',
+      cancelText: 'Cancel',
+      confirmButtonClass: 'bg-green-500 hover:bg-green-600',
+      userId
+    });
+    setShowConfirmModal(true);
   };
 
-  const handleReject = async (userId) => {
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reject/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentUserId: currentUser._id,
-          rootAdminPassword: 'Salendra@2004' // Root admin password
-        }),
-      });
+  const handleReject = (userId) => {
+    const performReject = async () => {
+      setActionLoading(prev => ({ ...prev, reject: { ...prev.reject, [userId]: true } }));
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reject/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUserId: currentUser._id,
+            rootAdminPassword: 'Salendra@2004' // Root admin password
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to reject request');
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to reject request');
+        }
+
+        // Update the request in the list
+        setAllRequests(prev => prev.map(request =>
+          request._id === userId
+            ? { ...request, adminApprovalStatus: 'rejected', role: 'user' }
+            : request
+        ));
+
+        // Show success message
+        toast.success('Admin request rejected successfully!');
+        setShowConfirmModal(false);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setActionLoading(prev => ({ ...prev, reject: { ...prev.reject, [userId]: false } }));
       }
+    };
 
-      // Update the request in the list
-      setAllRequests(prev => prev.map(request =>
-        request._id === userId
-          ? { ...request, adminApprovalStatus: 'rejected', role: 'user' }
-          : request
-      ));
-
-      // Show success message
-      toast.success('Admin request rejected successfully!');
-    } catch (error) {
-      toast.error(error.message);
-    }
+    setConfirmModalData({
+      title: 'Reject Admin Request',
+      message: 'Are you sure you want to reject this admin request? They will not be granted admin access.',
+      onConfirm: performReject,
+      confirmText: 'Reject',
+      cancelText: 'Cancel',
+      confirmButtonClass: 'bg-red-500 hover:bg-red-600',
+      userId
+    });
+    setShowConfirmModal(true);
   };
 
-  const handleReapprove = async (userId) => {
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reapprove/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentUserId: currentUser._id,
-          rootAdminPassword: 'Salendra@2004' // Root admin password
-        }),
-      });
+  const handleReapprove = (userId) => {
+    const performReapprove = async () => {
+      setActionLoading(prev => ({ ...prev, reapprove: { ...prev.reapprove, [userId]: true } }));
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reapprove/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUserId: currentUser._id,
+            rootAdminPassword: 'Salendra@2004' // Root admin password
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to reapprove request');
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to reapprove request');
+        }
+
+        // Update the request in the list
+        setAllRequests(prev => prev.map(request =>
+          request._id === userId
+            ? { ...request, adminApprovalStatus: 'approved', role: 'admin' }
+            : request
+        ));
+
+        // Show success message
+        toast.success('Admin request reapproved successfully!');
+        setShowConfirmModal(false);
+      } catch (error) {
+        toast.error(error.message);
+      } finally {
+        setActionLoading(prev => ({ ...prev, reapprove: { ...prev.reapprove, [userId]: false } }));
       }
+    };
 
-      // Update the request in the list
-      setAllRequests(prev => prev.map(request =>
-        request._id === userId
-          ? { ...request, adminApprovalStatus: 'approved', role: 'admin' }
-          : request
-      ));
-
-      // Show success message
-      toast.success('Admin request reapproved successfully!');
-    } catch (error) {
-      toast.error(error.message);
-    }
+    setConfirmModalData({
+      title: 'Re-approve Admin Request',
+      message: 'Are you sure you want to re-approve this admin request? They will be granted administrative access again.',
+      onConfirm: performReapprove,
+      confirmText: 'Re-approve',
+      cancelText: 'Cancel',
+      confirmButtonClass: 'bg-blue-500 hover:bg-blue-600',
+      userId
+    });
+    setShowConfirmModal(true);
   };
 
   const formatDate = (dateString) => {
@@ -373,6 +440,42 @@ const AdminRequests = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md mx-4 animate-scale-in border border-white/20 dark:border-gray-700">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{confirmModalData.title}</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-8">{confirmModalData.message}</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="px-6 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all"
+                >
+                  {confirmModalData.cancelText}
+                </button>
+                <button
+                  onClick={() => confirmModalData.onConfirm && confirmModalData.onConfirm()}
+                  className={`px-6 py-2.5 rounded-xl text-white font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${confirmModalData.confirmButtonClass}`}
+                  disabled={actionLoading.approve[confirmModalData.userId] || actionLoading.reject[confirmModalData.userId] || actionLoading.reapprove[confirmModalData.userId]}
+                >
+                  {(actionLoading.approve[confirmModalData.userId] || actionLoading.reject[confirmModalData.userId] || actionLoading.reapprove[confirmModalData.userId]) ? (
+                    <>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      {actionLoading.approve[confirmModalData.userId] ? 'Approving...' :
+                        actionLoading.reject[confirmModalData.userId] ? 'Rejecting...' : 'Re-approving...'}
+                    </>
+                  ) : (
+                    confirmModalData.confirmText
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ContactSupportWrapper />
     </>
   );
