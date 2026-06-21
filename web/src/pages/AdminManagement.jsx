@@ -16,7 +16,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminManagement() {
   // Set page title
-  usePageTitle("Account Management - User & Admin Control");
+  usePageTitle("Account Management - Admin Control");
 
   const { currentUser } = useSelector((state) => state.user);
   const isRootOrDefault = currentUser?.isDefaultAdmin || currentUser?.role === 'rootadmin';
