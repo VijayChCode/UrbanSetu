@@ -1929,7 +1929,7 @@ export default function AdminManagement() {
                           >
                             <FaTrash /> Softban
                           </button>
-                          {isRootOrDefault && (
+                          {isRootOrDefault && user.adminApprovalStatus !== 'rejected' && (
                             <button
                               className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-purple-500 text-white hover:bg-purple-600 transition-all duration-200 flex items-center justify-center gap-2"
                               onClick={e => { e.stopPropagation(); handlePromote(user._id); }}
