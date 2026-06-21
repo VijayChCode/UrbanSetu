@@ -140,6 +140,7 @@ export default function Unsubscribe() {
     const [selectedReason, setSelectedReason] = useState('');
     const [otherReason, setOtherReason] = useState('');
     const [countdown, setCountdown] = useState(10);
+    const [verifying, setVerifying] = useState(true);
 
     useEffect(() => {
         if (view === 'thankyou' || view === 'already_unsubscribed') {
@@ -161,16 +162,42 @@ export default function Unsubscribe() {
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const emailParam = params.get('email');
         const tokenParam = params.get('token');
 
-        if (!emailParam || !tokenParam) {
+        if (!tokenParam) {
             setView('error');
-            setMessage('Invalid unsubscribe link. Missing email or security token.');
-        } else {
-            setEmail(emailParam);
-            setToken(tokenParam);
+            setMessage('Invalid unsubscribe link. Missing security token.');
+            setVerifying(false);
+            return;
         }
+
+        setToken(tokenParam);
+
+        const verifyToken = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/user/verify-unsubscribe-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: tokenParam }),
+                });
+                const data = await res.json();
+                if (res.ok && data.email) {
+                    setEmail(data.email);
+                } else {
+                    setView('error');
+                    setMessage(data.message || 'Invalid or expired security token.');
+                }
+            } catch (error) {
+                setView('error');
+                setMessage('A network error occurred. Please try again later.');
+            } finally {
+                setVerifying(false);
+            }
+        };
+
+        verifyToken();
     }, [location.search]);
 
     const handleUnsubscribe = async () => {
@@ -253,7 +280,20 @@ export default function Unsubscribe() {
                 <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/20 dark:border-slate-800/50 rounded-[2.5rem] shadow-2xl p-8 md:p-12 overflow-hidden relative">
 
                     <AnimatePresence mode="wait">
-                        {view === 'landing' && (
+                        {verifying ? (
+                            <motion.div
+                                key="verifying"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col items-center justify-center py-20 text-center"
+                            >
+                                <UrbanSetuSpinner size="lg" />
+                                <p className="text-slate-500 dark:text-slate-400 mt-6 font-medium text-lg">
+                                    Verifying secure link...
+                                </p>
+                            </motion.div>
+                        ) : view === 'landing' && (
                             <motion.div
                                 key="landing"
                                 initial={{ opacity: 0, x: 20 }}

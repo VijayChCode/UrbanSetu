@@ -1313,47 +1313,102 @@ export const downloadExportData = async (req, res, next) => {
     }
 };
 
+// Helper to resolve email from unsubscribe token
+const resolveEmailFromUnsubscribeToken = async (token) => {
+    if (!token) return null;
+    const { generateUnsubscribeToken } = await import("../utils/emailService.js");
+
+    // 1. Check User model
+    const users = await User.find({}).select('email');
+    for (const u of users) {
+        if (u.email && generateUnsubscribeToken(u.email) === token) {
+            return u.email;
+        }
+    }
+
+    // 2. Check Subscription model
+    const subscriptions = await Subscription.find({}).select('email');
+    for (const s of subscriptions) {
+        if (s.email && generateUnsubscribeToken(s.email) === token) {
+            return s.email;
+        }
+    }
+
+    return null;
+};
+
+// Verify unsubscribe token and return the resolved email
+export const verifyUnsubscribeToken = async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return next(errorHandler(400, "Token is required"));
+        }
+
+        const email = await resolveEmailFromUnsubscribeToken(token);
+        if (!email) {
+            return next(errorHandler(400, "Invalid unsubscribe token"));
+        }
+
+        res.status(200).json({
+            success: true,
+            email
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Unsubscribe user via token
 export const unsubscribeUser = async (req, res, next) => {
     try {
-        const { email, token } = req.body;
+        const { token } = req.body;
 
-        if (!email || !token) {
-            return next(errorHandler(400, "Email and token are required"));
+        if (!token) {
+            return next(errorHandler(400, "Token is required"));
         }
 
-        // Import generateUnsubscribeToken to verify
-        const { generateUnsubscribeToken } = await import("../utils/emailService.js");
-        const expectedToken = generateUnsubscribeToken(email);
+        const email = await resolveEmailFromUnsubscribeToken(token);
 
-        if (token !== expectedToken) {
+        if (!email) {
             return next(errorHandler(400, "Invalid unsubscribe token"));
         }
 
         const user = await User.findOne({ email });
 
-        if (!user) {
-            return next(errorHandler(404, "User not found"));
+        if (user) {
+            if (user.isSubscribed === false) {
+                const sub = await Subscription.findOne({ email });
+                if (!sub || sub.status === 'opted_out') {
+                    return res.status(200).json({
+                        success: true,
+                        message: "ALREADY_UNSUBSCRIBED"
+                    });
+                }
+            }
+            user.isSubscribed = false;
+            await user.save();
         }
 
-        if (user.isSubscribed === false) {
-            return res.status(200).json({
-                success: true,
-                message: "ALREADY_UNSUBSCRIBED"
-            });
-        }
-
-        user.isSubscribed = false;
-        await user.save();
-
-        // Sync with Subscription model if exists
-        await Subscription.findOneAndUpdate(
-            { email },
-            {
+        // Sync with Subscription model if exists (or create/update)
+        const existingSub = await Subscription.findOne({ email });
+        if (existingSub) {
+            if (existingSub.status === 'opted_out' && (!user || user.isSubscribed === false)) {
+                return res.status(200).json({
+                    success: true,
+                    message: "ALREADY_UNSUBSCRIBED"
+                });
+            }
+            existingSub.status = 'opted_out';
+            existingSub.statusUpdatedAt = new Date();
+            await existingSub.save();
+        } else {
+            await Subscription.create({
+                email,
                 status: 'opted_out',
                 statusUpdatedAt: new Date()
-            }
-        );
+            });
+        }
 
         res.status(200).json({
             success: true,
@@ -1367,17 +1422,15 @@ export const unsubscribeUser = async (req, res, next) => {
 // Submit unsubscribe reason
 export const submitUnsubscribeReason = async (req, res, next) => {
     try {
-        const { email, token, reason } = req.body;
+        const { token, reason } = req.body;
 
-        if (!email || !token || !reason) {
-            return next(errorHandler(400, "Email, token and reason are required"));
+        if (!token || !reason) {
+            return next(errorHandler(400, "Token and reason are required"));
         }
 
-        // Verify token again for security
-        const { generateUnsubscribeToken } = await import("../utils/emailService.js");
-        const expectedToken = generateUnsubscribeToken(email);
+        const email = await resolveEmailFromUnsubscribeToken(token);
 
-        if (token !== expectedToken) {
+        if (!email) {
             return next(errorHandler(400, "Invalid token"));
         }
 
@@ -1387,15 +1440,15 @@ export const submitUnsubscribeReason = async (req, res, next) => {
             { new: true }
         );
 
-        if (!user) {
-            return next(errorHandler(404, "User not found"));
-        }
-
-        // Also update reason in Subscription model if exists
-        await Subscription.findOneAndUpdate(
+        const sub = await Subscription.findOneAndUpdate(
             { email },
-            { rejectionReason: reason }
+            { rejectionReason: reason },
+            { new: true }
         );
+
+        if (!user && !sub) {
+            return next(errorHandler(404, "User/Subscription not found"));
+        }
 
         res.status(200).json({
             success: true,

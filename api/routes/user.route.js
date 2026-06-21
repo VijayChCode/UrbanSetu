@@ -1,5 +1,5 @@
 import express from 'express'
-import { test, updateUser, deleteUser, getUserListings, getUserSummary, getUserByEmail, changePassword, getApprovedAdmins, transferDefaultAdminRights, deleteUserAfterTransfer, verifyPassword, getAllUsersForAutocomplete, getUserByEmailForAssignment, checkEmailAvailability, checkMobileAvailability, exportData, searchUsers, downloadExportData, unsubscribeUser, toggleUserSubscription, submitUnsubscribeReason } from '../controllers/user.controller.js'
+import { test, updateUser, deleteUser, getUserListings, getUserSummary, getUserByEmail, changePassword, getApprovedAdmins, transferDefaultAdminRights, deleteUserAfterTransfer, verifyPassword, getAllUsersForAutocomplete, getUserByEmailForAssignment, checkEmailAvailability, checkMobileAvailability, exportData, searchUsers, downloadExportData, unsubscribeUser, toggleUserSubscription, submitUnsubscribeReason, verifyUnsubscribeToken } from '../controllers/user.controller.js'
 
 import { verifyToken } from '../utils/verify.js'
 import { dataExportRateLimit } from '../middleware/rateLimiter.js'
@@ -270,6 +270,7 @@ router.get("/search", verifyToken, searchUsers);
 
 // Unsubscribe routes
 router.post("/unsubscribe", unsubscribeUser);
+router.post("/verify-unsubscribe-token", verifyUnsubscribeToken);
 router.post("/submit-unsubscribe-reason", submitUnsubscribeReason);
 router.patch("/toggle-subscription/:id", verifyToken, toggleUserSubscription);
 
