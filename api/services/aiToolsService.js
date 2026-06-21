@@ -408,6 +408,38 @@ export const scheduleReminder = async ({
 };
 
 /**
+ * AI Tool: Get User Reminders
+ * Purpose: Allows the AI to fetch all reminders for the current user to answer questions about active or past reminders.
+ */
+export const getUserRemindersTool = async ({ userId }) => {
+    try {
+        if (!userId) {
+            return JSON.stringify({
+                success: false,
+                message: "User is not logged in. Reminders cannot be retrieved for guests."
+            });
+        }
+
+        const reminders = await Reminder.find({ userId }).sort({ scheduledTime: 1 });
+
+        return JSON.stringify({
+            success: true,
+            reminders: reminders.map(r => ({
+                id: r._id.toString(),
+                taskText: r.taskText,
+                scheduledTime: r.scheduledTime.toISOString(),
+                status: r.status,
+                emailSent: r.emailSent,
+                createdAt: r.createdAt.toISOString()
+            }))
+        });
+    } catch (error) {
+        console.error("Tool Error (getUserRemindersTool):", error);
+        return JSON.stringify({ success: false, error: "Failed to retrieve reminders." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
@@ -416,7 +448,8 @@ export const toolRegistry = {
     get_user_listings: getUserListings,
     sentinel_image_auditor: sentinelImageAuditor,
     search_blogs_and_guides: searchBlogsAndGuides,
-    schedule_reminder: scheduleReminder
+    schedule_reminder: scheduleReminder,
+    get_user_reminders: getUserRemindersTool
 };
 
 /**
@@ -551,6 +584,18 @@ export const toolDefinitions = [
                     }
                 },
                 required: ["reminderText", "scheduledTime"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "get_user_reminders",
+            description: "Retrieve all scheduled, triggered, and cancelled reminders for the current logged-in user. Use this when the user asks what active, scheduled, past, or cancelled reminders they have present in the system.",
+            parameters: {
+                type: "object",
+                properties: {},
+                required: []
             }
         }
     }

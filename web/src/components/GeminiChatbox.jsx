@@ -3358,7 +3358,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setTimeout(() => setSendIconAnimating(false), 800);
 
         let userMessage = inputMessage.trim();
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock/i.test(userMessage);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(userMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
         }
@@ -3566,6 +3566,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             }
                                             return updatedMessages;
                                         });
+                                    } else if (streamData.type === 'tool_call') {
+                                        if (streamData.name === 'schedule_reminder' || streamData.name === 'get_user_reminders') {
+                                            setIsCurrentRequestScheduler(true);
+                                        }
                                     } else if (streamData.type === 'done') {
                                         isStreamingComplete = true;
                                         streamingResponse = streamData.content;
@@ -3973,6 +3977,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         setIsLoading(true);
 
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(originalMessage);
+        if (isSchedulerRequest) {
+            setIsCurrentRequestScheduler(true);
+        }
+
         // Remove the error message
         setMessages(prev => prev.filter((_, index) => index !== messageIndex));
 
@@ -4089,6 +4098,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }]);
         } finally {
             setIsLoading(false);
+            setIsCurrentRequestScheduler(false);
         }
     };
 
@@ -4605,6 +4615,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         setIsLoading(true);
 
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(messageContent);
+        if (isSchedulerRequest) {
+            setIsCurrentRequestScheduler(true);
+        }
+
         try {
             const currentSessionId = getOrCreateSessionId();
             console.log('Sending edited message to SetuAI:', messageContent, 'Session:', currentSessionId);
@@ -4714,6 +4729,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }]);
         } finally {
             setIsLoading(false);
+            setIsCurrentRequestScheduler(false);
             abortControllerRef.current = null;
         }
     };
@@ -11700,6 +11716,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
                                                 { title: 'Multi-Modal', desc: 'Supports text, voice input, and image analysis.', icon: '🎤' },
                                                 { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
+                                                { title: 'AI Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time.', icon: '⏰' },
                                                 { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
                                             ].map((feat, i) => (
                                                 <div key={i} className={`p-4 rounded-xl border ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>

@@ -804,6 +804,24 @@ export const chatWithGemini = async (req, res) => {
         if (responseMessage.tool_calls) {
             console.log('🛠️ AI requested tool execution:', responseMessage.tool_calls.length);
 
+            if (enableStreaming === true || enableStreaming === 'true') {
+                if (!res.headersSent) {
+                    const origin = req.headers.origin || 'https://urbansetu.vercel.app';
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain; charset=utf-8',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Access-Control-Allow-Origin': origin,
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, HEAD',
+                        'Access-Control-Allow-Credentials': 'true'
+                    });
+                }
+                for (const toolCall of responseMessage.tool_calls) {
+                    res.write(`data: ${JSON.stringify({ type: 'tool_call', name: toolCall.function.name })}\n\n`);
+                }
+            }
+
             // Append the assistant's request to history
             messages.push(responseMessage);
 
@@ -881,15 +899,17 @@ export const chatWithGemini = async (req, res) => {
                 // ... logic for streaming ...
                 console.log('Streaming final response after tools...');
                 const origin = req.headers.origin || 'https://urbansetu.vercel.app';
-                res.writeHead(200, {
-                    'Content-Type': 'text/plain; charset=utf-8',
-                    'Cache-Control': 'no-cache',
-                    'Connection': 'keep-alive',
-                    'Access-Control-Allow-Origin': origin,
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, HEAD',
-                    'Access-Control-Allow-Credentials': 'true'
-                });
+                if (!res.headersSent) {
+                    res.writeHead(200, {
+                        'Content-Type': 'text/plain; charset=utf-8',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive',
+                        'Access-Control-Allow-Origin': origin,
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, HEAD',
+                        'Access-Control-Allow-Credentials': 'true'
+                    });
+                }
 
                 const stream = await groq.chat.completions.create(requestPayload);
                 let fullResponse = '';
