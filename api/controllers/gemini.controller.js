@@ -2102,3 +2102,61 @@ export const dismissReminder = async (req, res) => {
     }
 };
 
+// Create a new reminder manually
+export const createReminder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { reminderText, scheduledTime } = req.body;
+
+        if (!reminderText) {
+            return res.status(400).json({
+                success: false,
+                message: 'Reminder text is required'
+            });
+        }
+
+        if (!scheduledTime) {
+            return res.status(400).json({
+                success: false,
+                message: 'Scheduled time is required'
+            });
+        }
+
+        const targetTime = new Date(scheduledTime);
+        if (isNaN(targetTime.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid scheduled time format'
+            });
+        }
+
+        if (targetTime <= new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Scheduled time must be in the future'
+            });
+        }
+
+        const reminder = new Reminder({
+            userId,
+            taskText: reminderText,
+            scheduledTime: targetTime,
+            status: 'scheduled'
+        });
+
+        await reminder.save();
+
+        res.json({
+            success: true,
+            message: 'Reminder created successfully',
+            reminder
+        });
+    } catch (error) {
+        console.error('Failed to create reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create reminder'
+        });
+    }
+};
+

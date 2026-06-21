@@ -1,5 +1,5 @@
 import express from 'express';
-import { chatWithGemini, getUserChatSessions, rateMessage, getMessageRatings, createNewSession, deleteSession, deleteAllSessions, bookmarkMessage, removeBookmark, getBookmarkedMessages, getAllMessageRatings, deleteRating, getSmartSuggestions, updateSessionHistory, getPolicyStatus, getUserReminders, rescheduleReminder, deleteReminder, dismissReminder } from '../controllers/gemini.controller.js';
+import { chatWithGemini, getUserChatSessions, rateMessage, getMessageRatings, createNewSession, deleteSession, deleteAllSessions, bookmarkMessage, removeBookmark, getBookmarkedMessages, getAllMessageRatings, deleteRating, getSmartSuggestions, updateSessionHistory, getPolicyStatus, getUserReminders, rescheduleReminder, deleteReminder, dismissReminder, createReminder } from '../controllers/gemini.controller.js';
 import { optionalAuth, verifyToken } from '../utils/verify.js';
 import { aiChatRateLimit, getRateLimitStatus } from '../middleware/aiRateLimiter.js';
 import { cleanupOldChatData, getDataRetentionStats, cleanupUserData } from '../services/dataRetentionService.js';
@@ -152,6 +152,7 @@ router.post('/suggestions', optionalAuth, getSmartSuggestions);
 
 // AI Task Reminder Routes
 router.get('/reminders', verifyToken, getUserReminders);
+router.post('/reminders', verifyToken, createReminder);
 router.put('/reminders/:id/reschedule', verifyToken, rescheduleReminder);
 router.delete('/reminders/:id', verifyToken, deleteReminder);
 router.patch('/reminders/:id/dismiss', verifyToken, dismissReminder);

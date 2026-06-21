@@ -594,6 +594,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isLoadingReminders, setIsLoadingReminders] = useState(false);
     const [isRescheduling, setIsRescheduling] = useState(null);
     const [rescheduleDate, setRescheduleDate] = useState('');
+    const [isCreatingReminder, setIsCreatingReminder] = useState(false);
+    const [newReminderText, setNewReminderText] = useState('');
+    const [newReminderDate, setNewReminderDate] = useState('');
     const [chatSessions, setChatSessions] = useState([]);
     const [lifetimeUsage, setLifetimeUsage] = useState({ totalTokens: 0 });
     const [activeSessionTokens, setActiveSessionTokens] = useState(0);
@@ -680,6 +683,43 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } catch (err) {
             console.error("Error rescheduling reminder:", err);
             toast.error("Error rescheduling reminder");
+        }
+    };
+
+    const handleCreateReminder = async (text, time) => {
+        if (!text) {
+            toast.warn("Please enter a reminder description.");
+            return;
+        }
+        if (!time) {
+            toast.warn("Please select a valid date and time.");
+            return;
+        }
+        if (new Date(time) < new Date()) {
+            toast.warn("Cannot schedule a reminder in the past.");
+            return;
+        }
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reminderText: text, scheduledTime: time })
+            });
+            if (res.ok) {
+                toast.success("Reminder scheduled successfully");
+                fetchReminders();
+                setIsCreatingReminder(false);
+                setNewReminderText('');
+                setNewReminderDate('');
+            } else {
+                const errData = await res.json();
+                toast.error(errData.message || "Failed to schedule reminder");
+            }
+        } catch (err) {
+            console.error("Error creating reminder:", err);
+            toast.error("Error scheduling reminder");
         }
     };
 
@@ -9420,21 +9460,89 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <FaClock className="text-indigo-500" />
                                             Active Reminders
                                         </h4>
-                                        <button
-                                            onClick={fetchReminders}
-                                            disabled={isLoadingReminders}
-                                            className={`p-2 rounded-lg transition-all duration-200 ${isLoadingReminders
-                                                ? 'opacity-50 cursor-not-allowed'
-                                                : isDarkMode
-                                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                                                }`}
-                                            title="Refresh reminders"
-                                        >
-                                            <FaSync size={14} className={isLoadingReminders ? "animate-spin" : ""} />
-                                        </button>
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                onClick={() => {
+                                                    setIsCreatingReminder(!isCreatingReminder);
+                                                    setNewReminderText('');
+                                                    setNewReminderDate('');
+                                                }}
+                                                className={`p-1.5 rounded-lg transition-all duration-205 ${isCreatingReminder
+                                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                    : isDarkMode
+                                                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                                    }`}
+                                                title="Schedule a reminder manually"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={fetchReminders}
+                                                disabled={isLoadingReminders}
+                                                className={`p-1.5 rounded-lg transition-all duration-200 ${isLoadingReminders
+                                                    ? 'opacity-50 cursor-not-allowed'
+                                                    : isDarkMode
+                                                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                                                        : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                                    }`}
+                                                title="Refresh reminders"
+                                            >
+                                                <FaSync size={12} className={isLoadingReminders ? "animate-spin" : ""} />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="flex-1 overflow-y-auto pr-1">
+                                        {isCreatingReminder && (
+                                            <div className={`p-3.5 mb-4 border ${isDarkMode ? 'border-indigo-500/30 bg-indigo-950/20' : 'border-indigo-100 bg-indigo-50/40'} rounded-xl space-y-3`}>
+                                                <h5 className={`text-[10px] font-bold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'} uppercase tracking-wider`}>New Reminder</h5>
+                                                
+                                                <div className="space-y-1">
+                                                    <label className={`text-[10px] font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>What should we remind you of?</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. Call listing agent, Study physics..."
+                                                        value={newReminderText}
+                                                        onChange={(e) => setNewReminderText(e.target.value)}
+                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-905 border-gray-300 focus:ring-indigo-500'}`}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <label className={`text-[10px] font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>When?</label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={newReminderDate}
+                                                        onChange={(e) => setNewReminderDate(e.target.value)}
+                                                        min={getMinDateTime()}
+                                                        style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-905 border-gray-300 focus:ring-indigo-500'}`}
+                                                    />
+                                                </div>
+
+                                                <div className="flex gap-2 pt-1">
+                                                    <button
+                                                        onClick={() => handleCreateReminder(newReminderText, newReminderDate)}
+                                                        className="flex-1 text-xs py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 text-center"
+                                                    >
+                                                        Schedule
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsCreatingReminder(false);
+                                                            setNewReminderText('');
+                                                            setNewReminderDate('');
+                                                        }}
+                                                        className={`text-xs py-2 px-3 rounded-lg border font-semibold transition-colors ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                         {isLoadingReminders ? (
                                             <div className="flex flex-col items-center justify-center py-12 gap-3 animate-pulse">
                                                 <UrbanSetuSpinner />
@@ -11844,7 +11952,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
                                                 { title: 'Multi-Modal', desc: 'Supports text, voice input, and image analysis.', icon: '🎤' },
                                                 { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
-                                                { title: 'AI Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time.', icon: '⏰' },
+                                                { title: 'AI & Manual Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time via AI or manual creation.', icon: '⏰' },
                                                 { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
                                             ].map((feat, i) => (
                                                 <div key={i} className={`p-4 rounded-xl border ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
