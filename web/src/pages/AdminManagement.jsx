@@ -967,28 +967,51 @@ export default function AdminManagement() {
   };
 
   // Add this handler at the top-level of the component
-  const handleReapprove = async (adminId) => {
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/reapprove/${adminId}`, {
-        method: "PATCH",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setAdmins(prev => prev.map(a => a._id === adminId ? { ...a, adminApprovalStatus: 'approved', status: 'active' } : a));
-        toast.success("Admin re-approved successfully!");
-        socket.emit('admin_update', { type: 'update', admin: { ...data }, userId: adminId });
-        // Emit global signout event for the reapproved admin
-        socket.emit('force_signout', {
-          userId: adminId,
-          action: 'reapprove',
-          message: 'Your admin account has been re-approved. You have been signed out. Please sign in again to access admin features.'
+  const handleReapprove = (adminId) => {
+    const performReapprove = async () => {
+      setActionLoading(prev => ({
+        ...prev,
+        promote: { ...prev.promote, [adminId]: true }
+      }));
+      try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/reapprove/${adminId}`, {
+          method: "PATCH",
         });
-      } else {
-        toast.error(data.message || "Failed to re-approve admin");
+        const data = await res.json();
+        if (res.ok) {
+          setAdmins(prev => prev.map(a => a._id === adminId ? { ...a, adminApprovalStatus: 'approved', status: 'active', role: 'admin' } : a));
+          toast.success("Admin re-approved successfully!");
+          socket.emit('admin_update', { type: 'update', admin: { ...data }, userId: adminId });
+          // Emit global signout event for the reapproved admin
+          socket.emit('force_signout', {
+            userId: adminId,
+            action: 'reapprove',
+            message: 'Your admin account has been re-approved. You have been signed out. Please sign in again to access admin features.'
+          });
+          setShowConfirmModal(false);
+        } else {
+          toast.error(data.message || "Failed to re-approve admin");
+        }
+      } catch (err) {
+        toast.error("Failed to re-approve admin");
+      } finally {
+        setActionLoading(prev => ({
+          ...prev,
+          promote: { ...prev.promote, [adminId]: false }
+        }));
       }
-    } catch (err) {
-      toast.error("Failed to re-approve admin");
-    }
+    };
+
+    showConfirmation(
+      "Re-approve Admin Request",
+      "Are you sure you want to re-approve this admin request? They will be granted administrative access again.",
+      performReapprove,
+      {
+        confirmText: "Re-approve",
+        confirmButtonClass: "bg-blue-500 hover:bg-blue-600",
+        userId: adminId
+      }
+    );
   };
 
   const handleApproveAdmin = (userId) => {
@@ -2060,21 +2083,23 @@ export default function AdminManagement() {
                               >
                                 <FaTrash /> Softban
                               </button>
-                              <button
-                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
-                                onClick={e => { e.stopPropagation(); handleDemote(admin._id); }}
-                              >
-                                {actionLoading.demote[admin._id] ? (
-                                  <>
-                                    <UrbanSetuSpinner size="sm" isBright={true} />
-                                    Demoting...
-                                  </>
-                                ) : (
-                                  <>
-                                    <FaArrowDown /> Demote to User
-                                  </>
-                                )}
-                              </button>
+                              {admin.adminApprovalStatus !== 'rejected' && (
+                                <button
+                                  className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
+                                  onClick={e => { e.stopPropagation(); handleDemote(admin._id); }}
+                                >
+                                  {actionLoading.demote[admin._id] ? (
+                                    <>
+                                      <UrbanSetuSpinner size="sm" isBright={true} />
+                                      Demoting...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FaArrowDown /> Demote to User
+                                    </>
+                                  )}
+                                </button>
+                              )}
                               {isRootOrDefault && admin.adminApprovalStatus === 'rejected' && (
                                 <button
                                   className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
@@ -2638,7 +2663,8 @@ export default function AdminManagement() {
                                 confirmModalData.confirmText === 'Activate' ? 'Activating...' :
                                   confirmModalData.confirmText === 'Softban' ? 'Softbanning...' :
                                     confirmModalData.confirmText === 'Restore' ? 'Restoring...' :
-                                      confirmModalData.confirmText === 'Purge' ? 'Purging...' : 'Processing...'}
+                                      confirmModalData.confirmText === 'Purge' ? 'Purging...' :
+                                        confirmModalData.confirmText === 'Re-approve' ? 'Re-approving...' : 'Processing...'}
                       </>
                     ) : (
                       confirmModalData.confirmText

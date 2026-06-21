@@ -901,8 +901,10 @@ export const reapproveRejectedAdmin = async (req, res, next) => {
       return next(errorHandler(403, 'Access denied. Only default admin or root admin can re-approve admins.'));
     }
     const admin = await User.findById(adminId);
-    if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
-    if (admin.adminApprovalStatus !== 'rejected') return next(errorHandler(400, 'Only rejected admins can be re-approved.'));
+    if (!admin || (admin.role !== 'admin' && (admin.role !== 'user' || admin.adminApprovalStatus !== 'rejected'))) {
+      return next(errorHandler(404, 'Admin not found'));
+    }
+    admin.role = 'admin';
     admin.adminApprovalStatus = 'approved';
     admin.status = 'active';
     admin.adminApprovalDate = new Date();
