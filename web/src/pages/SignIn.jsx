@@ -813,7 +813,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                             <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-700 rounded-lg shadow-sm transition-all duration-300 ease-out transform ${loginMethod === "otp" ? "translate-x-full left-1" : "left-1"}`}></div>
                             <button
                                 type="button"
-                                disabled={authInProgress !== null || otpSent}
+                                disabled={authInProgress !== null}
                                 onClick={() => onTabClick("password")}
                                 className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold relative z-10 transition-colors duration-200 ${loginMethod === "password" ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"} disabled:opacity-50`}
                             >
