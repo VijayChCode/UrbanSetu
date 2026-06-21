@@ -1574,6 +1574,12 @@ io.on('connection', (socket) => {
         callId,
         startTime: startTimeTimestamp // Send exact timestamp for synchronization
       });
+
+      // Notify other sockets of receiver that call was accepted elsewhere
+      io.to(`user_${receiverId}`).emit('call-accepted-elsewhere', {
+        callId,
+        receiverSocketId: socket.id
+      });
     } catch (err) {
       console.error("Error accepting call:", err);
       socket.emit('call-error', { message: 'Failed to accept call' });
@@ -1642,11 +1648,11 @@ io.on('connection', (socket) => {
         call.endTime = new Date();
         await call.save();
 
-        const activeCall = activeCalls.get(callId);
-        if (activeCall) {
-          io.to(activeCall.callerSocketId).emit('call-rejected', { callId });
-          activeCalls.delete(callId);
-        }
+        // Notify both caller and receiver rooms to close incoming/calling modals on all tabs
+        io.to(`user_${call.callerId}`).emit('call-rejected', { callId });
+        io.to(`user_${call.receiverId}`).emit('call-rejected', { callId });
+
+        activeCalls.delete(callId);
       }
     } catch (err) {
       console.error("Error rejecting call:", err);
@@ -1666,12 +1672,11 @@ io.on('connection', (socket) => {
         call.endTime = new Date();
         await call.save();
 
-        const activeCall = activeCalls.get(callId);
-        if (activeCall) {
-          // Emit to receiver to close incoming call modal
-          io.to(`user_${call.receiverId}`).emit('call-cancelled', { callId });
-          activeCalls.delete(callId);
-        }
+        // Emit to both caller and receiver rooms to close modals on all tabs
+        io.to(`user_${call.receiverId}`).emit('call-cancelled', { callId });
+        io.to(`user_${call.callerId}`).emit('call-cancelled', { callId });
+        
+        activeCalls.delete(callId);
       }
     } catch (err) {
       console.error("Error cancelling call:", err);

@@ -296,11 +296,40 @@ export const useCall = () => {
         cleanupCall();
         setCallState(null);
         setActiveCall(null);
+      } else if (event.data.type === 'CALL_ACCEPTED_ELSEWHERE' && incomingCallRef.current?.callId === event.data.callId) {
+        console.log('[Call Sync] Call accepted on another tab, cleaning up ringing UI');
+        stopRingtone();
+        ringtoneSoundRef.current = null;
+        setIncomingCall(null);
+        setCallState(null);
+        setActiveCall(null);
+        setIsSyncingSummary(false);
+      } else if (event.data.type === 'CALL_REJECTED_ELSEWHERE' && incomingCallRef.current?.callId === event.data.callId) {
+        console.log('[Call Sync] Call rejected on another tab, cleaning up');
+        stopRingtone();
+        ringtoneSoundRef.current = null;
+        setIncomingCall(null);
+        setCallState(null);
+        setActiveCall(null);
+        setIsSyncingSummary(false);
+      } else if (event.data.type === 'CALL_CANCELLED_ELSEWHERE' && 
+                ((incomingCallRef.current && incomingCallRef.current.callId === event.data.callId) ||
+                 (activeCallRef.current && activeCallRef.current.callId === event.data.callId))) {
+        console.log('[Call Sync] Call cancelled on another tab');
+        stopRingtone();
+        stopCalling();
+        ringtoneSoundRef.current = null;
+        callingSoundRef.current = null;
+        cleanupCall();
+        setIncomingCall(null);
+        setCallState(null);
+        setActiveCall(null);
+        setIsSyncingSummary(false);
       }
     };
 
     return () => bc.close();
-  }, [activeCall?.callId]);
+  }, [activeCall?.callId, cleanupCall, stopCalling, stopRingtone]);
 
   // Socket initialization and session recovery
   useEffect(() => {
@@ -1121,6 +1150,20 @@ export const useCall = () => {
       }
     };
 
+    // Handle call accepted on another tab/device (receiver's other sockets)
+    const handleCallAcceptedElsewhere = (data) => {
+      if (incomingCallRef.current && incomingCallRef.current.callId === data.callId) {
+        console.log('[Call Sync] Call accepted elsewhere via socket, cleaning up ringing UI');
+        stopRingtone();
+        ringtoneSoundRef.current = null;
+        setIncomingCall(null);
+        incomingCallRef.current = null;
+        setCallState(null);
+        setActiveCall(null);
+        setIsSyncingSummary(false);
+      }
+    };
+
     const handleCallRejected = (data) => {
       // Use ref to get current value without dependency
       if (activeCallRef.current && activeCallRef.current.callId === data.callId) {
@@ -1130,10 +1173,15 @@ export const useCall = () => {
         endCall();
         toast.info('Call was rejected');
       }
-      // Stop ringtone when call is rejected (receiver side)
+      // Stop ringtone when call is rejected (receiver side - other tabs)
       if (incomingCallRef.current && incomingCallRef.current.callId === data.callId) {
         stopRingtone();
         ringtoneSoundRef.current = null;
+        setIncomingCall(null);
+        incomingCallRef.current = null;
+        setCallState(null);
+        setActiveCall(null);
+        setIsSyncingSummary(false);
       }
     };
 
@@ -1220,6 +1268,7 @@ export const useCall = () => {
     socket.on('peer-reconnecting', handlePeerReconnecting);
     socket.on('peer-resumed', handlePeerResumed);
     socket.on('call-accepted', handleCallAccepted);
+    socket.on('call-accepted-elsewhere', handleCallAcceptedElsewhere);
     socket.on('call-rejected', handleCallRejected);
     socket.on('call-ended', handleCallEnded);
     socket.on('call-missed', handleCallMissed);
@@ -1330,6 +1379,7 @@ export const useCall = () => {
       socket.off('peer-reconnecting', handlePeerReconnecting);
       socket.off('peer-resumed', handlePeerResumed);
       socket.off('call-accepted', handleCallAccepted);
+      socket.off('call-accepted-elsewhere', handleCallAcceptedElsewhere);
       socket.off('call-rejected', handleCallRejected);
       socket.off('call-ended', handleCallEnded);
       socket.off('call-missed', handleCallMissed);
@@ -1687,6 +1737,13 @@ export const useCall = () => {
       setPreCallMuted(false);
       setPreCallVideoOff(false);
 
+      // Broadcast to other same-device tabs that this call was accepted here
+      try {
+        const bc = new BroadcastChannel('urbansetu_call_sync');
+        bc.postMessage({ type: 'CALL_ACCEPTED_ELSEWHERE', callId: savedCallId, senderTabId: tabIdRef.current });
+        bc.close();
+      } catch (e) { /* BroadcastChannel not supported */ }
+
       // Notify caller about receiver's initial media state if pre-call preferences were set
       if (receiverMuted || receiverVideoOff) {
         setTimeout(() => {
@@ -1720,8 +1777,16 @@ export const useCall = () => {
     // Play end call sound when rejecting call
     playEndCall();
     if (incomingCall) {
-      socket.emit('call-reject', { callId: incomingCall.callId });
+      const rejectedCallId = incomingCall.callId;
+      socket.emit('call-reject', { callId: rejectedCallId });
       setIncomingCall(null);
+
+      // Broadcast to other same-device tabs that this call was rejected here
+      try {
+        const bc = new BroadcastChannel('urbansetu_call_sync');
+        bc.postMessage({ type: 'CALL_REJECTED_ELSEWHERE', callId: rejectedCallId, senderTabId: tabIdRef.current });
+        bc.close();
+      } catch (e) { /* BroadcastChannel not supported */ }
     }
     endCall();
   };
@@ -1752,6 +1817,13 @@ export const useCall = () => {
 
     if (currentActiveCall?.callId && (currentCallState === 'initiating' || currentCallState === 'ringing')) {
       socket.emit('call-cancel', { callId: currentActiveCall.callId });
+
+      // Broadcast to other same-device tabs that the call was cancelled
+      try {
+        const bc = new BroadcastChannel('urbansetu_call_sync');
+        bc.postMessage({ type: 'CALL_CANCELLED_ELSEWHERE', callId: currentActiveCall.callId, senderTabId: tabIdRef.current });
+        bc.close();
+      } catch (e) { /* BroadcastChannel not supported */ }
     }
 
     // If user ends call, we'll get final duration from API response below
