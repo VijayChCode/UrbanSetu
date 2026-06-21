@@ -2379,7 +2379,7 @@ export default function AdminManagement() {
                           </span>
                         </div>
 
-                        {selectedAccount?.adminApprovalStatus === 'pending' && (
+                        {isRootOrDefault && selectedAccount?.adminApprovalStatus === 'pending' && (
                           <div className="flex gap-2 w-full mt-2 border-b border-gray-100 dark:border-gray-700/60 pb-3 md:pb-4">
                             <button
                               onClick={() => handleApproveAdmin(selectedAccount._id)}
