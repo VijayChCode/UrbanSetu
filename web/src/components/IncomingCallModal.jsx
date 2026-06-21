@@ -73,14 +73,15 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
     };
   }, [call?.callId]); // Only re-run when callId changes
 
-  // Attach video preview to ref
-  useEffect(() => {
-    if (videoPreviewRef.current && previewStream && call?.callType === 'video') {
-      videoPreviewRef.current.srcObject = previewStream;
-      videoPreviewRef.current.muted = true;
-      videoPreviewRef.current.play().catch(() => {});
+  // Callback ref to attach stream - fires every time the video element mounts/unmounts
+  const videoRefCallback = (el) => {
+    videoPreviewRef.current = el;
+    if (el && previewStream) {
+      el.srcObject = previewStream;
+      el.muted = true;
+      el.play().catch(() => {});
     }
-  }, [previewStream, call?.callType]);
+  };
 
   // Sync preCallMuted/preCallVideoOff to preview stream tracks
   useEffect(() => {
@@ -153,7 +154,7 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
           <div className="relative mb-4 rounded-xl overflow-hidden bg-black aspect-video max-h-[200px] sm:max-h-[240px]">
             {previewStream && hasVideoTrack && !preCallVideoOff ? (
               <video
-                ref={videoPreviewRef}
+                ref={videoRefCallback}
                 autoPlay
                 playsInline
                 muted
