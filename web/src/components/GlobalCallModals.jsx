@@ -4,6 +4,7 @@ import { useCallContext } from '../contexts/CallContext';
 import IncomingCallModal from './IncomingCallModal';
 import ActiveCallModal from './ActiveCallModal';
 import OngoingCallBar from './OngoingCallBar';
+import IncomingCallBubble from './IncomingCallBubble';
 import MicLevelBar from './MicLevelBar';
 import axios from 'axios';
 
@@ -63,7 +64,15 @@ const GlobalCallModals = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [appointmentData, setAppointmentData] = useState(null);
   const [loadingAppointment, setLoadingAppointment] = useState(false);
+  const [isIncomingMinimized, setIsIncomingMinimized] = useState(false);
   const callerVideoPreviewRef = useRef(null);
+
+  // Reset incoming minimized state when incoming call changes
+  useEffect(() => {
+    if (!incomingCall) {
+      setIsIncomingMinimized(false);
+    }
+  }, [incomingCall]);
 
   // Fetch appointment data when active call or incoming call changes
   useEffect(() => {
@@ -152,15 +161,29 @@ const GlobalCallModals = () => {
   return (
     <>
       {/* Incoming Call Modal - Shows on any page */}
-      <IncomingCallModal
-        call={incomingCall}
-        onAccept={acceptCall}
-        onReject={rejectCall}
-        preCallMuted={preCallMuted}
-        preCallVideoOff={preCallVideoOff}
-        setPreCallMuted={setPreCallMuted}
-        setPreCallVideoOff={setPreCallVideoOff}
-      />
+      {/* Incoming Call Modal - only when NOT minimized */}
+      {!isIncomingMinimized && (
+        <IncomingCallModal
+          call={incomingCall}
+          onAccept={() => { setIsIncomingMinimized(false); acceptCall(); }}
+          onReject={() => { setIsIncomingMinimized(false); rejectCall(); }}
+          onIgnore={() => setIsIncomingMinimized(true)}
+          preCallMuted={preCallMuted}
+          preCallVideoOff={preCallVideoOff}
+          setPreCallMuted={setPreCallMuted}
+          setPreCallVideoOff={setPreCallVideoOff}
+        />
+      )}
+
+      {/* Floating Draggable Bubble for minimized incoming call */}
+      {incomingCall && isIncomingMinimized && (
+        <IncomingCallBubble
+          callType={incomingCall.callType}
+          callerName={incomingCall.callerName}
+          onOpen={() => setIsIncomingMinimized(false)}
+          onReject={() => { setIsIncomingMinimized(false); rejectCall(); }}
+        />
+      )}
 
       {/* Active Call Modal - Only shows when not minimized */}
       {(callState === 'active' || callState === 'ended') && activeCall && !isMinimized && (

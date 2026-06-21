@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { FaPhone, FaVideo, FaTimes } from 'react-icons/fa';
 import MicLevelBar from './MicLevelBar';
 
-const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVideoOff, setPreCallMuted, setPreCallVideoOff }) => {
+const IncomingCallModal = ({ call, onAccept, onReject, onIgnore, preCallMuted, preCallVideoOff, setPreCallMuted, setPreCallVideoOff }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [ringing, setRinging] = useState(false);
   const [previewStream, setPreviewStream] = useState(null);
@@ -358,6 +358,16 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
             <FaPhone className="text-2xl sm:text-3xl" />
           </button>
         </div>
+
+        {/* Ignore button */}
+        {onIgnore && (
+          <button
+            onClick={onIgnore}
+            className="mt-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-sm font-medium transition-colors duration-200 hover:underline"
+          >
+            Ignore
+          </button>
+        )}
       </div>
     </div>
   );
