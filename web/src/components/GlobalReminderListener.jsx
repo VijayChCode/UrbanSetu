@@ -10,6 +10,11 @@ export default function GlobalReminderListener() {
   const [activeReminder, setActiveReminder] = useState(null);
   const audioRef = useRef(null);
   const timeoutRef = useRef(null);
+  const activeReminderRef = useRef(null);
+
+  useEffect(() => {
+    activeReminderRef.current = activeReminder;
+  }, [activeReminder]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -52,10 +57,29 @@ export default function GlobalReminderListener() {
       }, 60000);
     };
 
+    const handleReminderDismissed = (data) => {
+      console.log('Reminder dismissed from another tab:', data);
+      if (activeReminderRef.current && activeReminderRef.current.reminderId === data.reminderId) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        setActiveReminder(null);
+        window.activeRingingReminderId = null;
+        window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+      }
+    };
+
     socket.on('reminder_triggered', handleReminderTriggered);
+    socket.on('reminder_dismissed', handleReminderDismissed);
 
     return () => {
       socket.off('reminder_triggered', handleReminderTriggered);
+      socket.off('reminder_dismissed', handleReminderDismissed);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;

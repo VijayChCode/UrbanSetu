@@ -2090,6 +2090,13 @@ export const dismissReminder = async (req, res) => {
         reminder.status = 'dismissed';
         await reminder.save();
 
+        // Notify all user tabs via WebSocket to stop ringing
+        const io = req.app.get('io');
+        if (io) {
+            console.log(`🗣️ Socket: Emitting reminder_dismissed to user ${userId} for reminder ${id}`);
+            io.to(userId.toString()).emit('reminder_dismissed', { reminderId: id });
+        }
+
         res.json({
             success: true,
             message: 'Reminder dismissed successfully',
