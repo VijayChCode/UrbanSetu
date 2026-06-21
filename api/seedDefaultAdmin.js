@@ -8,7 +8,7 @@ dotenv.config();
 const seedDefaultAdmin = async () => {
   try {
     // Connect to MongoDB
-    await mongoose.connect("mongodb+srv://Rajashekar:Rajashekar@mern-estate.kzrjh.mongodb.net/mern-estate?retryWrites=true&w=majority&appName=mern-estate&tls=true&tlsAllowInvalidCertificates=true");
+    await mongoose.connect(process.env.MONGO);
     console.log('Connected to MongoDB');
 
     // Check if default admin already exists
