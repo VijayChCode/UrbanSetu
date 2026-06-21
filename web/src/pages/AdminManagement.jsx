@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle, FaCoins, FaComments, FaMapMarkedAlt, FaChartLine, FaCreditCard, FaHeart, FaEye, FaClock, FaUnlockAlt } from "react-icons/fa";
+import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle, FaCoins, FaComments, FaMapMarkedAlt, FaChartLine, FaCreditCard, FaHeart, FaEye, FaClock, FaUnlockAlt, FaSync } from "react-icons/fa";
 import { getErrorCode } from "../utils/errorRegistry";
 import { socket } from "../utils/socket";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
@@ -1449,14 +1449,7 @@ export default function AdminManagement() {
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 hover:scale-[1.03] disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200 inline-flex items-center gap-2 border border-blue-500/20"
               title="Refresh all account data"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 24 24" 
-                fill="currentColor" 
-                className={`w-4 h-4 transition-transform duration-700 ${refreshing ? "animate-spin" : ""}`}
-              >
-                <path d="M12 6V3L8 7l4 4V8c2.757 0 5 2.243 5 5a5 5 0 11-9.9-1H5.026A7 7 0 1019 13c0-3.86-3.141-7-7-7z" />
-              </svg>
+              <FaSync className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
               <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
           </div>
