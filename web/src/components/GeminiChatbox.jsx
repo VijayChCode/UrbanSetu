@@ -399,6 +399,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [activeRetryMenu, setActiveRetryMenu] = useState(null);
     const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
     const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
+    const [deleteReminderId, setDeleteReminderId] = useState(null);
     const [sessionId, setSessionId] = useState(null);
     const [currentChatName, setCurrentChatName] = useState('');
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -683,9 +684,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDeleteReminder = async (id) => {
-        if (!window.confirm("Are you sure you want to cancel this reminder?")) {
-            return;
-        }
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${id}`, {
                 method: 'DELETE'
@@ -9504,7 +9502,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                     Reschedule
                                                                                 </button>
                                                                                 <button
-                                                                                    onClick={() => handleDeleteReminder(reminder._id)}
+                                                                                    onClick={() => setDeleteReminderId(reminder._id)}
                                                                                     className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-red-900/30 hover:bg-red-800 text-red-300' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
                                                                                 >
                                                                                     Cancel
@@ -12696,6 +12694,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             )}
 
             {/* Confirmation Modals */}
+            <ConfirmationModal
+                isOpen={deleteReminderId !== null}
+                onClose={() => setDeleteReminderId(null)}
+                onConfirm={() => {
+                    if (deleteReminderId) {
+                        handleDeleteReminder(deleteReminderId);
+                    }
+                }}
+                title="Cancel Reminder"
+                message="Are you sure you want to cancel this reminder?"
+                confirmText="Cancel Reminder"
+                cancelText="Keep Reminder"
+                isDestructive={true}
+            />
             <ConfirmationModal
                 isOpen={showUnsavedSettingsModal}
                 onClose={() => setShowUnsavedSettingsModal(false)}
