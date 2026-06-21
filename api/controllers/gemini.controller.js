@@ -2071,3 +2071,34 @@ export const deleteReminder = async (req, res) => {
     }
 };
 
+// Dismiss a triggered reminder
+export const dismissReminder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const reminder = await Reminder.findOne({ _id: id, userId });
+        if (!reminder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reminder not found or unauthorized'
+            });
+        }
+
+        reminder.status = 'dismissed';
+        await reminder.save();
+
+        res.json({
+            success: true,
+            message: 'Reminder dismissed successfully',
+            reminder
+        });
+    } catch (error) {
+        console.error('Failed to dismiss reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to dismiss reminder'
+        });
+    }
+};
+

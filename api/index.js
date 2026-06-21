@@ -7,6 +7,7 @@ import listingRouter from './routes/listing.route.js'
 import bookingRouter from "./routes/booking.route.js";
 import { registerUserAppointmentsSocket } from './routes/booking.route.js';
 import Booking from './models/booking.model.js';
+import Reminder from './models/reminder.model.js';
 import aboutRouter from "./routes/about.route.js";
 import adminRouter from "./routes/admin.route.js";
 import contactRouter from "./routes/contact.route.js";
@@ -813,6 +814,24 @@ io.on('connection', (socket) => {
     socket.join(`user_${userIdStr}`);
 
     io.emit('userOnlineUpdate', { userId, online: true });
+
+    // Check for triggered reminders that haven't been dismissed/acknowledged yet
+    try {
+      const pendingReminders = await Reminder.find({
+        userId: userIdStr,
+        status: 'triggered'
+      });
+      for (const reminder of pendingReminders) {
+        console.log(`🗣️ Socket connection: Emitting missed triggered reminder for user ${userIdStr}: "${reminder.taskText}"`);
+        socket.emit('reminder_triggered', {
+          reminderId: reminder._id.toString(),
+          taskText: reminder.taskText,
+          scheduledTime: reminder.scheduledTime.toISOString()
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching pending triggered reminders on presence pulse:', err);
+    }
 
     // CHECK FOR EXISTING ACTIVE CALLS (Persistence/Recovery)
     for (const [callId, activeCall] of activeCalls.entries()) {

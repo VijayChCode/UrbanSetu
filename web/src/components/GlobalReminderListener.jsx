@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { socket } from '../utils/socket';
 import { useSelector } from 'react-redux';
 import { FaClock, FaVolumeMute } from 'react-icons/fa';
+import { authenticatedFetch } from '../utils/auth';
+import { API_BASE_URL } from '../config/api';
 
 export default function GlobalReminderListener() {
   const currentUser = useSelector(state => state.user.currentUser);
@@ -43,12 +45,23 @@ export default function GlobalReminderListener() {
     };
   }, [currentUser]);
 
-  const handleDismiss = () => {
+  const handleDismiss = async () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    const reminderId = activeReminder?.reminderId;
     setActiveReminder(null);
+
+    if (reminderId) {
+      try {
+        await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${reminderId}/dismiss`, {
+          method: 'PATCH'
+        });
+      } catch (err) {
+        console.error('Failed to dismiss reminder in DB:', err);
+      }
+    }
   };
 
   if (!activeReminder) return null;
