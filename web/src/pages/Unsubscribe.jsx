@@ -64,7 +64,7 @@ function DragSlider({ onConfirm, loading }) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         style={{ opacity: textOpacity }}
-                        className="absolute inset-0 flex items-center justify-center gap-3 text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wide pointer-events-none select-none"
+                        className="absolute inset-0 pl-16 pr-4 flex items-center justify-start sm:justify-center gap-2 sm:gap-3 text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wide pointer-events-none select-none whitespace-nowrap"
                     >
                         <span>Swipe to Unsubscribe</span>
                         
