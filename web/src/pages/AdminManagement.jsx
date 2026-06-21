@@ -261,8 +261,10 @@ export default function AdminManagement() {
     }
   };
 
-  const fetchData = async () => {
-    setInitialLoading(true);
+  const fetchData = async (isInitial = false) => {
+    if (isInitial) {
+      setInitialLoading(true);
+    }
     try {
       await fetchTabCounts();
       
@@ -306,7 +308,7 @@ export default function AdminManagement() {
 
   useEffect(() => {
     if (!currentUser?._id) return;
-    fetchData();
+    fetchData(true);
   }, [currentUser?._id]);
 
   // Debounce search term
