@@ -1018,6 +1018,20 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               <li>
                 <div
                   className="cursor-pointer transition-transform duration-300 hover:scale-110 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-3 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in"
+                  onClick={() => {
+                    const event = new CustomEvent('openRemindersModal');
+                    window.dispatchEvent(event);
+                    if (onNavigate) onNavigate();
+                  }}
+                  title="My Reminders"
+                >
+                  <FaClock className="text-lg text-indigo-500" />
+                  <span>My Reminders</span>
+                </div>
+              </li>
+              <li>
+                <div
+                  className="cursor-pointer transition-transform duration-300 hover:scale-110 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 flex items-center gap-3 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in"
                   onClick={() => { navigate("/user/settings"); if (onNavigate) onNavigate(); }}
                   title="Settings"
                 >
