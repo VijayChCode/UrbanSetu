@@ -1054,6 +1054,10 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
                         type={showCPassword ? 'text' : 'password'}
                         placeholder="Confirm your password"
                         onChange={handleChange}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          toast.warn("Pasting is disabled in the Confirm Password field to prevent typos.");
+                        }}
                         disabled={authInProgress === 'google' || loading}
                         startIcon={<Lock className="w-5 h-5 text-gray-400" />}
                         endAdornment={
