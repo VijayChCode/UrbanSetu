@@ -1995,7 +1995,12 @@ export default function AdminManagement() {
                             })()}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:gap-2">
+                        {admin.adminApprovalStatus === 'pending' && (
+                          <div className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 mt-4 px-1 uppercase tracking-wider">
+                            Admin Approval:
+                          </div>
+                        )}
+                        <div className={`flex flex-col gap-2 ${admin.adminApprovalStatus === 'pending' ? 'mt-2' : 'mt-4'} sm:flex-row sm:gap-2`}>
                           {admin.adminApprovalStatus === 'pending' ? (
                             <>
                               <button
@@ -2310,18 +2315,57 @@ export default function AdminManagement() {
                     </div>
 
                     {selectedAccount?.type === 'admin' && (
-                      <div className="flex items-center justify-between text-xs md:text-sm">
-                        <span className="text-gray-500 dark:text-gray-400 font-medium">Admin Approval Status:</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          selectedAccount?.adminApprovalStatus === 'pending'
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                            : selectedAccount?.adminApprovalStatus === 'approved'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                        }`}>
-                          {selectedAccount?.adminApprovalStatus || 'pending'}
-                        </span>
-                      </div>
+                      <>
+                        <div className="flex items-center justify-between text-xs md:text-sm">
+                          <span className="text-gray-500 dark:text-gray-400 font-medium">Admin Approval Status:</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            selectedAccount?.adminApprovalStatus === 'pending'
+                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                              : selectedAccount?.adminApprovalStatus === 'approved'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                          }`}>
+                            {selectedAccount?.adminApprovalStatus || 'pending'}
+                          </span>
+                        </div>
+
+                        {selectedAccount?.adminApprovalStatus === 'pending' && (
+                          <div className="flex gap-2 w-full mt-2 border-b border-gray-100 dark:border-gray-700/60 pb-3 md:pb-4">
+                            <button
+                              onClick={() => handleApproveAdmin(selectedAccount._id)}
+                              disabled={actionLoading.promote[selectedAccount._id]}
+                              className="flex-1 py-1.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
+                            >
+                              {actionLoading.promote[selectedAccount._id] ? (
+                                <>
+                                  <UrbanSetuSpinner size="sm" isBright={true} />
+                                  Approve
+                                </>
+                              ) : (
+                                <>
+                                  <span>✓</span> Approve
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleRejectAdmin(selectedAccount._id)}
+                              disabled={actionLoading.demote[selectedAccount._id]}
+                              className="flex-1 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
+                            >
+                              {actionLoading.demote[selectedAccount._id] ? (
+                                <>
+                                  <UrbanSetuSpinner size="sm" isBright={true} />
+                                  Reject
+                                </>
+                              ) : (
+                                <>
+                                  <span>✕</span> Reject
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Subscription Toggle */}
@@ -2338,43 +2382,6 @@ export default function AdminManagement() {
                         {subscriptionLoading ? '...' : (selectedAccount?.isSubscribed !== false ? 'Unsubscribe' : 'Subscribe')}
                       </button>
                     </div>
-
-                    {selectedAccount?.type === 'admin' && selectedAccount?.adminApprovalStatus === 'pending' && (
-                      <div className="flex gap-2 w-full mt-2">
-                        <button
-                          onClick={() => handleApproveAdmin(selectedAccount._id)}
-                          disabled={actionLoading.promote[selectedAccount._id]}
-                          className="flex-1 py-1.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
-                        >
-                          {actionLoading.promote[selectedAccount._id] ? (
-                            <>
-                              <UrbanSetuSpinner size="sm" isBright={true} />
-                              Approve
-                            </>
-                          ) : (
-                            <>
-                              <span>✓</span> Approve
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleRejectAdmin(selectedAccount._id)}
-                          disabled={actionLoading.demote[selectedAccount._id]}
-                          className="flex-1 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
-                        >
-                          {actionLoading.demote[selectedAccount._id] ? (
-                            <>
-                              <UrbanSetuSpinner size="sm" isBright={true} />
-                              Reject
-                            </>
-                          ) : (
-                            <>
-                              <span>✕</span> Reject
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
 
