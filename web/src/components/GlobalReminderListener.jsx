@@ -74,12 +74,31 @@ export default function GlobalReminderListener() {
       }
     };
 
+    const handleReminderSnoozed = (data) => {
+      console.log('Reminder snoozed from another tab:', data);
+      if (activeReminderRef.current && activeReminderRef.current.reminderId === data.reminderId) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        setActiveReminder(null);
+        window.activeRingingReminderId = null;
+        window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+      }
+    };
+
     socket.on('reminder_triggered', handleReminderTriggered);
     socket.on('reminder_dismissed', handleReminderDismissed);
+    socket.on('reminder_snoozed', handleReminderSnoozed);
 
     return () => {
       socket.off('reminder_triggered', handleReminderTriggered);
       socket.off('reminder_dismissed', handleReminderDismissed);
+      socket.off('reminder_snoozed', handleReminderSnoozed);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -118,6 +137,35 @@ export default function GlobalReminderListener() {
     }
   };
 
+  const handleSnooze = async () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    const reminderId = activeReminder?.reminderId;
+    setActiveReminder(null);
+    window.activeRingingReminderId = null;
+    window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+
+    if (reminderId) {
+      try {
+        await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${reminderId}/snooze`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ minutes: 5 }) // nominal snooze time of 5 minutes
+        });
+      } catch (err) {
+        console.error('Failed to snooze reminder in DB:', err);
+      }
+    }
+  };
+
   if (!activeReminder) return null;
 
   return (
@@ -146,14 +194,23 @@ export default function GlobalReminderListener() {
             This task was scheduled for <span className="text-indigo-300 font-semibold">{new Date(activeReminder.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>.
           </p>
 
-          {/* Dismiss button */}
-          <button
-            onClick={handleDismiss}
-            className="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white rounded-2xl font-bold transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-          >
-            <FaVolumeMute size={18} />
-            <span>Dismiss Alarm</span>
-          </button>
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            <button
+              onClick={handleSnooze}
+              className="flex-1 py-3 px-4 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+            >
+              <FaClock size={16} />
+              <span>Snooze (5m)</span>
+            </button>
+            <button
+              onClick={handleDismiss}
+              className="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white rounded-2xl font-bold transition-all shadow-lg hover:shadow-indigo-500/25 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+            >
+              <FaVolumeMute size={16} />
+              <span>Dismiss Alarm</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -17,7 +17,7 @@ const reminderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['scheduled', 'triggered', 'cancelled', 'dismissed'],
+      enum: ['scheduled', 'triggered', 'cancelled', 'dismissed', 'snoozed'],
       default: 'scheduled',
     },
     emailSent: {

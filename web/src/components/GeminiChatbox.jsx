@@ -9576,8 +9576,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         ) : reminders.length === 0 ? (
                                             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No reminders found</p>
                                         ) : (() => {
-                                            const activeReminders = reminders.filter(r => r.status === 'scheduled');
-                                            const pastReminders = reminders.filter(r => r.status !== 'scheduled');
+                                            const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed');
+                                            const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed');
                                             
                                             const activeTotalPages = Math.ceil(activeReminders.length / 3) || 1;
                                             const currentActivePage = Math.min(activePage, activeTotalPages);
@@ -9602,6 +9602,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         <div className="flex items-start justify-between gap-2 mb-1">
                                                                             <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} flex-1`}>
                                                                                 {reminder.taskText}
+                                                                                {reminder.status === 'snoozed' && (
+                                                                                    <span className="ml-2 inline-block text-[9px] px-1.5 py-0.5 rounded font-semibold bg-indigo-100/60 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">Snoozed</span>
+                                                                                )}
                                                                             </div>
                                                                             {ringingReminderId === reminder._id && (
                                                                                 <FaBell className="text-red-500 animate-ring-bell flex-shrink-0 mt-0.5" size={14} title="Ringing" />

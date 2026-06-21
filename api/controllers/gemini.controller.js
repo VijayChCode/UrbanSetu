@@ -2111,6 +2111,48 @@ export const dismissReminder = async (req, res) => {
     }
 };
 
+// Snooze a triggered reminder for a nominal amount of time (e.g. 5 minutes)
+export const snoozeReminder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+        const snoozeMinutes = req.body.minutes || 5; // Default to 5 minutes snooze
+
+        const reminder = await Reminder.findOne({ _id: id, userId });
+        if (!reminder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reminder not found or unauthorized'
+            });
+        }
+
+        // Set status to 'snoozed' and schedule time in the future
+        reminder.status = 'snoozed';
+        reminder.scheduledTime = new Date(Date.now() + snoozeMinutes * 60 * 1000);
+        reminder.emailSent = false; // Allow sending email notification again if triggered
+        await reminder.save();
+
+        // Notify all user tabs via WebSocket to stop ringing
+        const io = req.app.get('io');
+        if (io) {
+            console.log(`🗣️ Socket: Emitting reminder_snoozed to user ${userId} for reminder ${id}`);
+            io.to(userId.toString()).emit('reminder_snoozed', { reminderId: id, scheduledTime: reminder.scheduledTime });
+        }
+
+        res.json({
+            success: true,
+            message: 'Reminder snoozed successfully',
+            reminder
+        });
+    } catch (error) {
+        console.error('Failed to snooze reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to snooze reminder'
+        });
+    }
+};
+
 // Create a new reminder manually
 export const createReminder = async (req, res) => {
     try {

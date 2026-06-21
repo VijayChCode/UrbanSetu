@@ -275,9 +275,9 @@ const scheduleUserTaskReminders = (app) => {
   cron.schedule('* * * * *', async () => {
     try {
       const now = new Date();
-      // Find all scheduled reminders that are due
+      // Find all scheduled or snoozed reminders that are due
       const dueReminders = await Reminder.find({
-        status: 'scheduled',
+        status: { $in: ['scheduled', 'snoozed'] },
         scheduledTime: { $lte: now }
       });
 
