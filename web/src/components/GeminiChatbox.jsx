@@ -595,6 +595,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [pastPage, setPastPage] = useState(1);
     const [ringingReminderId, setRingingReminderId] = useState(window.activeRingingReminderId || null);
     const [isLoadingReminders, setIsLoadingReminders] = useState(false);
+    const [isSchedulingReminder, setIsSchedulingReminder] = useState(false);
     const [isRescheduling, setIsRescheduling] = useState(null);
     const [rescheduleDate, setRescheduleDate] = useState('');
     const [isCreatingReminder, setIsCreatingReminder] = useState(false);
@@ -711,6 +712,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             toast.warn("Cannot schedule a reminder in the past.");
             return;
         }
+        setIsSchedulingReminder(true);
         try {
             const utcTime = new Date(time).toISOString();
             const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders`, {
@@ -733,6 +735,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } catch (err) {
             console.error("Error creating reminder:", err);
             toast.error("Error scheduling reminder");
+        } finally {
+            setIsSchedulingReminder(false);
         }
     };
 
@@ -9522,7 +9526,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         placeholder="e.g. Call listing agent, Study physics..."
                                                         value={newReminderText}
                                                         onChange={(e) => setNewReminderText(e.target.value)}
-                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-905 border-gray-300 focus:ring-indigo-500'}`}
+                                                        disabled={isSchedulingReminder}
+                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-905 border-gray-300 focus:ring-indigo-500'} ${isSchedulingReminder ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     />
                                                 </div>
 
@@ -9533,17 +9538,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         value={newReminderDate}
                                                         onChange={(e) => setNewReminderDate(e.target.value)}
                                                         min={getMinDateTime()}
+                                                        disabled={isSchedulingReminder}
                                                         style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
-                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-905 border-gray-300 focus:ring-indigo-500'}`}
+                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-905 border-gray-300 focus:ring-indigo-500'} ${isSchedulingReminder ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     />
                                                 </div>
 
                                                 <div className="flex gap-2 pt-1">
                                                     <button
                                                         onClick={() => handleCreateReminder(newReminderText, newReminderDate)}
-                                                        className="flex-1 text-xs py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 text-center"
+                                                        disabled={isSchedulingReminder}
+                                                        className={`flex-1 text-xs py-2 px-3 rounded-lg bg-indigo-600 text-white font-bold transition-all shadow-md shadow-indigo-600/10 text-center ${isSchedulingReminder ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700 hover:shadow-indigo-600/20'}`}
                                                     >
-                                                        Schedule
+                                                        {isSchedulingReminder ? 'Scheduling...' : 'Schedule'}
                                                     </button>
                                                     <button
                                                         onClick={() => {
@@ -9551,7 +9558,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             setNewReminderText('');
                                                             setNewReminderDate('');
                                                         }}
-                                                        className={`text-xs py-2 px-3 rounded-lg border font-semibold transition-colors ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`}
+                                                        disabled={isSchedulingReminder}
+                                                        className={`text-xs py-2 px-3 rounded-lg border font-semibold transition-colors ${isSchedulingReminder ? 'opacity-50 cursor-not-allowed' : ''} ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`}
                                                     >
                                                         Cancel
                                                     </button>
