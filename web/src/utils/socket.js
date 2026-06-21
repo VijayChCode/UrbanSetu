@@ -149,90 +149,12 @@ socket.on('forceLogoutSession', ({ sessionId, reason }) => {
 
 // Function to reconnect socket with new token (call after login/logout)
 export function reconnectSocket() {
-  if (socket && socket.connected) {
-    socket.disconnect();
-  }
-  // Only log reconnection if there's a token (login) to reduce noise
   const token = getToken();
   if (token) {
     console.log('[Socket] reconnecting with token');
   }
-  socket = io(SOCKET_URL, {
-    auth: {
-      token: token,
-    },
-    withCredentials: true,
-    transports: ['websocket'],
-  });
-
-  // Add socket event listeners for debugging
-  socket.on('connect', () => {
-    // Only log reconnection if there's a token (login) to reduce noise
-    if (token) {
-      console.log('[Socket] Reconnected to server');
-    }
-    registerSessionRoom();
-    registerUserRoom();
-
-    // Re-register user room after reconnection
-    if (token) {
-      try {
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1]));
-          if (payload.id) {
-            socket.emit('registerUser', { userId: payload.id });
-          }
-        }
-      } catch (e) {
-        // Token parsing failed
-      }
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('[Socket] Disconnected from server');
-  });
-
-  socket.on('connect_error', (error) => {
-    console.log('[Socket] Connection error:', error);
-
-    // If token expired, try to refresh or ask user to sign in
-    if (error.message && (error.message.includes('expired') || error.message.includes('jwt'))) {
-      console.log('[Socket] Token expired, attempting to refresh...');
-      
-      refreshAccessToken().then(newToken => {
-        if (newToken) {
-          console.log('[Socket] Token refreshed successfully, reconnecting...');
-          socket.auth = { token: newToken };
-          socket.connect();
-        } else {
-          console.log('[Socket] Refresh failed, clearing auth');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('sessionId');
-          document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-        }
-      });
-    }
-  });
-
-  socket.on('forceLogout', ({ reason }) => {
-    console.log('[Socket] Force logout received:', reason);
-    try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); clearAllSentinelData(); } catch (_) { }
-    document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-    document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
-    document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
-    window.location.href = '/sign-in?error=forced_logout';
-  });
-  socket.on('forceLogoutSession', ({ sessionId, reason }) => {
-    const current = (document.cookie.split('; ').find(r => r.startsWith('session_id='))?.split('=')[1]) || null;
-    if (current && sessionId && current === sessionId) {
-      console.log('[Socket] Targeted force logout for this session:', reason);
-      try { localStorage.removeItem('accessToken'); localStorage.removeItem('sessionId'); clearAllSentinelData(); } catch (_) { }
-      document.cookie = 'access_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      document.cookie = 'refresh_token=; Max-Age=0; path=/; SameSite=None; Secure';
-      document.cookie = 'session_id=; Max-Age=0; path=/; SameSite=None; Secure';
-      window.location.href = '/sign-in?error=forced_logout';
-    }
-  });
+  if (socket) {
+    socket.auth = { token };
+    socket.disconnect().connect();
+  }
 } 

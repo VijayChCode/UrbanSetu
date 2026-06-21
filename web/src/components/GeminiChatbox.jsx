@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -591,6 +591,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showHistory, setShowHistory] = useState(false);
     const [showReminders, setShowReminders] = useState(false);
     const [reminders, setReminders] = useState([]);
+    const [activePage, setActivePage] = useState(1);
+    const [pastPage, setPastPage] = useState(1);
+    const [ringingReminderId, setRingingReminderId] = useState(window.activeRingingReminderId || null);
     const [isLoadingReminders, setIsLoadingReminders] = useState(false);
     const [isRescheduling, setIsRescheduling] = useState(null);
     const [rescheduleDate, setRescheduleDate] = useState('');
@@ -635,6 +638,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         };
         window.addEventListener('openRemindersModal', handleOpenReminders);
         return () => window.removeEventListener('openRemindersModal', handleOpenReminders);
+    }, []);
+
+    useEffect(() => {
+        const handleReminderRinging = (event) => {
+            setRingingReminderId(event.detail.reminderId);
+        };
+        window.addEventListener('reminderRinging', handleReminderRinging);
+        return () => window.removeEventListener('reminderRinging', handleReminderRinging);
     }, []);
 
     const fetchReminders = async () => {
@@ -745,6 +756,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     useEffect(() => {
         if (showReminders && currentUser) {
+            setActivePage(1);
+            setPastPage(1);
             fetchReminders();
         }
     }, [showReminders, currentUser]);
@@ -9557,16 +9570,34 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         ) : (() => {
                                             const activeReminders = reminders.filter(r => r.status === 'scheduled');
                                             const pastReminders = reminders.filter(r => r.status !== 'scheduled');
+                                            
+                                            const activeTotalPages = Math.ceil(activeReminders.length / 3) || 1;
+                                            const currentActivePage = Math.min(activePage, activeTotalPages);
+                                            const activePageItems = activeReminders.slice((currentActivePage - 1) * 3, currentActivePage * 3);
+
+                                            const pastTotalPages = Math.ceil(pastReminders.length / 3) || 1;
+                                            const currentPastPage = Math.min(pastPage, pastTotalPages);
+                                            const pastPageItems = pastReminders.slice((currentPastPage - 1) * 3, currentPastPage * 3);
+
                                             return (
                                                 <div className="space-y-4">
                                                     {activeReminders.length > 0 && (
                                                         <div className="space-y-2">
                                                             <h5 className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Active Reminders</h5>
                                                             <div className="space-y-3">
-                                                                {activeReminders.map((reminder) => (
-                                                                    <div key={reminder._id} className={`p-3 border ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'} rounded-lg transition-all duration-200 hover:shadow-md`}>
-                                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
-                                                                            {reminder.taskText}
+                                                                {activePageItems.map((reminder, idx) => (
+                                                                    <div 
+                                                                        key={`${reminder._id}_active_page_${currentActivePage}_${idx}`} 
+                                                                        className={`p-3 border ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'} rounded-lg transition-all duration-200 hover:shadow-md animate-reminder-item`}
+                                                                        style={{ animationDelay: `${idx * 0.03}s` }}
+                                                                    >
+                                                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                                                            <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} flex-1`}>
+                                                                                {reminder.taskText}
+                                                                            </div>
+                                                                            {ringingReminderId === reminder._id && (
+                                                                                <FaBell className="text-red-500 animate-ring-bell flex-shrink-0 mt-0.5" size={14} title="Ringing" />
+                                                                            )}
                                                                         </div>
                                                                         <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3`}>
                                                                             <FaCalendarAlt size={12} className="text-indigo-400" />
@@ -9622,14 +9653,41 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     </div>
                                                                 ))}
                                                             </div>
+                                                            {activeTotalPages > 1 && (
+                                                                <div className="flex items-center justify-between mt-2 pt-1">
+                                                                    <span className={`text-[10px] ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                        Page {currentActivePage} of {activeTotalPages}
+                                                                    </span>
+                                                                    <div className="flex gap-1.5">
+                                                                        <button
+                                                                            onClick={() => setActivePage(prev => Math.max(1, prev - 1))}
+                                                                            disabled={currentActivePage === 1}
+                                                                            className={`p-1 rounded ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700' : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                                        >
+                                                                            <FaChevronLeft size={10} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => setActivePage(prev => Math.min(activeTotalPages, prev + 1))}
+                                                                            disabled={currentActivePage === activeTotalPages}
+                                                                            className={`p-1 rounded ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700' : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                                        >
+                                                                            <FaChevronRight size={10} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     {pastReminders.length > 0 && (
                                                         <div className="space-y-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
                                                             <h5 className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Past & Cancelled</h5>
                                                             <div className="space-y-3">
-                                                                {pastReminders.map((reminder) => (
-                                                                    <div key={reminder._id} className={`p-3 border ${isDarkMode ? 'border-gray-750 bg-gray-900/20' : 'border-gray-150 bg-gray-50/50'} rounded-lg opacity-60 hover:opacity-85 transition-all duration-200`}>
+                                                                {pastPageItems.map((reminder, idx) => (
+                                                                    <div 
+                                                                        key={`${reminder._id}_past_page_${currentPastPage}_${idx}`} 
+                                                                        className={`p-3 border ${isDarkMode ? 'border-gray-750 bg-gray-900/20' : 'border-gray-150 bg-gray-50/50'} rounded-lg opacity-60 hover:opacity-85 transition-all duration-200 animate-reminder-item`}
+                                                                        style={{ animationDelay: `${idx * 0.03}s` }}
+                                                                    >
                                                                         <div className="flex items-start justify-between gap-2 mb-1">
                                                                             <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${reminder.status === 'cancelled' ? 'line-through decoration-gray-500/45' : ''}`}>
                                                                                 {reminder.taskText}
@@ -9647,6 +9705,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     </div>
                                                                 ))}
                                                             </div>
+                                                            {pastTotalPages > 1 && (
+                                                                <div className="flex items-center justify-between mt-2 pt-1">
+                                                                    <span className={`text-[10px] ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                        Page {currentPastPage} of {pastTotalPages}
+                                                                    </span>
+                                                                    <div className="flex gap-1.5">
+                                                                        <button
+                                                                            onClick={() => setPastPage(prev => Math.max(1, prev - 1))}
+                                                                            disabled={currentPastPage === 1}
+                                                                            className={`p-1 rounded ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700' : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                                        >
+                                                                            <FaChevronLeft size={10} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => setPastPage(prev => Math.min(pastTotalPages, prev + 1))}
+                                                                            disabled={currentPastPage === pastTotalPages}
+                                                                            className={`p-1 rounded ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700' : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                                        >
+                                                                            <FaChevronRight size={10} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -11193,6 +11274,35 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }
                 .animate-fadeIn { animation: fadeIn 0.25s ease-out; }
                 .animate-slideUp { animation: slideUp 0.28s ease-out; }
+
+                @keyframes reminderFadeIn {
+                  from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+                .animate-reminder-item {
+                  animation: reminderFadeIn 0.25s ease-out both;
+                }
+
+                @keyframes ring-bell {
+                  0%, 100% { transform: rotate(0); }
+                  15% { transform: rotate(15deg); }
+                  30% { transform: rotate(-15deg); }
+                  45% { transform: rotate(10deg); }
+                  60% { transform: rotate(-10deg); }
+                  75% { transform: rotate(4deg); }
+                  90% { transform: rotate(-4deg); }
+                }
+                .animate-ring-bell {
+                  animation: ring-bell 1.5s infinite;
+                  transform-origin: top center;
+                  display: inline-block;
+                }
                 
                 @keyframes bandwidth {
                   0%, 100% { opacity: 0.4; transform: scale(0.9) rotate(20deg); }

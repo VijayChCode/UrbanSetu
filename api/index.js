@@ -762,6 +762,25 @@ io.on('connection', (socket) => {
     }
   } catch (_) { }
 
+  // Check for triggered reminders on initial handshake connection
+  if (socket.user) {
+    const userIdStr = socket.user._id.toString();
+    Reminder.find({ userId: userIdStr, status: 'triggered' })
+      .then(pendingReminders => {
+        for (const reminder of pendingReminders) {
+          console.log(`🗣️ Handshake Connection: Emitting missed triggered reminder for user ${userIdStr}: "${reminder.taskText}"`);
+          socket.emit('reminder_triggered', {
+            reminderId: reminder._id.toString(),
+            taskText: reminder.taskText,
+            scheduledTime: reminder.scheduledTime.toISOString()
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching pending triggered reminders on connection:', err);
+      });
+  }
+
   // Allow clients to explicitly register their user room with validation
   socket.on('registerUser', ({ userId }) => {
     if (userId) {
@@ -773,6 +792,22 @@ io.on('connection', (socket) => {
       // Join both room formats for compatibility (userId and user_${userId})
       socket.join(userIdStr);
       socket.join(`user_${userIdStr}`);
+
+      // Deliver triggered reminders on explicit user registration
+      Reminder.find({ userId: userIdStr, status: 'triggered' })
+        .then(pendingReminders => {
+          for (const reminder of pendingReminders) {
+            console.log(`🗣️ User Registration: Emitting missed triggered reminder for user ${userIdStr}: "${reminder.taskText}"`);
+            socket.emit('reminder_triggered', {
+              reminderId: reminder._id.toString(),
+              taskText: reminder.taskText,
+              scheduledTime: reminder.scheduledTime.toISOString()
+            });
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching pending triggered reminders on registerUser:', err);
+        });
     }
   });
   // Broadcast forced logout to a specific session

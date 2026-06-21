@@ -32,6 +32,8 @@ export default function GlobalReminderListener() {
       audioRef.current = audio;
 
       setActiveReminder(data);
+      window.activeRingingReminderId = data.reminderId;
+      window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: data.reminderId, isRinging: true } }));
     };
 
     socket.on('reminder_triggered', handleReminderTriggered);
@@ -42,6 +44,8 @@ export default function GlobalReminderListener() {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      window.activeRingingReminderId = null;
+      window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
     };
   }, [currentUser]);
 
@@ -52,6 +56,8 @@ export default function GlobalReminderListener() {
     }
     const reminderId = activeReminder?.reminderId;
     setActiveReminder(null);
+    window.activeRingingReminderId = null;
+    window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
 
     if (reminderId) {
       try {
