@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaFileContract, FaEye, FaMapSigns, FaList, FaHeart, FaMoneyCheckAlt, FaCalendarAlt, FaSignOutAlt, FaStar, FaBars, FaTimes, FaTrash, FaTools, FaRoute, FaDownload, FaMobile, FaBookOpen, FaQuestionCircle, FaUsers, FaCrown } from "react-icons/fa";
+import { FaSearch, FaHome, FaInfoCircle, FaCompass, FaPlus, FaFileContract, FaEye, FaMapSigns, FaList, FaHeart, FaMoneyCheckAlt, FaCalendarAlt, FaSignOutAlt, FaStar, FaBars, FaTimes, FaTrash, FaTools, FaRoute, FaDownload, FaMobile, FaBookOpen, FaQuestionCircle, FaUsers, FaCrown, FaClock } from "react-icons/fa";
 import UserAvatar from "./UserAvatar";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -1117,6 +1117,18 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
                       >
                         <User className="text-blue-500 w-4 h-4 group-hover:scale-110 transition-transform" />
                         <span>My Profile</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          const event = new CustomEvent('openRemindersModal');
+                          window.dispatchEvent(event);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 font-medium group text-gray-700 dark:text-gray-300 border border-transparent hover:border-gray-200/50 dark:hover:border-gray-700/50"
+                      >
+                        <FaClock className="text-indigo-500 w-4 h-4 group-hover:scale-110 transition-transform" />
+                        <span>My Reminders</span>
                       </button>
 
                       <button

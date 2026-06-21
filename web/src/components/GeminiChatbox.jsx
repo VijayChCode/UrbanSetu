@@ -574,6 +574,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     }, []);
 
     // Reminders Operations
+    const getMinDateTime = () => {
+        const now = new Date();
+        const offset = now.getTimezoneOffset();
+        const localNow = new Date(now.getTime() - (offset * 60 * 1000));
+        return localNow.toISOString().slice(0, 16);
+    };
+
+    useEffect(() => {
+        const handleOpenReminders = () => {
+            setIsOpen(true);
+            setShowReminders(true);
+        };
+        window.addEventListener('openRemindersModal', handleOpenReminders);
+        return () => window.removeEventListener('openRemindersModal', handleOpenReminders);
+    }, []);
+
     const fetchReminders = async () => {
         setIsLoadingReminders(true);
         try {
@@ -595,6 +611,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const handleReschedule = async (id, newTime) => {
         if (!newTime) {
             toast.warn("Please select a valid date and time.");
+            return;
+        }
+        if (new Date(newTime) < new Date()) {
+            toast.warn("Cannot reschedule to a past date or time.");
             return;
         }
         try {
@@ -9289,7 +9309,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     type="datetime-local"
                                                                     value={rescheduleDate}
                                                                     onChange={(e) => setRescheduleDate(e.target.value)}
-                                                                    className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-850 text-white border-gray-700 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
+                                                                    min={getMinDateTime()}
+                                                                    style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                                                                    className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
                                                                 />
                                                                 <div className="flex gap-2">
                                                                     <button
