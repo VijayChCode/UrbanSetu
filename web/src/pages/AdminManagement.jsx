@@ -1831,7 +1831,7 @@ export default function AdminManagement() {
           </div>
           {tab === "admins" && (
             <div className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-              ℹ️ Info: Rejected admin accounts are treated as regular users until they are re-approved.
+              ℹ️ Info: Rejected admin accounts are treated as regular users until they are re-approved and shown in both User and Admin tabs.
             </div>
           )}
         </div>

@@ -20,12 +20,9 @@ export const getManagementTabCounts = async (req, res, next) => {
     }
     const isRoot = currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin;
 
-    // Users count (exclude rejected admins - they should appear in admins tab)
+    // Users count (include rejected admins)
     const usersCount = await User.countDocuments({
-      $and: [
-        { $or: [ { role: 'user' }, { role: { $exists: false } } ] },
-        { adminApprovalStatus: { $ne: 'rejected' } }
-      ]
+      $or: [ { role: 'user' }, { role: { $exists: false } } ]
     });
 
     // Admins count (include rejected admins who have adminApprovalStatus='rejected')
@@ -74,11 +71,10 @@ export const getManagementUsers = async (req, res, next) => {
     }
 
     const { page = 1, limit = 12, q, status, promoSubscription } = req.query;
-    // Exclude rejected admins from users list - they appear in admins tab
+    // Include rejected admins in users list - they appear in both tabs
     const query = {
       $and: [
-        { $or: [ { role: 'user' }, { role: { $exists: false } } ] },
-        { adminApprovalStatus: { $ne: 'rejected' } }
+        { $or: [ { role: 'user' }, { role: { $exists: false } } ] }
       ]
     };
 
