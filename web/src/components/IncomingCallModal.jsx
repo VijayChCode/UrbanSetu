@@ -6,6 +6,7 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
   const [isVisible, setIsVisible] = useState(false);
   const [ringing, setRinging] = useState(false);
   const [previewStream, setPreviewStream] = useState(null);
+  const [previewError, setPreviewError] = useState(null); // { type: 'no-permission' | 'no-device' | 'generic', message: string }
   const videoPreviewRef = useRef(null);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
         previewStream.getTracks().forEach(track => track.stop());
         setPreviewStream(null);
       }
+      setPreviewError(null);
       return;
     }
 
@@ -41,11 +43,23 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!cancelled) {
           setPreviewStream(stream);
+          setPreviewError(null);
         } else {
           stream.getTracks().forEach(track => track.stop());
         }
       } catch (err) {
         console.warn('[IncomingCallModal] Could not acquire preview stream:', err.name);
+        if (!cancelled) {
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            setPreviewError({ type: 'no-permission', message: 'Media permission denied' });
+          } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            setPreviewError({ type: 'no-device', message: call.callType === 'video' ? 'No camera/mic found' : 'No microphone found' });
+          } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+            setPreviewError({ type: 'in-use', message: 'Device is in use by another app' });
+          } else {
+            setPreviewError({ type: 'generic', message: 'Could not access media devices' });
+          }
+        }
       }
     };
 
@@ -103,6 +117,8 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
   if (!call || !isVisible) return null;
 
   const isVideoCall = call.callType === 'video';
+  const hasVideoTrack = previewStream && previewStream.getVideoTracks().length > 0;
+  const hasAudioTrack = previewStream && previewStream.getAudioTracks().length > 0;
 
   return (
     <div 
@@ -135,7 +151,7 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
         {/* Video Preview (Video calls only) */}
         {isVideoCall && (
           <div className="relative mb-4 rounded-xl overflow-hidden bg-black aspect-video max-h-[200px] sm:max-h-[240px]">
-            {previewStream && !preCallVideoOff ? (
+            {previewStream && hasVideoTrack && !preCallVideoOff ? (
               <video
                 ref={videoPreviewRef}
                 autoPlay
@@ -145,14 +161,39 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
-                <svg className="w-12 h-12 text-gray-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/>
-                </svg>
-                <span className="text-gray-500 text-xs">Camera off</span>
+                {previewError ? (
+                  <>
+                    <svg className="w-10 h-10 text-amber-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span className="text-amber-400 text-xs font-medium">{previewError.message}</span>
+                    <span className="text-gray-600 text-[10px] mt-1">You can still accept the call</span>
+                  </>
+                ) : preCallVideoOff ? (
+                  <>
+                    <svg className="w-12 h-12 text-gray-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"/>
+                    </svg>
+                    <span className="text-gray-500 text-xs">Camera off</span>
+                  </>
+                ) : !hasVideoTrack && previewStream ? (
+                  <>
+                    <svg className="w-10 h-10 text-amber-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-amber-400 text-xs font-medium">No camera detected</span>
+                    <span className="text-gray-600 text-[10px] mt-1">Audio still works</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-8 h-8 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <span className="text-gray-500 text-xs">Loading preview...</span>
+                  </>
+                )}
               </div>
             )}
             {/* Mic level overlay on video */}
-            {previewStream && (
+            {hasAudioTrack && (
               <div className="absolute bottom-2 left-2 bg-black/50 rounded-lg px-2 py-1 flex items-center gap-1.5">
                 <svg className={`w-3 h-3 ${preCallMuted ? 'text-red-400' : 'text-white'}`} fill="currentColor" viewBox="0 0 24 24">
                   {preCallMuted ? (
@@ -209,12 +250,28 @@ const IncomingCallModal = ({ call, onAccept, onReject, preCallMuted, preCallVide
         </div>
 
         {/* Audio call mic level bar */}
-        {!isVideoCall && previewStream && (
+        {!isVideoCall && (
           <div className="mb-4 flex flex-col items-center gap-1">
-            <MicLevelBar stream={previewStream} barCount={7} height="28px" theme="light" muted={preCallMuted} />
-            <span className={`text-[10px] font-medium ${preCallMuted ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
-              {preCallMuted ? 'Mic muted' : 'Your mic'}
-            </span>
+            {hasAudioTrack ? (
+              <>
+                <MicLevelBar stream={previewStream} barCount={7} height="28px" theme="light" muted={preCallMuted} />
+                <span className={`text-[10px] font-medium ${preCallMuted ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+                  {preCallMuted ? 'Mic muted' : 'Your mic'}
+                </span>
+              </>
+            ) : previewError ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span className="text-amber-600 dark:text-amber-400 text-[11px] font-medium">{previewError.message}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-gray-400 dark:text-gray-500 text-[11px]">Checking mic...</span>
+              </div>
+            )}
           </div>
         )}
 
