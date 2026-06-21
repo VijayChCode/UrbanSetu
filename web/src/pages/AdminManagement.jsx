@@ -1331,7 +1331,7 @@ export default function AdminManagement() {
         <div className="text-sm text-gray-500 dark:text-gray-400">
           Showing <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.min(totalItems, (currentPage - 1) * limit + 1)}</span> to{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.min(totalItems, currentPage * limit)}</span> of{" "}
-          <span className="font-semibold text-gray-700 dark:text-gray-300">{totalItems}</span> records
+          <span className="font-semibold text-gray-700 dark:text-gray-300">{totalItems}</span> accounts
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -1617,7 +1617,6 @@ export default function AdminManagement() {
           </div>
         </div>
 
-        (
           <>
             {(tab === "users") && (
               <div>
@@ -1875,7 +1874,9 @@ export default function AdminManagement() {
             {tab === 'softbanned' && (
               <div className="mt-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Softbanned Accounts ({softbannedTotal})</h2>
-                {softbannedAccounts.length === 0 ? (
+                {softbannedLoading ? (
+                  <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
+                ) : softbannedAccounts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm animate-fadeIn">
                     <div className="text-6xl mb-4">🕵️</div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
@@ -1956,7 +1957,9 @@ export default function AdminManagement() {
             {tab === 'purged' && (
               <div className="mt-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Purged Accounts (Permanently Removed) ({purgedTotal})</h2>
-                {purgedAccounts.length === 0 ? (
+                {purgedLoading ? (
+                  <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
+                ) : purgedAccounts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm animate-fadeIn">
                     <div className="text-6xl mb-4">🕵️</div>
                     <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
@@ -2020,7 +2023,6 @@ export default function AdminManagement() {
               </div>
             )}
           </>
-        )
       </div>
       {/* Account Details Modal */}
       {showAccountModal && (
