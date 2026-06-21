@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { FaUserCog } from 'react-icons/fa';
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import { toast } from 'react-toastify';
 import AdminRequestsSkeleton from '../components/skeletons/AdminRequestsSkeleton';
@@ -342,22 +343,31 @@ const AdminRequests = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 transition-colors duration-300">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Requests</h1>
-                <p className="text-gray-600 dark:text-gray-300 mt-2">Manage pending admin approval requests (Root Admin Only)</p>
-                <p className="text-sm text-green-600 dark:text-green-400 mt-1">Welcome, {currentUser.email} (Root Admin)</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Admin Requests</h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">Manage pending admin approval requests (Root Admin Only)</p>
+                <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-1">Welcome, {currentUser.email} (Root Admin)</p>
               </div>
-              <div className="flex gap-2">
-                <div className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-3 py-2 rounded-full text-sm font-medium">
-                  {allRequests.filter(r => r.adminApprovalStatus === 'pending').length} Pending
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 flex-shrink-0">
+                <div className="flex gap-1.5 sm:gap-2">
+                  <div className="flex-1 text-center bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border border-blue-200/20 shadow-sm">
+                    {allRequests.filter(r => r.adminApprovalStatus === 'pending').length} Pending
+                  </div>
+                  <div className="flex-1 text-center bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border border-green-200/20 shadow-sm">
+                    {allRequests.filter(r => r.adminApprovalStatus === 'approved').length} Approved
+                  </div>
+                  <div className="flex-1 text-center bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold border border-red-200/20 shadow-sm">
+                    {allRequests.filter(r => r.adminApprovalStatus === 'rejected').length} Rejected
+                  </div>
                 </div>
-                <div className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 px-3 py-2 rounded-full text-sm font-medium">
-                  {allRequests.filter(r => r.adminApprovalStatus === 'approved').length} Approved
-                </div>
-                <div className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 px-3 py-2 rounded-full text-sm font-medium">
-                  {allRequests.filter(r => r.adminApprovalStatus === 'rejected').length} Rejected
-                </div>
+                <button
+                  onClick={() => navigate('/admin/management')}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 hover:scale-[1.02] border border-blue-500/20"
+                >
+                  <FaUserCog className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>Manage Accounts</span>
+                </button>
               </div>
             </div>
 
