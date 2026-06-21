@@ -991,6 +991,90 @@ export default function AdminManagement() {
     }
   };
 
+  const handleApproveAdmin = async (userId) => {
+    setActionLoading(prev => ({
+      ...prev,
+      promote: { ...prev.promote, [userId]: true }
+    }));
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/approve/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentUserId: currentUser._id,
+          rootAdminPassword: 'Salendra@2004' // Root admin password
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to approve request');
+      }
+
+      setAdmins(prev => prev.map(admin =>
+        admin._id === userId
+          ? { ...admin, adminApprovalStatus: 'approved', role: 'admin', status: 'active' }
+          : admin
+      ));
+      if (selectedAccount && selectedAccount._id === userId) {
+        setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'approved', role: 'admin', status: 'active' }));
+      }
+      toast.success('Admin request approved successfully!');
+      fetchTabCounts();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setActionLoading(prev => ({
+        ...prev,
+        promote: { ...prev.promote, [userId]: false }
+      }));
+    }
+  };
+
+  const handleRejectAdmin = async (userId) => {
+    setActionLoading(prev => ({
+      ...prev,
+      demote: { ...prev.demote, [userId]: true }
+    }));
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reject/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentUserId: currentUser._id,
+          rootAdminPassword: 'Salendra@2004' // Root admin password
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to reject request');
+      }
+
+      setAdmins(prev => prev.map(admin =>
+        admin._id === userId
+          ? { ...admin, adminApprovalStatus: 'rejected', role: 'user' }
+          : admin
+      ));
+      if (selectedAccount && selectedAccount._id === userId) {
+        setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'rejected', role: 'user' }));
+      }
+      toast.success('Admin request rejected successfully!');
+      fetchTabCounts();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setActionLoading(prev => ({
+        ...prev,
+        demote: { ...prev.demote, [userId]: false }
+      }));
+    }
+  };
+
   // Filter accounts based on search term and status (now handled on backend)
   const filterAccounts = (accounts) => {
     return accounts;
@@ -1855,7 +1939,7 @@ export default function AdminManagement() {
                           <div className="flex-1 min-w-0 flex flex-col gap-1">
                             <div className="flex items-center gap-2 w-full min-w-0">
                               <span className="text-lg font-bold text-gray-800 dark:text-white truncate flex-1" title={admin.username}>{highlightMatch(admin.username)}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-md font-bold uppercase flex-shrink-0 ${admin.adminApprovalStatus === 'rejected' ? 'bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-300' : admin.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>{admin.adminApprovalStatus === 'rejected' ? 'rejected' : admin.status}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-md font-bold uppercase flex-shrink-0 ${admin.adminApprovalStatus === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' : admin.adminApprovalStatus === 'rejected' ? 'bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-300' : admin.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>{admin.adminApprovalStatus === 'pending' ? 'pending' : admin.adminApprovalStatus === 'rejected' ? 'rejected' : admin.status}</span>
                             </div>
 
                             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm w-full min-w-0">
@@ -1884,50 +1968,89 @@ export default function AdminManagement() {
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:gap-2">
-                          <button
-                            className={`flex-1 px-2 py-1 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${admin.status === "active" ? "bg-yellow-400 dark:bg-yellow-500/80 text-white hover:bg-yellow-500" : "bg-green-500 dark:bg-green-600/80 text-white hover:bg-green-600"}`}
-                            onClick={e => { e.stopPropagation(); handleSuspend(admin._id, "admin"); }}
-                          >
-                            {actionLoading.suspend[admin._id] ? (
-                              <>
-                                <UrbanSetuSpinner size="sm" isBright={true} />
-                                {admin.status === "active" ? "Suspending..." : "Activating..."}
-                              </>
-                            ) : (
-                              <>
-                                {admin.status === "active" ? <FaBan /> : <FaCheckCircle />}
-                                {admin.status === "active" ? "Suspend" : "Activate"}
-                              </>
-                            )}
-                          </button>
-                          <button
-                            className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
-                            onClick={e => { e.stopPropagation(); handleDelete(admin._id, "admin"); }}
-                          >
-                            <FaTrash /> Softban
-                          </button>
-                          <button
-                            className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
-                            onClick={e => { e.stopPropagation(); handleDemote(admin._id); }}
-                          >
-                            {actionLoading.demote[admin._id] ? (
-                              <>
-                                <UrbanSetuSpinner size="sm" isBright={true} />
-                                Demoting...
-                              </>
-                            ) : (
-                              <>
-                                <FaArrowDown /> Demote to User
-                              </>
-                            )}
-                          </button>
-                          {isRootOrDefault && admin.adminApprovalStatus === 'rejected' && (
-                            <button
-                              className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
-                              onClick={e => { e.stopPropagation(); handleReapprove(admin._id); }}
-                            >
-                              <FaCheckCircle /> Re-Approve
-                            </button>
+                          {admin.adminApprovalStatus === 'pending' ? (
+                            <>
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-500 hover:bg-green-600 text-white transition-all duration-200 flex items-center justify-center gap-1.5"
+                                onClick={e => { e.stopPropagation(); handleApproveAdmin(admin._id); }}
+                                disabled={actionLoading.promote[admin._id]}
+                              >
+                                {actionLoading.promote[admin._id] ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    Approving...
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>✓</span> Approve
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-red-500 hover:bg-red-600 text-white transition-all duration-200 flex items-center justify-center gap-1.5"
+                                onClick={e => { e.stopPropagation(); handleRejectAdmin(admin._id); }}
+                                disabled={actionLoading.demote[admin._id]}
+                              >
+                                {actionLoading.demote[admin._id] ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    Rejecting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>✕</span> Reject
+                                  </>
+                                )}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className={`flex-1 px-2 py-1 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${admin.status === "active" ? "bg-yellow-400 dark:bg-yellow-500/80 text-white hover:bg-yellow-500" : "bg-green-500 dark:bg-green-600/80 text-white hover:bg-green-600"}`}
+                                onClick={e => { e.stopPropagation(); handleSuspend(admin._id, "admin"); }}
+                              >
+                                {actionLoading.suspend[admin._id] ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    {admin.status === "active" ? "Suspending..." : "Activating..."}
+                                  </>
+                                ) : (
+                                  <>
+                                    {admin.status === "active" ? <FaBan /> : <FaCheckCircle />}
+                                    {admin.status === "active" ? "Suspend" : "Activate"}
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
+                                onClick={e => { e.stopPropagation(); handleDelete(admin._id, "admin"); }}
+                              >
+                                <FaTrash /> Softban
+                              </button>
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
+                                onClick={e => { e.stopPropagation(); handleDemote(admin._id); }}
+                              >
+                                {actionLoading.demote[admin._id] ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    Demoting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaArrowDown /> Demote to User
+                                  </>
+                                )}
+                              </button>
+                              {isRootOrDefault && admin.adminApprovalStatus === 'rejected' && (
+                                <button
+                                  className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
+                                  onClick={e => { e.stopPropagation(); handleReapprove(admin._id); }}
+                                >
+                                  <FaCheckCircle /> Re-Approve
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                         {suspendError[admin._id] && (
@@ -2127,7 +2250,7 @@ export default function AdminManagement() {
                         className="w-20 h-20 md:w-28 md:h-28 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-xl"
                         onError={e => { e.target.onerror = null; e.target.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'; }}
                       />
-                      <div className={`absolute bottom-1 right-1 w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-white dark:border-gray-800 shadow-md ${selectedAccount?.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                      <div className={`absolute bottom-1 right-1 w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-white dark:border-gray-800 shadow-md ${selectedAccount?.type === 'admin' && selectedAccount?.adminApprovalStatus === 'pending' ? 'bg-yellow-500 animate-pulse' : selectedAccount?.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
                     </div>
                     <div className="space-y-1">
                       <h2 className="text-lg md:text-xl font-extrabold text-gray-800 dark:text-white line-clamp-1">
@@ -2145,10 +2268,33 @@ export default function AdminManagement() {
                   <div className="w-full mt-5 md:mt-8 pt-4 md:pt-6 border-t border-gray-100 dark:border-gray-700/60 space-y-3 md:space-y-4">
                     <div className="flex items-center justify-between text-xs md:text-sm">
                       <span className="text-gray-500 dark:text-gray-400 font-medium">Account Status:</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${selectedAccount?.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
-                        {(selectedAccount?.status || 'active').toUpperCase()}
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        selectedAccount?.type === 'admin' && selectedAccount?.adminApprovalStatus === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          : selectedAccount?.status === 'active'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                      }`}>
+                        {selectedAccount?.type === 'admin' && selectedAccount?.adminApprovalStatus === 'pending'
+                          ? 'pending'
+                          : selectedAccount?.status || 'active'}
                       </span>
                     </div>
+
+                    {selectedAccount?.type === 'admin' && (
+                      <div className="flex items-center justify-between text-xs md:text-sm">
+                        <span className="text-gray-500 dark:text-gray-400 font-medium">Admin Approval Status:</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          selectedAccount?.adminApprovalStatus === 'pending'
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            : selectedAccount?.adminApprovalStatus === 'approved'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        }`}>
+                          {selectedAccount?.adminApprovalStatus || 'pending'}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Subscription Toggle */}
                     <div className="flex flex-col gap-1.5 p-2.5 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-700/40">
@@ -2164,6 +2310,43 @@ export default function AdminManagement() {
                         {subscriptionLoading ? '...' : (selectedAccount?.isSubscribed !== false ? 'Unsubscribe' : 'Subscribe')}
                       </button>
                     </div>
+
+                    {selectedAccount?.type === 'admin' && selectedAccount?.adminApprovalStatus === 'pending' && (
+                      <div className="flex gap-2 w-full mt-2">
+                        <button
+                          onClick={() => handleApproveAdmin(selectedAccount._id)}
+                          disabled={actionLoading.promote[selectedAccount._id]}
+                          className="flex-1 py-1.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
+                        >
+                          {actionLoading.promote[selectedAccount._id] ? (
+                            <>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
+                              Approve
+                            </>
+                          ) : (
+                            <>
+                              <span>✓</span> Approve
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleRejectAdmin(selectedAccount._id)}
+                          disabled={actionLoading.demote[selectedAccount._id]}
+                          className="flex-1 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
+                        >
+                          {actionLoading.demote[selectedAccount._id] ? (
+                            <>
+                              <UrbanSetuSpinner size="sm" isBright={true} />
+                              Reject
+                            </>
+                          ) : (
+                            <>
+                              <span>✕</span> Reject
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
