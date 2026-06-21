@@ -13,6 +13,7 @@ import User from '../models/user.model.js';
 import { 
   getManagementUsers, 
   getManagementAdmins, 
+  getManagementTabCounts,
   suspendUserOrAdmin, 
   deleteUserOrAdmin, 
   demoteAdminToUser, 
@@ -76,6 +77,7 @@ router.put('/reapprove/:userId', verifyToken, requireApprovedAdmin, reapproveAdm
 router.post('/transfer-rights', verifyToken, transferRootAdminRights);
 
 // Management Endpoints
+router.get('/management/tab-counts', verifyToken, getManagementTabCounts);
 router.get('/management/users', verifyToken, getManagementUsers);
 router.get('/management/admins', verifyToken, getManagementAdmins);
 router.patch('/management/suspend/:type/:id', verifyToken, suspendUserOrAdmin);

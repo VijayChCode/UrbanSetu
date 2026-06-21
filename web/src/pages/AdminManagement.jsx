@@ -82,9 +82,24 @@ export default function AdminManagement() {
     coinBalance: 0
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [promoSubscriptionFilter, setPromoSubscriptionFilter] = useState("all");
   const [adminApprovalFilter, setAdminApprovalFilter] = useState("all");
+  
+  // Tab Counts global state
+  const [tabCounts, setTabCounts] = useState({ users: 0, admins: 0, softbanned: 0, purged: 0 });
+
+  // Tab Pagination states
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [adminsPage, setAdminsPage] = useState(1);
+  const [adminsTotal, setAdminsTotal] = useState(0);
+  const [softbannedPage, setSoftbannedPage] = useState(1);
+  const [softbannedTotal, setSoftbannedTotal] = useState(0);
+  const [purgedPage, setPurgedPage] = useState(1);
+  const [purgedTotal, setPurgedTotal] = useState(0);
+
   const [passwordLockouts, setPasswordLockouts] = useState([]); // { email, unlockAt }
   const [showPasswordModal, setShowPasswordModal] = useState(true);
   const [managementPassword, setManagementPassword] = useState("");
@@ -103,10 +118,221 @@ export default function AdminManagement() {
   const warningTimerRef = useRef(null);
 
 
+  // Fetch tab counts
+  const fetchTabCounts = async () => {
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/tab-counts`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTabCounts({
+          users: data.users || 0,
+          admins: data.admins || 0,
+          softbanned: data.softbanned || 0,
+          purged: data.purged || 0
+        });
+      }
+    } catch (e) {
+      console.error("Failed to fetch tab counts", e);
+    }
+  };
+
+  const fetchUsers = async (pageNumber = usersPage) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(pageNumber));
+      params.set('limit', '10');
+      if (debouncedSearchTerm) params.set('q', debouncedSearchTerm);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (promoSubscriptionFilter !== 'all') params.set('promoSubscription', promoSubscriptionFilter);
+
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/users?${params.toString()}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUsers(data.items || []);
+        setUsersTotal(data.total || 0);
+        setUsersPage(data.page || pageNumber);
+      } else {
+        setUsers([]);
+        setUsersTotal(0);
+      }
+    } catch (e) {
+      setUsers([]);
+      setUsersTotal(0);
+      toast.error("Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAdmins = async (pageNumber = adminsPage) => {
+    if (!isRootOrDefault) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(pageNumber));
+      params.set('limit', '10');
+      if (debouncedSearchTerm) params.set('q', debouncedSearchTerm);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (promoSubscriptionFilter !== 'all') params.set('promoSubscription', promoSubscriptionFilter);
+      if (adminApprovalFilter !== 'all') params.set('adminApproval', adminApprovalFilter);
+
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/admins?${params.toString()}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAdmins(data.items || []);
+        setAdminsTotal(data.total || 0);
+        setAdminsPage(data.page || pageNumber);
+      } else {
+        setAdmins([]);
+        setAdminsTotal(0);
+      }
+    } catch (e) {
+      setAdmins([]);
+      setAdminsTotal(0);
+      toast.error("Failed to fetch admins");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSoftbannedAccounts = async (pageNumber = softbannedPage) => {
+    setSoftbannedLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(pageNumber));
+      params.set('limit', '10');
+      params.set('isPurged', 'false');
+      if (softbannedFilters.q) params.set('q', softbannedFilters.q);
+      if (softbannedFilters.role && softbannedFilters.role !== 'all') params.set('role', softbannedFilters.role);
+      if (softbannedFilters.softbannedBy) params.set('softbannedBy', softbannedFilters.softbannedBy);
+      if (softbannedFilters.from) params.set('from', softbannedFilters.from);
+      if (softbannedFilters.to) params.set('to', softbannedFilters.to);
+
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/deleted-accounts?${params.toString()}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSoftbannedAccounts(data.items || []);
+        setSoftbannedTotal(data.total || 0);
+        setSoftbannedPage(data.page || pageNumber);
+      } else {
+        setSoftbannedAccounts([]);
+        setSoftbannedTotal(0);
+      }
+    } catch (e) {
+      setSoftbannedAccounts([]);
+      setSoftbannedTotal(0);
+    } finally {
+      setSoftbannedLoading(false);
+    }
+  };
+
+  const fetchPurgedAccounts = async (pageNumber = purgedPage) => {
+    setPurgedLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(pageNumber));
+      params.set('limit', '10');
+      params.set('isPurged', 'true');
+      if (purgedFilters.q) params.set('q', purgedFilters.q);
+      if (purgedFilters.role && purgedFilters.role !== 'all') params.set('role', purgedFilters.role);
+      if (purgedFilters.purgedBy) params.set('purgedBy', purgedFilters.purgedBy);
+      if (purgedFilters.from) params.set('from', purgedFilters.from);
+      if (purgedFilters.to) params.set('to', purgedFilters.to);
+
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/deleted-accounts?${params.toString()}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPurgedAccounts(data.items || []);
+        setPurgedTotal(data.total || 0);
+        setPurgedPage(data.page || pageNumber);
+      } else {
+        setPurgedAccounts([]);
+        setPurgedTotal(0);
+      }
+    } catch (e) {
+      setPurgedAccounts([]);
+      setPurgedTotal(0);
+    } finally {
+      setPurgedLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      await fetchTabCounts();
+      
+      // Fetch password lockouts
+      try {
+        const lockRes = await authenticatedFetch(`${API_BASE_URL}/api/auth/password-lockouts`);
+        const lockData = await lockRes.json();
+        if (lockRes.ok && lockData && Array.isArray(lockData.items)) {
+          setPasswordLockouts(lockData.items);
+        } else {
+          setPasswordLockouts([]);
+        }
+      } catch (_) {
+        setPasswordLockouts([]);
+      }
+
+      // Fetch active tab
+      if (tab === "users") {
+        await fetchUsers(1);
+      } else if (tab === "admins") {
+        await fetchAdmins(1);
+      } else if (tab === "softbanned") {
+        await fetchSoftbannedAccounts(1);
+      } else if (tab === "purged") {
+        await fetchPurgedAccounts(1);
+      }
+    } catch (err) {
+      toast.error("Failed to fetch accounts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!currentUser?._id) return;
     fetchData();
   }, [currentUser?._id]);
+
+  // Debounce search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Reset pages when filters change
+  useEffect(() => {
+    setUsersPage(1);
+  }, [debouncedSearchTerm, statusFilter, promoSubscriptionFilter]);
+
+  useEffect(() => {
+    setAdminsPage(1);
+  }, [debouncedSearchTerm, statusFilter, promoSubscriptionFilter, adminApprovalFilter]);
+
+  // Fetch active tab data when pagination or filters change
+  useEffect(() => {
+    if (!currentUser?._id || showPasswordModal) return;
+    if (tab === "users") {
+      fetchUsers(usersPage);
+    } else if (tab === "admins") {
+      fetchAdmins(adminsPage);
+    }
+  }, [tab, usersPage, adminsPage, debouncedSearchTerm, statusFilter, promoSubscriptionFilter, adminApprovalFilter, currentUser?._id, showPasswordModal]);
+
+  useEffect(() => {
+    if (!currentUser?._id || showPasswordModal) return;
+    if (tab === "softbanned") {
+      fetchSoftbannedAccounts(softbannedPage);
+    } else if (tab === "purged") {
+      fetchPurgedAccounts(purgedPage);
+    }
+  }, [tab, softbannedPage, purgedPage, currentUser?._id, showPasswordModal]);
 
   // Add useEffect to listen for socket events and update users/admins state
   useEffect(() => {
@@ -118,6 +344,7 @@ export default function AdminManagement() {
         if (type === 'add') return [user, ...prev];
         return prev;
       });
+      fetchTabCounts();
     }
     function handleAdminUpdate({ type, admin }) {
       setAdmins(prev => {
@@ -126,6 +353,7 @@ export default function AdminManagement() {
         if (type === 'add') return [admin, ...prev];
         return prev;
       });
+      fetchTabCounts();
     }
     socket.on('user_update', handleUserUpdate);
     socket.on('admin_update', handleAdminUpdate);
@@ -172,94 +400,6 @@ export default function AdminManagement() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showPasswordModal]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Fetch users
-      const userRes = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/users`);
-      const userData = await userRes.json();
-      setUsers(userData);
-      // Fetch admins if default admin
-      if (isRootOrDefault) {
-        const adminRes = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/admins`);
-        const adminData = await adminRes.json();
-        setAdmins(adminData);
-      }
-      // Fetch active password lockouts (failed sign-in lockouts)
-      try {
-        const lockRes = await authenticatedFetch(`${API_BASE_URL}/api/auth/password-lockouts`);
-        const lockData = await lockRes.json();
-        if (lockRes.ok && lockData && Array.isArray(lockData.items)) {
-          setPasswordLockouts(lockData.items);
-        } else {
-          setPasswordLockouts([]);
-        }
-      } catch (_) {
-        setPasswordLockouts([]);
-      }
-      // Fetch softbanned accounts
-      try {
-        await fetchSoftbannedAccounts();
-      } catch (_) { }
-      // Fetch purged accounts
-      try {
-        await fetchPurgedAccounts();
-      } catch (_) { }
-    } catch (err) {
-      toast.error("Failed to fetch accounts");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSoftbannedAccounts = async () => {
-    setSoftbannedLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (softbannedFilters.q) params.set('q', softbannedFilters.q);
-      if (softbannedFilters.role && softbannedFilters.role !== 'all') params.set('role', softbannedFilters.role);
-      if (softbannedFilters.softbannedBy) params.set('softbannedBy', softbannedFilters.softbannedBy);
-      if (softbannedFilters.from) params.set('from', softbannedFilters.from);
-      if (softbannedFilters.to) params.set('to', softbannedFilters.to);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/deleted-accounts?${params.toString()}`);
-      const data = await res.json();
-      if (res.ok && data && Array.isArray(data.items)) {
-        // Filter out purged accounts (those with purgedAt)
-        setSoftbannedAccounts(data.items.filter(acc => !acc.purgedAt));
-      } else {
-        setSoftbannedAccounts([]);
-      }
-    } catch (e) {
-      setSoftbannedAccounts([]);
-    } finally {
-      setSoftbannedLoading(false);
-    }
-  };
-
-  const fetchPurgedAccounts = async () => {
-    setPurgedLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (purgedFilters.q) params.set('q', purgedFilters.q);
-      if (purgedFilters.role && purgedFilters.role !== 'all') params.set('role', purgedFilters.role);
-      if (purgedFilters.purgedBy) params.set('purgedBy', purgedFilters.purgedBy);
-      if (purgedFilters.from) params.set('from', purgedFilters.from);
-      if (purgedFilters.to) params.set('to', purgedFilters.to);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/deleted-accounts?${params.toString()}`);
-      const data = await res.json();
-      if (res.ok && data && Array.isArray(data.items)) {
-        // Filter only purged accounts (those with purgedAt)
-        setPurgedAccounts(data.items.filter(acc => acc.purgedAt));
-      } else {
-        setPurgedAccounts([]);
-      }
-    } catch (e) {
-      setPurgedAccounts([]);
-    } finally {
-      setPurgedLoading(false);
-    }
-  };
 
   // Optimistic UI for suspend
   const handleSuspend = async (id, type) => {
@@ -840,44 +980,9 @@ export default function AdminManagement() {
     }
   };
 
-  // Filter accounts based on search term and status
+  // Filter accounts based on search term and status (now handled on backend)
   const filterAccounts = (accounts) => {
-    let filtered = accounts;
-
-    // Search term filter
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(account =>
-        account.username?.toLowerCase().includes(term) ||
-        account.email?.toLowerCase().includes(term) ||
-        account.mobileNumber?.toLowerCase().includes(term)
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== "all") {
-      if (statusFilter === 'locked') {
-        const lockedEmailSet = new Set(passwordLockouts.filter(l => new Date(l.unlockAt) > new Date()).map(l => (l.email || '').toLowerCase()));
-        filtered = filtered.filter(account => lockedEmailSet.has((account.email || '').toLowerCase()));
-      } else {
-        filtered = filtered.filter(account => account.status === statusFilter);
-      }
-    }
-
-    // Promotional email subscription filter
-    if (promoSubscriptionFilter !== "all") {
-      filtered = filtered.filter(account => {
-        const isSubscribed = account.isSubscribed !== false;
-        return promoSubscriptionFilter === "subscribed" ? isSubscribed : !isSubscribed;
-      });
-    }
-
-    // Admin approval status filter (only for admin tab)
-    if (tab === "admins" && adminApprovalFilter !== "all") {
-      filtered = filtered.filter(account => account.adminApprovalStatus === adminApprovalFilter);
-    }
-
-    return filtered;
+    return accounts;
   };
 
   const filteredUsers = filterAccounts(users);
@@ -947,6 +1052,7 @@ export default function AdminManagement() {
         if (res.ok) {
           toast.success('Account restored');
           fetchSoftbannedAccounts();
+          fetchTabCounts();
           // Close modal only after success
           setShowConfirmModal(false);
         } else {
@@ -986,6 +1092,7 @@ export default function AdminManagement() {
           toast.success('Account purged');
           fetchSoftbannedAccounts();
           fetchPurgedAccounts();
+          fetchTabCounts();
           // Close modal only after success
           setShowConfirmModal(false);
         } else {
@@ -1200,6 +1307,81 @@ export default function AdminManagement() {
     return <AdminManagementSkeleton />;
   }
 
+  const renderPagination = (currentPage, totalItems, onPageChange, limit = 10) => {
+    const totalPages = Math.ceil(totalItems / limit);
+    if (totalPages <= 1) return null;
+
+    // Generate page numbers
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 animate-fadeIn">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Showing <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.min(totalItems, (currentPage - 1) * limit + 1)}</span> to{" "}
+          <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.min(totalItems, currentPage * limit)}</span> of{" "}
+          <span className="font-semibold text-gray-700 dark:text-gray-300">{totalItems}</span> records
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+          >
+            Previous
+          </button>
+          {startPage > 1 && (
+            <>
+              <button
+                onClick={() => onPageChange(1)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === 1 ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="px-2 text-gray-400">...</span>}
+            </>
+          )}
+          {pages.map((p) => (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === p ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+            >
+              {p}
+            </button>
+          ))}
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="px-2 text-gray-400">...</span>}
+              <button
+                onClick={() => onPageChange(totalPages)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === totalPages ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 py-10 px-2 md:px-8 animate-fadeIn transition-colors duration-300">
       <div className="max-w-6xl mx-auto bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 animate-slideUp border border-white/20 dark:border-gray-800">
@@ -1226,9 +1408,10 @@ export default function AdminManagement() {
               setStatusFilter("all");
               setPromoSubscriptionFilter("all");
               setAdminApprovalFilter("all");
+              setUsersPage(1);
             }}
           >
-            Users ({users.length})
+            Users ({tabCounts.users})
           </button>
           {isRootOrDefault && (
             <button
@@ -1240,9 +1423,10 @@ export default function AdminManagement() {
                 setStatusFilter("all");
                 setPromoSubscriptionFilter("all");
                 setAdminApprovalFilter("all");
+                setAdminsPage(1);
               }}
             >
-              Admins ({admins.length})
+              Admins ({tabCounts.admins})
             </button>
           )}
           <button
@@ -1253,11 +1437,11 @@ export default function AdminManagement() {
               setStatusFilter("all");
               setPromoSubscriptionFilter("all");
               setAdminApprovalFilter("all");
-              fetchSoftbannedAccounts();
+              setSoftbannedPage(1);
             }}
           >
-            <span className="hidden sm:inline">Softbanned Accounts ({softbannedAccounts.length})</span>
-            <span className="sm:hidden">Softbanned ({softbannedAccounts.length})</span>
+            <span className="hidden sm:inline">Softbanned Accounts ({tabCounts.softbanned})</span>
+            <span className="sm:hidden">Softbanned ({tabCounts.softbanned})</span>
           </button>
           <button
             className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "purged" ? "bg-gradient-to-r from-red-500 to-orange-500 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700"}`}
@@ -1267,11 +1451,11 @@ export default function AdminManagement() {
               setStatusFilter("all");
               setPromoSubscriptionFilter("all");
               setAdminApprovalFilter("all");
-              fetchPurgedAccounts();
+              setPurgedPage(1);
             }}
           >
-            <span className="hidden sm:inline">Purged Accounts ({purgedAccounts.length})</span>
-            <span className="sm:hidden">Purged ({purgedAccounts.length})</span>
+            <span className="hidden sm:inline">Purged Accounts ({tabCounts.purged})</span>
+            <span className="sm:hidden">Purged ({tabCounts.purged})</span>
           </button>
         </div>
 
@@ -1382,8 +1566,8 @@ export default function AdminManagement() {
               <input type="date" value={softbannedFilters.to} onChange={e => setSoftbannedFilters(f => ({ ...f, to: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <input value={softbannedFilters.softbannedBy} onChange={e => setSoftbannedFilters(f => ({ ...f, softbannedBy: e.target.value }))} placeholder="Softbanned by (id or self)" className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <div className="flex items-center gap-2">
-                <button onClick={fetchSoftbannedAccounts} className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors">Apply</button>
-                <button onClick={() => { setSoftbannedFilters({ q: '', role: 'all', softbannedBy: '', from: '', to: '' }); setTimeout(fetchSoftbannedAccounts, 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
+                <button onClick={() => fetchSoftbannedAccounts(1)} className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors">Apply</button>
+                <button onClick={() => { setSoftbannedFilters({ q: '', role: 'all', softbannedBy: '', from: '', to: '' }); setTimeout(() => fetchSoftbannedAccounts(1), 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
               </div>
               <div className="col-span-full text-sm text-gray-500 dark:text-gray-400">
                 {isRootOrDefault ? 'You are viewing all softbanned accounts (users + admins).' : 'You are viewing only softbanned user accounts.'}
@@ -1401,8 +1585,8 @@ export default function AdminManagement() {
               <input type="date" value={purgedFilters.to} onChange={e => setPurgedFilters(f => ({ ...f, to: e.target.value }))} className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <input value={purgedFilters.purgedBy} onChange={e => setPurgedFilters(f => ({ ...f, purgedBy: e.target.value }))} placeholder="Purged by (id)" className="px-3 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               <div className="flex items-center gap-2">
-                <button onClick={fetchPurgedAccounts} className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors">Apply</button>
-                <button onClick={() => { setPurgedFilters({ q: '', role: 'all', purgedBy: '', from: '', to: '' }); setTimeout(fetchPurgedAccounts, 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
+                <button onClick={() => fetchPurgedAccounts(1)} className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors">Apply</button>
+                <button onClick={() => { setPurgedFilters({ q: '', role: 'all', purgedBy: '', from: '', to: '' }); setTimeout(() => fetchPurgedAccounts(1), 0); }} className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition-colors">Clear</button>
               </div>
               <div className="col-span-full text-sm text-gray-500 dark:text-gray-400">
                 {isRootOrDefault ? 'You are viewing all purged accounts (users + admins). These accounts are permanently removed.' : 'You are viewing only purged user accounts. These accounts are permanently removed.'}
@@ -1421,7 +1605,7 @@ export default function AdminManagement() {
                 {tab === "admins" && adminApprovalFilter !== "all" && <span className="ml-2 px-2 py-1 bg-purple-200 dark:bg-purple-800/50 rounded text-xs">Approval: {adminApprovalFilter}</span>}
               </div>
               <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                Found {tab === "users" ? filteredUsers.length : filteredAdmins.length} {tab === "users" ? "user" : "admin"}{tab === "users" ? (filteredUsers.length !== 1 ? "s" : "") : (filteredAdmins.length !== 1 ? "s" : "")} matching your filters
+                Found {tab === "users" ? usersTotal : adminsTotal} {tab === "users" ? "user" : "admin"}{tab === "users" ? (usersTotal !== 1 ? "s" : "") : (adminsTotal !== 1 ? "s" : "")} matching your filters
               </div>
             </div>
           )}
@@ -1441,7 +1625,7 @@ export default function AdminManagement() {
             {(tab === "users") && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2 animate-fadeIn">
-                  <FaUser className="text-blue-500" /> Users ({users.length})
+                  <FaUser className="text-blue-500" /> Users ({usersTotal})
                 </h2>
                 {filteredUsers.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
@@ -1554,6 +1738,7 @@ export default function AdminManagement() {
                     ))}
                   </div>
                 )}
+                {renderPagination(usersPage, usersTotal, setUsersPage)}
               </div>
             )}
             {tab === "admins" && !isRootOrDefault && showRestriction && (
@@ -1565,7 +1750,7 @@ export default function AdminManagement() {
             {tab === "admins" && isRootOrDefault && !showRestriction && (
               <div className="mt-10">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2 animate-fadeIn">
-                  <FaUserShield className="text-purple-500" /> Admins ({admins.length})
+                  <FaUserShield className="text-purple-500" /> Admins ({adminsTotal})
                 </h2>
                 {filteredAdmins.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 animate-fadeIn">
@@ -1685,11 +1870,12 @@ export default function AdminManagement() {
                     ))}
                   </div>
                 )}
+                {renderPagination(adminsPage, adminsTotal, setAdminsPage)}
               </div>
             )}
             {tab === 'softbanned' && (
               <div className="mt-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Softbanned Accounts ({softbannedAccounts.length})</h2>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Softbanned Accounts ({softbannedTotal})</h2>
                 {softbannedLoading ? (
                   <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
                 ) : softbannedAccounts.length === 0 ? (
@@ -1702,7 +1888,7 @@ export default function AdminManagement() {
                       <button
                         onClick={() => {
                           setSoftbannedFilters({ q: '', role: 'all', softbannedBy: '', from: '', to: '' });
-                          setTimeout(fetchSoftbannedAccounts, 0);
+                          setTimeout(() => fetchSoftbannedAccounts(1), 0);
                         }}
                         className="mt-4 text-blue-500 hover:text-blue-600 underline"
                       >
@@ -1767,11 +1953,12 @@ export default function AdminManagement() {
                     </table>
                   </div>
                 )}
+                {renderPagination(softbannedPage, softbannedTotal, setSoftbannedPage)}
               </div>
             )}
             {tab === 'purged' && (
               <div className="mt-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Purged Accounts (Permanently Removed) ({purgedAccounts.length})</h2>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Purged Accounts (Permanently Removed) ({purgedTotal})</h2>
                 {purgedLoading ? (
                   <div className="flex items-center justify-center p-8"><UrbanSetuSpinner size="md" /><span className="ml-3 text-gray-600 dark:text-gray-400">Loading...</span></div>
                 ) : purgedAccounts.length === 0 ? (
@@ -1784,7 +1971,7 @@ export default function AdminManagement() {
                       <button
                         onClick={() => {
                           setPurgedFilters({ q: '', role: 'all', purgedBy: '', from: '', to: '' });
-                          setTimeout(fetchPurgedAccounts, 0);
+                          setTimeout(() => fetchPurgedAccounts(1), 0);
                         }}
                         className="mt-4 text-blue-500 hover:text-blue-600 underline"
                       >
@@ -1834,6 +2021,7 @@ export default function AdminManagement() {
                     </table>
                   </div>
                 )}
+                {renderPagination(purgedPage, purgedTotal, setPurgedPage)}
               </div>
             )}
           </>

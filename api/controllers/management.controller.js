@@ -9,8 +9,53 @@ import { autoPurgeSoftbannedAccounts, getPurgeStatistics } from '../services/aut
 import { sendAccountDeletionReminders, getReminderStatistics } from '../services/accountReminderService.js';
 import { checkEmailServiceStatus, getEmailServiceMonitoringStats } from '../services/emailMonitoringService.js';
 import { revokeAllUserSessionsFromDB } from '../utils/sessionManager.js';
+import PasswordLockout from '../models/passwordLockout.model.js';
 
-// Fetch all users (for admin/rootadmin)
+// Get global tab counts for admin management panel
+export const getManagementTabCounts = async (req, res, next) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
+      return next(errorHandler(403, 'Access denied'));
+    }
+    const isRoot = currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin;
+
+    // Users count
+    const usersCount = await User.countDocuments({ $or: [ { role: 'user' }, { role: { $exists: false } } ] });
+
+    // Admins count
+    const adminQuery = { _id: { $ne: currentUser._id } };
+    if (isRoot) {
+      adminQuery.role = { $in: ['admin', 'rootadmin'] };
+    } else {
+      adminQuery.role = 'admin';
+      adminQuery.isDefaultAdmin = { $ne: true };
+    }
+    const adminsCount = await User.countDocuments(adminQuery);
+
+    // Softbanned count (purgedAt is null/unset)
+    const softbannedQuery = { purgedAt: null };
+    if (!isRoot) softbannedQuery.role = 'user';
+    const softbannedCount = await DeletedAccount.countDocuments(softbannedQuery);
+
+    // Purged count (purgedAt is set)
+    const purgedQuery = { purgedAt: { $ne: null } };
+    if (!isRoot) purgedQuery.role = 'user';
+    const purgedCount = await DeletedAccount.countDocuments(purgedQuery);
+
+    res.status(200).json({
+      success: true,
+      users: usersCount,
+      admins: adminsCount,
+      softbanned: softbannedCount,
+      purged: purgedCount
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Fetch all users (for admin/rootadmin) with pagination and filters
 export const getManagementUsers = async (req, res, next) => {
   try {
     const currentUser = await User.findById(req.user.id);
@@ -18,9 +63,46 @@ export const getManagementUsers = async (req, res, next) => {
       return next(errorHandler(403, 'Access denied'));
     }
 
+    const { page = 1, limit = 10, q, status, promoSubscription } = req.query;
+    const query = { $or: [ { role: 'user' }, { role: { $exists: false } } ] };
+
+    if (q) {
+      query.$or = [
+        { username: new RegExp(q, 'i') },
+        { email: new RegExp(q, 'i') },
+        { mobileNumber: new RegExp(q, 'i') }
+      ];
+    }
+
+    if (status && status !== 'all') {
+      if (status === 'locked') {
+        const activeLockouts = await PasswordLockout.find({ unlockAt: { $gt: new Date() } }).select('email');
+        const lockedEmails = activeLockouts.map(l => (l.email || '').toLowerCase());
+        query.email = { $in: lockedEmails };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (promoSubscription && promoSubscription !== 'all') {
+      if (promoSubscription === 'subscribed') {
+        query.isSubscribed = { $ne: false };
+      } else {
+        query.isSubscribed = false;
+      }
+    }
+
+    const skipVal = (Number(page) - 1) * Number(limit);
+    const limitVal = Number(limit);
+
+    const total = await User.countDocuments(query);
+
     // Use aggregation to fetch users with counts of their listings and appointments
-    const users = await User.aggregate([
-      { $match: { $or: [ { role: 'user' }, { role: { $exists: false } } ] } },
+    const items = await User.aggregate([
+      { $match: query },
+      { $sort: { createdAt: -1 } },
+      { $skip: skipVal },
+      { $limit: limitVal },
       // Lookup listings count
       {
         $lookup: {
@@ -118,19 +200,27 @@ export const getManagementUsers = async (req, res, next) => {
       }
     ]);
 
-    res.status(200).json(users);
+    res.status(200).json({
+      success: true,
+      items,
+      total,
+      page: Number(page),
+      limit: limitVal
+    });
   } catch (err) {
     next(err);
   }
 };
 
-// Fetch all admins (for admin and rootadmin)
+// Fetch all admins (for admin and rootadmin) with pagination and filters
 export const getManagementAdmins = async (req, res, next) => {
   try {
     const currentUser = await User.findById(req.user.id);
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Access denied. Only admins can access admin management.'));
     }
+    const { page = 1, limit = 10, q, status, promoSubscription, adminApproval } = req.query;
+
     // Include all admins regardless of approval status (pending, approved, rejected)
     // Regular admins: only see other admins (not rootadmin/default admin)
     // Rootadmin: see all admins (not rootadmin/default admin)
@@ -144,9 +234,52 @@ export const getManagementAdmins = async (req, res, next) => {
       query.role = 'admin';
       query.isDefaultAdmin = { $ne: true };
     }
+
+    if (q) {
+      query.$and = [
+        {
+          $or: [
+            { username: new RegExp(q, 'i') },
+            { email: new RegExp(q, 'i') },
+            { mobileNumber: new RegExp(q, 'i') }
+          ]
+        }
+      ];
+    }
+
+    if (status && status !== 'all') {
+      if (status === 'locked') {
+        const activeLockouts = await PasswordLockout.find({ unlockAt: { $gt: new Date() } }).select('email');
+        const lockedEmails = activeLockouts.map(l => (l.email || '').toLowerCase());
+        query.email = { $in: lockedEmails };
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (promoSubscription && promoSubscription !== 'all') {
+      if (promoSubscription === 'subscribed') {
+        query.isSubscribed = { $ne: false };
+      } else {
+        query.isSubscribed = false;
+      }
+    }
+
+    if (adminApproval && adminApproval !== 'all') {
+      query.adminApprovalStatus = adminApproval;
+    }
+
+    const skipVal = (Number(page) - 1) * Number(limit);
+    const limitVal = Number(limit);
+
+    const total = await User.countDocuments(query);
+
     // Use aggregation to fetch admins with counts
-    const admins = await User.aggregate([
+    const items = await User.aggregate([
       { $match: query },
+      { $sort: { createdAt: -1 } },
+      { $skip: skipVal },
+      { $limit: limitVal },
       // Lookup listings count
       {
         $lookup: {
@@ -244,7 +377,13 @@ export const getManagementAdmins = async (req, res, next) => {
       }
     ]);
 
-    res.status(200).json(admins);
+    res.status(200).json({
+      success: true,
+      items,
+      total,
+      page: Number(page),
+      limit: limitVal
+    });
   } catch (err) {
     next(err);
   }
@@ -525,7 +664,7 @@ export const getDeletedAccounts = async (req, res, next) => {
       return next(errorHandler(403, 'Access denied'));
     }
     const isRoot = currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin;
-    const { role, q, from, to, deletedBy, purgedBy, page = 1, limit = 50 } = req.query;
+    const { role, q, from, to, deletedBy, purgedBy, isPurged, page = 1, limit = 10 } = req.query;
     const filter = {};
     if (!isRoot) filter.role = 'user';
     if (role && (role === 'user' || role === 'admin')) filter.role = role;
@@ -535,13 +674,21 @@ export const getDeletedAccounts = async (req, res, next) => {
     ];
     if (from || to) {
       // For purged accounts, filter by purgedAt, otherwise by deletedAt
-      const dateField = purgedBy ? 'purgedAt' : 'deletedAt';
+      const dateField = (isPurged === 'true' || purgedBy) ? 'purgedAt' : 'deletedAt';
       filter[dateField] = {};
       if (from) filter[dateField].$gte = new Date(from);
       if (to) filter[dateField].$lte = new Date(to);
     }
     if (deletedBy) filter.deletedBy = deletedBy === 'self' ? 'self' : deletedBy;
     if (purgedBy) filter.purgedBy = purgedBy;
+
+    // Separate purged from softbanned
+    if (isPurged === 'true') {
+      filter.purgedAt = { $ne: null };
+    } else if (isPurged === 'false') {
+      filter.purgedAt = null;
+    }
+
     const skip = (Number(page) - 1) * Number(limit);
     const [items, total] = await Promise.all([
       DeletedAccount.find(filter).sort({ deletedAt: -1 }).skip(skip).limit(Number(limit)),
