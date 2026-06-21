@@ -427,6 +427,7 @@ export default function AdminChangePassword() {
                   type={showConfirm ? 'text' : 'password'}
                   value={formData.confirmNewPassword}
                   onChange={handleChange}
+                  onPaste={(e) => e.preventDefault()}
                   disabled={loading}
                   placeholder="Confirm your new password"
                   startIcon={<Lock className="w-5 h-5 dark:text-gray-400" />}
