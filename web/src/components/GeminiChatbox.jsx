@@ -665,12 +665,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
         try {
+            const utcTime = new Date(newTime).toISOString();
             const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${id}/reschedule`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ scheduledTime: newTime })
+                body: JSON.stringify({ scheduledTime: utcTime })
             });
             if (res.ok) {
                 toast.success("Reminder rescheduled successfully");
@@ -700,12 +701,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
         try {
+            const utcTime = new Date(time).toISOString();
             const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ reminderText: text, scheduledTime: time })
+                body: JSON.stringify({ reminderText: text, scheduledTime: utcTime })
             });
             if (res.ok) {
                 toast.success("Reminder scheduled successfully");
