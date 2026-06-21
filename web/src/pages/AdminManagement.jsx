@@ -297,6 +297,14 @@ export default function AdminManagement() {
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     if (!currentUser?._id) return;
     fetchData();
   }, [currentUser?._id]);
@@ -1327,61 +1335,62 @@ export default function AdminManagement() {
   const renderPagination = (currentPage, totalItems, onPageChange, limit = 12) => {
     const totalPages = Math.ceil(totalItems / limit);
     if (totalPages <= 1) return null;
-
-    // Generate page numbers
+ 
+    // Generate page numbers (fewer visible pages on mobile to fit the screen)
     const pages = [];
-    const maxVisiblePages = 5;
+    const maxVisiblePages = isMobile ? 3 : 5;
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
     if (endPage - startPage < maxVisiblePages - 1) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-
+ 
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-
+ 
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 animate-fadeIn">
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 animate-fadeIn w-full">
+        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
           Showing <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.min(totalItems, (currentPage - 1) * limit + 1)}</span> to{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.min(totalItems, currentPage * limit)}</span> of{" "}
           <span className="font-semibold text-gray-700 dark:text-gray-300">{totalItems}</span> accounts
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm font-medium flex-shrink-0 whitespace-nowrap"
           >
-            Previous
+            <span className="hidden sm:inline">Previous</span>
+            <span className="sm:hidden">&larr;</span>
           </button>
           {startPage > 1 && (
             <>
               <button
                 onClick={() => onPageChange(1)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === 1 ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 whitespace-nowrap ${currentPage === 1 ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 1
               </button>
-              {startPage > 2 && <span className="px-2 text-gray-400">...</span>}
+              {startPage > 2 && <span className="px-1 text-gray-400 flex-shrink-0 whitespace-nowrap">...</span>}
             </>
           )}
           {pages.map((p) => (
             <button
               key={p}
               onClick={() => onPageChange(p)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === p ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 whitespace-nowrap ${currentPage === p ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
             >
               {p}
             </button>
           ))}
           {endPage < totalPages && (
             <>
-              {endPage < totalPages - 1 && <span className="px-2 text-gray-400">...</span>}
+              {endPage < totalPages - 1 && <span className="px-1 text-gray-400 flex-shrink-0 whitespace-nowrap">...</span>}
               <button
                 onClick={() => onPageChange(totalPages)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === totalPages ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 whitespace-nowrap ${currentPage === totalPages ? "bg-blue-600 text-white" : "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
               >
                 {totalPages}
               </button>
@@ -1390,9 +1399,10 @@ export default function AdminManagement() {
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs sm:text-sm font-medium flex-shrink-0 whitespace-nowrap"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
+            <span className="sm:hidden">&rarr;</span>
           </button>
         </div>
       </div>
@@ -1401,14 +1411,14 @@ export default function AdminManagement() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 py-10 px-2 md:px-8 animate-fadeIn transition-colors duration-300">
-      <div className="max-w-6xl mx-auto bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 animate-slideUp border border-white/20 dark:border-gray-800">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <h1 className="text-4xl font-extrabold text-blue-700 dark:text-blue-400 drop-shadow animate-fade-in">Accounts Management</h1>
-          <div className="flex items-center gap-3">
+      <div className="max-w-6xl mx-auto bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl p-4 sm:p-8 animate-slideUp border border-white/20 dark:border-gray-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-blue-700 dark:text-blue-400 drop-shadow animate-fade-in text-center sm:text-left">Accounts Management</h1>
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3">
             {!showPasswordModal && (
               <>
                 <div
-                  className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 shadow border backdrop-blur-md transition-all duration-300 ${
+                  className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs md:text-sm font-bold flex items-center gap-1.5 sm:gap-2 shadow border backdrop-blur-md transition-all duration-300 ${
                     timeLeft <= 60
                       ? "bg-red-50/90 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 animate-pulse"
                       : "bg-gray-50/90 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
@@ -1421,7 +1431,9 @@ export default function AdminManagement() {
                     <FaClock className="w-3.5 h-3.5 text-blue-500" />
                   )}
                   <span>
-                    Locks in: <span className="font-mono font-black">{formatTime(timeLeft)}</span>
+                    <span className="hidden min-[380px]:inline">Locks in: </span>
+                    <span className="min-[380px]:hidden">Locks: </span>
+                    <span className="font-mono font-black">{formatTime(timeLeft)}</span>
                   </span>
                 </div>
                 {timeLeft <= 60 && (
@@ -1430,7 +1442,7 @@ export default function AdminManagement() {
                       setTimeLeft(600);
                       toast.success("Session extended successfully!");
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs md:text-sm font-bold shadow transition-all hover:scale-105 active:scale-95 animate-fadeIn"
+                    className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs md:text-sm font-bold shadow transition-all hover:scale-105 active:scale-95 animate-fadeIn"
                     title="Extend session for another 10 minutes"
                   >
                     Extend Time
@@ -1446,17 +1458,20 @@ export default function AdminManagement() {
                 toast.success("Accounts refreshed successfully!");
               }}
               disabled={refreshing}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 hover:scale-[1.03] disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200 inline-flex items-center gap-2 border border-blue-500/20"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 hover:scale-[1.03] disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200 inline-flex items-center gap-1.5 sm:gap-2 border border-blue-500/20"
               title="Refresh all account data"
             >
-              <FaSync className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-              <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
+              <FaSync className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+              <span>
+                <span className="hidden min-[380px]:inline">{refreshing ? "Refreshing..." : "Refresh"}</span>
+                <span className="min-[380px]:hidden">{refreshing ? "..." : "Refresh"}</span>
+              </span>
             </button>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 sm:gap-4 mb-8 animate-fadeIn">
+        <div className="flex overflow-x-auto gap-2 sm:gap-4 mb-8 pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden animate-fadeIn">
           <button
-            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "users" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700"}`}
+            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-lg shadow transition-all duration-200 flex-shrink-0 whitespace-nowrap ${tab === "users" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white sm:scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700"}`}
             onClick={() => {
               setTab("users");
               setShowRestriction(false);
@@ -1471,7 +1486,7 @@ export default function AdminManagement() {
           </button>
           {isRootOrDefault && (
             <button
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "admins" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700"}`}
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-lg shadow transition-all duration-200 flex-shrink-0 whitespace-nowrap ${tab === "admins" ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white sm:scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-700"}`}
               onClick={() => {
                 setShowRestriction(false);
                 setTab("admins");
@@ -1486,7 +1501,7 @@ export default function AdminManagement() {
             </button>
           )}
           <button
-            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "softbanned" ? "bg-gradient-to-r from-red-500 to-red-600 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-rose-50 dark:hover:bg-gray-700"}`}
+            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-lg shadow transition-all duration-200 flex-shrink-0 whitespace-nowrap ${tab === "softbanned" ? "bg-gradient-to-r from-red-500 to-red-600 text-white sm:scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-rose-50 dark:hover:bg-gray-700"}`}
             onClick={() => {
               setTab("softbanned");
               setSearchTerm("");
@@ -1500,7 +1515,7 @@ export default function AdminManagement() {
             <span className="sm:hidden">Softbanned ({tabCounts.softbanned})</span>
           </button>
           <button
-            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-lg shadow transition-all duration-200 ${tab === "purged" ? "bg-gradient-to-r from-red-500 to-orange-500 text-white scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700"}`}
+            className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-xs sm:text-lg shadow transition-all duration-200 flex-shrink-0 whitespace-nowrap ${tab === "purged" ? "bg-gradient-to-r from-red-500 to-orange-500 text-white sm:scale-105" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700"}`}
             onClick={() => {
               setTab("purged");
               setSearchTerm("");
