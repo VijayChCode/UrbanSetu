@@ -9,6 +9,7 @@ export default function GlobalReminderListener() {
   const currentUser = useSelector(state => state.user.currentUser);
   const [activeReminder, setActiveReminder] = useState(null);
   const audioRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -16,10 +17,14 @@ export default function GlobalReminderListener() {
     const handleReminderTriggered = (data) => {
       console.log('Reminder triggered globally:', data);
       
-      // Stop existing audio if any
+      // Stop existing audio and clear timeout if any
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
 
       // Play ringtone looping
@@ -34,6 +39,17 @@ export default function GlobalReminderListener() {
       setActiveReminder(data);
       window.activeRingingReminderId = data.reminderId;
       window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: data.reminderId, isRinging: true } }));
+
+      // Auto-mute the sound after 1 minute (60 seconds) but keep modal open
+      timeoutRef.current = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+        window.activeRingingReminderId = null;
+        window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+        console.log('Reminder alarm sound auto-muted after 1 minute.');
+      }, 60000);
     };
 
     socket.on('reminder_triggered', handleReminderTriggered);
@@ -44,6 +60,10 @@ export default function GlobalReminderListener() {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       window.activeRingingReminderId = null;
       window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
     };
@@ -53,6 +73,10 @@ export default function GlobalReminderListener() {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
     const reminderId = activeReminder?.reminderId;
     setActiveReminder(null);
