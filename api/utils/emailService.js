@@ -17726,8 +17726,11 @@ export const sendReminderNotificationEmail = async (email, { taskText, time, use
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <div style="text-align: center; margin-bottom: 30px;">
+            <div style="display: inline-block; width: 64px; height: 64px; background-color: #eef2ff; border-radius: 50%; line-height: 64px; text-align: center; margin-bottom: 15px;">
+              <span style="font-size: 32px;">⏰</span>
+            </div>
             <h1 style="color: #6366f1; margin: 0; font-size: 28px;">UrbanSetu</h1>
-            <p style="color: #6b7280; margin: 10px 0 0 0;">AI Task Reminder</p>
+            <p style="color: #6b7280; margin: 5px 0 0 0; font-weight: bold; letter-spacing: 0.5px;">AI Task Reminder</p>
           </div>
           
           <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6366f1;">
