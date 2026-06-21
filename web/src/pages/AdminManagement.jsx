@@ -1829,7 +1829,7 @@ export default function AdminManagement() {
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             💡 Tip: Press Ctrl+F to quickly focus the search box • Use status filter to view active or suspended accounts
           </div>
-          {tab === "admins" && (
+          {(tab === "admins" || (tab === "users" && isRootOrDefault)) && (
             <div className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
               ℹ️ Info: Rejected admin accounts are treated as regular users until they are re-approved and shown in both User and Admin tabs.
             </div>
