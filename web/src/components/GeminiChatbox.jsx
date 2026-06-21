@@ -9258,8 +9258,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                     <div className="flex-1 overflow-y-auto pr-1">
                                         {isLoadingReminders ? (
-                                            <div className="flex justify-center py-8">
+                                            <div className="flex flex-col items-center justify-center py-12 gap-3 animate-pulse">
                                                 <UrbanSetuSpinner />
+                                                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>
+                                                    Fetching active reminders...
+                                                </p>
                                             </div>
                                         ) : reminders.length === 0 ? (
                                             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No active reminders found</p>
