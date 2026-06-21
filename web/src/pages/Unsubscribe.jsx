@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { FaEnvelopeOpenText, FaCheckCircle, FaExclamationCircle, FaArrowLeft, FaArrowRight, FaHome, FaPaperPlane, FaInfoCircle } from 'react-icons/fa';
@@ -131,6 +131,7 @@ const reasons = [
 export default function Unsubscribe() {
     const { currentUser } = useSelector(state => state.user);
     const location = useLocation();
+    const navigate = useNavigate();
     const [view, setView] = useState('landing'); // landing, reason, thankyou, error, already_unsubscribed
     const [email, setEmail] = useState('');
     const [token, setToken] = useState('');
@@ -138,6 +139,25 @@ export default function Unsubscribe() {
     const [message, setMessage] = useState('');
     const [selectedReason, setSelectedReason] = useState('');
     const [otherReason, setOtherReason] = useState('');
+    const [countdown, setCountdown] = useState(10);
+
+    useEffect(() => {
+        if (view === 'thankyou' || view === 'already_unsubscribed') {
+            setCountdown(10);
+            const interval = setInterval(() => {
+                setCountdown((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        const redirectTarget = currentUser ? (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user') : '/';
+                        navigate(redirectTarget);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [view, currentUser, navigate]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -382,6 +402,9 @@ export default function Unsubscribe() {
                                     <FaHome className="text-xl" />
                                     Return to Homepage
                                 </Link>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 animate-pulse">
+                                    Redirecting to homepage automatically in <span className="font-semibold text-emerald-600 dark:text-emerald-400">{countdown}s</span>...
+                                </p>
                             </motion.div>
                         )}
 
@@ -440,6 +463,9 @@ export default function Unsubscribe() {
                                     <FaHome className="text-xl" />
                                     Return to Homepage
                                 </Link>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 animate-pulse">
+                                    Redirecting to homepage automatically in <span className="font-semibold text-emerald-600 dark:text-emerald-400">{countdown}s</span>...
+                                </p>
                             </motion.div>
                         )}
                     </AnimatePresence>
