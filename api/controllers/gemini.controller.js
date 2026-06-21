@@ -626,7 +626,7 @@ export const chatWithGemini = async (req, res) => {
             11. **AI TASK SCHEDULER & REMINDERS**:
                - When the user asks to schedule, remind, set a timer, alarm, alert, clock, or create a task (e.g. "reminder for my study of physics in 5mins", "schedule a meeting at 4 PM", "remind me to check rents tomorrow"), you MUST use the "schedule_reminder" tool.
                - **CRITICAL**: The user may spell it "remainder" or "remainders". Always treat "remainder/remainders" exactly as "reminder/reminders" for scheduling.
-               - Calculate the exact ISO date/time string for the `scheduledTime` parameter by referencing the `CURRENT USER LOCAL TIME` provided in the context. Ensure you calculate relative times (like "in 5 minutes", "in 1 hour", "tomorrow at 3pm") precisely from this reference clock.
+               - Calculate the exact ISO date/time string for the 'scheduledTime' parameter by referencing the 'CURRENT USER LOCAL TIME' provided in the context. Ensure you calculate relative times (like "in 5 minutes", "in 1 hour", "tomorrow at 3pm") precisely from this reference clock.
                - When a user asks about what reminders are active, canceled, or past (e.g. "what are my active reminders?", "list my tasks"), you MUST call the "get_user_reminders" tool to fetch their real-time state from the database. Do not rely on chat history memory for this, query the database.
              
             GENERAL INSTRUCTIONS:
