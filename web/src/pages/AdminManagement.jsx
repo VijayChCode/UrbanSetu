@@ -143,7 +143,7 @@ export default function AdminManagement() {
     try {
       const params = new URLSearchParams();
       params.set('page', String(pageNumber));
-      params.set('limit', '10');
+      params.set('limit', '12');
       if (debouncedSearchTerm) params.set('q', debouncedSearchTerm);
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (promoSubscriptionFilter !== 'all') params.set('promoSubscription', promoSubscriptionFilter);
@@ -173,7 +173,7 @@ export default function AdminManagement() {
     try {
       const params = new URLSearchParams();
       params.set('page', String(pageNumber));
-      params.set('limit', '10');
+      params.set('limit', '12');
       if (debouncedSearchTerm) params.set('q', debouncedSearchTerm);
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (promoSubscriptionFilter !== 'all') params.set('promoSubscription', promoSubscriptionFilter);
@@ -203,7 +203,7 @@ export default function AdminManagement() {
     try {
       const params = new URLSearchParams();
       params.set('page', String(pageNumber));
-      params.set('limit', '10');
+      params.set('limit', '12');
       params.set('isPurged', 'false');
       if (softbannedFilters.q) params.set('q', softbannedFilters.q);
       if (softbannedFilters.role && softbannedFilters.role !== 'all') params.set('role', softbannedFilters.role);
@@ -234,7 +234,7 @@ export default function AdminManagement() {
     try {
       const params = new URLSearchParams();
       params.set('page', String(pageNumber));
-      params.set('limit', '10');
+      params.set('limit', '12');
       params.set('isPurged', 'true');
       if (purgedFilters.q) params.set('q', purgedFilters.q);
       if (purgedFilters.role && purgedFilters.role !== 'all') params.set('role', purgedFilters.role);
@@ -1309,7 +1309,7 @@ export default function AdminManagement() {
     return <AdminManagementSkeleton />;
   }
 
-  const renderPagination = (currentPage, totalItems, onPageChange, limit = 10) => {
+  const renderPagination = (currentPage, totalItems, onPageChange, limit = 12) => {
     const totalPages = Math.ceil(totalItems / limit);
     if (totalPages <= 1) return null;
 
@@ -1643,11 +1643,11 @@ export default function AdminManagement() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
+                  <div className="flex flex-wrap justify-center gap-8 animate-fadeIn">
                     {filteredUsers.map((user, index) => (
                       <div
                         key={user._id}
-                        className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-blue-200 dark:hover:border-blue-800"
+                        className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.334rem)] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-blue-200 dark:hover:border-blue-800"
                         onClick={() => handleAccountClick(user, 'user')}
                         title="Click to view full details"
                         style={{ animation: `staggerFadeIn 0.25s ease-out ${index * 0.03}s backwards` }}
@@ -1770,11 +1770,11 @@ export default function AdminManagement() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
+                  <div className="flex flex-wrap justify-center gap-8 animate-fadeIn">
                     {filteredAdmins.map((admin, index) => (
                       <div
                         key={admin._id}
-                        className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-purple-200 dark:hover:border-purple-800"
+                        className="w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.334rem)] bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-purple-200 dark:hover:border-purple-800"
                         onClick={() => handleAccountClick(admin, 'admin')}
                         title="Click to view full details"
                         style={{ animation: `staggerFadeIn 0.25s ease-out ${index * 0.03}s backwards` }}

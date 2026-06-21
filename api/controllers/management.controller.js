@@ -63,7 +63,7 @@ export const getManagementUsers = async (req, res, next) => {
       return next(errorHandler(403, 'Access denied'));
     }
 
-    const { page = 1, limit = 10, q, status, promoSubscription } = req.query;
+    const { page = 1, limit = 12, q, status, promoSubscription } = req.query;
     const query = { $or: [ { role: 'user' }, { role: { $exists: false } } ] };
 
     if (q) {
@@ -219,7 +219,7 @@ export const getManagementAdmins = async (req, res, next) => {
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
       return next(errorHandler(403, 'Access denied. Only admins can access admin management.'));
     }
-    const { page = 1, limit = 10, q, status, promoSubscription, adminApproval } = req.query;
+    const { page = 1, limit = 12, q, status, promoSubscription, adminApproval } = req.query;
 
     // Include all admins regardless of approval status (pending, approved, rejected)
     // Regular admins: only see other admins (not rootadmin/default admin)
@@ -664,7 +664,7 @@ export const getDeletedAccounts = async (req, res, next) => {
       return next(errorHandler(403, 'Access denied'));
     }
     const isRoot = currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin;
-    const { role, q, from, to, deletedBy, purgedBy, isPurged, page = 1, limit = 10 } = req.query;
+    const { role, q, from, to, deletedBy, purgedBy, isPurged, page = 1, limit = 12 } = req.query;
     const filter = {};
     if (!isRoot) filter.role = 'user';
     if (role && (role === 'user' || role === 'admin')) filter.role = role;
