@@ -79,8 +79,7 @@ const AdminRequests = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            currentUserId: currentUser._id,
-            rootAdminPassword: 'Salendra@2004' // Root admin password
+            currentUserId: currentUser._id
           }),
         });
 
@@ -129,8 +128,7 @@ const AdminRequests = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            currentUserId: currentUser._id,
-            rootAdminPassword: 'Salendra@2004' // Root admin password
+            currentUserId: currentUser._id
           }),
         });
 
@@ -179,8 +177,7 @@ const AdminRequests = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            currentUserId: currentUser._id,
-            rootAdminPassword: 'Salendra@2004' // Root admin password
+            currentUserId: currentUser._id
           }),
         });
 

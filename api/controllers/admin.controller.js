@@ -6,6 +6,10 @@ import { sendAdminApprovalEmail, sendAdminRejectionEmail } from "../utils/emailS
 // Get all pending admin requests
 export const getPendingAdminRequests = async (req, res, next) => {
     try {
+        const currentUser = await User.findById(req.user.id);
+        if (!currentUser || (currentUser.role !== 'rootadmin' && !currentUser.isDefaultAdmin)) {
+            return next(errorHandler(403, 'Access denied. Only root admin or default admin can view pending requests.'));
+        }
         const pendingRequests = await User.find({
             role: "admin",
             adminApprovalStatus: "pending"
@@ -21,8 +25,8 @@ export const getPendingAdminRequests = async (req, res, next) => {
 export const getAllAdminRequests = async (req, res, next) => {
     try {
         const currentUser = await User.findById(req.user.id);
-        if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin' && !currentUser.isDefaultAdmin)) {
-            return next(errorHandler(403, 'Access denied. Only admins can view admin requests.'));
+        if (!currentUser || (currentUser.role !== 'rootadmin' && !currentUser.isDefaultAdmin)) {
+            return next(errorHandler(403, 'Access denied. Only root admin or default admin can view admin requests.'));
         }
 
         const allRequests = await User.find({
@@ -52,8 +56,8 @@ export const approveAdminRequest = async (req, res, next) => {
         }
         
         // Allow rootadmin or default admin to approve
-        if (!((currentUser.role === 'admin' && currentUser.adminApprovalStatus === 'approved') || currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin)) {
-            return next(errorHandler(403, "Only approved admins or root admin can approve requests"));
+        if (!(currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin)) {
+            return next(errorHandler(403, "Only default admin or root admin can approve requests"));
         }
         
         // Find the user to approve
@@ -115,8 +119,8 @@ export const rejectAdminRequest = async (req, res, next) => {
         }
         
         // Allow rootadmin or default admin to reject
-        if (!((currentUser.role === 'admin' && currentUser.adminApprovalStatus === 'approved') || currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin)) {
-            return next(errorHandler(403, "Only approved admins or root admin can reject requests"));
+        if (!(currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin)) {
+            return next(errorHandler(403, "Only default admin or root admin can reject requests"));
         }
         
         // Find the user to reject
@@ -179,8 +183,8 @@ export const reapproveAdminRequest = async (req, res, next) => {
         }
         
         // Allow rootadmin or default admin to reapprove
-        if (!((currentUser.role === 'admin' && currentUser.adminApprovalStatus === 'approved') || currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin)) {
-            return next(errorHandler(403, "Only approved admins or root admin can reapprove requests"));
+        if (!(currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin)) {
+            return next(errorHandler(403, "Only default admin or root admin can reapprove requests"));
         }
         
         // Find the user to reapprove

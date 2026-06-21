@@ -20,16 +20,26 @@ export const getManagementTabCounts = async (req, res, next) => {
     }
     const isRoot = currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin;
 
-    // Users count
-    const usersCount = await User.countDocuments({ $or: [ { role: 'user' }, { role: { $exists: false } } ] });
+    // Users count (exclude rejected admins - they should appear in admins tab)
+    const usersCount = await User.countDocuments({
+      $and: [
+        { $or: [ { role: 'user' }, { role: { $exists: false } } ] },
+        { adminApprovalStatus: { $ne: 'rejected' } }
+      ]
+    });
 
-    // Admins count
+    // Admins count (include rejected admins who have adminApprovalStatus='rejected')
     const adminQuery = { _id: { $ne: currentUser._id } };
     if (isRoot) {
-      adminQuery.role = { $in: ['admin', 'rootadmin'] };
+      adminQuery.$or = [
+        { role: { $in: ['admin', 'rootadmin'] } },
+        { role: 'user', adminApprovalStatus: 'rejected' }
+      ];
     } else {
-      adminQuery.role = 'admin';
-      adminQuery.isDefaultAdmin = { $ne: true };
+      adminQuery.$or = [
+        { role: 'admin', isDefaultAdmin: { $ne: true } },
+        { role: 'user', adminApprovalStatus: 'rejected' }
+      ];
     }
     const adminsCount = await User.countDocuments(adminQuery);
 
@@ -64,31 +74,39 @@ export const getManagementUsers = async (req, res, next) => {
     }
 
     const { page = 1, limit = 12, q, status, promoSubscription } = req.query;
-    const query = { $or: [ { role: 'user' }, { role: { $exists: false } } ] };
+    // Exclude rejected admins from users list - they appear in admins tab
+    const query = {
+      $and: [
+        { $or: [ { role: 'user' }, { role: { $exists: false } } ] },
+        { adminApprovalStatus: { $ne: 'rejected' } }
+      ]
+    };
 
     if (q) {
-      query.$or = [
-        { username: new RegExp(q, 'i') },
-        { email: new RegExp(q, 'i') },
-        { mobileNumber: new RegExp(q, 'i') }
-      ];
+      query.$and.push({
+        $or: [
+          { username: new RegExp(q, 'i') },
+          { email: new RegExp(q, 'i') },
+          { mobileNumber: new RegExp(q, 'i') }
+        ]
+      });
     }
 
     if (status && status !== 'all') {
       if (status === 'locked') {
         const activeLockouts = await PasswordLockout.find({ unlockAt: { $gt: new Date() } }).select('email');
         const lockedEmails = activeLockouts.map(l => (l.email || '').toLowerCase());
-        query.email = { $in: lockedEmails };
+        query.$and.push({ email: { $in: lockedEmails } });
       } else {
-        query.status = status;
+        query.$and.push({ status: status });
       }
     }
 
     if (promoSubscription && promoSubscription !== 'all') {
       if (promoSubscription === 'subscribed') {
-        query.isSubscribed = { $ne: false };
+        query.$and.push({ isSubscribed: { $ne: false } });
       } else {
-        query.isSubscribed = false;
+        query.$and.push({ isSubscribed: false });
       }
     }
 
@@ -228,11 +246,17 @@ export const getManagementAdmins = async (req, res, next) => {
     const query = {
       _id: { $ne: currentUser._id }
     };
+    // Include rejected admins (role='user', adminApprovalStatus='rejected') in the admins list
     if (isRoot) {
-      query.role = { $in: ['admin', 'rootadmin'] };
+      query.$or = [
+        { role: { $in: ['admin', 'rootadmin'] } },
+        { role: 'user', adminApprovalStatus: 'rejected' }
+      ];
     } else {
-      query.role = 'admin';
-      query.isDefaultAdmin = { $ne: true };
+      query.$or = [
+        { role: 'admin', isDefaultAdmin: { $ne: true } },
+        { role: 'user', adminApprovalStatus: 'rejected' }
+      ];
     }
 
     if (q) {

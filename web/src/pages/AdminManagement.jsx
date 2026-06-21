@@ -974,12 +974,21 @@ export default function AdminManagement() {
         promote: { ...prev.promote, [adminId]: true }
       }));
       try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/reapprove/${adminId}`, {
-          method: "PATCH",
+        const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/reapprove/${adminId}`, {
+          method: "PUT",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentUserId: currentUser._id
+          }),
         });
         const data = await res.json();
         if (res.ok) {
           setAdmins(prev => prev.map(a => a._id === adminId ? { ...a, adminApprovalStatus: 'approved', status: 'active', role: 'admin' } : a));
+          if (selectedAccount && selectedAccount._id === adminId) {
+            setSelectedAccount(prev => ({ ...prev, adminApprovalStatus: 'approved', status: 'active', role: 'admin' }));
+          }
           toast.success("Admin re-approved successfully!");
           socket.emit('admin_update', { type: 'update', admin: { ...data }, userId: adminId });
           // Emit global signout event for the reapproved admin
@@ -988,6 +997,7 @@ export default function AdminManagement() {
             action: 'reapprove',
             message: 'Your admin account has been re-approved. You have been signed out. Please sign in again to access admin features.'
           });
+          fetchTabCounts();
           setShowConfirmModal(false);
         } else {
           toast.error(data.message || "Failed to re-approve admin");
@@ -1027,8 +1037,7 @@ export default function AdminManagement() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            currentUserId: currentUser._id,
-            rootAdminPassword: 'Salendra@2004' // Root admin password
+            currentUserId: currentUser._id
           }),
         });
 
@@ -1083,8 +1092,7 @@ export default function AdminManagement() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            currentUserId: currentUser._id,
-            rootAdminPassword: 'Salendra@2004' // Root admin password
+            currentUserId: currentUser._id
           }),
         });
 
@@ -2018,12 +2026,12 @@ export default function AdminManagement() {
                             })()}
                           </div>
                         </div>
-                        {admin.adminApprovalStatus === 'pending' && (
+                        {(admin.adminApprovalStatus === 'pending' || admin.adminApprovalStatus === 'rejected') && (
                           <div className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 mt-4 px-1 uppercase tracking-wider">
                             Admin Approval:
                           </div>
                         )}
-                        <div className={`flex flex-col gap-2 ${admin.adminApprovalStatus === 'pending' ? 'mt-2' : 'mt-4'} sm:flex-row sm:gap-2`}>
+                        <div className={`flex flex-col gap-2 ${(admin.adminApprovalStatus === 'pending' || admin.adminApprovalStatus === 'rejected') ? 'mt-2' : 'mt-4'} sm:flex-row sm:gap-2`}>
                           {admin.adminApprovalStatus === 'pending' ? (
                             <>
                               <button
@@ -2059,6 +2067,33 @@ export default function AdminManagement() {
                                 )}
                               </button>
                             </>
+                          ) : admin.adminApprovalStatus === 'rejected' ? (
+                            <>
+                              {isRootOrDefault && (
+                                <button
+                                  className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
+                                  onClick={e => { e.stopPropagation(); handleReapprove(admin._id); }}
+                                  disabled={actionLoading.promote[admin._id]}
+                                >
+                                  {actionLoading.promote[admin._id] ? (
+                                    <>
+                                      <UrbanSetuSpinner size="sm" isBright={true} />
+                                      Re-approving...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FaCheckCircle /> Re-Approve
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-all duration-200 flex items-center justify-center gap-2"
+                                onClick={e => { e.stopPropagation(); handleDelete(admin._id, "admin"); }}
+                              >
+                                <FaTrash /> Softban
+                              </button>
+                            </>
                           ) : (
                             <>
                               <button
@@ -2083,31 +2118,21 @@ export default function AdminManagement() {
                               >
                                 <FaTrash /> Softban
                               </button>
-                              {admin.adminApprovalStatus !== 'rejected' && (
-                                <button
-                                  className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
-                                  onClick={e => { e.stopPropagation(); handleDemote(admin._id); }}
-                                >
-                                  {actionLoading.demote[admin._id] ? (
-                                    <>
-                                      <UrbanSetuSpinner size="sm" isBright={true} />
-                                      Demoting...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <FaArrowDown /> Demote to User
-                                    </>
-                                  )}
-                                </button>
-                              )}
-                              {isRootOrDefault && admin.adminApprovalStatus === 'rejected' && (
-                                <button
-                                  className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-green-600 text-white hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
-                                  onClick={e => { e.stopPropagation(); handleReapprove(admin._id); }}
-                                >
-                                  <FaCheckCircle /> Re-Approve
-                                </button>
-                              )}
+                              <button
+                                className="flex-1 px-2 py-1 rounded-lg font-semibold text-sm bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center gap-2"
+                                onClick={e => { e.stopPropagation(); handleDemote(admin._id); }}
+                              >
+                                {actionLoading.demote[admin._id] ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    Demoting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaArrowDown /> Demote to User
+                                  </>
+                                )}
+                              </button>
                             </>
                           )}
                         </div>
@@ -2385,6 +2410,27 @@ export default function AdminManagement() {
                               ) : (
                                 <>
                                   <span>✕</span> Reject
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        {isRootOrDefault && selectedAccount?.adminApprovalStatus === 'rejected' && (
+                          <div className="flex gap-2 w-full mt-2 border-b border-gray-100 dark:border-gray-700/60 pb-3 md:pb-4">
+                            <button
+                              onClick={() => handleReapprove(selectedAccount._id)}
+                              disabled={actionLoading.promote[selectedAccount._id]}
+                              className="flex-1 py-1.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-[10px] md:text-xs font-bold shadow transition-all duration-200 flex items-center justify-center gap-1"
+                            >
+                              {actionLoading.promote[selectedAccount._id] ? (
+                                <>
+                                  <UrbanSetuSpinner size="sm" isBright={true} />
+                                  Re-approving...
+                                </>
+                              ) : (
+                                <>
+                                  <FaCheckCircle /> Re-Approve
                                 </>
                               )}
                             </button>
