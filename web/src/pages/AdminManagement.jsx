@@ -101,6 +101,7 @@ export default function AdminManagement() {
   const [softbannedTotal, setSoftbannedTotal] = useState(0);
   const [purgedPage, setPurgedPage] = useState(1);
   const [purgedTotal, setPurgedTotal] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [passwordLockouts, setPasswordLockouts] = useState([]); // { email, unlockAt }
   const [showPasswordModal, setShowPasswordModal] = useState(true);
@@ -1438,14 +1439,25 @@ export default function AdminManagement() {
               </>
             )}
             <button
-              onClick={() => fetchData()}
-              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow inline-flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
-              title="Refresh data"
+              onClick={async () => {
+                setRefreshing(true);
+                await fetchData();
+                setRefreshing(false);
+                toast.success("Accounts refreshed successfully!");
+              }}
+              disabled={refreshing}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold shadow-md hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 hover:scale-[1.03] disabled:opacity-75 disabled:cursor-not-allowed transition-all duration-200 inline-flex items-center gap-2 border border-blue-500/20"
+              title="Refresh all account data"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="currentColor" 
+                className={`w-4 h-4 transition-transform duration-700 ${refreshing ? "animate-spin" : ""}`}
+              >
                 <path d="M12 6V3L8 7l4 4V8c2.757 0 5 2.243 5 5a5 5 0 11-9.9-1H5.026A7 7 0 1019 13c0-3.86-3.141-7-7-7z" />
               </svg>
-              Refresh
+              <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
           </div>
         </div>
