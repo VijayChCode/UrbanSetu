@@ -25,6 +25,8 @@ export default function AdminManagement() {
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
   const [tab, setTab] = useState("users");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const passwordInputRef = useRef(null);
@@ -137,7 +139,7 @@ export default function AdminManagement() {
   };
 
   const fetchUsers = async (pageNumber = usersPage) => {
-    setLoading(true);
+    setTabLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('page', String(pageNumber));
@@ -161,13 +163,13 @@ export default function AdminManagement() {
       setUsersTotal(0);
       toast.error("Failed to fetch users");
     } finally {
-      setLoading(false);
+      setTabLoading(false);
     }
   };
 
   const fetchAdmins = async (pageNumber = adminsPage) => {
     if (!isRootOrDefault) return;
-    setLoading(true);
+    setTabLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('page', String(pageNumber));
@@ -192,7 +194,7 @@ export default function AdminManagement() {
       setAdminsTotal(0);
       toast.error("Failed to fetch admins");
     } finally {
-      setLoading(false);
+      setTabLoading(false);
     }
   };
 
@@ -259,7 +261,7 @@ export default function AdminManagement() {
   };
 
   const fetchData = async () => {
-    setLoading(true);
+    setInitialLoading(true);
     try {
       await fetchTabCounts();
       
@@ -289,7 +291,7 @@ export default function AdminManagement() {
     } catch (err) {
       toast.error("Failed to fetch accounts");
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -1303,7 +1305,7 @@ export default function AdminManagement() {
     );
   }
 
-  if (loading) {
+  if (initialLoading) {
     return <AdminManagementSkeleton />;
   }
 
@@ -1615,7 +1617,7 @@ export default function AdminManagement() {
           </div>
         </div>
 
-        {loading ? (
+        {tabLoading ? (
           <div className="flex flex-col items-center justify-center h-64 animate-fadeIn">
             <UrbanSetuSpinner size="xl" />
             <p className="text-lg text-gray-500 font-semibold mt-4">Loading accounts...</p>
@@ -1648,12 +1650,13 @@ export default function AdminManagement() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
-                    {filteredUsers.map((user) => (
+                    {filteredUsers.map((user, index) => (
                       <div
                         key={user._id}
-                        className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 animate-slideUp cursor-pointer hover:border-blue-200 dark:hover:border-blue-800"
+                        className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-blue-200 dark:hover:border-blue-800"
                         onClick={() => handleAccountClick(user, 'user')}
                         title="Click to view full details"
+                        style={{ animation: `staggerFadeIn 0.25s ease-out ${index * 0.03}s backwards` }}
                       >
                         <div className="flex items-start gap-4">
                           <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-500/20 flex-shrink-0 flex items-center justify-center text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -1774,12 +1777,13 @@ export default function AdminManagement() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-fadeIn">
-                    {filteredAdmins.map((admin) => (
+                    {filteredAdmins.map((admin, index) => (
                       <div
                         key={admin._id}
-                        className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 animate-slideUp cursor-pointer hover:border-purple-200 dark:hover:border-purple-800"
+                        className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-purple-200 dark:hover:border-purple-800"
                         onClick={() => handleAccountClick(admin, 'admin')}
                         title="Click to view full details"
+                        style={{ animation: `staggerFadeIn 0.25s ease-out ${index * 0.03}s backwards` }}
                       >
                         <div className="flex items-start gap-4">
                           <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex-shrink-0 flex items-center justify-center text-2xl font-bold text-purple-600 dark:text-purple-400">
@@ -1912,8 +1916,8 @@ export default function AdminManagement() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {softbannedAccounts.map(acc => (
-                          <tr key={acc._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        {softbannedAccounts.map((acc, index) => (
+                          <tr key={acc._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" style={{ animation: `staggerFadeIn 0.2s ease-out ${index * 0.02}s backwards` }}>
                             <td className="px-4 py-2 font-medium text-gray-800 dark:text-white whitespace-nowrap">{acc.name}</td>
                             <td className="px-4 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">{acc.email}</td>
                             <td className="px-4 py-2 whitespace-nowrap"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${acc.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>{acc.role}</span></td>
@@ -1995,8 +1999,8 @@ export default function AdminManagement() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {purgedAccounts.map(acc => (
-                          <tr key={acc._id} className="hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                        {purgedAccounts.map((acc, index) => (
+                          <tr key={acc._id} className="hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors" style={{ animation: `staggerFadeIn 0.2s ease-out ${index * 0.02}s backwards` }}>
                             <td className="px-4 py-2 font-medium text-gray-800 dark:text-white whitespace-nowrap">{acc.name}</td>
                             <td className="px-4 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">{acc.email}</td>
                             <td className="px-4 py-2 whitespace-nowrap"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${acc.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>{acc.role}</span></td>
@@ -2700,6 +2704,10 @@ export default function AdminManagement() {
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes staggerFadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
         .animate-slideUp { animation: slideUp 0.4s cubic-bezier(0.4,0,0.2,1); }

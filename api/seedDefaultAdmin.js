@@ -20,7 +20,7 @@ const seedDefaultAdmin = async () => {
     }
 
     // Create default admin
-    const hashedPassword = bcryptjs.hashSync('Salendra@2004', 10);
+    const hashedPassword = bcryptjs.hashSync('Hello@12', 10);
     
     const defaultAdmin = new User({
       username: 'adminvijay',
