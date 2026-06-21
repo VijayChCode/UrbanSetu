@@ -1160,9 +1160,8 @@ export default function AdminManagement() {
             return 0;
           }
           const nextVal = prev - 1;
-          // Warning toast at exactly 1 minute remaining (60 seconds left / 9 minutes passed)
           if (nextVal === 60) {
-            toast.info("For security reasons, you will be asked to re-enter your password in 1 minute.");
+            toast.info("For security reasons, your session will lock in 1 minute. Click 'Extend Time' next to the Refresh button to stay logged in.");
           }
           return nextVal;
         });
@@ -1406,23 +1405,37 @@ export default function AdminManagement() {
           <h1 className="text-4xl font-extrabold text-blue-700 dark:text-blue-400 drop-shadow animate-fade-in">Accounts Management</h1>
           <div className="flex items-center gap-3">
             {!showPasswordModal && (
-              <div
-                className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 shadow border backdrop-blur-md transition-all duration-300 ${
-                  timeLeft <= 60
-                    ? "bg-red-50/90 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 animate-pulse"
-                    : "bg-gray-50/90 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
-                }`}
-                title="Time remaining before session locks for security"
-              >
-                {timeLeft <= 60 ? (
-                  <FaLock className="w-3.5 h-3.5 text-red-500" />
-                ) : (
-                  <FaClock className="w-3.5 h-3.5 text-blue-500" />
+              <>
+                <div
+                  className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 shadow border backdrop-blur-md transition-all duration-300 ${
+                    timeLeft <= 60
+                      ? "bg-red-50/90 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 animate-pulse"
+                      : "bg-gray-50/90 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
+                  }`}
+                  title="Time remaining before session locks for security"
+                >
+                  {timeLeft <= 60 ? (
+                    <FaLock className="w-3.5 h-3.5 text-red-500" />
+                  ) : (
+                    <FaClock className="w-3.5 h-3.5 text-blue-500" />
+                  )}
+                  <span>
+                    Locks in: <span className="font-mono font-black">{formatTime(timeLeft)}</span>
+                  </span>
+                </div>
+                {timeLeft <= 60 && (
+                  <button
+                    onClick={() => {
+                      setTimeLeft(600);
+                      toast.success("Session extended successfully!");
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-xs md:text-sm font-bold shadow transition-all hover:scale-105 active:scale-95 animate-fadeIn"
+                    title="Extend session for another 10 minutes"
+                  >
+                    Extend Time
+                  </button>
                 )}
-                <span>
-                  Locks in: <span className="font-mono font-black">{formatTime(timeLeft)}</span>
-                </span>
-              </div>
+              </>
             )}
             <button
               onClick={() => fetchData()}
