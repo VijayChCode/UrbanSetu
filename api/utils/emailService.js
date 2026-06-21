@@ -17706,4 +17706,70 @@ export const sendChatLockedEmail = async (email, username, appointmentId, otherP
   }
 };
 
+// Send Reminder Notification Email
+export const sendReminderNotificationEmail = async (email, { taskText, time, username }) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const formattedTime = new Date(time).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `⏰ Reminder: ${taskText.substring(0, 40)}${taskText.length > 40 ? '...' : ''}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #6366f1; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">AI Task Reminder</p>
+          </div>
+          
+          <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6366f1;">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Task Reminder Triggered!</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              Hello ${username || 'User'},
+            </p>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              This is a scheduled reminder for your task:
+            </p>
+            <div style="background-color: white; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #e5e7eb; font-size: 16px; color: #1f2937; line-height: 1.6; font-weight: bold;">
+              "${taskText}"
+            </div>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              • <strong>Scheduled For:</strong> ${formattedTime}
+            </p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${clientBaseUrl}/user/ai" style="display: inline-block; background-color: #6366f1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Open SetuAI Assistant</a>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved. • <a href="${clientBaseUrl}/privacy" style="color: #9ca3af; text-decoration: underline;">Privacy</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions, 3, 1000, 'essential');
+    return result.success ?
+      createSuccessResponse(result.messageId, 'reminder_notification_email') :
+      createErrorResponse(new Error(result.error), 'reminder_notification_email');
+  } catch (error) {
+    console.error('Error sending reminder notification email:', error);
+    return createErrorResponse(error, 'reminder_notification_email');
+  }
+};
+
+
 

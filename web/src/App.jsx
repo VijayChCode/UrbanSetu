@@ -56,6 +56,7 @@ import { toast } from 'react-toastify';
 import { useSoundEffects } from './components/SoundEffects';
 import RoutePlannerAdmin from './pages/RoutePlannerAdmin';
 import MediaPreviewGlobal from './components/MediaPreviewGlobal';
+import GlobalReminderListener from './components/GlobalReminderListener';
 
 // Lazy load all pages
 const PublicHome = lazy(() => import('./pages/PublicHome'));
@@ -1489,6 +1490,7 @@ function AppRoutes({ bootstrapped }) {
       {/* Global Call Modals - Shows on any page */}
       <GlobalCallModals />
       <MediaPreviewGlobal />
+      <GlobalReminderListener />
 
       {/* Global Signout Loading Modal */}
       {isSigningOut && (

@@ -1,4 +1,7 @@
 import cron from 'node-cron';
+import Reminder from '../models/reminder.model.js';
+import User from '../models/user.model.js';
+import { sendReminderNotificationEmail } from '../utils/emailService.js';
 import { checkAndSendAppointmentReminders } from './appointmentReminderService.js';
 import { checkAndSendOutdatedAppointmentEmails } from './outdatedAppointmentService.js';
 import { autoPurgeSoftbannedAccounts } from './autoPurgeService.js';
@@ -263,6 +266,74 @@ const scheduleBlogPublication = () => {
   console.log('📋 Schedule: Every 15 minutes');
 };
 
+// Schedule user-defined task reminders to run every minute
+const scheduleUserTaskReminders = (app) => {
+  console.log('📅 Setting up user task reminder scheduler (every minute)...');
+
+  const io = app.get('io');
+
+  cron.schedule('* * * * *', async () => {
+    try {
+      const now = new Date();
+      // Find all scheduled reminders that are due
+      const dueReminders = await Reminder.find({
+        status: 'scheduled',
+        scheduledTime: { $lte: now }
+      });
+
+      if (dueReminders.length === 0) return;
+
+      console.log(`⏰ Found ${dueReminders.length} due reminders. Triggering...`);
+
+      for (const reminder of dueReminders) {
+        try {
+          // Update status immediately to prevent double processing in case of delays
+          reminder.status = 'triggered';
+          await reminder.save();
+
+          // Fetch user details
+          const user = await User.findById(reminder.userId);
+          if (!user) {
+            console.warn(`User ${reminder.userId} not found for reminder ${reminder._id}`);
+            continue;
+          }
+
+          // Emit WebSocket event to the user's room
+          if (io) {
+            console.log(`🗣️ Emitting reminder_triggered to user_${user._id.toString()}: "${reminder.taskText}"`);
+            io.to(user._id.toString()).emit('reminder_triggered', {
+              reminderId: reminder._id.toString(),
+              taskText: reminder.taskText,
+              scheduledTime: reminder.scheduledTime.toISOString()
+            });
+          }
+
+          // Send email notification
+          if (user.email) {
+            console.log(`✉️ Sending reminder email to ${user.email}`);
+            await sendReminderNotificationEmail(user.email, {
+              taskText: reminder.taskText,
+              time: reminder.scheduledTime,
+              username: user.username || user.email.split('@')[0]
+            });
+            reminder.emailSent = true;
+            await reminder.save();
+          }
+        } catch (itemErr) {
+          console.error(`Error processing reminder ${reminder._id}:`, itemErr);
+        }
+      }
+    } catch (error) {
+      console.error('Error in scheduled user task reminder check:', error);
+    }
+  }, {
+    scheduled: true,
+    timezone: "Asia/Kolkata"
+  });
+
+  console.log('✅ User task reminder scheduler set up successfully (Asia/Kolkata timezone)');
+};
+
 // Start the scheduler
 export const startScheduler = (app) => {
   console.log('🚀 Starting scheduler service...');
@@ -278,6 +349,7 @@ export const startScheduler = (app) => {
   scheduleSessionCleanup();
   scheduleBlogPublication();
   initializeCreatorFeedbackScheduler();
+  scheduleUserTaskReminders(app);
   console.log('✅ Scheduler service started successfully');
 };
 

@@ -1,5 +1,6 @@
 import Listing from "../models/listing.model.js";
 import Blog from "../models/blog.model.js";
+import Reminder from "../models/reminder.model.js";
 
 /**
  * AI Tool: Search Properties
@@ -343,6 +344,70 @@ export const searchBlogsAndGuides = async ({
 };
 
 /**
+ * AI Tool: Schedule Reminder
+ * Purpose: Allows the AI to schedule a reminder/task alarm for a user.
+ */
+export const scheduleReminder = async ({
+    reminderText,
+    scheduledTime,
+    userId
+}) => {
+    try {
+        if (!userId) {
+            return JSON.stringify({
+                success: false,
+                message: "User is not logged in. Reminders cannot be scheduled for guests."
+            });
+        }
+        if (!reminderText) {
+            return JSON.stringify({
+                success: false,
+                message: "Reminder description is required."
+            });
+        }
+        
+        let targetTime = new Date(scheduledTime);
+        if (isNaN(targetTime.getTime())) {
+            // Simple relative parsing fallback in case LLM passes invalid string
+            const now = new Date();
+            if (scheduledTime && scheduledTime.includes("minute")) {
+                const mins = parseInt(scheduledTime) || 5;
+                targetTime = new Date(now.getTime() + mins * 60 * 1000);
+            } else if (scheduledTime && scheduledTime.includes("hour")) {
+                const hrs = parseInt(scheduledTime) || 1;
+                targetTime = new Date(now.getTime() + hrs * 60 * 60 * 1000);
+            } else {
+                return JSON.stringify({
+                    success: false,
+                    message: "Invalid time format provided. Please specify a valid date and time."
+                });
+            }
+        }
+
+        const reminder = new Reminder({
+            userId,
+            taskText: reminderText,
+            scheduledTime: targetTime,
+            status: 'scheduled'
+        });
+
+        await reminder.save();
+
+        return JSON.stringify({
+            success: true,
+            message: `Successfully scheduled reminder for: "${reminderText}"`,
+            scheduledTime: reminder.scheduledTime.toISOString(),
+            status: "scheduled",
+            reminderId: reminder._id.toString()
+        });
+
+    } catch (error) {
+        console.error("Tool Error (scheduleReminder):", error);
+        return JSON.stringify({ success: false, error: "Failed to schedule reminder." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
@@ -350,7 +415,8 @@ export const toolRegistry = {
     get_property_details: getPropertyDetails,
     get_user_listings: getUserListings,
     sentinel_image_auditor: sentinelImageAuditor,
-    search_blogs_and_guides: searchBlogsAndGuides
+    search_blogs_and_guides: searchBlogsAndGuides,
+    schedule_reminder: scheduleReminder
 };
 
 /**
@@ -464,6 +530,27 @@ export const toolDefinitions = [
                     }
                 },
                 required: []
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "schedule_reminder",
+            description: "Schedule a task reminder or alarm for a user at a specific future date and time. Use this ONLY when the user asks to be reminded of something, or schedules an alarm/clock/reminder.",
+            parameters: {
+                type: "object",
+                properties: {
+                    reminderText: {
+                        type: "string",
+                        description: "What the user wants to be reminded of (e.g., 'Check pricing for Ocean Breeze flat')"
+                    },
+                    scheduledTime: {
+                        type: "string",
+                        description: "The absolute date and time when the reminder should trigger, formatted as a valid ISO 8601 string (e.g., '2026-06-22T10:30:00.000Z'). Note: The current local time is provided in the system prompt. Calculate relative offsets using it."
+                    }
+                },
+                required: ["reminderText", "scheduledTime"]
             }
         }
     }

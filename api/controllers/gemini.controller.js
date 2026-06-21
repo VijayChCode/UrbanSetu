@@ -5,6 +5,7 @@ import MessageRating from '../models/messageRating.model.js';
 import About from '../models/about.model.js';
 import Deployment from '../models/deployment.model.js';
 import PolicyViolation from '../models/policyViolation.model.js';
+import Reminder from '../models/reminder.model.js';
 import { getRelevantCachedData, needsReindexing, indexAllWebsiteData } from '../services/dataSyncService.js';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -1946,3 +1947,98 @@ export const getPolicyStatus = async (req, res) => {
         });
     }
 };
+
+// Get all reminders for current user
+export const getUserReminders = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const reminders = await Reminder.find({ userId, status: 'scheduled' }).sort({ scheduledTime: 1 });
+        res.json({
+            success: true,
+            reminders
+        });
+    } catch (error) {
+        console.error('Failed to get user reminders:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get reminders'
+        });
+    }
+};
+
+// Reschedule an existing reminder
+export const rescheduleReminder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+        const { scheduledTime } = req.body;
+
+        if (!scheduledTime) {
+            return res.status(400).json({
+                success: false,
+                message: 'Scheduled time is required'
+            });
+        }
+
+        const reminder = await Reminder.findOne({ _id: id, userId });
+        if (!reminder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reminder not found or unauthorized'
+            });
+        }
+
+        if (reminder.status !== 'scheduled') {
+            return res.status(400).json({
+                success: false,
+                message: 'Only scheduled reminders can be rescheduled'
+            });
+        }
+
+        reminder.scheduledTime = new Date(scheduledTime);
+        await reminder.save();
+
+        res.json({
+            success: true,
+            message: 'Reminder rescheduled successfully',
+            reminder
+        });
+    } catch (error) {
+        console.error('Failed to reschedule reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to reschedule reminder'
+        });
+    }
+};
+
+// Delete/Cancel an existing reminder
+export const deleteReminder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const reminder = await Reminder.findOne({ _id: id, userId });
+        if (!reminder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reminder not found or unauthorized'
+            });
+        }
+
+        reminder.status = 'cancelled';
+        await reminder.save();
+
+        res.json({
+            success: true,
+            message: 'Reminder cancelled successfully'
+        });
+    } catch (error) {
+        console.error('Failed to delete reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to cancel reminder'
+        });
+    }
+};
+

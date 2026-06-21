@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -47,16 +47,26 @@ const THINKING_TAGS = [
     "Ensuring accuracy..."
 ];
 
-const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
+const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false }) => {
     const [index, setIndex] = useState(0);
+
+    const schedulerTags = [
+        "Analyzing Query...",
+        "Identifying Tasks...",
+        "Creating Task...",
+        "Finalizing Task Creation..."
+    ];
+
+    const tagsToUse = isScheduler ? schedulerTags : THINKING_TAGS;
 
     useEffect(() => {
         let timer;
         const processTags = () => {
-            // Determine delay for current index - slower changes as requested
             let delay = 4000;
 
-            if (index === 5) { // "Finalizing answer..."
+            if (isScheduler) {
+                delay = 2500; // Cycle slightly faster for scheduler
+            } else if (index === 5) { // "Finalizing answer..."
                 delay = 8000; // Stay much longer on this one
             } else if (index > 5) {
                 delay = 6000; // Change very slowly for the "late" tags
@@ -64,8 +74,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
 
             timer = setTimeout(() => {
                 setIndex((prev) => {
-                    // Do not loop back to index 0 if we reached the end
-                    if (prev >= THINKING_TAGS.length - 1) return prev;
+                    if (prev >= tagsToUse.length - 1) return prev;
                     return prev + 1;
                 });
             }, delay);
@@ -73,7 +82,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
 
         processTags();
         return () => clearTimeout(timer);
-    }, [index]);
+    }, [index, isScheduler, tagsToUse.length]);
 
     return (
         <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
@@ -81,7 +90,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false }) => {
                 className="transition-transform duration-1000 ease-in-out absolute inset-0 w-full flex flex-col"
                 style={{ transform: `translateY(-${index * 24}px)` }}
             >
-                {THINKING_TAGS.map((tag, i) => (
+                {tagsToUse.map((tag, i) => (
                     <div
                         key={i}
                         className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap`}
@@ -346,6 +355,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [totalMessageCount, setTotalMessageCount] = useState(0); // Tracks actual total messages from backend (not just loaded ones)
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isCurrentRequestScheduler, setIsCurrentRequestScheduler] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [currentChatName, setCurrentChatName] = useState('');
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -533,6 +543,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showSettings, setShowSettings] = useState(false);
     const [showBookmarks, setShowBookmarks] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [showReminders, setShowReminders] = useState(false);
+    const [reminders, setReminders] = useState([]);
+    const [isLoadingReminders, setIsLoadingReminders] = useState(false);
+    const [isRescheduling, setIsRescheduling] = useState(null);
+    const [rescheduleDate, setRescheduleDate] = useState('');
     const [chatSessions, setChatSessions] = useState([]);
     const [lifetimeUsage, setLifetimeUsage] = useState({ totalTokens: 0 });
     const [activeSessionTokens, setActiveSessionTokens] = useState(0);
@@ -555,6 +570,76 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         window.addEventListener('contactSupportToggle', handleContactSupportToggle);
         return () => window.removeEventListener('contactSupportToggle', handleContactSupportToggle);
     }, []);
+
+    // Reminders Operations
+    const fetchReminders = async () => {
+        setIsLoadingReminders(true);
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders`);
+            if (res.ok) {
+                const data = await res.json();
+                setReminders(data.reminders || []);
+            } else {
+                toast.error("Failed to load reminders");
+            }
+        } catch (err) {
+            console.error("Error fetching reminders:", err);
+            toast.error("Network error loading reminders");
+        } finally {
+            setIsLoadingReminders(false);
+        }
+    };
+
+    const handleReschedule = async (id, newTime) => {
+        if (!newTime) {
+            toast.warn("Please select a valid date and time.");
+            return;
+        }
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${id}/reschedule`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ scheduledTime: newTime })
+            });
+            if (res.ok) {
+                toast.success("Reminder rescheduled successfully");
+                fetchReminders();
+                setIsRescheduling(null);
+            } else {
+                const errData = await res.json();
+                toast.error(errData.message || "Failed to reschedule reminder");
+            }
+        } catch (err) {
+            console.error("Error rescheduling reminder:", err);
+            toast.error("Error rescheduling reminder");
+        }
+    };
+
+    const handleDeleteReminder = async (id) => {
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                toast.success("Reminder cancelled successfully");
+                fetchReminders();
+            } else {
+                const errData = await res.json();
+                toast.error(errData.message || "Failed to cancel reminder");
+            }
+        } catch (err) {
+            console.error("Error deleting reminder:", err);
+            toast.error("Error cancelling reminder");
+        }
+    };
+
+    useEffect(() => {
+        if (showReminders && currentUser) {
+            fetchReminders();
+        }
+    }, [showReminders, currentUser]);
 
     // Keyboard shortcut to focus input
     useEffect(() => {
@@ -3248,6 +3333,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setTimeout(() => setSendIconAnimating(false), 800);
 
         let userMessage = inputMessage.trim();
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock/i.test(userMessage);
+        if (isSchedulerRequest) {
+            setIsCurrentRequestScheduler(true);
+        }
         const currentTone = currentUser ? tone : 'neutral'; // Use default tone for public users
         if (currentTone && currentTone !== 'neutral') {
             userMessage = `[Tone: ${currentTone}] ${userMessage}`;
@@ -3763,6 +3852,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
         } finally {
             setIsLoading(false);
+            setIsCurrentRequestScheduler(false);
 
             // Auto-sync session title if it's a new conversation
             if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
@@ -7126,7 +7216,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {hasChatError ? (
                                             <span>Chat Error Detected</span>
                                         ) : isLoading ? (
-                                            <ScrollingThinkingTags isHeader={true} />
+                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} />
                                         ) : showTypingIndicator ? (
                                             <span>Answering...</span>
                                         ) : (
@@ -7374,6 +7464,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <FaBookmark size={14} className="text-yellow-500" />
                                                         </div>
                                                         <span className="font-medium">Bookmarks</span>
+                                                    </button>
+                                                </li>
+                                            )}
+
+                                            {/* Reminders - Only for logged-in users */}
+                                            {currentUser && (
+                                                <li>
+                                                    <button
+                                                        onClick={() => { setShowReminders(true); setIsHeaderMenuOpen(false); }}
+                                                        className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
+                                                    >
+                                                        <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-500/20' : 'bg-indigo-100'} group-hover:scale-110 transition-transform duration-200`}>
+                                                            <FaClock size={14} className="text-indigo-500" />
+                                                        </div>
+                                                        <span className="font-medium">Reminders</span>
                                                     </button>
                                                 </li>
                                             )}
@@ -8348,7 +8453,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.2s' }}></div>
                                             </div>
                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium flex items-center gap-2`}>
-                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} />
+                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} />
                                             </span>
                                         </div>
                                     </div>
@@ -9123,6 +9228,104 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     )}
                                     <div className="flex justify-end mt-4">
                                         <button onClick={() => setShowBookmarks(false)} className={`px-3 py-1.5 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90`}>Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Reminders Modal */}
+                        {showReminders && (
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
+                                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl p-5 w-96 max-w-full max-h-[80vh] overflow-y-auto animate-scaleIn flex flex-col`}>
+                                    <div className="flex items-center justify-between mb-3 border-b pb-2">
+                                        <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-905'}`}>
+                                            <FaClock className="text-indigo-500" />
+                                            Active Reminders
+                                        </h4>
+                                        <button
+                                            onClick={fetchReminders}
+                                            disabled={isLoadingReminders}
+                                            className={`p-2 rounded-lg transition-all duration-200 ${isLoadingReminders
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : isDarkMode
+                                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                                }`}
+                                            title="Refresh reminders"
+                                        >
+                                            <FaSync size={14} className={isLoadingReminders ? "animate-spin" : ""} />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto pr-1">
+                                        {isLoadingReminders ? (
+                                            <div className="flex justify-center py-8">
+                                                <UrbanSetuSpinner />
+                                            </div>
+                                        ) : reminders.length === 0 ? (
+                                            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No active reminders found</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {reminders.map((reminder) => (
+                                                    <div key={reminder._id} className={`p-3 border ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'} rounded-lg transition-all duration-200 hover:shadow-md`}>
+                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
+                                                            {reminder.taskText}
+                                                        </div>
+                                                        <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3`}>
+                                                            <FaCalendarAlt size={12} className="text-indigo-400" />
+                                                            {new Date(reminder.scheduledTime).toLocaleString()}
+                                                        </div>
+                                                        {isRescheduling && isRescheduling._id === reminder._id ? (
+                                                            <div className="space-y-2 pt-1 border-t border-dashed border-gray-700">
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    value={rescheduleDate}
+                                                                    onChange={(e) => setRescheduleDate(e.target.value)}
+                                                                    className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-850 text-white border-gray-700 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
+                                                                />
+                                                                <div className="flex gap-2">
+                                                                    <button
+                                                                        onClick={() => handleReschedule(reminder._id, rescheduleDate)}
+                                                                        className="text-xs px-2.5 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
+                                                                    >
+                                                                        Save
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setIsRescheduling(null)}
+                                                                        className={`text-xs px-2.5 py-1.5 rounded font-medium border ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700' : 'bg-white hover:bg-gray-150 text-gray-700 border-gray-300'} transition-colors`}
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex gap-2 border-t pt-2 border-gray-150 dark:border-gray-700/50">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setIsRescheduling(reminder);
+                                                                        const date = new Date(reminder.scheduledTime);
+                                                                        const offset = date.getTimezoneOffset();
+                                                                        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+                                                                        setRescheduleDate(localDate.toISOString().slice(0, 16));
+                                                                    }}
+                                                                    className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-indigo-900/30 hover:bg-indigo-800 text-indigo-300' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'}`}
+                                                                >
+                                                                    Reschedule
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteReminder(reminder._id)}
+                                                                    className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-red-900/30 hover:bg-red-800 text-red-300' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-end mt-4 pt-2 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+                                        <button onClick={() => setShowReminders(false)} className={`px-3 py-1.5 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 transition-opacity font-medium`}>Close</button>
                                     </div>
                                 </div>
                             </div>
