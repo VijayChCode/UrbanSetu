@@ -1229,10 +1229,17 @@ export const useCall = () => {
         endCall();
         toast.info('Call was missed');
       }
-      // Stop ringtone when call is missed (receiver side)
+      // Receiver side: clear incoming call modal when call is missed (30s server timeout)
       if (incomingCallRef.current && incomingCallRef.current.callId === data.callId) {
         stopRingtone();
         ringtoneSoundRef.current = null;
+        // Clear all incoming call state so the modal/bubble disappears
+        incomingCallRef.current = null;
+        setIncomingCall(null);
+        setCallState(null);
+        setActiveCall(null);
+        setIsSyncingSummary(false);
+        toast.info('Missed call');
       }
     };
 
