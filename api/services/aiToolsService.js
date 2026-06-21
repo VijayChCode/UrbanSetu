@@ -440,6 +440,127 @@ export const getUserRemindersTool = async ({ userId }) => {
 };
 
 /**
+ * AI Tool: Reschedule Reminder
+ * Purpose: Allows the AI to update the scheduled time of an existing reminder.
+ */
+export const rescheduleReminderTool = async ({
+    reminderId,
+    newScheduledTime,
+    userId
+}) => {
+    try {
+        if (!userId) {
+            return JSON.stringify({
+                success: false,
+                message: "User is not logged in. Reminders cannot be rescheduled for guests."
+            });
+        }
+        if (!reminderId) {
+            return JSON.stringify({
+                success: false,
+                message: "Reminder ID is required to reschedule."
+            });
+        }
+        if (!newScheduledTime) {
+            return JSON.stringify({
+                success: false,
+                message: "New scheduled time is required."
+            });
+        }
+
+        let targetTime = new Date(newScheduledTime);
+        if (isNaN(targetTime.getTime())) {
+            return JSON.stringify({
+                success: false,
+                message: "Invalid date-time format provided."
+            });
+        }
+
+        if (targetTime <= new Date()) {
+            return JSON.stringify({
+                success: false,
+                message: "Cannot reschedule a reminder to a past date or time."
+            });
+        }
+
+        const reminder = await Reminder.findOne({ _id: reminderId, userId });
+        if (!reminder) {
+            return JSON.stringify({
+                success: false,
+                message: "Reminder not found or you are unauthorized to modify it."
+            });
+        }
+
+        if (reminder.status !== 'scheduled') {
+            return JSON.stringify({
+                success: false,
+                message: `Only active scheduled reminders can be rescheduled. Current status is: ${reminder.status}`
+            });
+        }
+
+        reminder.scheduledTime = targetTime;
+        await reminder.save();
+
+        return JSON.stringify({
+            success: true,
+            message: `Successfully rescheduled reminder "${reminder.taskText}" to ${reminder.scheduledTime.toISOString()}`,
+            reminderId: reminder._id.toString(),
+            newScheduledTime: reminder.scheduledTime.toISOString()
+        });
+
+    } catch (error) {
+        console.error("Tool Error (rescheduleReminderTool):", error);
+        return JSON.stringify({ success: false, error: "Failed to reschedule reminder." });
+    }
+};
+
+/**
+ * AI Tool: Cancel Reminder
+ * Purpose: Allows the AI to cancel an existing reminder.
+ */
+export const cancelReminderTool = async ({
+    reminderId,
+    userId
+}) => {
+    try {
+        if (!userId) {
+            return JSON.stringify({
+                success: false,
+                message: "User is not logged in. Reminders cannot be cancelled for guests."
+            });
+        }
+        if (!reminderId) {
+            return JSON.stringify({
+                success: false,
+                message: "Reminder ID is required to cancel."
+            });
+        }
+
+        const reminder = await Reminder.findOne({ _id: reminderId, userId });
+        if (!reminder) {
+            return JSON.stringify({
+                success: false,
+                message: "Reminder not found or you are unauthorized to modify it."
+            });
+        }
+
+        reminder.status = 'cancelled';
+        await reminder.save();
+
+        return JSON.stringify({
+            success: true,
+            message: `Successfully cancelled reminder "${reminder.taskText}"`,
+            reminderId: reminder._id.toString(),
+            status: "cancelled"
+        });
+
+    } catch (error) {
+        console.error("Tool Error (cancelReminderTool):", error);
+        return JSON.stringify({ success: false, error: "Failed to cancel reminder." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
@@ -449,7 +570,9 @@ export const toolRegistry = {
     sentinel_image_auditor: sentinelImageAuditor,
     search_blogs_and_guides: searchBlogsAndGuides,
     schedule_reminder: scheduleReminder,
-    get_user_reminders: getUserRemindersTool
+    get_user_reminders: getUserRemindersTool,
+    reschedule_reminder: rescheduleReminderTool,
+    cancel_reminder: cancelReminderTool
 };
 
 /**
@@ -596,6 +719,44 @@ export const toolDefinitions = [
                 type: "object",
                 properties: {},
                 required: []
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "reschedule_reminder",
+            description: "Reschedule an existing active scheduled reminder to a new date and time. Use this when the user asks to change, reschedule, move, or defer a reminder. First use get_user_reminders to find the active reminder ID.",
+            parameters: {
+                type: "object",
+                properties: {
+                    reminderId: {
+                        type: "string",
+                        description: "The unique ID of the reminder to reschedule (e.g., '65f123...')"
+                    },
+                    newScheduledTime: {
+                        type: "string",
+                        description: "The new absolute date and time, formatted as a valid ISO 8601 string (e.g., '2026-06-22T10:30:00.000Z')."
+                    }
+                },
+                required: ["reminderId", "newScheduledTime"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "cancel_reminder",
+            description: "Cancel an existing scheduled reminder. Use this when the user asks to delete, cancel, abort, or remove a reminder. First use get_user_reminders to find the active reminder ID.",
+            parameters: {
+                type: "object",
+                properties: {
+                    reminderId: {
+                        type: "string",
+                        description: "The unique ID of the reminder to cancel (e.g., '65f123...')"
+                    }
+                },
+                required: ["reminderId"]
             }
         }
     }

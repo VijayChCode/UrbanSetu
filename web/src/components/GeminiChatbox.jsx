@@ -3444,7 +3444,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setTimeout(() => setSendIconAnimating(false), 800);
 
         let userMessage = inputMessage.trim();
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(userMessage);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(userMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
         }
@@ -3653,7 +3653,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             return updatedMessages;
                                         });
                                     } else if (streamData.type === 'tool_call') {
-                                        if (streamData.name === 'schedule_reminder' || streamData.name === 'get_user_reminders') {
+                                        if (['schedule_reminder', 'get_user_reminders', 'reschedule_reminder', 'cancel_reminder'].includes(streamData.name)) {
                                             setIsCurrentRequestScheduler(true);
                                         }
                                     } else if (streamData.type === 'done') {
@@ -4070,7 +4070,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsCurrentRequestWebSearch(true);
         }
 
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(originalMessage);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(originalMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
         }
@@ -4717,7 +4717,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         setIsLoading(true);
 
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task/i.test(messageContent);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(messageContent);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
         }
