@@ -492,7 +492,7 @@ export const suspendUserOrAdmin = async (req, res, next) => {
         return next(errorHandler(403, 'Access denied. Only default admin or root admin can suspend admins.'));
       }
       const admin = await User.findById(id);
-      if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
+      if (!admin || (admin.role !== 'admin' && admin.adminApprovalStatus !== 'rejected')) return next(errorHandler(404, 'Admin not found'));
       const togglingAdminToSuspended = admin.status === 'active';
       admin.status = togglingAdminToSuspended ? 'suspended' : 'active';
       if (togglingAdminToSuspended) {
@@ -625,7 +625,7 @@ export const deleteUserOrAdmin = async (req, res, next) => {
         return next(errorHandler(403, 'Access denied'));
       }
       const admin = await User.findById(id);
-      if (!admin || admin.role !== 'admin') return next(errorHandler(404, 'Admin not found'));
+      if (!admin || (admin.role !== 'admin' && admin.adminApprovalStatus !== 'rejected')) return next(errorHandler(404, 'Admin not found'));
       const delRecAdmin = await DeletedAccount.create({
         accountId: admin._id,
         name: admin.username,
