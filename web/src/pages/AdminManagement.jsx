@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle, FaCoins, FaComments, FaMapMarkedAlt, FaChartLine, FaCreditCard, FaHeart, FaEye } from "react-icons/fa";
+import { FaHome, FaUser, FaUserShield, FaEnvelope, FaTimes, FaCalendarAlt, FaCheckCircle, FaBan, FaTrash, FaUserLock, FaPhone, FaList, FaCalendar, FaArrowDown, FaSearch, FaLock, FaExclamationCircle, FaCoins, FaComments, FaMapMarkedAlt, FaChartLine, FaCreditCard, FaHeart, FaEye, FaClock, FaUnlockAlt } from "react-icons/fa";
 import { getErrorCode } from "../utils/errorRegistry";
 import { socket } from "../utils/socket";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
@@ -116,8 +116,8 @@ export default function AdminManagement() {
     cancelText: 'Cancel',
     confirmButtonClass: 'bg-red-500 hover:bg-red-600'
   });
-  const lockoutTimerRef = useRef(null);
-  const warningTimerRef = useRef(null);
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const countdownIntervalRef = useRef(null);
 
 
   // Fetch tab counts
@@ -1120,20 +1120,11 @@ export default function AdminManagement() {
     );
   };
 
-  // Helper to start lockout timer
-  const startLockoutTimer = () => {
-    // Clear any existing timers
-    if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
-    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    // Show warning at 4 minutes
-    warningTimerRef.current = setTimeout(() => {
-      toast.info("For security reasons, you will be asked to re-enter your password in 1 minute.");
-    }, 4 * 60 * 1000);
-    // Lock at 5 minutes
-    lockoutTimerRef.current = setTimeout(() => {
-      setShowPasswordModal(true);
-      toast.info("Session expired for security. Please re-enter your password.");
-    }, 5 * 60 * 1000);
+  // Helper to format remaining seconds into MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
   // Handle mobile state updates
@@ -1152,18 +1143,43 @@ export default function AdminManagement() {
     }
   }, [showPasswordModal, isMobile]);
 
-  // Start timer on successful password entry
+  // Manage countdown timer and automatic security lockout (10 minutes)
   useEffect(() => {
     if (!showPasswordModal) {
-      startLockoutTimer();
+      setTimeLeft(600); // 10 minutes in seconds
+      
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      
+      countdownIntervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setShowPasswordModal(true);
+            toast.info("Session expired for security. Please re-enter your password.");
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+            return 0;
+          }
+          const nextVal = prev - 1;
+          // Warning toast at exactly 1 minute remaining (60 seconds left / 9 minutes passed)
+          if (nextVal === 60) {
+            toast.info("For security reasons, you will be asked to re-enter your password in 1 minute.");
+          }
+          return nextVal;
+        });
+      }, 1000);
     } else {
-      if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
-      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      setTimeLeft(600);
     }
-    // Clean up on unmount
+
     return () => {
-      if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
-      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
     };
   }, [showPasswordModal]);
 
@@ -1238,7 +1254,6 @@ export default function AdminManagement() {
         setShowPasswordModal(false);
         setManagementPassword("");
         setManagementPasswordError("");
-        startLockoutTimer(); // Reset timer on every successful entry
       } else {
         const data = await res.json();
         // Track wrong attempts locally (allow up to 3 attempts before logout)
@@ -1387,18 +1402,39 @@ export default function AdminManagement() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-950 dark:to-gray-900 py-10 px-2 md:px-8 animate-fadeIn transition-colors duration-300">
       <div className="max-w-6xl mx-auto bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 animate-slideUp border border-white/20 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <h1 className="text-4xl font-extrabold text-blue-700 dark:text-blue-400 drop-shadow animate-fade-in">Accounts Management</h1>
-          <button
-            onClick={() => fetchData()}
-            className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow inline-flex items-center gap-2"
-            title="Refresh data"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-              <path d="M12 6V3L8 7l4 4V8c2.757 0 5 2.243 5 5a5 5 0 11-9.9-1H5.026A7 7 0 1019 13c0-3.86-3.141-7-7-7z" />
-            </svg>
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            {!showPasswordModal && (
+              <div
+                className={`px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold flex items-center gap-2 shadow border backdrop-blur-md transition-all duration-300 ${
+                  timeLeft <= 60
+                    ? "bg-red-50/90 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 animate-pulse"
+                    : "bg-gray-50/90 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
+                }`}
+                title="Time remaining before session locks for security"
+              >
+                {timeLeft <= 60 ? (
+                  <FaLock className="w-3.5 h-3.5 text-red-500" />
+                ) : (
+                  <FaClock className="w-3.5 h-3.5 text-blue-500" />
+                )}
+                <span>
+                  Locks in: <span className="font-mono font-black">{formatTime(timeLeft)}</span>
+                </span>
+              </div>
+            )}
+            <button
+              onClick={() => fetchData()}
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow inline-flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+              title="Refresh data"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <path d="M12 6V3L8 7l4 4V8c2.757 0 5 2.243 5 5a5 5 0 11-9.9-1H5.026A7 7 0 1019 13c0-3.86-3.141-7-7-7z" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2 sm:gap-4 mb-8 animate-fadeIn">
           <button
