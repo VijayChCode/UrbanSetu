@@ -640,6 +640,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const handleDeleteReminder = async (id) => {
+        if (!window.confirm("Are you sure you want to cancel this reminder?")) {
+            return;
+        }
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${id}`, {
                 method: 'DELETE'
@@ -3482,7 +3485,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         enableContextMemory: enableContextMemory,
                         contextWindow: contextWindow,
                         enableSystemPrompts: enableSystemPrompts,
-                        selectedProperties: selectedProperties
+                        selectedProperties: selectedProperties,
+                        clientTime: new Date().toString()
                     }),
                     signal: abortControllerRef.current.signal
                 });
@@ -3668,7 +3672,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         enableContextMemory: enableContextMemory,
                         contextWindow: contextWindow,
                         enableSystemPrompts: enableSystemPrompts,
-                        selectedProperties: selectedProperties
+                        selectedProperties: selectedProperties,
+                        clientTime: new Date().toString()
                     }),
                     signal: abortControllerRef.current.signal
                 });
@@ -3997,7 +4002,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     enableStreaming: false, // Force non-streaming for retries to ensure JSON response
                     enableContextMemory: enableContextMemory, // Send context memory preference
                     contextWindow: contextWindow, // Send context window size
-                    enableSystemPrompts: enableSystemPrompts // Send system prompts preference
+                    enableSystemPrompts: enableSystemPrompts, // Send system prompts preference
+                    clientTime: new Date().toString()
                 }),
                 signal: abortControllerRef.current.signal
             });
@@ -4620,7 +4626,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     tone: currentUser ? tone : 'neutral', // Send current tone setting or default for public users
                     responseLength: aiResponseLength, // Send response length setting
                     creativity: aiCreativity, // Send creativity level setting
-                    enableStreaming: false // Force non-streaming to ensure JSON response when editing
+                    enableStreaming: false, // Force non-streaming to ensure JSON response when editing
+                    clientTime: new Date().toString()
                 }),
                 signal: abortControllerRef.current.signal
             });
@@ -5551,7 +5558,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         displayMessage: displayMsg,
                         ...mediaPayload,
                         sessionId: currentSessionId,
-                        history: messages.slice(-10)
+                        history: messages.slice(-10),
+                        clientTime: new Date().toString()
                     })
                 });
 
@@ -9291,69 +9299,105 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </p>
                                             </div>
                                         ) : reminders.length === 0 ? (
-                                            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No active reminders found</p>
-                                        ) : (
-                                            <div className="space-y-3">
-                                                {reminders.map((reminder) => (
-                                                    <div key={reminder._id} className={`p-3 border ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'} rounded-lg transition-all duration-200 hover:shadow-md`}>
-                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
-                                                            {reminder.taskText}
-                                                        </div>
-                                                        <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3`}>
-                                                            <FaCalendarAlt size={12} className="text-indigo-400" />
-                                                            {new Date(reminder.scheduledTime).toLocaleString()}
-                                                        </div>
-                                                        {isRescheduling && isRescheduling._id === reminder._id ? (
-                                                            <div className="space-y-2 pt-1 border-t border-dashed border-gray-700">
-                                                                <input
-                                                                    type="datetime-local"
-                                                                    value={rescheduleDate}
-                                                                    onChange={(e) => setRescheduleDate(e.target.value)}
-                                                                    min={getMinDateTime()}
-                                                                    style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
-                                                                    className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
-                                                                />
-                                                                <div className="flex gap-2">
-                                                                    <button
-                                                                        onClick={() => handleReschedule(reminder._id, rescheduleDate)}
-                                                                        className="text-xs px-2.5 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
-                                                                    >
-                                                                        Save
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => setIsRescheduling(null)}
-                                                                        className={`text-xs px-2.5 py-1.5 rounded font-medium border ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700' : 'bg-white hover:bg-gray-150 text-gray-700 border-gray-300'} transition-colors`}
-                                                                    >
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
+                                            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No reminders found</p>
+                                        ) : (() => {
+                                            const activeReminders = reminders.filter(r => r.status === 'scheduled');
+                                            const pastReminders = reminders.filter(r => r.status !== 'scheduled');
+                                            return (
+                                                <div className="space-y-4">
+                                                    {activeReminders.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <h5 className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Active Reminders</h5>
+                                                            <div className="space-y-3">
+                                                                {activeReminders.map((reminder) => (
+                                                                    <div key={reminder._id} className={`p-3 border ${isDarkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'} rounded-lg transition-all duration-200 hover:shadow-md`}>
+                                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-1`}>
+                                                                            {reminder.taskText}
+                                                                        </div>
+                                                                        <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3`}>
+                                                                            <FaCalendarAlt size={12} className="text-indigo-400" />
+                                                                            {new Date(reminder.scheduledTime).toLocaleString()}
+                                                                        </div>
+                                                                        {isRescheduling && isRescheduling._id === reminder._id ? (
+                                                                            <div className="space-y-2 pt-1 border-t border-dashed border-gray-700">
+                                                                                <input
+                                                                                    type="datetime-local"
+                                                                                    value={rescheduleDate}
+                                                                                    onChange={(e) => setRescheduleDate(e.target.value)}
+                                                                                    min={getMinDateTime()}
+                                                                                    style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                                                                                    className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
+                                                                                />
+                                                                                <div className="flex gap-2">
+                                                                                    <button
+                                                                                        onClick={() => handleReschedule(reminder._id, rescheduleDate)}
+                                                                                        className="text-xs px-2.5 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
+                                                                                    >
+                                                                                        Save
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={() => setIsRescheduling(null)}
+                                                                                        className={`text-xs px-2.5 py-1.5 rounded font-medium border ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700' : 'bg-white hover:bg-gray-150 text-gray-700 border-gray-300'} transition-colors`}
+                                                                                    >
+                                                                                        Cancel
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex gap-2 border-t pt-2 border-gray-150 dark:border-gray-700/50">
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        setIsRescheduling(reminder);
+                                                                                        const date = new Date(reminder.scheduledTime);
+                                                                                        const offset = date.getTimezoneOffset();
+                                                                                        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+                                                                                        setRescheduleDate(localDate.toISOString().slice(0, 16));
+                                                                                    }}
+                                                                                    className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-indigo-900/30 hover:bg-indigo-800 text-indigo-300' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'}`}
+                                                                                >
+                                                                                    Reschedule
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleDeleteReminder(reminder._id)}
+                                                                                    className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-red-900/30 hover:bg-red-800 text-red-300' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        ) : (
-                                                            <div className="flex gap-2 border-t pt-2 border-gray-150 dark:border-gray-700/50">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setIsRescheduling(reminder);
-                                                                        const date = new Date(reminder.scheduledTime);
-                                                                        const offset = date.getTimezoneOffset();
-                                                                        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
-                                                                        setRescheduleDate(localDate.toISOString().slice(0, 16));
-                                                                    }}
-                                                                    className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-indigo-900/30 hover:bg-indigo-800 text-indigo-300' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'}`}
-                                                                >
-                                                                    Reschedule
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteReminder(reminder._id)}
-                                                                    className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-red-900/30 hover:bg-red-800 text-red-300' : 'bg-red-100 hover:bg-red-200 text-red-700'}`}
-                                                                >
-                                                                    Cancel
-                                                                </button>
+                                                        </div>
+                                                    )}
+                                                    {pastReminders.length > 0 && (
+                                                        <div className="space-y-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                                                            <h5 className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Past & Cancelled</h5>
+                                                            <div className="space-y-3">
+                                                                {pastReminders.map((reminder) => (
+                                                                    <div key={reminder._id} className={`p-3 border ${isDarkMode ? 'border-gray-750 bg-gray-900/20' : 'border-gray-150 bg-gray-50/50'} rounded-lg opacity-60 hover:opacity-85 transition-all duration-200`}>
+                                                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                                                            <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} ${reminder.status === 'cancelled' ? 'line-through decoration-gray-500/45' : ''}`}>
+                                                                                {reminder.taskText}
+                                                                            </div>
+                                                                            {reminder.status === 'cancelled' ? (
+                                                                                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-red-100/50 text-red-700 dark:bg-red-950/30 dark:text-red-400 flex-shrink-0">Cancelled</span>
+                                                                            ) : (
+                                                                                <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-green-100/50 text-green-700 dark:bg-green-950/30 dark:text-green-400 flex-shrink-0">Sent</span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                                            <FaCalendarAlt size={12} className="opacity-70" />
+                                                                            {new Date(reminder.scheduledTime).toLocaleString()}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                     <div className="flex justify-end mt-4 pt-2 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                                         <button onClick={() => setShowReminders(false)} className={`px-3 py-1.5 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 transition-opacity font-medium`}>Close</button>

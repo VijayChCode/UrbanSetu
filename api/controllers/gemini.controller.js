@@ -56,7 +56,8 @@ export const chatWithGemini = async (req, res) => {
         maxTokens = '2048',
         enableStreaming = true,
         contextWindow = '4',
-        selectedProperties
+        selectedProperties,
+        clientTime
     } = req.body;
     const userId = req.user?.id;
     // Normalize client IP (take first one if it's a list from proxy)
@@ -366,8 +367,10 @@ export const chatWithGemini = async (req, res) => {
         }
         // -------------------------------------------------------------
 
-        const getSystemPrompt = async (tone, userMessage, user = null) => {
-            const userContext = user ? `CURRENT USER: ${user.username || user.email || 'Verified User'} (ID: ${user.id})` : 'CURRENT USER: Guest / Not Signed In';
+        const getSystemPrompt = async (tone, userMessage, user = null, clientTime = null) => {
+            const clientDateObj = clientTime ? new Date(clientTime) : new Date();
+            const timeInfo = `CURRENT USER LOCAL TIME: ${clientTime ? clientTime : clientDateObj.toString()} (ISO UTC: ${clientDateObj.toISOString()})`;
+            const userContext = user ? `CURRENT USER: ${user.username || user.email || 'Verified User'} (ID: ${user.id})\n${timeInfo}` : `CURRENT USER: Guest / Not Signed In\n${timeInfo}`;
             // Fetch dynamic About Us data
             let aboutContext = '';
             try {
@@ -675,7 +678,7 @@ export const chatWithGemini = async (req, res) => {
             content: msg.content?.substring(0, 1000) // Limit history message length
         }));
 
-        const systemPrompt = await getSystemPrompt(tone, sanitizedMessage, req.user);
+        const systemPrompt = await getSystemPrompt(tone, sanitizedMessage, req.user, clientTime);
 
         console.log('Calling Groq API, tone:', tone, 'responseLength:', responseLength, 'creativity:', creativity);
 
@@ -1952,7 +1955,7 @@ export const getPolicyStatus = async (req, res) => {
 export const getUserReminders = async (req, res) => {
     try {
         const userId = req.user.id;
-        const reminders = await Reminder.find({ userId, status: 'scheduled' }).sort({ scheduledTime: 1 });
+        const reminders = await Reminder.find({ userId }).sort({ scheduledTime: -1 });
         res.json({
             success: true,
             reminders

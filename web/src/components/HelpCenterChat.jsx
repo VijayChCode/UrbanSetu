@@ -104,7 +104,8 @@ const HelpCenterChat = () => {
                     tone: 'friendly', // Force friendly tone for help center
                     responseLength: 'medium',
                     enableStreaming: false,
-                    helpArticles: helpArticles
+                    helpArticles: helpArticles,
+                    clientTime: new Date().toString()
                 })
             });
 
