@@ -13109,7 +13109,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             Powered By
                                         </h3>
                                         <div className={`p-6 rounded-2xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-                                            <div className="grid md:grid-cols-3 gap-6">
+                                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                                                 <div className="space-y-2">
                                                     <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Inference</div>
                                                     <div className="text-xl font-bold font-mono text-orange-500">Groq LPU™</div>
@@ -13131,6 +13131,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         On-device recommendations & image auditing.
                                                     </p>
                                                 </div>
+                                                <div className="space-y-2">
+                                                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Processing</div>
+                                                    <div className="text-xl font-bold font-mono text-purple-500">Gemini OCR & Media</div>
+                                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                        Advanced image OCR, document extraction, and video analysis.
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
@@ -13146,7 +13153,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 { title: 'Real Estate Expertise', desc: 'Deep knowledge of property trends, pricing, and legal processes.', icon: '🏢' },
                                                 { title: 'Live Property Search', desc: 'Can search and recommend local listings from UrbanSetu database.', icon: '🔍' },
                                                 { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
-                                                { title: 'Multi-Modal', desc: 'Supports text, voice input, and image analysis.', icon: '🎤' },
+                                                { title: 'Multi-Modal & OCR', desc: 'Advanced image OCR, document analysis, voice input, and video processing.', icon: '📷' },
                                                 { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
                                                 { title: 'AI & Manual Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time via AI or manual creation.', icon: '⏰' },
                                                 { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
