@@ -6372,71 +6372,50 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         const tempId = Date.now() + Math.random();
 
-        // Add to pending images as uploading first
+        // Add to pending images immediately with the original URL (no uploading state needed as we don't upload to Cloudinary)
         setPendingImages(prev => [...prev, {
             id: tempId,
             name: 'External Image',
             type: 'image',
             url: url,
-            uploading: true,
+            uploading: false,
             isExternal: true
         }]);
 
         setImageLinkInput('');
         setShowImageLinkModal(false);
 
-        try {
-            // Upload to backend/cloudinary to get CORS-friendly URL
-            const response = await authenticatedFetch(`${API_BASE_URL}/api/upload/image-url`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imageUrl: url })
-            });
-
-            if (!response.ok) throw new Error('Failed to upload image URL');
-            const data = await response.json();
-            const fileUrl = data.imageUrl;
-
-            // Update pending images with the real Cloudinary URL
-            setPendingImages(prev => prev.map(img =>
-                img.id === tempId ? { ...img, url: fileUrl, uploading: false } : img
-            ));
-
-            // Fetch the uploaded image to run OCR and Sentinel audit on the client
+        // Fetch the image via the backend proxy to bypass CORS on the client for OCR & Sentinel Audit
+        (async () => {
             try {
-                const imgResponse = await fetch(fileUrl);
-                const blob = await imgResponse.blob();
+                const proxyUrl = `${API_BASE_URL}/api/upload/proxy-image?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('Failed to fetch proxy image');
+                
+                const blob = await response.blob();
                 const file = new File([blob], 'external-image.jpg', { type: blob.type || 'image/jpeg' });
 
-                // Run Sentinel audit
+                // Run Sentinel audit on the proxied file object
                 performAudit(file, tempId, 'chat');
 
-                // Run OCR check
-                (async () => {
-                    try {
-                        setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
-                        const text = await extractTextFromFile(file, (progressMsg) => {
-                            console.log(`[OCR URL Image] ${progressMsg}`);
-                        });
-                        if (text && text.trim()) {
-                            setOcrResults(prev => ({ ...prev, [tempId]: text.trim() }));
-                        }
-                    } catch (ocrErr) {
-                        console.warn('OCR skipped/failed for URL image:', ocrErr);
-                    } finally {
-                        setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
+                // Run OCR check in the background
+                try {
+                    setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+                    const text = await extractTextFromFile(file, (progressMsg) => {
+                        console.log(`[OCR URL Image] ${progressMsg}`);
+                    });
+                    if (text && text.trim()) {
+                        setOcrResults(prev => ({ ...prev, [tempId]: text.trim() }));
                     }
-                })();
-
-            } catch (fetchErr) {
-                console.error('Failed to fetch Cloudinary image for client-side audit/OCR:', fetchErr);
+                } catch (ocrErr) {
+                    console.warn('OCR skipped/failed for URL image:', ocrErr);
+                } finally {
+                    setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
+                }
+            } catch (error) {
+                console.warn('Failed to perform OCR & Audit via proxy:', error);
             }
-
-        } catch (error) {
-            console.error('Error adding image from URL:', error);
-            toast.error('Failed to process image URL.');
-            setPendingImages(prev => prev.filter(img => img.id !== tempId));
-        }
+        })();
     };
 
 

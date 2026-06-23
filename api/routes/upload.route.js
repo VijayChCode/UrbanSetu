@@ -156,29 +156,32 @@ router.post('/image', verifyToken, uploadImage.single('image'), async (req, res)
   }
 });
 
-// Upload image from URL
-router.post('/image-url', verifyToken, async (req, res) => {
+// Proxy external image to bypass CORS for client-side OCR and audit
+router.get('/proxy-image', async (req, res) => {
   try {
-    const { imageUrl } = req.body;
-    if (!imageUrl) {
-      return res.status(400).json({ message: 'No image URL provided' });
+    const { url } = req.query;
+    if (!url) {
+      return res.status(400).json({ message: 'No URL provided' });
     }
 
-    console.log('Uploading image from URL:', imageUrl);
-    const uploadResult = await cloudinary.v2.uploader.upload(imageUrl, {
-      folder: 'urbansetu-chat/images',
-      resource_type: 'image',
-    });
+    const response = await fetch(url);
+    if (!response.ok) {
+      return res.status(response.status).json({ message: `Failed to fetch image: ${response.statusText}` });
+    }
 
-    console.log('Image uploaded from URL successfully:', uploadResult.secure_url);
-    res.status(200).json({
-      message: 'Image uploaded successfully',
-      imageUrl: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-    });
+    const contentType = response.headers.get('content-type');
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
+    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    // Convert response body to buffer and send it
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    res.send(buffer);
   } catch (error) {
-    console.error('URL upload error:', error);
-    res.status(500).json({ message: 'Error uploading image from URL', error: error.message });
+    console.error('Proxy image error:', error);
+    res.status(500).json({ message: 'Error proxying image', error: error.message });
   }
 });
 
