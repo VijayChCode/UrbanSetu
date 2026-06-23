@@ -4004,6 +4004,35 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
                 }
 
+                // Check if the response is JSON instead of stream (e.g. backend fallback or API status)
+                const contentType = response.headers.get('Content-Type') || '';
+                if (contentType.includes('application/json')) {
+                    const jsonData = await response.json();
+                    if (jsonData && jsonData.response) {
+                        setMessages(prev => {
+                            const currentMessages = Array.isArray(prev) ? prev : [];
+                            return [...currentMessages, {
+                                role: 'assistant',
+                                content: jsonData.response.trim(),
+                                timestamp: new Date().toISOString()
+                            }];
+                        });
+                        setTotalMessageCount(prev => prev + 1);
+                        setIsLoading(false);
+                        playSound('message-received.mp3');
+                        if (jsonData.sessionId && jsonData.sessionId !== sessionId) {
+                            setSessionId(jsonData.sessionId);
+                            localStorage.setItem('gemini_session_id', jsonData.sessionId);
+                        }
+                        fetchRateLimitStatus();
+                        
+                        // Show sent success check briefly
+                        setSendIconSent(true);
+                        setTimeout(() => setSendIconSent(false), 600);
+                        return; // Exit handleSubmit early as we got a full JSON response
+                    }
+                }
+
                 // Handle streaming response
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -4338,13 +4367,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         violationFooter = `\n\n**Warning: This is violation ${currentViolations}/${VIOLATION_LIMIT}.** You have ${remaining} more ${remaining === 1 ? 'chance' : 'chances'} before a 24-hour restriction is applied.`;
                     }
 
-                    updatedMessages.push({
-                        role: 'assistant',
-                        content: `⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).${violationFooter}\n\nThis incident has been flagged for review.`,
-                        timestamp: new Date().toISOString(),
-                        isError: true,
-                        isViolation: true
-                    });
+                    const violationContent = `⚠️ **Safety Policy Violation Detected**\n\nI cannot fulfill this request because it falls under a restricted category (e.g., Harassment, Hate Speech, Violence, or Illegal Activities).${violationFooter}\n\nThis incident has been flagged for review.`;
+
+                    // Check if there is an active streaming message at the end of the conversation
+                    const lastMessage = updatedMessages[updatedMessages.length - 1];
+                    if (lastMessage && lastMessage.role === 'assistant' && lastMessage.isStreaming) {
+                        lastMessage.content = violationContent;
+                        delete lastMessage.isStreaming;
+                        lastMessage.isError = true;
+                        lastMessage.isViolation = true;
+                    } else {
+                        updatedMessages.push({
+                            role: 'assistant',
+                            content: violationContent,
+                            timestamp: new Date().toISOString(),
+                            isError: true,
+                            isViolation: true
+                        });
+                    }
 
                     return updatedMessages;
                 });
@@ -4372,13 +4412,25 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                 setMessages(prev => {
                     const currentMessages = Array.isArray(prev) ? prev : [];
-                    return [...currentMessages, {
-                        role: 'assistant',
-                        content: `I'm having a bit of trouble connecting right now (${errorMessage}). \n\nFeel free to try again in a moment or rephrase your request!`,
-                        timestamp: new Date().toISOString(),
-                        isError: false, // Set to false to show as a normal bubble per user request
-                        originalUserMessage: lastUserMessageRef.current
-                    }];
+                    const updatedMessages = [...currentMessages];
+                    const lastMessage = updatedMessages[updatedMessages.length - 1];
+                    const errContent = `I'm having a bit of trouble connecting right now (${errorMessage}). \n\nFeel free to try again in a moment or rephrase your request!`;
+                    
+                    if (lastMessage && lastMessage.role === 'assistant' && lastMessage.isStreaming) {
+                        lastMessage.content = errContent;
+                        delete lastMessage.isStreaming;
+                        lastMessage.isError = false;
+                        lastMessage.originalUserMessage = lastUserMessageRef.current;
+                    } else {
+                        updatedMessages.push({
+                            role: 'assistant',
+                            content: errContent,
+                            timestamp: new Date().toISOString(),
+                            isError: false, // Set to false to show as a normal bubble per user request
+                            originalUserMessage: lastUserMessageRef.current
+                        });
+                    }
+                    return updatedMessages;
                 });
                 if (!isOpen) {
                     setUnreadCount(count => count + 1);
