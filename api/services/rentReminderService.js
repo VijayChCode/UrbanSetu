@@ -74,7 +74,7 @@ export const checkAndSendRentReminders = async () => {
                     if (triggerDays.includes(daysOverdue) || (daysOverdue > 30 && daysOverdue % 30 === 0)) {
                         const payUrl = `${clientUrl}/user/pay-monthly-rent?contractId=${contract._id}&scheduleIndex=${wallet.paymentSchedule.indexOf(payment)}`;
                         const penalty = payment.penaltyAmount || 0;
-                        const totalAmount = payment.amount + penalty + (contract.maintenanceCharges || 0);
+                        const totalAmount = payment.amount + penalty;
 
                         notificationsToSend.push({
                             type: 'overdue',
@@ -164,12 +164,11 @@ export const checkAndSendRentReminders = async () => {
 
             // Save updates to DB first
             if (walletUpdated) {
-                const maintenance = contract.maintenanceCharges || 0;
                 const pendingPayments = wallet.paymentSchedule.filter(p => p.status === 'pending' || p.status === 'overdue');
                 const completedPayments = wallet.paymentSchedule.filter(p => p.status === 'completed' || p.status === 'paid');
 
-                wallet.totalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
-                wallet.totalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+                wallet.totalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
+                wallet.totalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
 
                 wallet.markModified('paymentSchedule');
                 await wallet.save();

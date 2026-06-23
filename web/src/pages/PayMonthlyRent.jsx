@@ -235,20 +235,18 @@ export default function PayMonthlyRent() {
 
   const getTotalAmount = () => {
     if (!selectedPayment || !contract) return 0;
-    const baseAmount = selectedPayment.amount || contract.lockedRentAmount || 0;
+    const amount = selectedPayment.amount || contract.lockedRentAmount || 0;
     const penalty = selectedPayment.penaltyAmount || 0;
-    const maintenance = contract.maintenanceCharges || 0;
     const discount = Math.floor(coinsToRedeem / 10);
     // Note: Security deposit is paid upfront during contract creation, not in monthly rent payments
-    return Math.max(0, baseAmount + penalty + maintenance - discount);
+    return Math.max(0, amount + penalty - discount);
   };
 
   const getSubtotal = () => {
     if (!selectedPayment || !contract) return 0;
-    const baseAmount = selectedPayment.amount || contract.lockedRentAmount || 0;
+    const amount = selectedPayment.amount || contract.lockedRentAmount || 0;
     const penalty = selectedPayment.penaltyAmount || 0;
-    const maintenance = contract.maintenanceCharges || 0;
-    return baseAmount + penalty + maintenance;
+    return amount + penalty;
   };
 
   const handleCreatePayment = async () => {
@@ -324,7 +322,7 @@ export default function PayMonthlyRent() {
           contractId: contract._id,
           walletId: wallet._id,
           scheduleIndex: selectedPayment.scheduleIndex,
-          amount: selectedPayment.amount || contract.lockedRentAmount,
+          amount: selectedPayment.amount ? (selectedPayment.amount - (contract.maintenanceCharges || 0)) : (contract.lockedRentAmount || 0),
           month: selectedPayment.month,
           year: selectedPayment.year,
           isAutoDebit: false,
@@ -607,7 +605,7 @@ export default function PayMonthlyRent() {
                 </div>
                 <div className="flex justify-between">
                   <span>Monthly Rent:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">₹{(selectedPayment.amount || contract.lockedRentAmount || 0).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">₹{((selectedPayment.amount || contract.lockedRentAmount || 0) - (contract.maintenanceCharges || 0)).toLocaleString('en-IN')}</span>
                 </div>
                 {selectedPayment.penaltyAmount > 0 && (
                   <div className="flex justify-between text-red-600 dark:text-red-400">
@@ -691,7 +689,7 @@ export default function PayMonthlyRent() {
               <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex justify-between">
                   <span>Monthly Rent:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">₹{(selectedPayment?.amount || contract?.lockedRentAmount || 0).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">₹{((selectedPayment?.amount || contract?.lockedRentAmount || 0) - (contract?.maintenanceCharges || 0)).toLocaleString('en-IN')}</span>
                 </div>
                 {selectedPayment?.penaltyAmount > 0 && (
                   <div className="flex justify-between text-red-600 dark:text-red-400">

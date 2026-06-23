@@ -257,11 +257,11 @@ export default function RentWallet() {
   const completedPayments = wallet.paymentSchedule?.filter(p => p.status === 'completed' || p.status === 'paid') || [];
   const pendingPayments = wallet.paymentSchedule?.filter(p => p.status === 'pending' || p.status === 'overdue') || [];
 
-  const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
-  const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount + maintenance, 0);
+  const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
+  const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount, 0);
 
-  const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
-  const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+  const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
+  const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
 
 
 
@@ -556,10 +556,10 @@ export default function RentWallet() {
                   <div className="flex items-center md:items-end justify-between md:flex-col gap-4 w-full md:w-auto">
                     <div className="text-left md:text-right">
                       <p className="text-2xl font-black text-gray-800 dark:text-white">
-                        ₹{(nextPayment.amount + (nextPayment.penaltyAmount || 0) + maintenance).toLocaleString('en-IN')}
+                        ₹{(nextPayment.amount + (nextPayment.penaltyAmount || 0)).toLocaleString('en-IN')}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Base: ₹{nextPayment.amount.toLocaleString('en-IN')} 
+                        Base: ₹{(nextPayment.amount - maintenance).toLocaleString('en-IN')} 
                         {maintenance > 0 && ` + Maintenance: ₹${maintenance.toLocaleString('en-IN')}`}
                         {nextPayment.penaltyAmount > 0 && ` + Penalty: ₹${nextPayment.penaltyAmount.toLocaleString('en-IN')}`}
                       </p>
@@ -731,7 +731,7 @@ export default function RentWallet() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-green-600 dark:text-green-400">
-                            ₹{(payment.amount + (contract?.maintenanceCharges || 0)).toLocaleString('en-IN')}
+                            ₹{(payment.amount + (payment.penaltyAmount || 0)).toLocaleString('en-IN')}
                           </p>
                           {payment.penaltyAmount > 0 && (
                             <p className="text-xs text-red-600 dark:text-red-400">
