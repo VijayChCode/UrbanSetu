@@ -3365,7 +3365,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, customMessage = null) => {
         if (e) e.preventDefault();
 
         // Cooldown/Policy Block check
@@ -3374,8 +3374,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
 
+        const activeMessage = customMessage !== null ? customMessage : inputMessage;
+
         // Allow submission if there's text OR pending images (image-only messages are valid)
-        if ((!inputMessage.trim() && pendingImages.length === 0) || isLoading) return;
+        if ((!activeMessage.trim() && pendingImages.length === 0) || isLoading) return;
 
         // Check if images are still uploading
         if (pendingImages.length > 0) {
@@ -3438,7 +3440,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
 
         // Check character limit
-        if (inputMessage.length > 2000) {
+        if (activeMessage.length > 2000) {
             toast.error('Message is too long. Please shorten it to under 2000 characters.');
             return;
         }
@@ -3460,7 +3462,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setSendIconAnimating(true);
         setTimeout(() => setSendIconAnimating(false), 800);
 
-        let userMessage = inputMessage.trim();
+        let userMessage = activeMessage.trim();
         const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(userMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
@@ -6824,6 +6826,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 .trim();
         }
 
+        // Clean up `<confirm-cancel>` tags from display text
+        const confirmCancelRegex = /<confirm-cancel\s+id=["']([^"']+)["']\s+text=["']([^"']+)["']\s*(?:\/>|>\s*<\/confirm-cancel>)/gi;
+        cleanedText = cleanedText.replace(confirmCancelRegex, '').trim();
+
         // If markdown is disabled, just use link formatting
         if (!enableMarkdown) {
             return formatTextWithLinks(cleanedText, isSentMessage);
@@ -6935,6 +6941,86 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             return <span key={index} className={isSentMessage ? "text-white" : ""} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(restoredPart) }} />;
         });
+    };
+
+    const renderConfirmationBubble = (message) => {
+        if (message.role !== 'assistant' || !message.content) return null;
+
+        const confirmCancelRegex = /<confirm-cancel\s+id=["']([^"']+)["']\s+text=["']([^"']+)["']\s*(?:\/>|>\s*<\/confirm-cancel>)/i;
+        const match = message.content.match(confirmCancelRegex);
+        if (!match) return null;
+
+        const reminderId = match[1];
+        const reminderText = match[2];
+
+        // Unique radio name for this message to prevent conflict across messages
+        const radioName = `confirm_cancel_${reminderId}`;
+
+        const handleOptionClick = (optionText) => {
+            setInputMessage(optionText);
+            handleSubmit(null, optionText);
+        };
+
+        return (
+            <div className={`mt-3 p-4 rounded-xl border ${isDarkMode ? 'bg-gray-900/60 border-gray-700/85 text-gray-200' : 'bg-white border-gray-200 text-gray-800'} shadow-md select-none`}>
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="p-1 px-2.5 bg-red-500/10 text-red-500 dark:text-red-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Action Required
+                    </span>
+                    <h4 className="text-xs font-bold text-gray-750 dark:text-gray-300">
+                        Confirm Reminder Cancellation
+                    </h4>
+                </div>
+                <p className="text-xs mb-3 text-gray-600 dark:text-gray-400 font-medium">
+                    Are you sure you want to cancel the reminder for <strong className="font-bold text-red-500">"{reminderText}"</strong>?
+                </p>
+                <div className="space-y-2.5">
+                    {/* Radio Button 1: Yes, cancel */}
+                    <div 
+                        onClick={() => handleOptionClick(`Yes, cancel the reminder "${reminderText}" with ID "${reminderId}"`)}
+                        className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all ${
+                            isDarkMode 
+                                ? 'bg-gray-850 hover:bg-red-950/20 border-gray-850 hover:border-red-900/50 text-gray-300' 
+                                : 'bg-gray-50 hover:bg-red-50 border-gray-50 hover:border-red-200 text-gray-700'
+                        }`}
+                    >
+                        <input
+                            type="radio"
+                            name={radioName}
+                            id={`${radioName}_yes`}
+                            className="text-red-500 focus:ring-red-400 h-3.5 w-3.5 cursor-pointer"
+                            onChange={() => {}} // Controlled by wrapper div click
+                            readOnly
+                        />
+                        <label htmlFor={`${radioName}_yes`} className="text-xs font-bold cursor-pointer flex-1">
+                            Yes, cancel the reminder: "{reminderText}"
+                        </label>
+                    </div>
+
+                    {/* Radio Button 2: No, keep */}
+                    <div 
+                        onClick={() => handleOptionClick(`No, keep my reminder`)}
+                        className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all ${
+                            isDarkMode 
+                                ? 'bg-gray-850 hover:bg-blue-950/25 border-gray-850 hover:border-blue-900/50 text-gray-300' 
+                                : 'bg-gray-50 hover:bg-blue-50 border-gray-50 hover:border-blue-200 text-gray-700'
+                        }`}
+                    >
+                        <input
+                            type="radio"
+                            name={radioName}
+                            id={`${radioName}_no`}
+                            className="text-blue-500 focus:ring-blue-400 h-3.5 w-3.5 cursor-pointer"
+                            onChange={() => {}} // Controlled by wrapper div click
+                            readOnly
+                        />
+                        <label htmlFor={`${radioName}_no`} className="text-xs font-bold cursor-pointer flex-1">
+                            No, keep this reminder
+                        </label>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     // Analytics tracking
@@ -8371,6 +8457,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <div className="message-content-text">
                                                                 {renderTextWithMarkdownAndLinks(message.content, message.role === 'user', message)}
                                                             </div>
+                                                            
+                                                            {/* Confirmation bubble if cancellation requires confirmation */}
+                                                            {renderConfirmationBubble(message)}
 
                                                             {/* Recommended Properties Slider */}
                                                             {message.role === 'assistant' && message.recommendations && message.recommendations.length > 0 && (

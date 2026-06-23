@@ -520,6 +520,7 @@ export const rescheduleReminderTool = async ({
  */
 export const cancelReminderTool = async ({
     reminderId,
+    confirmed = false,
     userId
 }) => {
     try {
@@ -541,6 +542,17 @@ export const cancelReminderTool = async ({
             return JSON.stringify({
                 success: false,
                 message: "Reminder not found or you are unauthorized to modify it."
+            });
+        }
+
+        // If not confirmed yet, return confirmation required status
+        if (!confirmed) {
+            return JSON.stringify({
+                success: false,
+                requires_confirmation: true,
+                reminderId: reminder._id.toString(),
+                reminderText: reminder.taskText,
+                message: `Cancellation of reminder "${reminder.taskText}" requires user confirmation.`
             });
         }
 
@@ -754,6 +766,10 @@ export const toolDefinitions = [
                     reminderId: {
                         type: "string",
                         description: "The unique ID of the reminder to cancel (e.g., '65f123...')"
+                    },
+                    confirmed: {
+                        type: "boolean",
+                        description: "Must be true only if the user has explicitly confirmed they want to cancel this specific reminder. If the user just asked to cancel it but hasn't confirmed yet, this must be false."
                     }
                 },
                 required: ["reminderId"]
