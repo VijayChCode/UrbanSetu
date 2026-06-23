@@ -611,10 +611,11 @@ export const chatWithGemini = async (req, res) => {
                - If you find results via tools AND they are non-empty (i.e. you are actually recommending properties or articles), ALWAYS include this exact phrase at the end of your response: "I've generated some detailed cards for you below! ↓".
                - If the tools return no results, or if you are not recommending anything, do NOT include this phrase. Explain that no direct match was found and suggest general links.
                - PRO TIP: You can suggest links from the ROUTE MAP if the specific search fails.
-            7. **SENTINEL IMAGE AUDIT**:
-               - When a user provides an image URL or mentions an uploaded photo/layout/document, you MUST use the "sentinel_image_auditor" tool for EACH distinct image URL provided in the prompt.
-               - If multiple images are provided, call the tool multiple times (once for each URL) to analyze each one.
-               - Incorporate the audit findings (quality score, detected entities, audit summary) into your response to provide technical feedback to the user about their upload.
+            7. **SENTINEL IMAGE AUDIT & OCR TEXT**:
+                - When a user uploads an image/document, you will receive its Sentinel Vision audit findings and/or extracted OCR text context.
+                - **CRITICAL**: Never disclose or reveal technical details about "Sentinel Image Auditor", "OCR", "Tesseract", quality scores, classification labels (like 'Real Estate (Study / Library)'), or tool logs to the user unless they explicitly ask for technical specs.
+                - Use this details purely as context to answer their question directly.
+                - If the image/document contains a question, math problem, general knowledge quiz, or text query (e.g. "Which constitutional amendment introduced GST in India?"), directly address and answer the question naturally and concisely. Do NOT force a real estate connection or mention property listings.
             8. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
             9. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
             10. **OWNED PROPERTIES (LANDLORD/OWNED MODE)**: 

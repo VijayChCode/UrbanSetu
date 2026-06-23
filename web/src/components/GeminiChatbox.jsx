@@ -64,10 +64,28 @@ const runOcrOnCanvas = async (canvas, onProgress) => {
 
 // Main function to extract text from a file locally
 const extractTextFromFile = async (file, onProgress) => {
-    const extension = file.name.split('.').pop().toLowerCase();
+    const extension = file.name ? file.name.split('.').pop().toLowerCase() : '';
+    const mimeType = file.type || '';
 
-    // 1. Plain Text / Code / CSV Files
-    if (['txt', 'js', 'jsx', 'ts', 'tsx', 'py', 'json', 'html', 'css', 'md', 'xml', 'csv', 'sql'].includes(extension)) {
+    // 1. Image Files (Direct OCR)
+    if (mimeType.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(extension)) {
+        onProgress?.('Loading OCR Engine...');
+        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js');
+        if (!window.Tesseract) throw new Error('Tesseract.js failed to load.');
+
+        onProgress?.('Performing character recognition...');
+        const result = await window.Tesseract.recognize(file, 'eng', {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    onProgress?.(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                }
+            }
+        });
+        return result.data.text;
+    }
+
+    // 2. Plain Text / Code / CSV Files
+    if (['txt', 'js', 'jsx', 'ts', 'tsx', 'py', 'json', 'html', 'css', 'md', 'xml', 'csv', 'sql'].includes(extension) || mimeType.startsWith('text/') || mimeType === 'application/json') {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => resolve(e.target.result);
@@ -76,8 +94,8 @@ const extractTextFromFile = async (file, onProgress) => {
         });
     }
 
-    // 2. Microsoft Word Files (.docx)
-    if (extension === 'docx') {
+    // 3. Microsoft Word Files (.docx)
+    if (extension === 'docx' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         onProgress?.('Loading Word parser...');
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
         if (!window.mammoth) throw new Error('Mammoth.js failed to load.');
@@ -88,8 +106,8 @@ const extractTextFromFile = async (file, onProgress) => {
         return result.value;
     }
 
-    // 3. Microsoft Excel Files (.xlsx / .xls)
-    if (extension === 'xlsx' || extension === 'xls') {
+    // 4. Microsoft Excel Files (.xlsx / .xls)
+    if (extension === 'xlsx' || extension === 'xls' || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || mimeType === 'application/vnd.ms-excel') {
         onProgress?.('Loading Excel parser...');
         await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
         if (!window.XLSX) throw new Error('SheetJS failed to load.');
@@ -108,8 +126,8 @@ const extractTextFromFile = async (file, onProgress) => {
         return text;
     }
 
-    // 4. PDF Documents (Vector Text extraction + Scanned Image OCR Fallback)
-    if (extension === 'pdf') {
+    // 5. PDF Documents (Vector Text extraction + Scanned Image OCR Fallback)
+    if (extension === 'pdf' || mimeType === 'application/pdf') {
         onProgress?.('Loading PDF reader...');
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js');
         if (!window.pdfjsLib) throw new Error('PDF.js failed to load.');
@@ -144,23 +162,6 @@ const extractTextFromFile = async (file, onProgress) => {
             fullText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
         }
         return fullText;
-    }
-
-    // 5. Image Files (Direct OCR)
-    if (['png', 'jpg', 'jpeg', 'webp'].includes(extension)) {
-        onProgress?.('Loading OCR Engine...');
-        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js');
-        if (!window.Tesseract) throw new Error('Tesseract.js failed to load.');
-
-        onProgress?.('Performing character recognition...');
-        const result = await window.Tesseract.recognize(file, 'eng', {
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    onProgress?.(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-                }
-            }
-        });
-        return result.data.text;
     }
 
     throw new Error(`Text extraction not supported for .${extension} files.`);
