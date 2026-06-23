@@ -6033,7 +6033,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         };
     }, []);
 
-    const toggleVoiceInput = () => {
+    function toggleVoiceInput() {
         if (isBlockedByPolicy) {
             toast.warning('Voice input is disabled during your policy cooldown.');
             return;
@@ -6048,7 +6048,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } else {
             startListening();
         }
-    };
+    }
 
     const startListening = () => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
