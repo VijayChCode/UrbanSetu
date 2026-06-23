@@ -6959,7 +6959,23 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Disable options if already executed or if there is a subsequent user message
         const hasSubsequentUserMessage = msgIndex !== undefined && messages.slice(msgIndex + 1).some(m => m.role === 'user');
         const isExecuted = message.confirmationExecuted || hasSubsequentUserMessage;
-        const selectedChoice = message.confirmationSelected;
+        
+        let selectedChoice = message.confirmationSelected;
+        if (!selectedChoice && msgIndex !== undefined) {
+            // Fallback: Infer selection from subsequent user messages in case state is refreshed or history is loaded
+            const subsequentUserMsg = messages.slice(msgIndex + 1).find(m => m.role === 'user');
+            if (subsequentUserMsg && subsequentUserMsg.content) {
+                const text = subsequentUserMsg.content.toLowerCase();
+                if (text.includes('yes, cancel') || text.includes('yes, cancel the reminder')) {
+                    selectedChoice = 'yes';
+                } else if (text.includes('no, keep') || text.includes('keep my reminder')) {
+                    selectedChoice = 'no';
+                }
+            }
+        }
+
+        const isSelectedYes = selectedChoice === 'yes';
+        const isSelectedNo = selectedChoice === 'no';
 
         const handleOptionClick = (optionText, choice) => {
             if (msgIndex !== undefined) {
@@ -6998,7 +7014,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         onClick={isExecuted ? null : () => handleOptionClick(`Yes, cancel the reminder "${reminderText}" with ID "${reminderId}"`, 'yes')}
                         className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border transition-all ${
                             isExecuted 
-                                ? 'opacity-50 cursor-not-allowed bg-gray-100/5 dark:bg-gray-800/10' 
+                                ? `cursor-not-allowed ${
+                                    isSelectedYes 
+                                        ? (isDarkMode 
+                                            ? 'bg-red-500/10 border-red-500/30 text-red-300' 
+                                            : 'bg-red-50 border-red-200 text-red-700')
+                                        : 'bg-gray-100/5 dark:bg-gray-800/10 border-transparent opacity-40 text-gray-500'
+                                }` 
                                 : `cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
                                     isDarkMode 
                                         ? 'bg-gray-850 hover:bg-red-950/20 border-gray-850 hover:border-red-900/50 text-gray-300' 
@@ -7010,9 +7032,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             type="radio"
                             name={radioName}
                             id={`${radioName}_yes`}
-                            className="text-red-500 focus:ring-red-400 h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
+                            className={`text-red-500 focus:ring-red-400 h-3.5 w-3.5 ${isExecuted ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                             onChange={() => {}} // Controlled by wrapper div click
-                            checked={selectedChoice === 'yes'}
+                            checked={isSelectedYes}
                             disabled={isExecuted}
                         />
                         <label htmlFor={`${radioName}_yes`} className={`text-xs font-bold flex-1 ${isExecuted ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
@@ -7025,7 +7047,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         onClick={isExecuted ? null : () => handleOptionClick(`No, keep my reminder`, 'no')}
                         className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border transition-all ${
                             isExecuted 
-                                ? 'opacity-50 cursor-not-allowed bg-gray-100/5 dark:bg-gray-800/10' 
+                                ? `cursor-not-allowed ${
+                                    isSelectedNo 
+                                        ? (isDarkMode 
+                                            ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' 
+                                            : 'bg-blue-50 border-blue-200 text-blue-700')
+                                        : 'bg-gray-100/5 dark:bg-gray-800/10 border-transparent opacity-40 text-gray-500'
+                                }` 
                                 : `cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
                                     isDarkMode 
                                         ? 'bg-gray-850 hover:bg-blue-950/25 border-gray-850 hover:border-blue-900/50 text-gray-300' 
@@ -7037,9 +7065,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             type="radio"
                             name={radioName}
                             id={`${radioName}_no`}
-                            className="text-blue-500 focus:ring-blue-400 h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
+                            className={`text-blue-500 focus:ring-blue-400 h-3.5 w-3.5 ${isExecuted ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                             onChange={() => {}} // Controlled by wrapper div click
-                            checked={selectedChoice === 'no'}
+                            checked={isSelectedNo}
                             disabled={isExecuted}
                         />
                         <label htmlFor={`${radioName}_no`} className={`text-xs font-bold flex-1 ${isExecuted ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
