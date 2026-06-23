@@ -3789,6 +3789,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         let videoUrl = '';
         let documentUrl = '';
         let documentName = '';
+        let ocrTextToSend = '';
 
         if (pendingImages.length > 0) {
             messageImages = pendingImages.filter(img => img.type === 'image').map(img => img.url).filter(Boolean);
@@ -3864,6 +3865,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
 
             aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n${fileTexts}` : fileTexts;
+            ocrTextToSend = fileTexts;
 
             setPendingImages([]); // Clear pending images after they are attached
         }
@@ -3890,7 +3892,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 audioUrl,
                 videoUrl,
                 documentUrl,
-                documentName
+                documentName,
+                ocrText: ocrTextToSend || undefined
             }];
         });
         // Increment total message count for accurate limit enforcement
@@ -3958,6 +3961,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         videoUrl,
                         documentUrl,
                         documentName,
+                        ocrText: ocrTextToSend || undefined,
                         isOnlyAttachment: !userMessage.trim(),
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
@@ -4161,6 +4165,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         videoUrl,
                         documentUrl,
                         documentName,
+                        ocrText: ocrTextToSend || undefined,
                         isOnlyAttachment: !userMessage.trim(),
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
@@ -7344,65 +7349,123 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Preserve <br>, <strong>, <em> etc. that we generate, but remove unknown tags
         processedText = processedText.replace(/<(?!\/?(br|strong|em|h[1-6]|li|ul|ol|table|thead|tbody|tr|th|td|div|span|pre|code|svg|path|rect|button|img)\b)[^>]+>/gi, '');
 
-        // Process code blocks first (before other markdown)
+        // Mask code blocks and inline code to protect them from other parsing rules (like math delimiters or list items)
+        const codeBlocks = [];
         processedText = processedText.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
-            let lang = language || 'text';
-            const cleanCode = code.trim();
+            codeBlocks.push({ type: 'block', language, code, match });
+            return `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length - 1}__`;
+        });
+        processedText = processedText.replace(/`([^`]+)`/g, (match, code) => {
+            codeBlocks.push({ type: 'inline', code, match });
+            return `__INLINE_CODE_PLACEHOLDER_${codeBlocks.length - 1}__`;
+        });
 
-            // Map common language aliases to Prism.js language names
-            const languageMap = {
-                'html': 'markup',
-                'xml': 'markup',
-                'svg': 'markup',
-                'js': 'javascript',
-                'py': 'python',
-                'sh': 'bash',
-                'shell': 'bash',
-                'md': 'markdown'
-            };
+        // Parse LaTeX math expressions
+        // 1. Render boxed equations (e.g. \boxed{50} or $\boxed{50}$)
+        processedText = processedText.replace(/(?:\$\$|\$)?\\boxed\{([^\}]+)\}(?:\$\$|\$)?/g, (match, content) => {
+            return `<span class="inline-flex items-center justify-center border border-blue-500/40 dark:border-blue-400/40 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-blue-600 dark:text-blue-300 font-bold px-2.5 py-0.5 rounded-md shadow-sm select-all mx-1 font-mono">${content}</span>`;
+        });
 
-            lang = languageMap[lang] || lang;
+        // 2. Render display math blocks (e.g. $$x = 5$$)
+        processedText = processedText.replace(/\$\$(.*?)\$\$/g, '<div class="math-block text-center my-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg font-mono text-sm overflow-x-auto border border-gray-200/50 dark:border-gray-700/50 text-gray-800 dark:text-gray-200">$1</div>');
 
-            if (enableCodeHighlighting) {
-                try {
-                    // Highlight the code with Prism.js
-                    const highlightedCode = Prism.highlight(cleanCode, Prism.languages[lang] || Prism.languages.text, lang);
-                    return `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-700 dark:border-gray-600 bg-gray-900 dark:bg-gray-800">
-                        <div class="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-700 border-b border-gray-700 dark:border-gray-600">
-                            <span class="text-xs font-medium text-gray-400 uppercase">${lang}</span>
-                            <button class="code-copy-btn p-1.5 rounded-lg text-gray-400 hover:text-white transition-all hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}">
-                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                        </div>
-                        <pre class="bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${highlightedCode}</code></pre>
-                    </div>`;
-                } catch (error) {
-                    console.warn('Code highlighting failed:', error);
-                    return `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+        // 3. Render inline math (e.g. $x$ or $10x = 50$, avoiding currency matching)
+        processedText = processedText.replace(/\$(?!\s)([^\$]+?)(?<!\s)\$/g, (match, content) => {
+            if (/^\d+(?:\.\d+)?$/.test(content)) return match;
+            const hasMathSymbol = /[\=+\-*\/\\()_^{}<>≤≥≠≈±×÷]/.test(content);
+            if (!hasMathSymbol && content.length > 5) return match;
+            return `<span class="math-inline font-mono bg-gray-100 dark:bg-gray-800/80 px-1 py-0.5 rounded text-gray-800 dark:text-gray-200">${content}</span>`;
+        });
+
+        // 4. Clean up common LaTeX symbols inside text
+        processedText = processedText
+            .replace(/\\times/g, '×')
+            .replace(/\\div/g, '÷')
+            .replace(/\\cdot/g, '·')
+            .replace(/\\le/g, '≤')
+            .replace(/\\leq/g, '≤')
+            .replace(/\\ge/g, '≥')
+            .replace(/\\geq/g, '≥')
+            .replace(/\\ne/g, '≠')
+            .replace(/\\neq/g, '≠')
+            .replace(/\\approx/g, '≈')
+            .replace(/\\pm/g, '±')
+            .replace(/\\infty/g, '∞')
+            .replace(/\\alpha/g, 'α')
+            .replace(/\\beta/g, 'β')
+            .replace(/\\gamma/g, 'γ')
+            .replace(/\\delta/g, 'δ')
+            .replace(/\\theta/g, 'θ')
+            .replace(/\\pi/g, 'π')
+            .replace(/\\sigma/g, 'σ')
+            .replace(/\\omega/g, 'ω')
+            .replace(/\\sqrt\{([^\}]+)\}/g, '√$1')
+            .replace(/([a-zA-Z0-9])\^([0-9a-zA-Z\+\-]+)/g, '$1<sup>$2</sup>')
+            .replace(/([a-zA-Z0-9])\^\{([^\}]+)\}/g, '$1<sup>$2</sup>')
+            .replace(/([a-zA-Z0-9])_([0-9a-zA-Z\+\-]+)/g, '$1<sub>$2</sub>')
+            .replace(/([a-zA-Z0-9])_\{([^\}]+)\}/g, '$1<sub>$2</sub>');
+
+        // Restore and parse masked code blocks and inline code
+        for (let i = 0; i < codeBlocks.length; i++) {
+            const block = codeBlocks[i];
+            let htmlReplacement = '';
+            
+            if (block.type === 'block') {
+                let lang = block.language || 'text';
+                const cleanCode = block.code.trim();
+                const languageMap = {
+                    'html': 'markup',
+                    'xml': 'markup',
+                    'svg': 'markup',
+                    'js': 'javascript',
+                    'py': 'python',
+                    'sh': 'bash',
+                    'shell': 'bash',
+                    'md': 'markdown'
+                };
+                lang = languageMap[lang] || lang;
+
+                if (enableCodeHighlighting) {
+                    try {
+                        const highlightedCode = Prism.highlight(cleanCode, Prism.languages[lang] || Prism.languages.text, lang);
+                        htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-700 dark:border-gray-600 bg-gray-900 dark:bg-gray-800">
+                            <div class="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-700 border-b border-gray-700 dark:border-gray-600">
+                                <span class="text-xs font-medium text-gray-400 uppercase">${lang}</span>
+                                <button class="code-copy-btn p-1.5 rounded-lg text-gray-400 hover:text-white transition-all hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}">
+                                    <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                            </div>
+                            <pre class="bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${highlightedCode}</code></pre>
+                        </div>`;
+                    } catch (error) {
+                        console.warn('Code highlighting failed:', error);
+                        htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+                            <div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">${lang}</span>
+                                <button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}">
+                                    <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                            </div>
+                            <pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${cleanCode}</code></pre>
+                        </div>`;
+                    }
+                } else {
+                    htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
                         <div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
                             <span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">${lang}</span>
                             <button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}">
-                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
                         </div>
                         <pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${cleanCode}</code></pre>
                     </div>`;
                 }
-            } else {
-                return `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
-                    <div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
-                        <span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">${lang}</span>
-                        <button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}">
-                            <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        </button>
-                    </div>
-                    <pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${cleanCode}</code></pre>
-                </div>`;
+                processedText = processedText.replace(`__CODE_BLOCK_PLACEHOLDER_${i}__`, htmlReplacement);
+            } else if (block.type === 'inline') {
+                htmlReplacement = `<code class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono border border-gray-300 dark:border-gray-600">${block.code}</code>`;
+                processedText = processedText.replace(`__INLINE_CODE_PLACEHOLDER_${i}__`, htmlReplacement);
             }
-        });
-
-        // Process inline code
-        processedText = processedText.replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono border border-gray-300 dark:border-gray-600">$1</code>');
+        }
         // Process markdown tables (before processing other markdown elements)
         // Pattern: | Header | Header |\n|--------|--------|\n| Cell   | Cell   |
         processedText = processedText.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)+)/g, (match) => {

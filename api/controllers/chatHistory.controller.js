@@ -34,7 +34,9 @@ export const saveChatMessage = async (req, res) => {
             audioUrl,
             videoUrl,
             documentUrl,
-            documentName 
+            documentName,
+            ocrText,
+            visionAnalysis
         } = req.body;
 
         const media = {
@@ -43,7 +45,9 @@ export const saveChatMessage = async (req, res) => {
             audioUrl,
             videoUrl,
             documentUrl,
-            documentName
+            documentName,
+            ocrText,
+            visionAnalysis
         };
 
         await chatHistory.addMessage(role, content, isRestricted, recommendations, isError, media);

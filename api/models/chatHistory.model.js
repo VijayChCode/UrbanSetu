@@ -101,6 +101,14 @@ const chatHistorySchema = new mongoose.Schema({
     documentName: {
       type: String,
       default: undefined
+    },
+    ocrText: {
+      type: String,
+      default: undefined
+    },
+    visionAnalysis: {
+      type: String,
+      default: undefined
     }
   }],
   totalMessages: {

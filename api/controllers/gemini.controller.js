@@ -94,6 +94,7 @@ export const chatWithGemini = async (req, res) => {
         videoUrl,
         documentUrl,
         documentName,
+        ocrText,           // Extracted OCR text from the frontend
         history = [],
         imageAudits = {},  // Audit results from the frontend (URLs mapped to analysis)
         sessionId,
@@ -193,7 +194,8 @@ export const chatWithGemini = async (req, res) => {
             videoUrl,
             documentUrl,
             documentName,
-            imageAudits
+            imageAudits,
+            ocrText
         };
 
 
@@ -642,10 +644,54 @@ export const chatWithGemini = async (req, res) => {
 
         // Prepare conversation history with security filtering using contextWindow
         const contextWindowSize = Math.min(parseInt(contextWindow) || 6, 6);
-        const filteredHistory = history.slice(-contextWindowSize).map(msg => ({
-            role: msg.role === 'assistant' ? 'assistant' : 'user', // Groq uses 'assistant' not 'model'
-            content: msg.content?.substring(0, 300) // Limit history message length to save tokens
-        }));
+
+        // Fetch DB chat session if logged in to get correct vision/ocr context
+        let dbMessages = [];
+        if (userId && currentSessionId) {
+            try {
+                const chatHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
+                if (chatHistory) {
+                    dbMessages = chatHistory.messages || [];
+                }
+            } catch (err) {
+                console.warn('Error fetching history from DB for Groq context:', err);
+            }
+        }
+
+        const filteredHistory = history.slice(-contextWindowSize).map(msg => {
+            const role = msg.role === 'assistant' ? 'assistant' : 'user';
+            let content = msg.content || '';
+
+            if (role === 'user') {
+                let extra = '';
+                // Attempt to find matching message in DB to load ocrText and visionAnalysis
+                const dbMsg = dbMessages.find(m => 
+                    m.role === 'user' && 
+                    m.content === msg.content && 
+                    (m.ocrText || m.visionAnalysis)
+                );
+
+                const finalVision = dbMsg?.visionAnalysis || msg.visionAnalysis;
+                const finalOcr = dbMsg?.ocrText || msg.ocrText;
+
+                if (finalVision) {
+                    extra += `\n\n[VISION ANALYSIS - Visual content of the uploaded media]:\n${finalVision}`;
+                }
+                if (finalOcr) {
+                    extra += `\n\n[EXTRACTED TEXT (OCR) / TRANSCRIPT]:\n${finalOcr}`;
+                }
+
+                // Increase content size limit to accommodate the vision analysis and OCR
+                content = (content + extra).substring(0, 1500);
+            } else {
+                content = content.substring(0, 500);
+            }
+
+            return {
+                role,
+                content
+            };
+        });
 
         const systemPrompt = await getSystemPrompt(tone, userTypedMessage, req.user, clientTime);
 
@@ -731,11 +777,29 @@ export const chatWithGemini = async (req, res) => {
         // Vision Analysis: If images are present, analyze them with Groq Vision (Llama 4 Scout)
         // This gives the LLM actual visual understanding of the image content
         const allImageUrls = [...(images || []), ...(imageUrl ? [imageUrl] : [])].filter(Boolean);
+        let visionAnalysisResult = undefined;
         if (allImageUrls.length > 0) {
             try {
                 const visionDescription = await analyzeImageWithVision(allImageUrls, userTypedMessage);
                 if (visionDescription) {
                     finalUserMessage += `\n\n[VISION ANALYSIS - Detailed visual understanding of the uploaded image(s)]:\n${visionDescription}`;
+                    visionAnalysisResult = visionDescription;
+                    media.visionAnalysis = visionAnalysisResult;
+
+                    // Immediately save/update vision description to the database user message
+                    if (userId) {
+                        try {
+                            const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
+                            const lastMsg = chatHistory.messages[chatHistory.messages.length - 1];
+                            if (lastMsg && lastMsg.role === 'user' && lastMsg.content === userDisplayContent) {
+                                lastMsg.visionAnalysis = visionAnalysisResult;
+                                await chatHistory.save();
+                                console.log('✅ Vision analysis description saved to user message in database');
+                            }
+                        } catch (saveError) {
+                            console.error('Error saving vision analysis immediately:', saveError);
+                        }
+                    }
                 }
             } catch (visionErr) {
                 console.error('Vision analysis error (non-fatal):', visionErr.message);
@@ -980,6 +1044,10 @@ export const chatWithGemini = async (req, res) => {
                             timestamp: new Date(),
                             ...media
                         });
+                    } else {
+                        // Ensure ocrText and visionAnalysis are up-to-date in the duplicate record
+                        if (ocrText) lastMsg.ocrText = ocrText;
+                        if (visionAnalysisResult) lastMsg.visionAnalysis = visionAnalysisResult;
                     }
 
                     chatHistory.messages.push({
@@ -1016,6 +1084,9 @@ export const chatWithGemini = async (req, res) => {
                                         timestamp: new Date(),
                                         ...media
                                     });
+                                } else {
+                                    if (ocrText) lastLatestMsg.ocrText = ocrText;
+                                    if (visionAnalysisResult) lastLatestMsg.visionAnalysis = visionAnalysisResult;
                                 }
                                 latestHistory.messages.push({
                                     role: 'assistant',
@@ -1102,6 +1173,10 @@ export const chatWithGemini = async (req, res) => {
                             timestamp: new Date(),
                             ...media
                         });
+                    } else {
+                        // Ensure ocrText and visionAnalysis are up-to-date in the duplicate record
+                        if (ocrText) lastMsg.ocrText = ocrText;
+                        if (visionAnalysisResult) lastMsg.visionAnalysis = visionAnalysisResult;
                     }
 
                     chatHistory.messages.push({
@@ -1137,6 +1212,9 @@ export const chatWithGemini = async (req, res) => {
                                         timestamp: new Date(),
                                         ...media
                                     });
+                                } else {
+                                    if (ocrText) lastLatestMsg.ocrText = ocrText;
+                                    if (visionAnalysisResult) lastLatestMsg.visionAnalysis = visionAnalysisResult;
                                 }
                                 latestHistory.messages.push({
                                     role: 'assistant',
@@ -1206,7 +1284,16 @@ export const chatWithGemini = async (req, res) => {
 
         if (userId) {
             try {
-                const media = { images, imageUrl, audioUrl, videoUrl, documentUrl, documentName };
+                const mediaWithOcr = { 
+                     images, 
+                     imageUrl, 
+                     audioUrl, 
+                     videoUrl, 
+                     documentUrl, 
+                     documentName,
+                     ocrText,
+                     visionAnalysis: visionAnalysisResult
+                 };
                 const userDisplayContent = displayMessage !== undefined ? displayMessage : (message ? message.substring(0, 500) : "Media Attachment");
 
                 const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
@@ -1214,7 +1301,7 @@ export const chatWithGemini = async (req, res) => {
                     role: 'user',
                     content: userDisplayContent,
                     timestamp: new Date(),
-                    ...media
+                    ...mediaWithOcr
                 });
                 chatHistory.messages.push({
                     role: 'assistant',
