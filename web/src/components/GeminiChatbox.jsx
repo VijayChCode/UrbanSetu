@@ -5213,7 +5213,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 audioUrl: originalMessage.audioUrl,
                 videoUrl: originalMessage.videoUrl,
                 documentUrl: originalMessage.documentUrl,
-                documentName: originalMessage.documentName
+                documentName: originalMessage.documentName,
+                ocrText: originalMessage.ocrText
             });
 
 

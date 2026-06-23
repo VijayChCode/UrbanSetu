@@ -763,6 +763,26 @@ export const chatWithGemini = async (req, res) => {
         // If image audits are already provided from the frontend, inject them into the message
         // so the AI doesn't redundantly try to call sentinel_image_auditor (which causes tool_use_failed errors)
         let finalUserMessage = fullPrompt;
+
+        // If this is a retry/duplicate (no new images passed in request but matching message exists in DB),
+        // restore the cached ocrText and visionAnalysis from the DB.
+        let cachedOcr = undefined;
+        let cachedVision = undefined;
+        if (userId && currentSessionId && (!images || images.length === 0)) {
+            try {
+                const currentChatHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
+                if (currentChatHistory && currentChatHistory.messages && currentChatHistory.messages.length > 0) {
+                    const lastMsg = currentChatHistory.messages[currentChatHistory.messages.length - 1];
+                    if (lastMsg && lastMsg.role === 'user' && lastMsg.content === userDisplayContent) {
+                        cachedOcr = lastMsg.ocrText;
+                        cachedVision = lastMsg.visionAnalysis;
+                    }
+                }
+            } catch (err) {
+                console.warn('Error reading cached media details from DB:', err);
+            }
+        }
+
         if (imageAudits && Object.keys(imageAudits).length > 0) {
             const auditSummaries = Object.entries(imageAudits).map(([url, audit]) => {
                 const fileName = url.split('/').pop() || 'uploaded image';
@@ -777,7 +797,7 @@ export const chatWithGemini = async (req, res) => {
         // Vision Analysis: If images are present, analyze them with Groq Vision (Llama 4 Scout)
         // This gives the LLM actual visual understanding of the image content
         const allImageUrls = [...(images || []), ...(imageUrl ? [imageUrl] : [])].filter(Boolean);
-        let visionAnalysisResult = undefined;
+        let visionAnalysisResult = cachedVision;
         if (allImageUrls.length > 0) {
             try {
                 const visionDescription = await analyzeImageWithVision(allImageUrls, userTypedMessage);
@@ -804,6 +824,13 @@ export const chatWithGemini = async (req, res) => {
             } catch (visionErr) {
                 console.error('Vision analysis error (non-fatal):', visionErr.message);
             }
+        } else if (cachedVision) {
+            finalUserMessage += `\n\n[VISION ANALYSIS - Visual content of the uploaded media (Cached)]:\n${cachedVision}`;
+        }
+
+        const finalOcr = ocrText || cachedOcr;
+        if (finalOcr) {
+            finalUserMessage += `\n\n[EXTRACTED TEXT (OCR) / TRANSCRIPT]:\n${finalOcr}`;
         }
 
         messages.push({
