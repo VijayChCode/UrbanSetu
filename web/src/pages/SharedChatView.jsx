@@ -450,51 +450,7 @@ export default function SharedChatView() {
                                     </div>
                                 )}
 
-                                {/* Media Display */}
-                                {(msg.imageUrl || (msg.images && msg.images.length > 0)) && (
-                                    <div className="mb-4 flex flex-wrap gap-3">
-                                        {(msg.images && msg.images.length > 0 ? msg.images : [msg.imageUrl]).filter(Boolean).map((img, imgIdx) => (
-                                            <div key={imgIdx} className="relative group w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-700 shadow-xl transition-all hover:scale-[1.05] hover:rotate-1">
-                                                <img
-                                                    src={img}
-                                                    alt={`Shared image ${imgIdx + 1}`}
-                                                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setPreviewImages(msg.images && msg.images.length > 0 ? msg.images : [msg.imageUrl]);
-                                                        setPreviewImageIndex(imgIdx);
-                                                        setIsImagePreviewOpen(true);
-                                                    }}
-                                                />
-                                                <button
-                                                    className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-2 rounded-xl shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block"
-                                                    onClick={async (e) => {
-                                                        e.stopPropagation();
-                                                        try {
-                                                            const response = await fetch(img, { mode: 'cors' });
-                                                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                            const blob = await response.blob();
-                                                            const blobUrl = window.URL.createObjectURL(blob);
-                                                            const a = document.createElement('a');
-                                                            a.href = blobUrl;
-                                                            a.download = `shared-image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
-                                                            document.body.appendChild(a);
-                                                            a.click();
-                                                            document.body.removeChild(a);
-                                                            window.URL.revokeObjectURL(blobUrl);
-                                                        } catch (err) {
-                                                            console.error('Download error:', err);
-                                                            toast.error('Failed to download image');
-                                                        }
-                                                    }}
-                                                    title="Download image"
-                                                >
-                                                    <FaDownload size={14} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+
 
                                 <div className={`text-base sm:text-lg whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : ''}`}>
                                     {formatText(msg.content, msg.role === 'user')}

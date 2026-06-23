@@ -4461,8 +4461,58 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
         }
 
-        // Remove the error message
-        setMessages(prev => prev.filter((_, index) => index !== messageIndex));
+        // Branching implementation:
+        // 1. Capture original assistant message and tail
+        const originalAssistantMessage = messages[messageIndex];
+        const currentTail = messages.slice(messageIndex + 1);
+
+        let variants = [];
+        let activeIdx = 0;
+
+        if (originalAssistantMessage) {
+            activeIdx = originalAssistantMessage.activeVersionIndex || 0;
+            if (originalAssistantMessage.variants && originalAssistantMessage.variants.length > 0) {
+                variants = [...originalAssistantMessage.variants];
+                variants[activeIdx] = {
+                    ...variants[activeIdx],
+                    content: originalAssistantMessage.content,
+                    images: originalAssistantMessage.images,
+                    imageUrl: originalAssistantMessage.imageUrl,
+                    audioUrl: originalAssistantMessage.audioUrl,
+                    videoUrl: originalAssistantMessage.videoUrl,
+                    documentUrl: originalAssistantMessage.documentUrl,
+                    documentName: originalAssistantMessage.documentName,
+                    isError: originalAssistantMessage.isError,
+                    recommendations: originalAssistantMessage.recommendations,
+                    tokenUsage: originalAssistantMessage.tokenUsage,
+                    tail: currentTail
+                };
+            } else {
+                variants = [
+                    {
+                        content: originalAssistantMessage.content,
+                        images: originalAssistantMessage.images,
+                        imageUrl: originalAssistantMessage.imageUrl,
+                        audioUrl: originalAssistantMessage.audioUrl,
+                        videoUrl: originalAssistantMessage.videoUrl,
+                        documentUrl: originalAssistantMessage.documentUrl,
+                        documentName: originalAssistantMessage.documentName,
+                        isError: originalAssistantMessage.isError,
+                        recommendations: originalAssistantMessage.recommendations,
+                        tokenUsage: originalAssistantMessage.tokenUsage,
+                        tail: currentTail,
+                        timestamp: originalAssistantMessage.timestamp,
+                        role: 'assistant'
+                    }
+                ];
+            }
+        }
+
+        const newVersionIndex = variants.length;
+
+        // Truncate messages list to exclude the assistant message and its tail during the API call
+        const nextMessages = messages.slice(0, messageIndex);
+        setMessages(nextMessages);
 
         try {
             const currentSessionId = getOrCreateSessionId();
@@ -4478,6 +4528,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 messagePayload += "\n\n[System Directive: Search the web for latest listings, guides, and real estate information]";
             }
 
+            // Sync the truncated tree first to make sure database is consistent with the new active path
+            await syncChatTreeToBackend(nextMessages);
+
             const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
                 method: 'POST',
                 headers: {
@@ -4485,19 +4538,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 },
                 body: JSON.stringify({
                     message: messagePayload,
-                    history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10), // Send context window messages
+                    history: enableContextMemory ? nextMessages.slice(-parseInt(contextWindow)) : nextMessages.slice(-10),
                     sessionId: currentSessionId,
-                    tone: currentUser ? tone : 'neutral', // Send current tone setting or default for public users
-                    responseLength: aiResponseLength, // Send response length setting
-                    creativity: aiCreativity, // Send creativity level setting
-                    temperature: temperature, // Send custom temperature
-                    topP: topP, // Send custom topP
-                    topK: topK, // Send custom topK
-                    maxTokens: maxTokens, // Send custom max tokens
+                    tone: currentUser ? tone : 'neutral',
+                    responseLength: aiResponseLength,
+                    creativity: aiCreativity,
+                    temperature: temperature,
+                    topP: topP,
+                    topK: topK,
+                    maxTokens: maxTokens,
                     enableStreaming: false, // Force non-streaming for retries to ensure JSON response
-                    enableContextMemory: enableContextMemory, // Send context memory preference
-                    contextWindow: contextWindow, // Send context window size
-                    enableSystemPrompts: enableSystemPrompts, // Send system prompts preference
+                    enableContextMemory: enableContextMemory,
+                    contextWindow: contextWindow,
+                    enableSystemPrompts: enableSystemPrompts,
                     clientTime: new Date().toString()
                 }),
                 signal: abortControllerRef.current.signal
@@ -4530,11 +4583,43 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             if (data && data.response && typeof data.response === 'string') {
                 const trimmedResponse = data.response.trim();
-                setMessages(prev => [...prev, {
+
+                // Create the new variant for the assistant message
+                const newVersion = {
+                    content: trimmedResponse,
+                    role: 'assistant',
+                    timestamp: new Date().toISOString(),
+                    recommendations: data.recommendations,
+                    tokenUsage: data.tokenUsage || undefined,
+                    tail: []
+                };
+
+                const newAssistantMessage = {
                     role: 'assistant',
                     content: trimmedResponse,
-                    timestamp: new Date().toISOString()
-                }]);
+                    timestamp: newVersion.timestamp,
+                    variants: [...variants, newVersion],
+                    activeVersionIndex: newVersionIndex,
+                    recommendations: data.recommendations,
+                    tokenUsage: data.tokenUsage || undefined
+                };
+
+                const finalMessages = [...nextMessages, newAssistantMessage];
+                setMessages(finalMessages);
+                await syncChatTreeToBackend(finalMessages);
+
+                setTotalMessageCount(prev => prev + 1);
+
+                if (data.tokenUsage && (data.tokenUsage.totalTokens || data.tokenUsage.total_tokens)) {
+                    const added = data.tokenUsage.totalTokens || data.tokenUsage.total_tokens;
+                    setActiveSessionTokens(prev => prev + added);
+                    setLifetimeUsage(prev => ({
+                        ...prev,
+                        totalTokens: (prev.totalTokens || 0) + added
+                    }));
+                    setBurstCount(Math.min(35, Math.max(12, Math.floor(added / 4))));
+                    setShowCoinBurst(true);
+                }
 
                 // Update session ID if provided in response
                 if (data.sessionId && data.sessionId !== sessionId) {
@@ -4552,15 +4637,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             let errorMessage = 'Sorry, I\'m having trouble connecting right now. Please try again later.';
 
             if (error.name === 'AbortError') {
-                // Request was cancelled - backend won't count it
                 setIsLoading(false);
-                // Refresh rate limit to get accurate count
                 fetchRateLimitStatus();
                 return;
             }
-
-            // For technical errors, backend won't count them either
-            // Just set appropriate error messages
 
             if (error.message.includes('timeout')) {
                 errorMessage = 'Request timed out. The response is taking longer than expected. Please try again.';
@@ -4572,16 +4652,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 errorMessage = 'Network error. Please check your connection and try again.';
             }
 
-            // Refresh rate limit to get accurate count after error
             fetchRateLimitStatus();
 
-            setMessages(prev => [...prev, {
+            // Create error variant
+            const errorVersion = {
+                content: errorMessage,
+                role: 'assistant',
+                isError: true,
+                timestamp: new Date().toISOString(),
+                tail: []
+            };
+
+            const errorAssistantMessage = {
                 role: 'assistant',
                 content: errorMessage,
-                timestamp: new Date().toISOString(),
                 isError: true,
-                originalUserMessage: originalMessage
-            }]);
+                timestamp: errorVersion.timestamp,
+                variants: [...variants, errorVersion],
+                activeVersionIndex: newVersionIndex
+            };
+
+            const finalMessages = [...nextMessages, errorAssistantMessage];
+            setMessages(finalMessages);
+            await syncChatTreeToBackend(finalMessages);
         } finally {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
@@ -5082,7 +5175,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 documentName: originalMessage.documentName
             });
 
-            toast.info('New conversation branch created');
+
 
             // Log for debugging
             console.log('Successfully branched message at index', messageIndex, 'New version count:', variants.length + 1);
