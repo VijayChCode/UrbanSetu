@@ -496,171 +496,53 @@ export const chatWithGemini = async (req, res) => {
             }
 
             const PROJECT_KNOWLEDGE = `
-            PLATFORM: UrbanSetu
-            TYPE: Advanced AI-First Real Estate Management Platform (MERN Stack)
-            ACCESS POINTS (Dual Frontend):
-            1. Primary (Vercel): https://urbansetu.vercel.app
-            2. Global Mirror (Render): https://urbansetuglobal.onrender.com
-            *Both URLs provide full access to the platform.*
-            
+            PLATFORM: UrbanSetu (Advanced AI-First Real Estate Management Platform - MERN Stack)
+            URLS: https://urbansetu.vercel.app (Primary), https://urbansetuglobal.onrender.com (Mirror)
+
             ${aboutContext}
 
-            LEADERSHIP PROFILE:
-            - **Bhavith Tungena** (CEO & Founder)
-              - **Role:** Visionary Leader, FullStack Developer, AI/ML (Sentinel) Architect.
-              - **Education:** Kakatiya Institute of Technology & Science, Warangal (2022-2026).
-              - **Background:** Aspiring Software Engineer with expert proficiency in TensorFlow.js, Neural Networks, and Generative AI.
-              - **Key Traits:** Designer of the Sentinel v2.0 Neural Engine.
-              - **Location:** Warangal, Telangana, India.
-              - **LinkedIn:** [Bhavith Tungena](https://www.linkedin.com/in/bhavith-tungena-b6689727a/)
+            LEADERSHIP: Bhavith Tungena (CEO & Founder, FullStack Developer, AI Architect. KITSW alumni).
+            MISSION: Bridge gap between people & property with trust & transparency.
+            CORE VALUES: Transparency (no hidden fees), Sustainability (ESG), Innovation, Community.
             
-            MISSION & VISION:
-            To bridge the gap between people and property through technology, trust, and transparency. We envision a world where finding a home is as easy, safe, and reliable as sending a message.
-            
-            CORE VALUES:
-            - Transparency: No hidden fees, clear digital contracts, honest listings.
-            - Sustainability: ESG scoring (Environmental, Social, Governance) for all properties.
-            - Innovation: AI-driven insights, price prediction, and automation.
-            - Community: Building neighborhoods and connections, not just housing transactions.
+            KEY FEATURES:
+            - marketplace: Buy/Sell/Rent listings with room details, photos, and "Verified" status.
+            - SetuAI: Part of Sentinel v2.0 ecosystem. Provides search, mortgage/rent calculations, recommendations.
+            - Sentinel AI:
+               * Sentinel Live: Client-side TensorFlow.js property similarity recommendations.
+               * Models: Ensemble, Neural Networks (95-98% accuracy) for user profiling.
+               * Sentinel Image Auditor: MobileNet (TensorFlow.js) room type detection & image quality audit.
+               * ESG Scoring: AAA to D environmental/social/governance metrics.
+            - Rent-Lock: Secure fixed rent for 1/3/5 years. Requires digital contract signed by tenant & landlord.
+            - Sale-Lock: Buyer priority lock under_contract status via token payment.
+            - Multi-platform: Available as Web, Android (APK), iOS (IPA), Windows (EXE), macOS (DMG), Linux.
+            - Updates: Release logs at /updates.
+            - Security: OTP verification, fraud detection, PCI-DSS payments, digital signatures.
+            - Roles: Guest, User (Buyer/Seller/Tenant/Landlord), Admin, Root Admin.
 
-            KEY PILLARS & FEATURES:
-            1. MARKETPLACE & LISTINGS:
-               - Buy/Sell/Rent with rich media (Images, Videos).
-               - Structured Data: Property type (Sale/Rent), area (sq ft), floor, age, bedrooms/bathrooms.
-               - Verification: "Verified" badge for trusted listings to build confidence.
-            
-            2. SETU_AI (The Assistant):
-               - Framework: Part of the **Sentinel v2.0 AI Ecosystem**.
-               - Capabilities: Real-time search, legal summaries, mortgage/rent calculations, smart recommendations, market trend analysis.
-               - Technical Core: Integrates LLMs (Groq) with client-side **TensorFlow.js** for real-time edge intelligence.
-               - Persona: Professional, helpful, knowledgeable about real estate laws and the Sentinel Neural Engine architecture.
-
-            3. SENTINEL AI ECOSYSTEM (Proprietary AI):
-               - **Sentinel v2.0 Neural Engine:** The central brain of UrbanSetu, managing all intelligent operations.
-               - **Sentinel Live (Tensor-Mode):** A client-side recommendation engine powered by **TensorFlow.js**. It calculates property similarity (Cosine Similarity) in real-time within the browser for absolute privacy and zero latency.
-               - **Advanced AI Models:** Utilizes an Ensemble system (Super-AI), Matrix Factorization, Random Forest, and Deep Neural Networks (95-98% accuracy) for deep user profiling.
-               - **Sentinel Image Auditor:** Uses **MobileNet (TensorFlow.js)** to automatically detect room types, audit image quality, and brightness/contrast during property uploads.
-               - **ESG Neural Scoring:** AI-driven assessment of Environmental, Social, and Governance metrics (AAA to D rating).
-            
-            3. RENT-LOCK (Signature Feature):
-               - Concept: Secures a fixed rent amount for a chosen duration (1, 3, or 5 years or custom).
-               - Mechanism: Requires a digital contract signed by both tenant and landlord via UrbanSetu.
-               - Benefits: Protects tenants from rent hikes and landlords from sudden vacancies.
-               - Requirements: Security deposit (usually 2-3 months), identity verification, and a valid rental booking through the platform.
-
-            4. SALE-LOCK (Signature Feature):
-               - Concept: A buyer "locks" a property for sale by paying a token amount.
-               - Status Change: Property status becomes "UNDER CONTRACT" (under_contract).
-               - Benefits: Builds trust by preventing "gazumping" (where a seller accepts a higher offer from someone else after already agreeing to a sale). It gives the buyer priority while completing legal and financial work.
-
-            5. ESG METRICS (Sustainability):
-               - Environmental: Energy rating, carbon footprint, solar panels, rainwater harvesting.
-               - Social: Accessibility, community impact, diversity, affordable housing.
-               - Governance: Transparency, ethical standards, compliance.
-               - Scoring: Properties are rated AAA to D. Higher scores represent more sustainable and ethical housing.
-
-            6. MULTI-PLATFORM AVAILABILITY:
-               - UrbanSetu is accessible everywhere via our native ecosystem.
-               - LATEST ACTIVE VERSIONS:
-               ${deploymentContext}
-               - Platforms & Formats:
-                  - Android: APK available for direct download.
-                  - iOS: IPA available for iPhone/iPad users.
-                  - Windows: Native EXE/MSI installers (Windows 10/11).
-                  - macOS: DMG/PKG for Intel and Apple Silicon Macs (macOS 10.15+).
-                  - Linux: Support for Debian and RPM-based distributions.
-               - DOWNLOAD PAGE: [UrbanSetu Downloads](https://urbansetu.vercel.app/download)
-               - Goal: Provide a seamless, secure, and high-performance real estate experience across all devices.
-
-            7. WEB UPDATES & CHANGELOG:
-               - We maintain a dedicated "What's New" page for the platform (https://urbansetu.vercel.app/updates).
-               - Categories of Updates:
-                  - New Features (🚀): Major platform additions.
-                  - Improvements (⚡): Speed and usability enhancements.
-                  - Bug Fixes (🐞): Stability and performance repairs.
-                  - Announcements (📢): Important platform news.
-               - Content Verification: The updates page includes release dates, version numbers (matching native builds), and video/image previews of new features.
-
-            8. IMAGE ANALYSIS & AUDITING (Sentinel Vision):
-               - Framework: **Sentinel Image Auditor** (powered by TensorFlow.js).
-               - Capabilities:
-                  - Automated room type detection (Living Room, Kitchen, Bedroom, etc.).
-                  - Image quality assessment (Brightness, Contrast, Sharpness).
-                  - Fraud detection (Detecting stock photos or watermarked images).
-               - Purpose: Ensures high-quality, authentic listings for all users.
-               - Technical Detail: Runs locally on the user's browser for privacy and speed during property uploads.
-
-            9. TRUST & SECURITY:
-               - Identity Verification: Validated mobile numbers (OTP) for all accounts.
-               - Fraud Detection: AI monitoring for suspicious listings and price anomalies.
-               - Payment Security: PCI-DSS compliant gateways, escrow services for deposits/bookings.
-               - Data Privacy: GDPR/RERA compliant, data encryption, no selling of user data.
-               - Digital Signatures: Tamper-proof contracts for all Rent-Lock and Sale-Lock agreements.
-            
-            USER ROLES:
-            - Guest: Browse listings, read blogs, view public pages (About, Contact).
-            - User: Registered (Buyer/Seller/Tenant/Landlord). Can Create Listings, access Rent Wallet, Book Appointments, Wishlist/Watchlist properties.
-            - Admin: Content moderation, dispute resolution, user support, feature management.
-            - Root Admin: System oversight, admin management.
-            
             ${LEGAL_POLICIES}
-            
-            CONTACT & SUPPORT:
-            - Email: urbansetu.noreply@gmail.com, auth.urbansetu@gmail.com, info.urbansetu@gmail.com
-            - Phone: +1 (555) 123-4567
+
+            CONTACT: Email: info.urbansetu@gmail.com, Phone: +1 (555) 123-4567
             `;
 
             const ROUTE_MAP = `
             SUGGESTED LINKS (Always use absolute URLs):
-            - Home (Primary): https://urbansetu.vercel.app/
-            - Home (Global Mirror): https://urbansetuglobal.onrender.com/
-            - Login: https://urbansetu.vercel.app/sign-in
-            - Sign Up: https://urbansetu.vercel.app/sign-up
+            - Home: https://urbansetu.vercel.app/
+            - Login/Sign Up: https://urbansetu.vercel.app/sign-in | /sign-up
             - Search: https://urbansetu.vercel.app/search
-            - About Us: https://urbansetu.vercel.app/about
-            - Contact Support: https://urbansetu.vercel.app/contact
-            - Terms & Conditions: https://urbansetu.vercel.app/terms
-            - Privacy Policy: https://urbansetu.vercel.app/privacy
-            - Cookie Policy: https://urbansetu.vercel.app/cookie-policy
-            - Blogs: https://urbansetu.vercel.app/blogs
-            - Guides: https://urbansetu.vercel.app/guides
-            - Agents: https://urbansetu.vercel.app/agents
-            - Agent Profile: https://urbansetu.vercel.app/agent/AGENT_ID (Replace AGENT_ID with actual ID)
-            - Help Center: https://urbansetu.vercel.app/help-center
-            - Help Center Article: https://urbansetu.vercel.app/help-center/article/ARTICLE_ID (Replace ARTICLE_ID with actual ID)
-            - Community: https://urbansetu.vercel.app/community
-            - Download App: https://urbansetu.vercel.app/download
-            - Web Updates: https://urbansetu.vercel.app/updates
-            - Blog Detail: https://urbansetu.vercel.app/blog/BLOG_TITLE (Replace BLOG_TITLE with actual slug/title)
-            - Forgot Password: https://urbansetu.vercel.app/forgot-password?email= (Append email if known)
-            - Community Guidelines: https://urbansetu.vercel.app/community-guidelines
-            - FAQs: https://urbansetu.vercel.app/faqs
-            - Market Trends: https://urbansetu.vercel.app/market-trends
-            - Property Details: https://urbansetu.vercel.app/listing/PROPERTY_ID (Replace PROPERTY_ID with actual ID)
-            - Create New Listing: https://urbansetu.vercel.app/user/create-listing
-            - My Listings: https://urbansetu.vercel.app/user/my-listings
-            - My Appointments: https://urbansetu.vercel.app/user/my-appointments
-            - Profile: https://urbansetu.vercel.app/user/profile
-            - Wishlist: https://urbansetu.vercel.app/user/wishlist
-            - Watchlist: https://urbansetu.vercel.app/user/watchlist
-            - Rent Wallet: https://urbansetu.vercel.app/user/rent-wallet
-            - Rental Contracts: https://urbansetu.vercel.app/user/rental-contracts
-            - Pay Rent: https://urbansetu.vercel.app/user/pay-monthly-rent
-            - Settings: https://urbansetu.vercel.app/user/settings
-            - AI Assistant: https://urbansetu.vercel.app/user/ai
-            - Services: https://urbansetu.vercel.app/user/services
-            - Route-planner: https://urbansetu.vercel.app/user/route-planner
-            - Investment Tools: https://urbansetu.vercel.app/user/investment-tools
-            - Device Management: https://urbansetu.vercel.app/user/device-management
-            - Rewards: https://urbansetu.vercel.app/user/rewards
-            - Community Leaderboard: https://urbansetu.vercel.app/user/leaderboard
-            - Property Reviews: https://urbansetu.vercel.app/user/reviews
-            - Rental Ratings: https://urbansetu.vercel.app/user/rental-ratings
-            - Property Verification: https://urbansetu.vercel.app/user/property-verification
-            - Dispute Resolution: https://urbansetu.vercel.app/user/disputes
-            - Rental Loans: https://urbansetu.vercel.app/user/rental-loans
-            - Call History: https://urbansetu.vercel.app/user/call-history
-            - Deleted Listings: https://urbansetu.vercel.app/user/deleted-listings
+            - About/Contact: https://urbansetu.vercel.app/about | /contact
+            - Legal (T&C/Privacy): /terms | /privacy | /cookie-policy
+            - Blogs/Guides/FAQs: https://urbansetu.vercel.app/blogs | /guides | /faqs
+            - Help Center: /help-center
+            - Help Center Article: /help-center/article/ARTICLE_ID
+            - Downloads/Updates: /download | /updates
+            - User Profile: /user/profile
+            - My Listings: /user/my-listings
+            - Appointments: /user/my-appointments
+            - Rent Wallet / Pay Rent: /user/rent-wallet | /user/pay-monthly-rent
+            - Contracts/Disputes/Loans: /user/rental-contracts | /user/disputes | /user/rental-loans
+            - Other User Pages: /user/settings | /user/ai | /user/route-planner | /user/rewards
+            - Property Details: /listing/PROPERTY_ID (Replace PROPERTY_ID with actual ID)
             `;
 
             const basePrompt = `You are "SetuAI", the advanced AI assistant for UrbanSetu.
@@ -770,12 +652,21 @@ export const chatWithGemini = async (req, res) => {
         console.log('Calling Groq API, tone:', tone, 'responseLength:', responseLength, 'creativity:', creativity);
 
         // Helper functions for AI settings
-        const getMaxTokens = (responseLength) => {
+        const getMaxTokens = (responseLength, messagesArray) => {
+            const messagesStr = JSON.stringify(messagesArray || []);
+            const estimatedPromptTokens = Math.ceil(messagesStr.length / 3.8);
+            
+            let requestedTokens = 512;
             switch (responseLength) {
-                case 'short': return 1024;
-                case 'long': return 8192;
-                default: return 4096; // medium
+                case 'short': requestedTokens = 256; break;
+                case 'long': requestedTokens = 1024; break;
+                default: requestedTokens = 512; break;
             }
+
+            // Cap requested tokens so that Prompt + Completion is strictly below the 12,000 TPM limit
+            // Leave a safety buffer of 500 tokens
+            const maxAllowedCompletion = Math.max(100, 11500 - estimatedPromptTokens);
+            return Math.min(requestedTokens, maxAllowedCompletion);
         };
 
         const getTemperature = (creativity, tone, customTemp) => {
@@ -866,7 +757,7 @@ export const chatWithGemini = async (req, res) => {
             messages: messages,
             model: GROQ_MODEL, // Llama 3 for tool use (Groq model ID)
             temperature: getTemperature(creativity, tone, temperature),
-            max_completion_tokens: getMaxTokens(responseLength),
+            max_completion_tokens: getMaxTokens(responseLength, messages),
             top_p: getTopP(topP),
             stream: false, // Default to false for tool handling logic simplicity first
             tools: toolDefinitions,
@@ -891,7 +782,7 @@ export const chatWithGemini = async (req, res) => {
                     messages: messages,
                     model: GROQ_MODEL,
                     temperature: getTemperature(creativity, tone, temperature),
-                    max_completion_tokens: getMaxTokens(responseLength),
+                    max_completion_tokens: getMaxTokens(responseLength, messages),
                     top_p: getTopP(topP),
                     stream: false
                     // No tools - let the AI respond directly
