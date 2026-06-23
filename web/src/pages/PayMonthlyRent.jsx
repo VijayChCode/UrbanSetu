@@ -133,7 +133,12 @@ export default function PayMonthlyRent() {
       }
 
       setContract(contractObj);
-      setCustomClauses(contractObj.customClauses || []);
+      // Filter out any invalid/garbage clauses that were previously saved
+      const validClauses = (contractObj.customClauses || []).filter(c => {
+        const lower = (c || '').toLowerCase();
+        return c && c.trim() && !lower.includes('no input to convert') && !lower.includes('could not generate') && !lower.includes('there is no input');
+      });
+      setCustomClauses(validClauses);
 
       // Fetch wallet - try to fetch regardless of walletId field
       // The API endpoint uses contractId to find the wallet
@@ -290,6 +295,23 @@ export default function PayMonthlyRent() {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || 'Failed to draft clause');
+      }
+
+      // Reject invalid/garbage AI responses
+      const invalidPatterns = [
+        'no input to convert',
+        'could not generate',
+        'there is no input',
+        'please provide',
+        'i cannot',
+        'i\'m unable'
+      ];
+      const draftLower = (data.draftedClause || '').toLowerCase();
+      const isInvalid = invalidPatterns.some(p => draftLower.includes(p));
+
+      if (isInvalid || !data.draftedClause?.trim()) {
+        toast.error('AI could not generate a valid clause. Please provide a clearer description.');
+        return;
       }
 
       setDraftedClauseText(data.draftedClause);
@@ -819,10 +841,16 @@ export default function PayMonthlyRent() {
               )}
 
               {/* Saved Custom Clauses */}
-              {customClauses.length > 0 && (
+              {customClauses.filter(c => {
+                const lower = (c || '').toLowerCase();
+                return c && c.trim() && !lower.includes('no input to convert') && !lower.includes('could not generate') && !lower.includes('there is no input');
+              }).length > 0 && (
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300">Custom Clauses on Contract:</h4>
-                  {customClauses.map((clause, index) => (
+                  {customClauses.filter(c => {
+                    const lower = (c || '').toLowerCase();
+                    return c && c.trim() && !lower.includes('no input to convert') && !lower.includes('could not generate') && !lower.includes('there is no input');
+                  }).map((clause, index) => (
                     <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-800 flex items-start gap-3 shadow-sm">
                       <span className="text-purple-500 mt-0.5 text-xs font-bold min-w-[20px]">{index + 1}.</span>
                       <p className="text-sm text-gray-800 dark:text-gray-300 italic flex-1">"{clause}"</p>

@@ -186,6 +186,23 @@ export default function RentProperty() {
         throw new Error(data.message || 'Failed to draft clause');
       }
 
+      // Reject invalid/garbage AI responses
+      const invalidPatterns = [
+        'no input to convert',
+        'could not generate',
+        'there is no input',
+        'please provide',
+        'i cannot',
+        'i\'m unable'
+      ];
+      const draftLower = (data.draftedClause || '').toLowerCase();
+      const isInvalid = invalidPatterns.some(p => draftLower.includes(p));
+
+      if (isInvalid || !data.draftedClause?.trim()) {
+        toast.error('AI could not generate a valid clause. Please provide a clearer description.');
+        return;
+      }
+
       setCustomClauses(prev => [...prev, data.draftedClause]);
       setNewClauseInput('');
       toast.success('Legal clause drafted and added!');
