@@ -207,10 +207,10 @@ export default function GlobalReminderListener() {
         </button>
 
         <div className="flex flex-col items-center text-center">
-          {/* Animated Alarm Emoji */}
-          <div className="w-20 h-20 rounded-full bg-indigo-500/10 flex items-center justify-center mb-6 border border-indigo-500/30 shadow-inner relative">
+          {/* Animated Alarm GIF */}
+          <div className="w-20 h-20 rounded-full bg-indigo-500/10 flex items-center justify-center mb-6 border border-indigo-500/30 shadow-inner relative overflow-hidden">
             <span className="absolute inset-0 rounded-full bg-indigo-500/10 animate-ping opacity-75"></span>
-            <span className="text-4xl animate-bounce">⏰</span>
+            <img src="/assets/images/placidplace-alarm-19387.gif" alt="Ringing" className="w-14 h-14 object-contain z-10" />
           </div>
 
           <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 mb-3">
@@ -338,13 +338,13 @@ const MinimizedAlarmBubble = ({ taskText, onOpen, onDismiss }) => {
           onMouseDown={handlePointerDown}
           onTouchStart={handlePointerDown}
           onClick={handleClick}
-          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 border-2 border-red-500/40"
+          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 border-2 border-red-500/40 overflow-hidden"
           style={{
             animation: 'alarm-bubble-slide-in 0.3s ease-out, alarm-bubble-pulse 2s ease-in-out infinite',
           }}
           title={`Ringing: ${taskText} (click to open)`}
         >
-          <span className="text-2xl animate-bounce">⏰</span>
+          <img src="/assets/images/placidplace-alarm-19387.gif" alt="Ringing" className="w-10 h-10 object-contain z-10" />
         </div>
 
         {/* Small dismiss button */}
