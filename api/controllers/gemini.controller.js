@@ -738,7 +738,7 @@ export const chatWithGemini = async (req, res) => {
             content: msg.content?.substring(0, 1000) // Limit history message length
         }));
 
-        const systemPrompt = await getSystemPrompt(tone, sanitizedMessage, req.user, clientTime);
+        const systemPrompt = await getSystemPrompt(tone, userTypedMessage, req.user, clientTime);
 
         console.log('Calling Groq API, tone:', tone, 'responseLength:', responseLength, 'creativity:', creativity);
 
