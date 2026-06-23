@@ -55,6 +55,56 @@ const generateReceiptNumber = () => {
   return 'RCP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 };
 
+// Process SetuCoins redemption upon payment completion
+const processCoinRedemption = async (payment) => {
+  try {
+    const getMeta = (key) => payment.metadata instanceof Map ? payment.metadata.get(key) : (payment.metadata ? payment.metadata[key] : undefined);
+    
+    let coinsToRedeem = 0;
+    if (payment.paymentType === 'emi') {
+      coinsToRedeem = Number(payment.emiDetails?.coinsRedeemed || getMeta('coinsRedeemed') || 0);
+    } else {
+      coinsToRedeem = Number(getMeta('coinsRedeemed') || 0);
+    }
+
+    if (coinsToRedeem <= 0) return;
+
+    // Dynamically import CoinService to avoid circular dependencies
+    const CoinService = (await import('../services/coinService.js')).default;
+    const balanceData = await CoinService.getBalance(payment.userId);
+    const amountToDebit = Math.min(coinsToRedeem, balanceData.setuCoinsBalance);
+
+    if (amountToDebit > 0) {
+      const source = payment.paymentType === 'emi' ? 'loan_emi_discount' : 'redemption_rent_fee';
+      let description = '';
+      if (payment.paymentType === 'emi') {
+        const emiMonth = payment.emiDetails?.month || payment.rentMonth || getMeta('month');
+        const emiYear = payment.emiDetails?.year || payment.rentYear || getMeta('year');
+        description = `Discount applied to Loan EMI (${emiMonth}/${emiYear})`;
+      } else {
+        const rentMonth = payment.rentMonth || getMeta('month');
+        const rentYear = payment.rentYear || getMeta('year');
+        description = `Redeemed for rent payment (${rentMonth}/${rentYear})`;
+      }
+
+      await CoinService.debit({
+        userId: payment.userId,
+        amount: amountToDebit,
+        source: source,
+        description: description,
+        referenceModel: 'Payment',
+        referenceId: payment._id
+      });
+      console.log(`🪙 Successfully debited ${amountToDebit} SetuCoins for payment ${payment._id}`);
+    } else {
+      console.warn(`⚠️ Payment ${payment._id} requested redeeming ${coinsToRedeem} coins, but user balance was 0.`);
+    }
+  } catch (error) {
+    console.error('Error processing SetuCoins redemption on payment completion:', error);
+  }
+};
+
+
 // Razorpay helpers
 const getRazorpayAuthHeader = () => {
   const keyId = process.env.RAZORPAY_KEY_ID;
@@ -405,6 +455,10 @@ router.post("/verify", verifyToken, async (req, res) => {
     payment.completedAt = new Date();
     payment.clientIp = clientIp || req.ip;
     payment.userAgent = userAgent || req.headers['user-agent'];
+
+    // Process SetuCoins redemption if applicable
+    await processCoinRedemption(payment);
+
 
     // 🛡️ Sentinel AI Wallet Monitoring
     try {
@@ -1039,6 +1093,10 @@ router.post('/razorpay/verify', verifyToken, async (req, res) => {
     payment.completedAt = new Date();
     payment.clientIp = clientIp || req.ip;
     payment.userAgent = userAgent || req.headers['user-agent'];
+
+    // Process SetuCoins redemption if applicable
+    await processCoinRedemption(payment);
+
     // DELAYED SAVE
     // await payment.save();
 
@@ -1877,15 +1935,8 @@ router.post("/monthly-rent", verifyToken, async (req, res) => {
           return res.status(400).json({ message: "Redemption amount cannot exceed payment total." });
         }
 
-        // Deduct coins immediately
-        await CoinService.debit({
-          userId,
-          amount: coinsToRedeem,
-          source: 'redemption_rent_fee',
-          description: `Redeemed for rent payment (${month}/${year})`,
-          referenceModel: 'Payment'
-          // Note: referenceId will be updated to Payment ID after creation if possible, or left null/generic
-        });
+        // Deduct coins deferred to payment verification
+        console.log(`🪙 Applied ${coinsToRedeem} SetuCoins for ₹${discountValue} rent discount (debit deferred to payment verification)`);
 
         coinDiscount = discountValue;
         redeemedCoins = coinsToRedeem;
@@ -2099,13 +2150,8 @@ router.post("/loan-emi", verifyToken, async (req, res) => {
         redeemedCoins = coinDiscount * 10;
 
         if (redeemedCoins > 0) {
-          await CoinService.debit({
-            userId,
-            amount: redeemedCoins,
-            source: 'loan_emi_discount',
-            description: `Discount applied to Loan EMI (${emiEntry.month}/${emiEntry.year})`
-          });
-          console.log(`🪙 Redeemed ${redeemedCoins} SetuCoins for ₹${coinDiscount} discount on EMI`);
+          // Debit is deferred to payment verification
+          console.log(`🪙 Capped at ${redeemedCoins} SetuCoins for ₹${coinDiscount} discount on EMI (debit deferred to payment verification)`);
         }
       } catch (coinError) {
         console.error("Error applying SetuCoins discount:", coinError);
@@ -2147,7 +2193,9 @@ router.post("/loan-emi", verifyToken, async (req, res) => {
         emiIndex: emiIndex,
         month: emiEntry.month,
         year: emiEntry.year,
-        originalAmount: baseAmountInr
+        originalAmount: baseAmountInr,
+        coinsRedeemed: redeemedCoins,
+        coinDiscount: coinDiscount
       }
     });
 
@@ -3245,6 +3293,9 @@ router.post('/admin/mark-paid', verifyToken, async (req, res) => {
     // Set metadata to indicate admin marked this payment
     if (!payment.metadata) payment.metadata = {};
     payment.metadata.adminMarked = true;
+
+    // Process SetuCoins redemption if applicable
+    await processCoinRedemption(payment);
 
     // Set receipt URL
     const base = `${req.protocol}://${req.get('host')}`;

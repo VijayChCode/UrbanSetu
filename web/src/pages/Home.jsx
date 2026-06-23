@@ -1521,8 +1521,7 @@ export default function Home() {
                         return (p.status === 'pending' || p.status === 'overdue') && dueDate < now;
                       }) || [];
 
-                      const maintenance = contract.maintenanceCharges || 0;
-                      const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+                      const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
 
                       // Find the oldest overdue payment to show days overdue
                       let maxDaysOverdue = 0;
@@ -1639,8 +1638,7 @@ export default function Home() {
                       const diffTime = dueDate.getTime() - now.getTime();
                       const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                      const maintenance = contract.maintenanceCharges || 0;
-                      const totalDue = upcomingPayment.amount + maintenance;
+                      const totalDue = upcomingPayment.amount;
 
                       return (
                         <div

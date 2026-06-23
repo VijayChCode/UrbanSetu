@@ -127,11 +127,11 @@ export default function AdminRentWallet() {
     const completedPayments = wallet.paymentSchedule?.filter(p => p.status === 'completed' || p.status === 'paid') || [];
     const pendingPayments = wallet.paymentSchedule?.filter(p => p.status === 'pending' || p.status === 'overdue') || [];
 
-    const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
-    const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount + maintenance, 0);
+    const totalOverdue = overduePayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
+    const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount, 0);
 
-    const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
-    const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0) + maintenance, 0);
+    const displayTotalPaid = completedPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
+    const displayTotalDue = pendingPayments.reduce((sum, p) => sum + p.amount + (p.penaltyAmount || 0), 0);
 
     return (
         <div className="bg-gradient-to-br from-gray-900 via-gray-900 to-indigo-950 min-h-screen py-10 px-4 md:px-8">
@@ -337,7 +337,7 @@ export default function AdminRentWallet() {
                                                                 </div>
                                                             </div>
                                                             <div className="text-right">
-                                                                <p className="text-white font-bold">₹{(payment.amount + maintenance).toLocaleString('en-IN')}</p>
+                                                                <p className="text-white font-bold">₹{(payment.amount + (payment.penaltyAmount || 0)).toLocaleString('en-IN')}</p>
                                                                 {payment.paidAt ? (
                                                                     <p className="text-[10px] text-green-500 font-bold uppercase italic">Paid {new Date(payment.paidAt).toLocaleDateString('en-GB')}</p>
                                                                 ) : (
