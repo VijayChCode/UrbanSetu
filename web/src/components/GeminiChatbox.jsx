@@ -453,7 +453,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         const words = [
             "Ask anything...",
-            "Schedule tasks",
+            "Schedule tasks...",
             "Add reminders...",
             "Find homes...",
             "Check rental...",
@@ -9332,7 +9332,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             e.preventDefault();
                                                             const words = [
                                                                 "Ask anything...",
-                                                                "Schedule tasks",
+                                                                "Schedule tasks...",
                                                                 "Add reminders...",
                                                                 "Find homes...",
                                                                 "Check rental...",
@@ -9374,7 +9374,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         if (diffX > 60 && Math.abs(diffY) < 40) {
                                                             const words = [
                                                                 "Ask anything...",
-                                                                "Schedule tasks",
+                                                                "Schedule tasks...",
                                                                 "Add reminders...",
                                                                 "Find homes...",
                                                                 "Check rental...",
