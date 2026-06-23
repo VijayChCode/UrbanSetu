@@ -175,16 +175,16 @@ export const chatWithGemini = async (req, res) => {
         }
 
         // Basic input sanitization
-        const safeMessage = message || '';
-        const sanitizedMessage = safeMessage.trim().substring(0, 2000); // Limit message length
-        if (sanitizedMessage !== safeMessage.trim()) {
+        const fullPrompt = (message || '').trim();
+        const userTypedMessage = (displayMessage !== undefined ? displayMessage : fullPrompt).trim();
+        if (userTypedMessage.length > 2000) {
             return res.status(400).json({
                 success: false,
                 message: 'Message too long. Please keep it under 2000 characters.'
             });
         }
 
-        const userDisplayContent = displayMessage !== undefined ? displayMessage : sanitizedMessage;
+        const userDisplayContent = userTypedMessage;
         const media = {
             images,
             imageUrl,
@@ -320,7 +320,7 @@ export const chatWithGemini = async (req, res) => {
         };
 
 
-        const isRestricted = await moderateContent(sanitizedMessage);
+        const isRestricted = await moderateContent(userTypedMessage);
 
         if (isRestricted) {
             console.warn(`[Moderation] Blocked restricted content from user ${userId || 'guest'}`);
@@ -798,7 +798,7 @@ export const chatWithGemini = async (req, res) => {
         // Add current user message
         // If image audits are already provided from the frontend, inject them into the message
         // so the AI doesn't redundantly try to call sentinel_image_auditor (which causes tool_use_failed errors)
-        let finalUserMessage = sanitizedMessage;
+        let finalUserMessage = fullPrompt;
         if (imageAudits && Object.keys(imageAudits).length > 0) {
             const auditSummaries = Object.entries(imageAudits).map(([url, audit]) => {
                 const fileName = url.split('/').pop() || 'uploaded image';
@@ -815,7 +815,7 @@ export const chatWithGemini = async (req, res) => {
         const allImageUrls = [...(images || []), ...(imageUrl ? [imageUrl] : [])].filter(Boolean);
         if (allImageUrls.length > 0) {
             try {
-                const visionDescription = await analyzeImageWithVision(allImageUrls, sanitizedMessage);
+                const visionDescription = await analyzeImageWithVision(allImageUrls, userTypedMessage);
                 if (visionDescription) {
                     finalUserMessage += `\n\n[VISION ANALYSIS - Detailed visual understanding of the uploaded image(s)]:\n${visionDescription}`;
                 }

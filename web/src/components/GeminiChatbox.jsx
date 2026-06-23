@@ -3595,9 +3595,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         // Filter to supported file types (same as handleFileUpload)
         const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-        const validAudioTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
-        const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv'];
-        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+        const validAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/x-aac', 'audio/ogg', 'audio/webm'];
+        const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv', 'video/quicktime', 'video/x-matroska'];
+        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.ms-powerpoint'];
         const allValidTypes = [...validImageTypes, ...validAudioTypes, ...validVideoTypes, ...validDocTypes];
         const maxSize = 10 * 1024 * 1024; // 10MB
 
@@ -3605,9 +3605,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const rejectedFiles = [];
 
         files.forEach(file => {
+            const ext = file.name ? file.name.split('.').pop().toLowerCase() : '';
+            const isImage = validImageTypes.includes(file.type) || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+            const isAudio = validAudioTypes.includes(file.type) || ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'webm'].includes(ext);
+            const isVideo = validVideoTypes.includes(file.type) || ['mp4', 'webm', 'ogg', 'mov', 'mkv'].includes(ext);
+            const isDoc = validDocTypes.includes(file.type) || ['pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx', 'pptx', 'ppt'].includes(ext);
+
             if (file.size > maxSize) {
                 rejectedFiles.push(`${file.name} (too large - max 10MB)`);
-            } else if (!allValidTypes.includes(file.type)) {
+            } else if (!(isImage || isAudio || isVideo || isDoc)) {
                 rejectedFiles.push(`${file.name} (unsupported format)`);
             } else {
                 validFiles.push(file);
@@ -5837,9 +5843,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         const maxSize = 10 * 1024 * 1024; // 10MB
         const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-        const validAudioTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
-        const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv'];
-        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+        const validAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/x-aac', 'audio/ogg', 'audio/webm'];
+        const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv', 'video/quicktime', 'video/x-matroska'];
+        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.ms-powerpoint'];
 
         const allValidTypes = [...validImageTypes, ...validAudioTypes, ...validVideoTypes, ...validDocTypes];
 
@@ -5847,9 +5853,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const rejectedFiles = [];
 
         files.forEach(file => {
+            const ext = file.name ? file.name.split('.').pop().toLowerCase() : '';
+            const isImage = validImageTypes.includes(file.type) || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+            const isAudio = validAudioTypes.includes(file.type) || ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'webm'].includes(ext);
+            const isVideo = validVideoTypes.includes(file.type) || ['mp4', 'webm', 'ogg', 'mov', 'mkv'].includes(ext);
+            const isDoc = validDocTypes.includes(file.type) || ['pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx', 'pptx', 'ppt'].includes(ext);
+
             if (file.size > maxSize) {
                 rejectedFiles.push(`${file.name} (too large - max 10MB)`);
-            } else if (!allValidTypes.includes(file.type)) {
+            } else if (!(isImage || isAudio || isVideo || isDoc)) {
                 rejectedFiles.push(`${file.name} (unsupported format)`);
             } else {
                 validFiles.push(file);
