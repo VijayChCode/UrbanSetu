@@ -9885,7 +9885,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-600'}`}
                                                     title="More options"
                                                     disabled={isListening || isProcessingVoice}
-                                                                                       {/* Options Menu */}
+                                                >
+                                                    <FaEllipsisV size={16} />
+                                                </button>
+
+                                                {/* Options Menu */}
                                                 {showInputOptions && (
                                                     <div className={`absolute bottom-10 left-0 w-48 hover:w-72 group/menu rounded-lg shadow-xl border overflow-hidden z-50 transform origin-bottom-left transition-all duration-300 ease-in-out ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                                                         <button
