@@ -308,8 +308,8 @@ const MinimizedAlarmBubble = ({ taskText, onOpen, onDismiss }) => {
     <>
       <style>{`
         @keyframes alarm-bubble-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-          50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+          0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+          50% { box-shadow: 0 0 12px 6px rgba(239, 68, 68, 0.2), 0 0 0 12px rgba(239, 68, 68, 0); }
         }
         @keyframes alarm-bubble-slide-in {
           from { transform: scale(0.3); opacity: 0; }
@@ -338,7 +338,7 @@ const MinimizedAlarmBubble = ({ taskText, onOpen, onDismiss }) => {
           onMouseDown={handlePointerDown}
           onTouchStart={handlePointerDown}
           onClick={handleClick}
-          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-2xl bg-gradient-to-br from-red-500 via-pink-600 to-purple-600 border border-white/20"
+          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer shadow-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 border-2 border-red-500/40"
           style={{
             animation: 'alarm-bubble-slide-in 0.3s ease-out, alarm-bubble-pulse 2s ease-in-out infinite',
           }}
