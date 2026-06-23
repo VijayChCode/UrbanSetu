@@ -555,7 +555,7 @@ export const getRelevantCachedData = (userMessage, selectedProperties = []) => {
     }
 
     // Add relevant properties from cache
-    const relevantProperties = searchCachedProperties(keywords.join(' '), 5);
+    const relevantProperties = searchCachedProperties(keywords.join(' '), 2);
     if (relevantProperties.length > 0) {
         contextData += 'RELEVANT PROPERTIES:\n';
         relevantProperties.forEach((prop, index) => {
@@ -567,7 +567,7 @@ export const getRelevantCachedData = (userMessage, selectedProperties = []) => {
             contextData += `   Location: ${prop.location}\n`;
             contextData += `   Price: ₹${prop.price.toLocaleString()} | Type: ${prop.type.toUpperCase()}\n`;
             contextData += `   Details: ${prop.bedrooms}BHK | ${prop.bathrooms} Bath | ${prop.area} sq ft\n`;
-            contextData += `   Description: ${prop.description?.slice(0, 160)}...\n`;
+            contextData += `   Description: ${prop.description?.slice(0, 80)}...\n`;
             contextData += '\n';
         });
     }
@@ -585,7 +585,7 @@ export const getRelevantCachedData = (userMessage, selectedProperties = []) => {
         contextData += 'ARTICLE SEARCH HINTS (Use "search_blogs_and_guides" tool to suggest these articles with visual cards):\n';
         relevantBlogs.forEach((blog, index) => {
             contextData += `${index + 1}. ${blog.title} [ID: ${blog.id}]\n`;
-            contextData += `   ${blog.excerpt?.slice(0, 100)}...\n`;
+            contextData += `   ${blog.excerpt?.slice(0, 80)}...\n`;
             contextData += '\n';
         });
     }
@@ -603,21 +603,22 @@ export const getRelevantCachedData = (userMessage, selectedProperties = []) => {
         contextData += 'FREQUENTLY ASKED QUESTIONS:\n';
         relevantFAQs.forEach((faq, index) => {
             contextData += `Q${index + 1}. ${faq.question}\n`;
-            contextData += `A${index + 1}. ${faq.answer?.slice(0, 200)}...\n\n`;
+            contextData += `A${index + 1}. ${faq.answer?.slice(0, 80)}...\n\n`;
         });
     }
 
     // Add relevant reviews from cache
-    const relevantReviews = searchCachedReviews(keywords.join(' '), 3);
+    const relevantReviews = searchCachedReviews(keywords.join(' '), 2);
     if (relevantReviews.length > 0) {
         contextData += 'CUSTOMER REVIEWS:\n';
         relevantReviews.forEach((review, index) => {
+            const link = review.listingId ? `${BASE_URL}/listing/${review.listingId}` : '#';
             contextData += `${index + 1}. ${review.listingName} (${review.listingLocation})\n`;
             contextData += `   Rating: ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)} (${review.rating}/5)\n`;
-            contextData += `   Review: "${review.comment.slice(0, 150)}..."\n`;
+            contextData += `   Review: "${review.comment.slice(0, 80)}..."\n`;
             contextData += `   By: ${review.userName}${review.isVerified ? ' (Verified)' : ''}\n`;
             if (review.ownerResponse) {
-                contextData += `   Owner Response: "${review.ownerResponse.slice(0, 100)}..."\n`;
+                contextData += `   Owner Response: "${review.ownerResponse.slice(0, 80)}..."\n`;
             }
             contextData += `   Helpful: ${review.helpfulCount} | ${new Date(review.createdAt).toLocaleDateString()}\n\n`;
         });

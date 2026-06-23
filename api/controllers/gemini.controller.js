@@ -734,10 +734,10 @@ export const chatWithGemini = async (req, res) => {
         };
 
         // Prepare conversation history with security filtering using contextWindow
-        const contextWindowSize = parseInt(contextWindow) || 10;
+        const contextWindowSize = Math.min(parseInt(contextWindow) || 6, 6);
         const filteredHistory = history.slice(-contextWindowSize).map(msg => ({
             role: msg.role === 'assistant' ? 'assistant' : 'user', // Groq uses 'assistant' not 'model'
-            content: msg.content?.substring(0, 1000) // Limit history message length
+            content: msg.content?.substring(0, 300) // Limit history message length to save tokens
         }));
 
         const systemPrompt = await getSystemPrompt(tone, userTypedMessage, req.user, clientTime);

@@ -3769,7 +3769,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     let ocrInfo = '';
                     if (ocrText) {
                         let truncatedOcr = ocrText.trim();
-                        const MAX_TEXT_LEN = 15000;
+                        const MAX_TEXT_LEN = 4000;
                         if (truncatedOcr.length > MAX_TEXT_LEN) {
                             truncatedOcr = truncatedOcr.substring(0, MAX_TEXT_LEN) + `\n... [Content truncated to first ${MAX_TEXT_LEN} characters due to context limit]`;
                         }
@@ -3787,7 +3787,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             fileType === 'video' ? 'Video Speech Transcript' : 
                                             'Extracted Document Content';
                         let truncatedExtracted = extractedText.trim();
-                        const MAX_TEXT_LEN = 15000;
+                        const MAX_TEXT_LEN = 4000;
                         if (truncatedExtracted.length > MAX_TEXT_LEN) {
                             truncatedExtracted = truncatedExtracted.substring(0, MAX_TEXT_LEN) + `\n... [Content truncated to first ${MAX_TEXT_LEN} characters due to context limit]`;
                         }
