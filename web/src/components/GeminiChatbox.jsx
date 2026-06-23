@@ -3474,12 +3474,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setTimeout(() => setSendIconAnimating(false), 800);
 
         let userMessage = activeMessage.trim();
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(userMessage);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|remove|drop|revoke|stop|reschedule|postpone|prepone|change|modify|shift|move/i.test(userMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
-            if (/reschedule|postpone|change/i.test(userMessage)) {
+            if (/reschedule|postpone|prepone|change|modify|shift|move/i.test(userMessage)) {
                 setCurrentSchedulerType('reschedule');
-            } else if (/cancel|delete|remove/i.test(userMessage)) {
+            } else if (/cancel|delete|remove|drop|revoke|stop/i.test(userMessage)) {
                 setCurrentSchedulerType('cancel');
             } else {
                 setCurrentSchedulerType('create');
@@ -4115,12 +4115,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsCurrentRequestWebSearch(true);
         }
 
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(originalMessage);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|remove|drop|revoke|stop|reschedule|postpone|prepone|change|modify|shift|move/i.test(originalMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
-            if (/reschedule|postpone|change/i.test(originalMessage)) {
+            if (/reschedule|postpone|prepone|change|modify|shift|move/i.test(originalMessage)) {
                 setCurrentSchedulerType('reschedule');
-            } else if (/cancel|delete|remove/i.test(originalMessage)) {
+            } else if (/cancel|delete|remove|drop|revoke|stop/i.test(originalMessage)) {
                 setCurrentSchedulerType('cancel');
             } else {
                 setCurrentSchedulerType('create');
@@ -4770,12 +4770,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         setIsLoading(true);
 
-        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(messageContent);
+        const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|remove|drop|revoke|stop|reschedule|postpone|prepone|change|modify|shift|move/i.test(messageContent);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
-            if (/reschedule|postpone|change/i.test(messageContent)) {
+            if (/reschedule|postpone|prepone|change|modify|shift|move/i.test(messageContent)) {
                 setCurrentSchedulerType('reschedule');
-            } else if (/cancel|delete|remove/i.test(messageContent)) {
+            } else if (/cancel|delete|remove|drop|revoke|stop/i.test(messageContent)) {
                 setCurrentSchedulerType('cancel');
             } else {
                 setCurrentSchedulerType('create');
