@@ -8643,62 +8643,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     src={message.audioUrl}
                                                                     className="w-full"
                                                                     controls
+                                                                    controlsList="nodownload"
                                                                     preload="metadata"
                                                                     onClick={(e) => e.stopPropagation()}
                                                                 />
                                                             </div>
-                                                            <button
-                                                                className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-700 p-1 rounded-full shadow-md transition-colors hidden sm:block"
-                                                                onClick={async (e) => {
-                                                                    e.stopPropagation();
-                                                                    try {
-                                                                        const response = await authenticatedFetch(message.audioUrl, { mode: 'cors' });
-                                                                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                                                                        const contentType = response.headers.get('content-type') || 'audio/mpeg';
-                                                                        const blob = await response.blob();
-                                                                        const blobUrl = window.URL.createObjectURL(blob);
-
-                                                                        const getFileExtension = (contentType) => {
-                                                                            const mimeToExt = {
-                                                                                'audio/mpeg': 'mp3',
-                                                                                'audio/wav': 'wav',
-                                                                                'audio/webm': 'webm',
-                                                                                'audio/ogg': 'ogg',
-                                                                                'audio/mp4': 'm4a',
-                                                                                'audio/aac': 'aac'
-                                                                            };
-                                                                            return mimeToExt[contentType] || 'mp3';
-                                                                        };
-
-                                                                        const extension = getFileExtension(contentType);
-                                                                        const fileName = `audio-${Date.now()}.${extension}`;
-
-                                                                        const a = document.createElement('a');
-                                                                        a.href = blobUrl;
-                                                                        a.download = fileName;
-                                                                        document.body.appendChild(a);
-                                                                        a.click();
-                                                                        document.body.removeChild(a);
-                                                                        window.URL.revokeObjectURL(blobUrl);
-
-                                                                        console.log('Downloaded audio:', fileName, 'Type:', contentType);
-                                                                    } catch (error) {
-                                                                        console.error('Audio download failed:', error);
-                                                                        // Fallback to direct link
-                                                                        const a = document.createElement('a');
-                                                                        a.href = message.audioUrl;
-                                                                        a.download = `audio-${Date.now()}.mp3`;
-                                                                        a.target = '_blank';
-                                                                        document.body.appendChild(a);
-                                                                        a.click();
-                                                                        document.body.removeChild(a);
-                                                                    }
-                                                                }}
-                                                                title="Download Audio"
-                                                            >
-                                                                <FaDownload className="text-xs" />
-                                                            </button>
                                                         </div>
                                                     </div>
                                                 )}
