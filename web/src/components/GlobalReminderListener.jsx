@@ -23,6 +23,12 @@ export default function GlobalReminderListener() {
     const handleReminderTriggered = (data) => {
       console.log('Reminder triggered globally:', data);
       
+      // If this reminder is already active (ringing or minimized), ignore duplicate trigger
+      if (activeReminderRef.current && activeReminderRef.current.reminderId === data.reminderId) {
+        console.log('Reminder already active, ignoring duplicate trigger.');
+        return;
+      }
+
       // Stop existing audio and clear timeout if any
       if (audioRef.current) {
         audioRef.current.pause();
@@ -338,7 +344,7 @@ const MinimizedAlarmBubble = ({ taskText, onOpen, onDismiss }) => {
           }}
           title={`Ringing: ${taskText} (click to open)`}
         >
-          <FaClock className="text-white text-xl animate-bounce" />
+          <span className="text-2xl animate-bounce">⏰</span>
         </div>
 
         {/* Small dismiss button */}
