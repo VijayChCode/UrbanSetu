@@ -7106,6 +7106,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => `<a href="${url.trim()}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`) // Links
             .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>') // Bold
             .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>') // Italic
+            .replace(/^###### (.*$)/gim, '<h6 class="text-[10px] font-bold mt-2 mb-1 text-gray-400 dark:text-gray-500 uppercase tracking-wider">$1</h6>') // H6
+            .replace(/^##### (.*$)/gim, '<h5 class="text-xs font-bold mt-2 mb-1 text-gray-300 dark:text-gray-400">$1</h5>') // H5
+            .replace(/^#### (.*$)/gim, '<h4 class="text-sm font-semibold mt-3 mb-1 text-gray-200 dark:text-gray-300">$1</h4>') // H4
             .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>') // H3
             .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>') // H2
             .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>') // H1
