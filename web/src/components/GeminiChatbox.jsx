@@ -5209,6 +5209,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     videoUrl: originalMessage.videoUrl,
                     documentUrl: originalMessage.documentUrl,
                     documentName: originalMessage.documentName,
+                    ocrText: originalMessage.ocrText,
+                    visionAnalysis: originalMessage.visionAnalysis,
                     tail: currentTail
                 };
             } else {
@@ -5222,6 +5224,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         videoUrl: originalMessage.videoUrl,
                         documentUrl: originalMessage.documentUrl,
                         documentName: originalMessage.documentName,
+                        ocrText: originalMessage.ocrText,
+                        visionAnalysis: originalMessage.visionAnalysis,
                         tail: currentTail,
                         timestamp: originalMessage.timestamp,
                         role: originalMessage.role
@@ -5233,6 +5237,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const newVersionIndex = variants.length;
             const newVersion = {
                 content: editingMessageContent.trim(),
+                images: originalMessage.images,
+                imageUrl: originalMessage.imageUrl,
+                audioUrl: originalMessage.audioUrl,
+                videoUrl: originalMessage.videoUrl,
+                documentUrl: originalMessage.documentUrl,
+                documentName: originalMessage.documentName,
+                ocrText: originalMessage.ocrText,
+                visionAnalysis: originalMessage.visionAnalysis,
                 tail: [], // New branch starts empty
                 timestamp: new Date().toISOString(),
                 role: 'user'

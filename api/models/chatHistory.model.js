@@ -62,6 +62,8 @@ const chatHistorySchema = new mongoose.Schema({
       documentUrl: String,
       documentName: String,
       imageAudits: Object,
+      ocrText: String,
+      visionAnalysis: String,
       tokenUsage: {
         promptTokens: Number,
         completionTokens: Number,

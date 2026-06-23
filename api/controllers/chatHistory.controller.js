@@ -341,8 +341,50 @@ export const updateChatSession = async (req, res) => {
                         }
                     }
 
-                    chatHistory.messages = mergedMessages;
-                    chatHistory.totalMessages = mergedMessages.length;
+                    // Merge media/analysis fields that exist in the database but might be missing/undefined in frontend payload
+                    const incomingMessagesWithMergedDbFields = mergedMessages.map(incomingMsg => {
+                        const existingMsg = chatHistory.messages.find(m => 
+                            m.role === incomingMsg.role && 
+                            m.content === incomingMsg.content &&
+                            (!incomingMsg.timestamp || new Date(m.timestamp).toISOString() === new Date(incomingMsg.timestamp).toISOString())
+                        );
+
+                        if (existingMsg) {
+                            let mergedVariants = incomingMsg.variants;
+                            if (Array.isArray(incomingMsg.variants) && Array.isArray(existingMsg.variants)) {
+                                mergedVariants = incomingMsg.variants.map((v, vIdx) => {
+                                    const existingVariant = existingMsg.variants[vIdx];
+                                    if (existingVariant && existingVariant.role === v.role && existingVariant.content === v.content) {
+                                        return {
+                                            ...v,
+                                            ocrText: v.ocrText || existingVariant.ocrText,
+                                            visionAnalysis: v.visionAnalysis || existingVariant.visionAnalysis
+                                        };
+                                    }
+                                    return v;
+                                });
+                            }
+
+                            return {
+                                ...incomingMsg,
+                                ocrText: incomingMsg.ocrText || existingMsg.ocrText,
+                                visionAnalysis: incomingMsg.visionAnalysis || existingMsg.visionAnalysis,
+                                imageAudits: incomingMsg.imageAudits || existingMsg.imageAudits,
+                                images: incomingMsg.images || existingMsg.images,
+                                imageUrl: incomingMsg.imageUrl || existingMsg.imageUrl,
+                                audioUrl: incomingMsg.audioUrl || existingMsg.audioUrl,
+                                videoUrl: incomingMsg.videoUrl || existingMsg.videoUrl,
+                                documentUrl: incomingMsg.documentUrl || existingMsg.documentUrl,
+                                documentName: incomingMsg.documentName || existingMsg.documentName,
+                                tokenUsage: incomingMsg.tokenUsage || existingMsg.tokenUsage,
+                                variants: mergedVariants
+                            };
+                        }
+                        return incomingMsg;
+                    });
+
+                    chatHistory.messages = incomingMessagesWithMergedDbFields;
+                    chatHistory.totalMessages = incomingMessagesWithMergedDbFields.length;
                 }
                 
                 if (hasName) {
