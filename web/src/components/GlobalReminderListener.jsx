@@ -207,10 +207,10 @@ export default function GlobalReminderListener() {
         </button>
 
         <div className="flex flex-col items-center text-center">
-          {/* Animated Clock Icon */}
+          {/* Animated Alarm Emoji */}
           <div className="w-20 h-20 rounded-full bg-indigo-500/10 flex items-center justify-center mb-6 border border-indigo-500/30 shadow-inner relative">
             <span className="absolute inset-0 rounded-full bg-indigo-500/10 animate-ping opacity-75"></span>
-            <FaClock size={36} className="text-indigo-400 animate-pulse" />
+            <span className="text-4xl animate-bounce">⏰</span>
           </div>
 
           <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 mb-3">
