@@ -32,6 +32,140 @@ import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-markdown';
 import DOMPurify from 'dompurify';
 
+// Dynamic Script Loader for CDN dependencies
+const loadScript = (src) => {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = (err) => reject(err);
+        document.head.appendChild(script);
+    });
+};
+
+// Helper for running Tesseract on a canvas element
+const runOcrOnCanvas = async (canvas, onProgress) => {
+    await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js');
+    if (!window.Tesseract) throw new Error('Tesseract.js failed to load.');
+
+    const result = await window.Tesseract.recognize(canvas, 'eng', {
+        logger: m => {
+            if (m.status === 'recognizing text') {
+                onProgress?.(`OCR Page Progress: ${Math.round(m.progress * 100)}%`);
+            }
+        }
+    });
+    return result.data.text;
+};
+
+// Main function to extract text from a file locally
+const extractTextFromFile = async (file, onProgress) => {
+    const extension = file.name.split('.').pop().toLowerCase();
+
+    // 1. Plain Text / Code / CSV Files
+    if (['txt', 'js', 'jsx', 'ts', 'tsx', 'py', 'json', 'html', 'css', 'md', 'xml', 'csv', 'sql'].includes(extension)) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (err) => reject(err);
+            reader.readAsText(file);
+        });
+    }
+
+    // 2. Microsoft Word Files (.docx)
+    if (extension === 'docx') {
+        onProgress?.('Loading Word parser...');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+        if (!window.mammoth) throw new Error('Mammoth.js failed to load.');
+
+        onProgress?.('Parsing Word document...');
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await window.mammoth.extractRawText({ arrayBuffer });
+        return result.value;
+    }
+
+    // 3. Microsoft Excel Files (.xlsx / .xls)
+    if (extension === 'xlsx' || extension === 'xls') {
+        onProgress?.('Loading Excel parser...');
+        await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+        if (!window.XLSX) throw new Error('SheetJS failed to load.');
+
+        onProgress?.('Parsing Excel spreadsheet...');
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = window.XLSX.read(arrayBuffer, { type: 'array' });
+        let text = '';
+        workbook.SheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            const csv = window.XLSX.utils.sheet_to_csv(worksheet);
+            if (csv.trim()) {
+                text += `\n--- Sheet: ${sheetName} ---\n${csv}\n`;
+            }
+        });
+        return text;
+    }
+
+    // 4. PDF Documents (Vector Text extraction + Scanned Image OCR Fallback)
+    if (extension === 'pdf') {
+        onProgress?.('Loading PDF reader...');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js');
+        if (!window.pdfjsLib) throw new Error('PDF.js failed to load.');
+        
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        onProgress?.('Reading PDF pages...');
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            onProgress?.(`Parsing page ${pageNum}/${pdf.numPages}...`);
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            let pageText = textContent.items.map(item => item.str).join(' ');
+
+            // If the page contains no selectable text, it's likely a scanned PDF page. Run OCR fallback.
+            if (!pageText.trim()) {
+                onProgress?.(`Page ${pageNum}/${pdf.numPages} is blank. Running OCR scan...`);
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({ canvasContext: context, viewport }).promise;
+                const ocrText = await runOcrOnCanvas(canvas, onProgress);
+                pageText = ocrText;
+            }
+
+            fullText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
+        }
+        return fullText;
+    }
+
+    // 5. Image Files (Direct OCR)
+    if (['png', 'jpg', 'jpeg', 'webp'].includes(extension)) {
+        onProgress?.('Loading OCR Engine...');
+        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.0.5/dist/tesseract.min.js');
+        if (!window.Tesseract) throw new Error('Tesseract.js failed to load.');
+
+        onProgress?.('Performing character recognition...');
+        const result = await window.Tesseract.recognize(file, 'eng', {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    onProgress?.(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                }
+            }
+        });
+        return result.data.text;
+    }
+
+    throw new Error(`Text extraction not supported for .${extension} files.`);
+};
+
 const THINKING_TAGS = [
     "Thinking...",
     "Analyzing query...",
@@ -431,6 +565,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isExpanded, setIsExpanded] = useState(false);
     const lastUserMessageRef = useRef('');
+    const [ocrResults, setOcrResults] = useState({});
+    const [isExtractingText, setIsExtractingText] = useState(false);
+    const [extractionProgress, setExtractionProgress] = useState('');
     const [tone, setTone] = useState(() => localStorage.getItem('gemini_tone') || 'neutral'); // modes dropdown (tone)
     const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
     const headerMenuButtonRef = useRef(null);
@@ -3505,7 +3642,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     const { sentinelScore, classification } = audit;
                     auditInfo = ` [Sentinel Audit: Quality Score ${sentinelScore}, Classification: ${classification.type} (${classification.category}), Status: ${classification.status}, Reason: ${classification.reason}]`;
                 }
-                return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}`;
+                const ocrText = ocrResults[img.id];
+                const ocrInfo = ocrText ? `\n\nExtracted Image Text Content (OCR):\n"""\n${ocrText}\n"""` : '';
+                return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}${ocrInfo}`;
             }).join('\n');
 
             // Map audits to specific URLs for the AI tool
@@ -5670,6 +5809,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                         // Trigger pixel-level audit for the AI (using the file object)
                         performAudit(file, tempId, 'chat');
+
+                        // Run client-side OCR on the image in the background
+                        (async () => {
+                            try {
+                                const text = await extractTextFromFile(file, (progressMsg) => {
+                                    console.log(`[OCR ${file.name}] ${progressMsg}`);
+                                });
+                                if (text && text.trim()) {
+                                    setOcrResults(prev => ({ ...prev, [tempId]: text.trim() }));
+                                }
+                            } catch (ocrErr) {
+                                console.warn(`OCR skipped/failed for image ${file.name}:`, ocrErr);
+                            }
+                        })();
                     } catch (err) {
                         if (err.name === 'AbortError') {
                             console.log('Upload aborted');
@@ -5710,7 +5863,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     file.type.startsWith('video/') ? 'video' : 'document';
                 const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
 
-                const promptWithFile = `I've uploaded a ${fileType} file: ${file.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
+                let extractedText = '';
+                if (fileType === 'document') {
+                    try {
+                        setIsExtractingText(true);
+                        setExtractionProgress('Initializing parser...');
+                        extractedText = await extractTextFromFile(file, (progressMsg) => {
+                            setExtractionProgress(progressMsg);
+                            toast.info(`[Document Processing] ${progressMsg}`, { autoClose: 1500, toastId: 'doc-parse-progress' });
+                        });
+                        toast.success(`[Document Processing] Successfully parsed ${file.name}!`, { autoClose: 2000, toastId: 'doc-parse-success' });
+                    } catch (parseErr) {
+                        console.error('Failed client-side text extraction:', parseErr);
+                        toast.warn(`Could not extract raw text from ${file.name} directly. Fulfilling as attachment.`, { autoClose: 3500 });
+                    } finally {
+                        setIsExtractingText(false);
+                        setExtractionProgress('');
+                    }
+                }
+
+                let promptWithFile = `I've uploaded a ${fileType} file: ${file.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
+                if (extractedText && extractedText.trim()) {
+                    promptWithFile += `\n\nExtracted Document Content:\n"""\n${extractedText.trim()}\n"""`;
+                }
                 const displayMsg = `Attached ${fileType}: ${file.name}`;
 
                 // Send immediate message for non-image files
@@ -8992,6 +9167,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             )}
 
+
+                            {/* Text Extraction / OCR Progress Bar */}
+                            {isExtractingText && (
+                                <div className="mb-3 p-3 bg-blue-50/80 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-xl animate-pulse">
+                                    <div className="flex items-center justify-between text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                            <UrbanSetuSpinner size="sm" />
+                                            <span>Analyzing Document & Extracting Content...</span>
+                                        </div>
+                                        <span className="opacity-90">{extractionProgress}</span>
+                                    </div>
+                                    <div className="w-full bg-blue-100 dark:bg-blue-900/40 rounded-full h-1.5 overflow-hidden">
+                                        <div className="bg-blue-500 h-full rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Uploaded Files Display */}
                             {uploadedFiles.length > 0 && (
