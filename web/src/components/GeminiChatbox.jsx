@@ -3749,37 +3749,85 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         let messageImages = [];
         let aiPromptMessage = userMessage;
         let imageAuditsToStream = {}; // Initialize here
+        let audioUrl = '';
+        let videoUrl = '';
+        let documentUrl = '';
+        let documentName = '';
 
         if (pendingImages.length > 0) {
-            messageImages = pendingImages.map(img => img.url).filter(Boolean);
-            const imageTexts = pendingImages.map(img => {
-                const audit = auditResults[`chat_${img.id}`];
-                let auditInfo = '';
-                if (audit) {
-                    const { sentinelScore, classification } = audit;
-                    auditInfo = ` [Sentinel Audit: Quality Score ${sentinelScore}, Classification: ${classification.type} (${classification.category}), Status: ${classification.status}, Reason: ${classification.reason}]`;
+            messageImages = pendingImages.filter(img => img.type === 'image').map(img => img.url).filter(Boolean);
+            
+            const fileTexts = pendingImages.map(img => {
+                if (img.type === 'image') {
+                    const audit = auditResults[`chat_${img.id}`];
+                    let auditInfo = '';
+                    if (audit) {
+                        const { sentinelScore, classification } = audit;
+                        auditInfo = ` [Sentinel Audit: Quality Score ${sentinelScore}, Classification: ${classification.type} (${classification.category}), Status: ${classification.status}, Reason: ${classification.reason}]`;
+                    }
+                    const ocrText = ocrResults[img.id];
+                    let ocrInfo = '';
+                    if (ocrText) {
+                        let truncatedOcr = ocrText.trim();
+                        const MAX_TEXT_LEN = 15000;
+                        if (truncatedOcr.length > MAX_TEXT_LEN) {
+                            truncatedOcr = truncatedOcr.substring(0, MAX_TEXT_LEN) + `\n... [Content truncated to first ${MAX_TEXT_LEN} characters due to context limit]`;
+                        }
+                        ocrInfo = `\n\nExtracted Image Text Content (OCR):\n"""\n${truncatedOcr}\n"""`;
+                    }
+                    return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}${ocrInfo}`;
+                } else {
+                    const fileType = img.type; // 'audio', 'video', 'document'
+                    const fileUrl = img.url;
+                    const extractedText = ocrResults[img.id] || '';
+                    
+                    let promptWithFile = `I've uploaded a ${fileType} file: ${img.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
+                    if (extractedText && extractedText.trim()) {
+                        const contentLabel = fileType === 'audio' ? 'Audio Transcript' : 
+                                            fileType === 'video' ? 'Video Speech Transcript' : 
+                                            'Extracted Document Content';
+                        let truncatedExtracted = extractedText.trim();
+                        const MAX_TEXT_LEN = 15000;
+                        if (truncatedExtracted.length > MAX_TEXT_LEN) {
+                            truncatedExtracted = truncatedExtracted.substring(0, MAX_TEXT_LEN) + `\n... [Content truncated to first ${MAX_TEXT_LEN} characters due to context limit]`;
+                        }
+                        promptWithFile += `\n\n${contentLabel}:\n"""\n${truncatedExtracted}\n"""`;
+                    }
+                    return promptWithFile;
                 }
-                const ocrText = ocrResults[img.id];
-                const ocrInfo = ocrText ? `\n\nExtracted Image Text Content (OCR):\n"""\n${ocrText}\n"""` : '';
-                return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}${ocrInfo}`;
-            }).join('\n');
+            }).join('\n\n');
 
             // Map audits to specific URLs for the AI tool
             const urlAudits = {};
             pendingImages.forEach(img => {
-                const audit = auditResults[`chat_${img.id}`];
-                if (img.url && audit) {
-                    urlAudits[img.url] = audit;
+                if (img.type === 'image') {
+                    const audit = auditResults[`chat_${img.id}`];
+                    if (img.url && audit) {
+                        urlAudits[img.url] = audit;
+                    }
                 }
             });
             imageAuditsToStream = urlAudits; // Store for request body
 
-            // If there's no text, use a fallback for display, but prompt AI with specific context
-            if (!displayUserMessage) {
-                displayUserMessage = ""; // UI will show images
+            // Also extract the first audioUrl, videoUrl, documentUrl, and documentName for mediaPayload
+            const firstAudio = pendingImages.find(img => img.type === 'audio');
+            const firstVideo = pendingImages.find(img => img.type === 'video');
+            const firstDoc = pendingImages.find(img => img.type === 'document');
+
+            if (firstAudio) audioUrl = firstAudio.url;
+            if (firstVideo) videoUrl = firstVideo.url;
+            if (firstDoc) {
+                documentUrl = firstDoc.url;
+                documentName = firstDoc.name;
             }
 
-            aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n${imageTexts}` : imageTexts;
+            // If there's no text, use a fallback for display, but prompt AI with specific context
+            if (!displayUserMessage) {
+                const fileTypesList = pendingImages.map(img => `${img.type}: ${img.name}`).join(', ');
+                displayUserMessage = `Attached: ${fileTypesList}`;
+            }
+
+            aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n${fileTexts}` : fileTexts;
 
             setPendingImages([]); // Clear pending images after they are attached
         }
@@ -3802,7 +3850,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 content: displayUserMessage,
                 timestamp: new Date().toISOString(),
                 images: messageImages,
-                imageAudits: imageAuditsToStream
+                imageAudits: imageAuditsToStream,
+                audioUrl,
+                videoUrl,
+                documentUrl,
+                documentName
             }];
         });
         // Increment total message count for accurate limit enforcement
@@ -3812,11 +3864,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         historyIndexRef.current = -1;
         lastUserMessageRef.current = userMessage;
 
+        let requestMediaType = null;
         if (messageImages.length > 0) {
-            setCurrentRequestMediaType('image');
-        } else {
-            setCurrentRequestMediaType(null);
+            requestMediaType = 'image';
+        } else if (audioUrl) {
+            requestMediaType = 'audio';
+        } else if (videoUrl) {
+            requestMediaType = 'video';
+        } else if (documentUrl) {
+            requestMediaType = 'document';
+            const extension = documentName ? documentName.split('.').pop().toLowerCase() : '';
+            if (['js', 'jsx', 'ts', 'tsx', 'py', 'json', 'html', 'css', 'md', 'xml', 'csv', 'sql'].includes(extension)) {
+                requestMediaType = 'code';
+            }
         }
+        setCurrentRequestMediaType(requestMediaType);
         // Set loading state to show cancel button
         setIsLoading(true);
         setHasChatError(false);
@@ -3856,6 +3918,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         displayMessage: displayUserMessage, // Custom field for non-link storage
                         images: messageImages, // Explicitly pass images
                         imageAudits: imageAuditsToStream, // Pass pre-calculated audits to backend
+                        audioUrl,
+                        videoUrl,
+                        documentUrl,
+                        documentName,
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
                         tone: currentUser ? tone : 'neutral',
@@ -5888,58 +5954,77 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setUploadingFile(true);
             setUploadProgress(0);
 
-            // Separate images from other files
-            const imageFiles = files.filter(f => f.type.startsWith('image/'));
-            const otherFiles = files.filter(f => !f.type.startsWith('image/'));
+            // Verify total file slots limit (max 5)
+            const currentFilesCount = pendingImages.length;
+            if (currentFilesCount + files.length > 5) {
+                toast.error(`You can only upload up to 5 files. ${5 - currentFilesCount} slots remaining.`);
+                // Take only what fits
+                files.splice(5 - currentFilesCount);
+            }
 
-            // Handle image uploads with preview state
-            if (imageFiles.length > 0) {
-                // Check 5 images limit
-                const currentImagesCount = pendingImages.length;
-                if (currentImagesCount + imageFiles.length > 5) {
-                    toast.error(`You can only upload up to 5 images. ${5 - currentImagesCount} slots remaining.`);
-                    // Take only what fits
-                    imageFiles.splice(5 - currentImagesCount);
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                let fileType = 'document';
+                if (file.type.startsWith('image/')) {
+                    fileType = 'image';
+                } else if (file.type.startsWith('audio/')) {
+                    fileType = 'audio';
+                } else if (file.type.startsWith('video/')) {
+                    fileType = 'video';
                 }
 
-                for (let i = 0; i < imageFiles.length; i++) {
-                    const file = imageFiles[i];
-                    const tempId = Date.now() + Math.random();
-                    const controller = new AbortController();
+                const tempId = Date.now() + Math.random();
+                const controller = new AbortController();
 
-                    // Add to pending with uploading state
-                    setPendingImages(prev => [...prev, {
-                        id: tempId,
-                        name: file.name,
-                        type: 'image',
-                        uploading: true,
-                        progress: 0,
-                        controller: controller
-                    }]);
+                // Add to pending with uploading state
+                setPendingImages(prev => [...prev, {
+                    id: tempId,
+                    name: file.name,
+                    type: fileType,
+                    uploading: true,
+                    progress: 0,
+                    controller: controller
+                }]);
 
-                    try {
-                        let formData = new FormData();
+                try {
+                    let uploadEndpoint = '';
+                    let formData = new FormData();
+                    if (fileType === 'image') {
+                        uploadEndpoint = '/api/upload/image';
                         formData.append('image', file);
+                    } else if (fileType === 'audio') {
+                        uploadEndpoint = '/api/upload/audio';
+                        formData.append('audio', file);
+                    } else if (fileType === 'video') {
+                        uploadEndpoint = '/api/upload/video';
+                        formData.append('video', file);
+                    } else {
+                        uploadEndpoint = '/api/upload/document';
+                        formData.append('document', file);
+                    }
 
-                        const response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/upload/image`, {
-                            method: 'POST',
-                            body: formData,
-                            signal: controller.signal
-                        });
+                    const response = await authenticatedFetch(`${API_BASE_URL}${uploadEndpoint}`, {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal
+                    });
 
-                        if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
-                        const uploadData = await response.json();
-                        const fileUrl = uploadData.imageUrl;
+                    if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+                    const uploadData = await response.json();
+                    const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
 
-                        // Update pending image with the real URL
-                        setPendingImages(prev => prev.map(img =>
-                            img.id === tempId ? { ...img, url: fileUrl, uploading: false, controller: null } : img
-                        ));
+                    // Update pending file with the real URL
+                    setPendingImages(prev => prev.map(img =>
+                        img.id === tempId ? { ...img, url: fileUrl, uploading: false, controller: null } : img
+                    ));
 
-                        // Trigger pixel-level audit for the AI (using the file object)
+                    // Trigger pixel-level audit for the AI if it is an image
+                    if (fileType === 'image') {
                         performAudit(file, tempId, 'chat');
+                    }
 
-                        // Run client-side OCR on the image in the background
+                    // Run text extraction/transcription in the background
+                    if (fileType === 'image') {
                         (async () => {
                             try {
                                 setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
@@ -5955,264 +6040,156 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
                             }
                         })();
-                    } catch (err) {
-                        if (err.name === 'AbortError') {
-                            console.log('Upload aborted');
-                            return;
-                        }
-                        toast.error(`Failed to upload ${file.name}`);
-                        setPendingImages(prev => prev.filter(img => img.id !== tempId));
-                    }
-                }
-            }
-
-            // Handle other files immediately as before
-            for (let i = 0; i < otherFiles.length; i++) {
-                const file = otherFiles[i];
-                let uploadEndpoint = '';
-                let formData = new FormData();
-
-                if (file.type.startsWith('audio/')) {
-                    uploadEndpoint = '/api/upload/audio';
-                    formData.append('audio', file);
-                } else if (file.type.startsWith('video/')) {
-                    uploadEndpoint = '/api/upload/video';
-                    formData.append('video', file);
-                } else {
-                    uploadEndpoint = '/api/upload/document';
-                    formData.append('document', file);
-                }
-
-                const response = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}${uploadEndpoint}`, {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
-                const uploadData = await response.json();
-
-                const fileType = file.type.startsWith('audio/') ? 'audio' :
-                    file.type.startsWith('video/') ? 'video' : 'document';
-                const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
-
-                let extractedText = '';
-                
-                // Document text extraction (existing)
-                if (fileType === 'document') {
-                    try {
-                        setIsExtractingText(true);
-                        setExtractionProgress('Initializing parser...');
-                        extractedText = await extractTextFromFile(file, (progressMsg) => {
-                            setExtractionProgress(progressMsg);
-                            toast.info(`[Document Processing] ${progressMsg}`, { autoClose: 1500, toastId: 'doc-parse-progress' });
-                        });
-                        toast.success(`[Document Processing] Successfully parsed ${file.name}!`, { autoClose: 2000, toastId: 'doc-parse-success' });
-                    } catch (parseErr) {
-                        console.error('Failed client-side text extraction:', parseErr);
-                        toast.warn(`Could not extract raw text from ${file.name} directly. Fulfilling as attachment.`, { autoClose: 3500 });
-                    } finally {
-                        setIsExtractingText(false);
-                        setExtractionProgress('');
-                    }
-                }
-
-                // Audio transcription via Groq Whisper (FREE)
-                if (fileType === 'audio' && fileUrl) {
-                    try {
-                        setIsExtractingText(true);
-                        setExtractionProgress('Transcribing audio with Whisper...');
-                        toast.info('🎤 Transcribing audio...', { autoClose: 2000, toastId: 'audio-transcribe' });
-                        
-                        const transcribeResponse = await authenticatedFetch(`${API_BASE_URL}/api/speech-to-text/transcribe`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ audioUrl: fileUrl })
-                        });
-                        
-                        if (transcribeResponse.ok) {
-                            const transcribeData = await transcribeResponse.json();
-                            if (transcribeData.success && transcribeData.transcription) {
-                                extractedText = transcribeData.transcription;
-                                const duration = transcribeData.duration ? ` (${Math.round(transcribeData.duration)}s)` : '';
-                                toast.success(`🎤 Audio transcribed successfully${duration}`, { autoClose: 2000, toastId: 'audio-transcribe-done' });
-                            }
-                        }
-                    } catch (transcribeErr) {
-                        console.error('Audio transcription failed:', transcribeErr);
-                        toast.warn('Could not transcribe audio. Sending as attachment only.', { autoClose: 3000 });
-                    } finally {
-                        setIsExtractingText(false);
-                        setExtractionProgress('');
-                    }
-                }
-
-                // Video audio extraction + transcription
-                if (fileType === 'video' && fileUrl) {
-                    try {
-                        setIsExtractingText(true);
-                        setExtractionProgress('Extracting audio from video...');
-                        toast.info('🎬 Extracting audio from video...', { autoClose: 2000, toastId: 'video-extract' });
-
-                        // Extract audio from video using Web Audio API
-                        const videoAudioBlob = await new Promise((resolve, reject) => {
-                            const video = document.createElement('video');
-                            video.src = URL.createObjectURL(file);
-                            video.muted = true;
-                            
-                            video.onloadedmetadata = () => {
-                                // For long videos, limit to first 5 minutes
-                                const maxDuration = Math.min(video.duration, 300);
-                                
-                                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                                const source = audioContext.createMediaElementSource(video);
-                                const dest = audioContext.createMediaStreamDestination();
-                                source.connect(dest);
-                                
-                                const mediaRecorder = new MediaRecorder(dest.stream, {
-                                    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+                    } else if (fileType === 'document') {
+                        (async () => {
+                            try {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+                                const text = await extractTextFromFile(file, (progressMsg) => {
+                                    console.log(`[Doc Extraction ${file.name}] ${progressMsg}`);
+                                    toast.info(`[Document Processing] ${progressMsg}`, { autoClose: 1500, toastId: `doc-parse-${tempId}` });
                                 });
-                                const chunks = [];
+                                if (text && text.trim()) {
+                                    setOcrResults(prev => ({ ...prev, [tempId]: text.trim() }));
+                                    toast.success(`[Document Processing] Successfully parsed ${file.name}!`, { autoClose: 2000, toastId: `doc-parse-success-${tempId}` });
+                                }
+                            } catch (parseErr) {
+                                console.error('Failed client-side text extraction:', parseErr);
+                                toast.warn(`Could not extract raw text from ${file.name} directly. Fulfilling as attachment.`, { autoClose: 3500 });
+                            } finally {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
+                            }
+                        })();
+                    } else if (fileType === 'audio') {
+                        (async () => {
+                            try {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+                                toast.info('🎤 Transcribing audio...', { autoClose: 2000, toastId: `audio-transcribe-${tempId}` });
                                 
-                                mediaRecorder.ondataavailable = (e) => {
-                                    if (e.data.size > 0) chunks.push(e.data);
-                                };
-                                
-                                mediaRecorder.onstop = () => {
-                                    audioContext.close();
-                                    URL.revokeObjectURL(video.src);
-                                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
-                                    resolve(blob);
-                                };
-
-                                mediaRecorder.onerror = (err) => {
-                                    audioContext.close();
-                                    URL.revokeObjectURL(video.src);
-                                    reject(err);
-                                };
-                                
-                                video.onended = () => mediaRecorder.stop();
-                                setTimeout(() => {
-                                    if (mediaRecorder.state === 'recording') {
-                                        mediaRecorder.stop();
-                                        video.pause();
-                                    }
-                                }, maxDuration * 1000 + 500);
-                                
-                                mediaRecorder.start();
-                                video.play().catch(reject);
-                            };
-                            
-                            video.onerror = reject;
-                        });
-
-                        if (videoAudioBlob && videoAudioBlob.size > 1000) {
-                            setExtractionProgress('Transcribing video audio...');
-                            toast.info('🎤 Transcribing video speech...', { autoClose: 2000, toastId: 'video-transcribe' });
-
-                            // Upload extracted audio to get a URL, then transcribe
-                            const audioFormData = new FormData();
-                            audioFormData.append('audio', videoAudioBlob, 'video-audio.webm');
-
-                            const audioUploadRes = await authenticatedFetch(`${API_BASE_URL}/api/upload/audio`, {
-                                method: 'POST',
-                                body: audioFormData
-                            });
-
-                            if (audioUploadRes.ok) {
-                                const audioUploadData = await audioUploadRes.json();
-                                const audioFileUrl = audioUploadData.audioUrl;
-
                                 const transcribeResponse = await authenticatedFetch(`${API_BASE_URL}/api/speech-to-text/transcribe`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ audioUrl: audioFileUrl })
+                                    body: JSON.stringify({ audioUrl: fileUrl })
                                 });
-
+                                
                                 if (transcribeResponse.ok) {
                                     const transcribeData = await transcribeResponse.json();
                                     if (transcribeData.success && transcribeData.transcription) {
-                                        extractedText = transcribeData.transcription;
-                                        toast.success('🎬 Video speech transcribed!', { autoClose: 2000, toastId: 'video-transcribe-done' });
+                                        setOcrResults(prev => ({ ...prev, [tempId]: transcribeData.transcription.trim() }));
+                                        const duration = transcribeData.duration ? ` (${Math.round(transcribeData.duration)}s)` : '';
+                                        toast.success(`🎤 Audio transcribed successfully${duration}`, { autoClose: 2000, toastId: `audio-transcribe-done-${tempId}` });
                                     }
                                 }
+                            } catch (transcribeErr) {
+                                console.error('Audio transcription failed:', transcribeErr);
+                                toast.warn('Could not transcribe audio. Sending as attachment only.', { autoClose: 3000 });
+                            } finally {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
                             }
-                        } else {
-                            console.log('Video has no significant audio track');
-                        }
-                    } catch (videoErr) {
-                        console.error('Video audio extraction failed:', videoErr);
-                        toast.warn('Could not extract audio from video. Sending as attachment only.', { autoClose: 3000 });
-                    } finally {
-                        setIsExtractingText(false);
-                        setExtractionProgress('');
+                        })();
+                    } else if (fileType === 'video') {
+                        (async () => {
+                            try {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+                                toast.info('🎬 Extracting audio from video...', { autoClose: 2000, toastId: `video-extract-${tempId}` });
+
+                                const videoAudioBlob = await new Promise((resolve, reject) => {
+                                    const video = document.createElement('video');
+                                    video.src = URL.createObjectURL(file);
+                                    video.muted = true;
+                                    
+                                    video.onloadedmetadata = () => {
+                                        const maxDuration = Math.min(video.duration, 300);
+                                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                                        const source = audioContext.createMediaElementSource(video);
+                                        const dest = audioContext.createMediaStreamDestination();
+                                        source.connect(dest);
+                                        
+                                        const mediaRecorder = new MediaRecorder(dest.stream, {
+                                            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+                                        });
+                                        const chunks = [];
+                                        
+                                        mediaRecorder.ondataavailable = (e) => {
+                                            if (e.data.size > 0) chunks.push(e.data);
+                                        };
+                                        
+                                        mediaRecorder.onstop = () => {
+                                            audioContext.close();
+                                            URL.revokeObjectURL(video.src);
+                                            const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                                            resolve(blob);
+                                        };
+
+                                        mediaRecorder.onerror = (err) => {
+                                            audioContext.close();
+                                            URL.revokeObjectURL(video.src);
+                                            reject(err);
+                                        };
+                                        
+                                        video.onended = () => mediaRecorder.stop();
+                                        setTimeout(() => {
+                                            if (mediaRecorder.state === 'recording') {
+                                                mediaRecorder.stop();
+                                                video.pause();
+                                            }
+                                        }, maxDuration * 1000 + 500);
+                                        
+                                        mediaRecorder.start();
+                                        video.play().catch(reject);
+                                    };
+                                    
+                                    video.onerror = reject;
+                                });
+
+                                if (videoAudioBlob && videoAudioBlob.size > 1000) {
+                                    const audioFormData = new FormData();
+                                    audioFormData.append('audio', videoAudioBlob, 'video-audio.webm');
+
+                                    const audioUploadRes = await authenticatedFetch(`${API_BASE_URL}/api/upload/audio`, {
+                                        method: 'POST',
+                                        body: audioFormData
+                                    });
+
+                                    if (audioUploadRes.ok) {
+                                        const audioUploadData = await audioUploadRes.json();
+                                        const audioFileUrl = audioUploadData.audioUrl;
+
+                                        const transcribeResponse = await authenticatedFetch(`${API_BASE_URL}/api/speech-to-text/transcribe`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ audioUrl: audioFileUrl })
+                                        });
+
+                                        if (transcribeResponse.ok) {
+                                            const transcribeData = await transcribeResponse.json();
+                                            if (transcribeData.success && transcribeData.transcription) {
+                                                setOcrResults(prev => ({ ...prev, [tempId]: transcribeData.transcription.trim() }));
+                                                toast.success('🎬 Video speech transcribed!', { autoClose: 2000, toastId: `video-transcribe-done-${tempId}` });
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (videoErr) {
+                                console.error('Video audio extraction failed:', videoErr);
+                                toast.warn('Could not extract audio from video. Sending as attachment only.', { autoClose: 3000 });
+                            } finally {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
+                            }
+                        })();
                     }
-                }
 
-                let promptWithFile = `I've uploaded a ${fileType} file: ${file.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
-                if (extractedText && extractedText.trim()) {
-                    const contentLabel = fileType === 'audio' ? 'Audio Transcript' : 
-                                        fileType === 'video' ? 'Video Speech Transcript' : 
-                                        'Extracted Document Content';
-                    promptWithFile += `\n\n${contentLabel}:\n"""\n${extractedText.trim()}\n"""`;
-                }
-
-                const displayMsg = `Attached ${fileType}: ${file.name}`;
-
-                // Send immediate message for non-image files
-                const currentSessionId = getOrCreateSessionId();
-                const mediaPayload = {
-                    [fileType === 'audio' ? 'audioUrl' : fileType === 'video' ? 'videoUrl' : 'documentUrl']: fileUrl,
-                    documentName: fileType === 'document' ? file.name : undefined
-                };
-
-                setMessages(prev => [...prev, {
-                    role: 'user',
-                    content: displayMsg,
-                    timestamp: new Date().toISOString(),
-                    ...mediaPayload
-                }]);
-
-                let requestMediaType = 'document';
-                if (fileType === 'audio') {
-                    requestMediaType = 'audio';
-                } else if (fileType === 'video') {
-                    requestMediaType = 'video';
-                } else {
-                    const extension = file.name ? file.name.split('.').pop().toLowerCase() : '';
-                    if (['js', 'jsx', 'ts', 'tsx', 'py', 'json', 'html', 'css', 'md', 'xml', 'csv', 'sql'].includes(extension)) {
-                        requestMediaType = 'code';
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        console.log('Upload aborted');
+                    } else {
+                        toast.error(`Failed to upload ${file.name}`);
                     }
+                    setPendingImages(prev => prev.filter(img => img.id !== tempId));
                 }
-                setCurrentRequestMediaType(requestMediaType);
-                setIsLoading(true);
-
-                const chatResponse = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: promptWithFile,
-                        displayMessage: displayMsg,
-                        ...mediaPayload,
-                        sessionId: currentSessionId,
-                        history: messages.slice(-10),
-                        clientTime: new Date().toString()
-                    })
-                });
-
-                if (chatResponse.ok) {
-                    const result = await chatResponse.json();
-                    setMessages(prev => [...prev, {
-                        role: 'assistant',
-                        content: result.response,
-                        timestamp: new Date().toISOString(),
-                        recommendations: result.recommendations
-                    }]);
-                }
-                setIsLoading(false);
             }
 
             if (files.length > 0) {
-                toast.success(`${files.length} file(s) processed`);
+                toast.success(`${files.length} file(s) queued for attachment`);
             }
         } catch (error) {
             console.error('File upload error:', error);
@@ -6221,7 +6198,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setUploadingFile(false);
             setUploadProgress(0);
             setIsLoading(false);
-            setCurrentRequestMediaType(null);
         }
     };
 
@@ -9703,19 +9679,42 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     </div>
                                                                 ) : (
                                                                     <>
-                                                                        <img
-                                                                            src={img.url}
-                                                                            alt={img.name}
-                                                                            className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
-                                                                            onClick={() => {
-                                                                                setPreviewImages([img.url]);
-                                                                                setPreviewImageIndex(0);
-                                                                                setIsImagePreviewOpen(true);
-                                                                            }}
-                                                                        />
+                                                                        {img.type === 'image' ? (
+                                                                            <img
+                                                                                src={img.url}
+                                                                                alt={img.name}
+                                                                                className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
+                                                                                onClick={() => {
+                                                                                    setPreviewImages([img.url]);
+                                                                                    setPreviewImageIndex(0);
+                                                                                    setIsImagePreviewOpen(true);
+                                                                                }}
+                                                                            />
+                                                                        ) : img.type === 'document' ? (
+                                                                            <div className={`w-full h-full flex flex-col items-center justify-center bg-indigo-500/10 dark:bg-indigo-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}>
+                                                                                <FaFileAlt className="text-indigo-600 dark:text-indigo-400 text-lg sm:text-xl" />
+                                                                                <span className="text-[8px] sm:text-[9px] text-gray-700 dark:text-gray-300 text-center truncate w-full mt-1 px-0.5 font-medium" title={img.name}>
+                                                                                    {img.name}
+                                                                                </span>
+                                                                            </div>
+                                                                        ) : img.type === 'audio' ? (
+                                                                            <div className={`w-full h-full flex flex-col items-center justify-center bg-pink-500/10 dark:bg-pink-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}>
+                                                                                <FaMicrophone className="text-pink-600 dark:text-pink-400 text-lg sm:text-xl" />
+                                                                                <span className="text-[8px] sm:text-[9px] text-gray-700 dark:text-gray-300 text-center truncate w-full mt-1 px-0.5 font-medium" title={img.name}>
+                                                                                    {img.name}
+                                                                                </span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className={`w-full h-full flex flex-col items-center justify-center bg-red-500/10 dark:bg-red-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}>
+                                                                                <FaPlay className="text-red-600 dark:text-red-400 text-lg sm:text-xl" />
+                                                                                <span className="text-[8px] sm:text-[9px] text-gray-700 dark:text-gray-300 text-center truncate w-full mt-1 px-0.5 font-medium" title={img.name}>
+                                                                                    {img.name}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
 
                                                                         {/* Sentinel Quality Badge */}
-                                                                        {(!isAuditing[`chat_${img.id}`] && !isOcrExtracting[img.id]) && auditResults[`chat_${img.id}`] && (
+                                                                        {(img.type === 'image' && !isAuditing[`chat_${img.id}`] && !isOcrExtracting[img.id]) && auditResults[`chat_${img.id}`] && (
                                                                             <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 pointer-events-none">
                                                                                 <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white shadow-sm flex items-center gap-0.5 ${auditResults[`chat_${img.id}`].sentinelScore >= 80 ? 'bg-green-500' :
                                                                                         auditResults[`chat_${img.id}`].sentinelScore >= 50 ? 'bg-orange-500' : 'bg-red-500'
@@ -9741,14 +9740,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 <UrbanSetuSpinner size="sm" isBright={true} />
                                                                                 <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse mt-1 text-center px-1">
                                                                                     {isAuditing[`chat_${img.id}`] && isOcrExtracting[img.id] ? "Auditing & OCR..." :
-                                                                                     isAuditing[`chat_${img.id}`] ? "Sentinel Auditing" : "Performing OCR..."}
+                                                                                     isAuditing[`chat_${img.id}`] ? "Sentinel Auditing" :
+                                                                                     img.type === 'audio' ? "Transcribing..." :
+                                                                                     img.type === 'video' ? "Transcribing..." : "Parsing Text..."}
                                                                                 </span>
                                                                             </div>
                                                                         )}
                                                                         <button
                                                                             onClick={() => setPendingImages(prev => prev.filter(p => p.id !== img.id))}
                                                                             className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all duration-200 border border-white/20 shadow-md z-20"
-                                                                            title="Remove image"
+                                                                            title={`Remove ${img.type}`}
                                                                         >
                                                                             <FaTimes size={10} />
                                                                         </button>
