@@ -164,6 +164,54 @@ const extractTextFromFile = async (file, onProgress) => {
         return fullText;
     }
 
+    // 6. PowerPoint Presentations (.pptx)
+    if (extension === 'pptx' || mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+        onProgress?.('Loading PowerPoint parser...');
+        await loadScript('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
+        if (!window.JSZip) throw new Error('JSZip failed to load.');
+
+        onProgress?.('Parsing PowerPoint presentation...');
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await window.JSZip.loadAsync(arrayBuffer);
+        
+        let text = '';
+        const slideFiles = Object.keys(zip.files).filter(name => name.startsWith('ppt/slides/slide') && name.endsWith('.xml'));
+        
+        // Sort slides by number so they appear in order
+        slideFiles.sort((a, b) => {
+            const numA = parseInt(a.replace(/[^0-9]/g, ''));
+            const numB = parseInt(b.replace(/[^0-9]/g, ''));
+            return numA - numB;
+        });
+
+        for (let i = 0; i < slideFiles.length; i++) {
+            const slideName = slideFiles[i];
+            const slideNum = i + 1;
+            onProgress?.(`Parsing slide ${slideNum}/${slideFiles.length}...`);
+            
+            const slideXmlText = await zip.files[slideName].async('text');
+            
+            // Extract text inside <a:t> XML tags (used in pptx for text runs)
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(slideXmlText, 'text/xml');
+            const textNodes = xmlDoc.getElementsByTagName('a:t');
+            
+            let slideText = '';
+            for (let j = 0; j < textNodes.length; j++) {
+                slideText += textNodes[j].textContent + ' ';
+            }
+            
+            if (slideText.trim()) {
+                text += `\n--- Slide ${slideNum} ---\n${slideText.trim()}\n`;
+            }
+        }
+        
+        if (!text.trim()) {
+            return "This PowerPoint file appears to contain no text.";
+        }
+        return text;
+    }
+
     throw new Error(`Text extraction not supported for .${extension} files.`);
 };
 
@@ -3549,7 +3597,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
         const validAudioTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
         const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv'];
-        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
         const allValidTypes = [...validImageTypes, ...validAudioTypes, ...validVideoTypes, ...validDocTypes];
         const maxSize = 10 * 1024 * 1024; // 10MB
 
@@ -5791,7 +5839,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
         const validAudioTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
         const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/mov', 'video/mkv'];
-        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+        const validDocTypes = ['application/pdf', 'text/plain', 'text/csv', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
 
         const allValidTypes = [...validImageTypes, ...validAudioTypes, ...validVideoTypes, ...validDocTypes];
 
@@ -5936,6 +5984,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
 
                 let extractedText = '';
+                
+                // Document text extraction (existing)
                 if (fileType === 'document') {
                     try {
                         setIsExtractingText(true);
@@ -5954,10 +6004,146 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
                 }
 
+                // Audio transcription via Groq Whisper (FREE)
+                if (fileType === 'audio' && fileUrl) {
+                    try {
+                        setIsExtractingText(true);
+                        setExtractionProgress('Transcribing audio with Whisper...');
+                        toast.info('🎤 Transcribing audio...', { autoClose: 2000, toastId: 'audio-transcribe' });
+                        
+                        const transcribeResponse = await authenticatedFetch(`${API_BASE_URL}/api/speech-to-text/transcribe`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ audioUrl: fileUrl })
+                        });
+                        
+                        if (transcribeResponse.ok) {
+                            const transcribeData = await transcribeResponse.json();
+                            if (transcribeData.success && transcribeData.transcription) {
+                                extractedText = transcribeData.transcription;
+                                const duration = transcribeData.duration ? ` (${Math.round(transcribeData.duration)}s)` : '';
+                                toast.success(`🎤 Audio transcribed successfully${duration}`, { autoClose: 2000, toastId: 'audio-transcribe-done' });
+                            }
+                        }
+                    } catch (transcribeErr) {
+                        console.error('Audio transcription failed:', transcribeErr);
+                        toast.warn('Could not transcribe audio. Sending as attachment only.', { autoClose: 3000 });
+                    } finally {
+                        setIsExtractingText(false);
+                        setExtractionProgress('');
+                    }
+                }
+
+                // Video audio extraction + transcription
+                if (fileType === 'video' && fileUrl) {
+                    try {
+                        setIsExtractingText(true);
+                        setExtractionProgress('Extracting audio from video...');
+                        toast.info('🎬 Extracting audio from video...', { autoClose: 2000, toastId: 'video-extract' });
+
+                        // Extract audio from video using Web Audio API
+                        const videoAudioBlob = await new Promise((resolve, reject) => {
+                            const video = document.createElement('video');
+                            video.src = URL.createObjectURL(file);
+                            video.muted = true;
+                            
+                            video.onloadedmetadata = () => {
+                                // For long videos, limit to first 5 minutes
+                                const maxDuration = Math.min(video.duration, 300);
+                                
+                                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                                const source = audioContext.createMediaElementSource(video);
+                                const dest = audioContext.createMediaStreamDestination();
+                                source.connect(dest);
+                                
+                                const mediaRecorder = new MediaRecorder(dest.stream, {
+                                    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+                                });
+                                const chunks = [];
+                                
+                                mediaRecorder.ondataavailable = (e) => {
+                                    if (e.data.size > 0) chunks.push(e.data);
+                                };
+                                
+                                mediaRecorder.onstop = () => {
+                                    audioContext.close();
+                                    URL.revokeObjectURL(video.src);
+                                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                                    resolve(blob);
+                                };
+
+                                mediaRecorder.onerror = (err) => {
+                                    audioContext.close();
+                                    URL.revokeObjectURL(video.src);
+                                    reject(err);
+                                };
+                                
+                                video.onended = () => mediaRecorder.stop();
+                                setTimeout(() => {
+                                    if (mediaRecorder.state === 'recording') {
+                                        mediaRecorder.stop();
+                                        video.pause();
+                                    }
+                                }, maxDuration * 1000 + 500);
+                                
+                                mediaRecorder.start();
+                                video.play().catch(reject);
+                            };
+                            
+                            video.onerror = reject;
+                        });
+
+                        if (videoAudioBlob && videoAudioBlob.size > 1000) {
+                            setExtractionProgress('Transcribing video audio...');
+                            toast.info('🎤 Transcribing video speech...', { autoClose: 2000, toastId: 'video-transcribe' });
+
+                            // Upload extracted audio to get a URL, then transcribe
+                            const audioFormData = new FormData();
+                            audioFormData.append('audio', videoAudioBlob, 'video-audio.webm');
+
+                            const audioUploadRes = await authenticatedFetch(`${API_BASE_URL}/api/upload/audio`, {
+                                method: 'POST',
+                                body: audioFormData
+                            });
+
+                            if (audioUploadRes.ok) {
+                                const audioUploadData = await audioUploadRes.json();
+                                const audioFileUrl = audioUploadData.audioUrl;
+
+                                const transcribeResponse = await authenticatedFetch(`${API_BASE_URL}/api/speech-to-text/transcribe`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ audioUrl: audioFileUrl })
+                                });
+
+                                if (transcribeResponse.ok) {
+                                    const transcribeData = await transcribeResponse.json();
+                                    if (transcribeData.success && transcribeData.transcription) {
+                                        extractedText = transcribeData.transcription;
+                                        toast.success('🎬 Video speech transcribed!', { autoClose: 2000, toastId: 'video-transcribe-done' });
+                                    }
+                                }
+                            }
+                        } else {
+                            console.log('Video has no significant audio track');
+                        }
+                    } catch (videoErr) {
+                        console.error('Video audio extraction failed:', videoErr);
+                        toast.warn('Could not extract audio from video. Sending as attachment only.', { autoClose: 3000 });
+                    } finally {
+                        setIsExtractingText(false);
+                        setExtractionProgress('');
+                    }
+                }
+
                 let promptWithFile = `I've uploaded a ${fileType} file: ${file.name}. Please analyze it and help me with it. File URL: ${fileUrl}`;
                 if (extractedText && extractedText.trim()) {
-                    promptWithFile += `\n\nExtracted Document Content:\n"""\n${extractedText.trim()}\n"""`;
+                    const contentLabel = fileType === 'audio' ? 'Audio Transcript' : 
+                                        fileType === 'video' ? 'Video Speech Transcript' : 
+                                        'Extracted Document Content';
+                    promptWithFile += `\n\n${contentLabel}:\n"""\n${extractedText.trim()}\n"""`;
                 }
+
                 const displayMsg = `Attached ${fileType}: ${file.name}`;
 
                 // Send immediate message for non-image files
@@ -11418,7 +11604,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <input
                                                 type="file"
                                                 multiple
-                                                accept="image/*,audio/*,video/*,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx"
+                                                accept="image/*,audio/*,video/*,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.pptx"
                                                 onChange={handleFileUpload}
                                                 className="hidden"
                                                 id="file-upload"

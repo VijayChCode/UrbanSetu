@@ -1,42 +1,43 @@
+import { Groq } from 'groq-sdk';
 import axios from 'axios';
-import FormData from 'form-data';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// OpenAI Whisper API configuration
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_WHISPER_URL = 'https://api.openai.com/v1/audio/transcriptions';
+// Groq Whisper API configuration (FREE tier)
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const WHISPER_MODEL = 'whisper-large-v3-turbo';
+
+const groq = new Groq({
+    apiKey: GROQ_API_KEY
+});
 
 // Retry function with exponential backoff for rate limiting
-const callWhisperAPIWithRetry = async (formData, maxRetries = 3) => {
+const callWhisperAPIWithRetry = async (fileBuffer, fileName, mimeType, maxRetries = 3) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const response = await axios.post(
-                OPENAI_WHISPER_URL,
-                formData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                        ...formData.getHeaders()
-                    },
-                    timeout: 30000 // 30 second timeout
-                }
-            );
+            // Groq SDK expects a File-like object
+            const file = new File([fileBuffer], fileName, { type: mimeType });
+            
+            const response = await groq.audio.transcriptions.create({
+                file: file,
+                model: WHISPER_MODEL,
+                response_format: 'verbose_json',
+                language: 'en'
+            });
             return response;
         } catch (error) {
-            console.log(`Whisper API attempt ${attempt} failed:`, error.response?.status, error.response?.data);
+            console.log(`Groq Whisper API attempt ${attempt} failed:`, error.status, error.message);
             
             // If it's a rate limit error (429), wait and retry
-            if (error.response?.status === 429 && attempt < maxRetries) {
-                const retryAfter = error.response.headers['retry-after'] || Math.pow(2, attempt);
-                const waitTime = parseInt(retryAfter) * 1000; // Convert to milliseconds
+            if (error.status === 429 && attempt < maxRetries) {
+                const waitTime = Math.pow(2, attempt) * 1000;
                 console.log(`Rate limited. Waiting ${waitTime}ms before retry ${attempt + 1}`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
                 continue;
             }
             
-            // If it's not a rate limit error or we've exhausted retries, throw the error
+            // If it's not a rate limit error or we've exhausted retries, throw
             throw error;
         }
     }
@@ -53,33 +54,54 @@ export const transcribeAudio = async (req, res) => {
             });
         }
 
-        if (!OPENAI_API_KEY) {
+        if (!GROQ_API_KEY) {
             return res.status(500).json({
                 success: false,
-                message: 'Speech-to-text service not configured. Please add OPENAI_API_KEY to environment variables.'
+                message: 'Speech-to-text service not configured. Please add GROQ_API_KEY to environment variables.'
             });
         }
 
         // Download the audio file from Cloudinary
+        console.log('📥 Downloading audio file for transcription:', audioUrl);
         const audioResponse = await axios.get(audioUrl, {
-            responseType: 'arraybuffer'
+            responseType: 'arraybuffer',
+            timeout: 60000 // 60 second timeout for large files
         });
 
-        // Create FormData for OpenAI Whisper API
-        const formData = new FormData();
-        formData.append('file', audioResponse.data, {
-            filename: 'audio.webm',
-            contentType: 'audio/webm'
-        });
-        formData.append('model', 'whisper-1');
-        formData.append('response_format', 'verbose_json');
-        formData.append('language', 'en');
+        const contentType = audioResponse.headers['content-type'] || 'audio/webm';
+        
+        // Determine file extension from content type
+        const extMap = {
+            'audio/webm': 'webm',
+            'audio/mpeg': 'mp3',
+            'audio/mp3': 'mp3',
+            'audio/wav': 'wav',
+            'audio/ogg': 'ogg',
+            'audio/aac': 'aac',
+            'audio/mp4': 'm4a',
+            'audio/m4a': 'm4a',
+            'audio/flac': 'flac',
+            'video/webm': 'webm',  // Some audio recorded as video/webm
+            'video/mp4': 'mp4'
+        };
+        const ext = extMap[contentType] || 'webm';
+        const fileName = `audio.${ext}`;
 
-        // Call OpenAI Whisper API with retry logic
-        const whisperResponse = await callWhisperAPIWithRetry(formData, 3);
+        console.log(`🎤 Sending ${(audioResponse.data.byteLength / 1024).toFixed(1)}KB audio to Groq Whisper...`);
 
-        // Extract transcription from response
-        const { text, language, duration, segments } = whisperResponse.data;
+        // Call Groq Whisper API with retry logic
+        const whisperResponse = await callWhisperAPIWithRetry(
+            audioResponse.data,
+            fileName,
+            contentType,
+            3
+        );
+
+        // Extract transcription from Groq response
+        const text = whisperResponse.text;
+        const language = whisperResponse.language || 'en';
+        const duration = whisperResponse.duration || 0;
+        const segments = whisperResponse.segments || [];
 
         if (!text || text.trim().length === 0) {
             return res.status(400).json({
@@ -89,52 +111,53 @@ export const transcribeAudio = async (req, res) => {
         }
 
         // Calculate average confidence from segments
-        let avgConfidence = 0.9; // Default confidence
+        let avgConfidence = 0.9;
         if (segments && segments.length > 0) {
             const totalConfidence = segments.reduce((sum, segment) => sum + (segment.avg_logprob || 0), 0);
             avgConfidence = Math.max(0, Math.min(1, Math.exp(totalConfidence / segments.length)));
         }
 
+        console.log(`✅ Transcription complete: ${text.length} chars, ${duration.toFixed(1)}s, lang=${language}`);
+
         res.json({
             success: true,
             transcription: text.trim(),
             confidence: avgConfidence,
-            language: language || 'en',
-            duration: duration || 0,
-            segments: segments || []
+            language: language,
+            duration: duration,
+            segments: segments
         });
 
     } catch (error) {
-        console.error('Whisper API error:', error);
+        console.error('Groq Whisper API error:', error);
         
-        if (error.response?.status === 400) {
+        if (error.status === 400) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid audio format or poor audio quality. Please try recording again.',
-                error: error.response.data?.error
+                error: error.message
             });
         }
 
-        if (error.response?.status === 401) {
+        if (error.status === 401) {
             return res.status(500).json({
                 success: false,
-                message: 'OpenAI API key is invalid. Please check your API key configuration.'
+                message: 'Groq API key is invalid. Please check your API key configuration.'
             });
         }
 
-        if (error.response?.status === 429) {
-            const retryAfter = error.response.headers['retry-after'] || 60;
+        if (error.status === 429) {
             return res.status(429).json({
                 success: false,
-                message: `Rate limit exceeded. Please wait ${retryAfter} seconds before trying again.`,
-                retryAfter: parseInt(retryAfter)
+                message: 'Rate limit exceeded. Please wait a moment before trying again.',
+                retryAfter: 10
             });
         }
 
         res.status(500).json({
             success: false,
             message: 'Failed to transcribe audio. Please try again.',
-            error: error.response?.data?.error || error.message
+            error: error.message
         });
     }
 };
@@ -145,7 +168,7 @@ export const getWebSpeechInfo = (req, res) => {
         res.json({
             success: true,
             supported: true,
-            provider: 'OpenAI Whisper',
+            provider: 'Groq Whisper (Free Tier)',
             languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh', 'ar', 'hi'],
             features: [
                 'automatic_punctuation',
@@ -155,14 +178,15 @@ export const getWebSpeechInfo = (req, res) => {
                 'noise_robustness',
                 'accent_adaptation'
             ],
-            model: 'whisper-1',
-            cost: '$0.006 per minute',
+            model: WHISPER_MODEL,
+            cost: 'FREE (Groq free tier)',
             advantages: [
                 'High accuracy transcription',
                 'Supports 99+ languages',
                 'Handles various accents and dialects',
                 'Works with noisy audio',
-                'Automatic punctuation and capitalization'
+                'Automatic punctuation and capitalization',
+                'Free tier with generous rate limits'
             ]
         });
     } catch (error) {

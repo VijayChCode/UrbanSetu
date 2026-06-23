@@ -11,10 +11,59 @@ import { getRelevantCachedData, needsReindexing, indexAllWebsiteData } from '../
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 // Using Llama 3.3 70B Versatile as the primary model
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+// Vision model for multimodal image understanding (FREE on Groq)
+const GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 const groq = new Groq({
     apiKey: GROQ_API_KEY
 });
+
+// Helper: Analyze image(s) using Groq Vision model (Llama 4 Scout - multimodal)
+const analyzeImageWithVision = async (imageUrls, userQuestion) => {
+    try {
+        if (!imageUrls || imageUrls.length === 0) return null;
+
+        console.log(`👁️ Analyzing ${imageUrls.length} image(s) with Groq Vision...`);
+
+        // Build multimodal content with image_url parts
+        const content = [
+            {
+                type: "text",
+                text: `Analyze the following image(s) in detail. The user's question is: "${userQuestion || 'Please describe this image.'}"\n\nProvide a comprehensive description including:\n- What is shown in the image (objects, text, scenes, people, etc.)\n- Any text visible in the image (read ALL text carefully)\n- Layout, structure, and visual composition\n- Any relevant details that would help answer the user's question\n\nBe thorough but concise. Focus on details most relevant to the user's question.`
+            }
+        ];
+
+        // Add each image URL as a content part
+        for (const url of imageUrls.slice(0, 4)) { // Max 4 images
+            content.push({
+                type: "image_url",
+                image_url: { url: url }
+            });
+        }
+
+        const visionResponse = await groq.chat.completions.create({
+            model: GROQ_VISION_MODEL,
+            messages: [
+                {
+                    role: "user",
+                    content: content
+                }
+            ],
+            max_completion_tokens: 1500,
+            temperature: 0.3
+        });
+
+        const description = visionResponse.choices?.[0]?.message?.content;
+        if (description && description.trim()) {
+            console.log(`✅ Vision analysis complete: ${description.length} chars`);
+            return description.trim();
+        }
+        return null;
+    } catch (error) {
+        console.error('⚠️ Vision analysis failed (falling back to text-only):', error.message);
+        return null;
+    }
+};
 
 import { toolRegistry, toolDefinitions } from '../services/aiToolsService.js';
 
@@ -760,10 +809,26 @@ export const chatWithGemini = async (req, res) => {
             }).join('\n');
             finalUserMessage += `\n\n[SENTINEL AUDIT RESULTS - DO NOT call sentinel_image_auditor, these images are already analyzed]:\n${auditSummaries}`;
         }
+
+        // Vision Analysis: If images are present, analyze them with Groq Vision (Llama 4 Scout)
+        // This gives the LLM actual visual understanding of the image content
+        const allImageUrls = [...(images || []), ...(imageUrl ? [imageUrl] : [])].filter(Boolean);
+        if (allImageUrls.length > 0) {
+            try {
+                const visionDescription = await analyzeImageWithVision(allImageUrls, sanitizedMessage);
+                if (visionDescription) {
+                    finalUserMessage += `\n\n[VISION ANALYSIS - Detailed visual understanding of the uploaded image(s)]:\n${visionDescription}`;
+                }
+            } catch (visionErr) {
+                console.error('Vision analysis error (non-fatal):', visionErr.message);
+            }
+        }
+
         messages.push({
             role: 'user',
             content: finalUserMessage
         });
+
 
         // -------------------------------------------------------------
         // TOOL USE & STREAMING LOGIC
