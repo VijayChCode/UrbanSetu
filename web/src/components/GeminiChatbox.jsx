@@ -3400,7 +3400,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         };
     }, [openHistoryMenuSessionId]);
 
-    // Keyboard shortcuts: Ctrl+F focus, Esc close
+    // Keyboard shortcuts: Ctrl+/ focus, Esc close, and bottom menu options
     useEffect(() => {
         if (!isOpen) return;
 
@@ -3412,6 +3412,55 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }
             } else if (event.key === 'Escape') {
                 setIsOpen(false);
+            } else {
+                const isCtrl = event.ctrlKey || event.metaKey;
+                const isShift = event.shiftKey;
+
+                // 1. Upload File: Ctrl+U
+                if (isCtrl && !isShift && event.key.toLowerCase() === 'u') {
+                    event.preventDefault();
+                    if (isBlockedByPolicy) {
+                        toast.warning('File upload is disabled during your policy cooldown.');
+                        return;
+                    }
+                    if (!currentUser) {
+                        toast.info('Please login to upload files');
+                        return;
+                    }
+                    setShowFileUpload(true);
+                }
+                // 2. Voice Input: Ctrl+Shift+A
+                else if (isCtrl && isShift && event.key.toLowerCase() === 'a') {
+                    event.preventDefault();
+                    if (isBlockedByPolicy) {
+                        toast.warning('Voice input is disabled during your policy cooldown.');
+                        return;
+                    }
+                    toggleVoiceInput();
+                }
+                // 3. Image Link: Ctrl+Shift+I
+                else if (isCtrl && isShift && event.key.toLowerCase() === 'i') {
+                    event.preventDefault();
+                    if (isBlockedByPolicy) {
+                        toast.warning('Image auditing is disabled during your policy cooldown.');
+                        return;
+                    }
+                    if (!currentUser) {
+                        toast.info('Please login to use image link');
+                        return;
+                    }
+                    setShowImageLinkModal(true);
+                }
+                // 4. Think longer: Ctrl+Shift+M
+                else if (isCtrl && isShift && event.key.toLowerCase() === 'm') {
+                    event.preventDefault();
+                    setPrePromptPreference(prev => prev === 'think' ? null : 'think');
+                }
+                // 5. Search the web: Ctrl+Shift+S
+                else if (isCtrl && isShift && event.key.toLowerCase() === 's') {
+                    event.preventDefault();
+                    setPrePromptPreference(prev => prev === 'search' ? null : 'search');
+                }
             }
         };
 
@@ -3419,7 +3468,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isOpen]);
+    }, [isOpen, currentUser, isBlockedByPolicy, toggleVoiceInput]);
 
     // Enhanced scroll lock for modal with mobile support
     useEffect(() => {
@@ -9836,13 +9885,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-600'}`}
                                                     title="More options"
                                                     disabled={isListening || isProcessingVoice}
-                                                >
-                                                    <FaEllipsisV size={16} />
-                                                </button>
-
-                                                {/* Options Menu */}
+                                                                                       {/* Options Menu */}
                                                 {showInputOptions && (
-                                                    <div className={`absolute bottom-10 left-0 w-48 rounded-lg shadow-xl border overflow-hidden z-50 transform origin-bottom-left transition-all duration-200 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                                                    <div className={`absolute bottom-10 left-0 w-48 hover:w-72 group/menu rounded-lg shadow-xl border overflow-hidden z-50 transform origin-bottom-left transition-all duration-300 ease-in-out ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -9858,12 +9903,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 setShowInputOptions(false);
                                                             }}
                                                             disabled={isBlockedByPolicy}
-                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
-                                                                <FaPaperclip size={14} />
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                                                                    <FaPaperclip size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Upload File</span>
                                                             </div>
-                                                            <span className="text-sm font-medium">Upload File</span>
+                                                            <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+U</span>
                                                         </button>
 
                                                         <button
@@ -9877,12 +9925,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 setShowInputOptions(false);
                                                             }}
                                                             disabled={isBlockedByPolicy}
-                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
-                                                                <FaMicrophone size={14} />
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
+                                                                    <FaMicrophone size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Voice Input</span>
                                                             </div>
-                                                            <span className="text-sm font-medium">Voice Input</span>
+                                                            <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+A</span>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -9899,12 +9950,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 setShowInputOptions(false);
                                                             }}
                                                             disabled={isBlockedByPolicy}
-                                                            className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
-                                                                <FaImage size={14} />
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                                                                    <FaImage size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Image Link</span>
                                                             </div>
-                                                            <span className="text-sm font-medium">Image Link</span>
+                                                            <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+I</span>
                                                         </button>
 
                                                         <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
@@ -9923,9 +9977,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Think longer</span>
                                                             </div>
-                                                            {prePromptPreference === 'think' && (
-                                                                <FaCheck className={isDarkMode ? 'text-purple-400' : 'text-purple-600'} size={12} />
-                                                            )}
+                                                            <div className="flex items-center gap-2 ml-auto">
+                                                                {prePromptPreference === 'think' && (
+                                                                    <FaCheck className={isDarkMode ? 'text-purple-400' : 'text-purple-600'} size={12} />
+                                                                )}
+                                                                <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+M</span>
+                                                            </div>
                                                         </button>
 
                                                         <button
@@ -9942,9 +9999,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Search the web</span>
                                                             </div>
-                                                            {prePromptPreference === 'search' && (
-                                                                <FaCheck className={isDarkMode ? 'text-teal-400' : 'text-teal-600'} size={12} />
-                                                            )}
+                                                            <div className="flex items-center gap-2 ml-auto">
+                                                                {prePromptPreference === 'search' && (
+                                                                    <FaCheck className={isDarkMode ? 'text-teal-400' : 'text-teal-650'} size={12} />
+                                                                )}
+                                                                <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+S</span>
+                                                            </div>
                                                         </button>
                                                     </div>
                                                 )}
@@ -13093,6 +13153,42 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{feat.desc}</p>
                                                 </div>
                                             ))}
+                                        </div>
+                                    </section>
+
+                                    {/* Keyboard Shortcuts */}
+                                    <section>
+                                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                            <FaClipboardList className="text-blue-500" />
+                                            Keyboard Shortcuts
+                                        </h3>
+                                        <div className={`p-5 rounded-2xl ${isDarkMode ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Focus text input</span>
+                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + /</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Upload File</span>
+                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + U</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Voice Input</span>
+                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + A</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Image Link</span>
+                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + I</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Think longer (deep thinking)</span>
+                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + M</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Search the web</span>
+                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + S</kbd>
+                                                </div>
+                                            </div>
                                         </div>
                                     </section>
 
