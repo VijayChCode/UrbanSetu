@@ -47,10 +47,20 @@ const THINKING_TAGS = [
     "Ensuring accuracy..."
 ];
 
-const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, isDeepThinking = false, isWebSearch = false }) => {
+const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, schedulerType = 'create', isDeepThinking = false, isWebSearch = false }) => {
     const [index, setIndex] = useState(0);
 
-    const schedulerTags = [
+    const schedulerTags = schedulerType === 'reschedule' ? [
+        "Analyzing Query...",
+        "Finding Active Reminders...",
+        "Rescheduling Task...",
+        "Finalizing Task Update..."
+    ] : schedulerType === 'cancel' ? [
+        "Analyzing Query...",
+        "Identifying Target Task...",
+        "Canceling Reminder...",
+        "Finalizing Reminder Cancellation..."
+    ] : [
         "Analyzing Query...",
         "Identifying Tasks...",
         "Creating Task...",
@@ -93,7 +103,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
 
     useEffect(() => {
         setIndex(0);
-    }, [isScheduler, isDeepThinking, isWebSearch]);
+    }, [isScheduler, schedulerType, isDeepThinking, isWebSearch]);
 
     useEffect(() => {
         let timer;
@@ -122,7 +132,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
 
         processTags();
         return () => clearTimeout(timer);
-    }, [index, isScheduler, isDeepThinking, isWebSearch, tagsToUse.length]);
+    }, [index, isScheduler, schedulerType, isDeepThinking, isWebSearch, tagsToUse.length]);
 
     return (
         <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
@@ -396,6 +406,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isCurrentRequestScheduler, setIsCurrentRequestScheduler] = useState(false);
+    const [currentSchedulerType, setCurrentSchedulerType] = useState('create'); // 'create', 'reschedule', 'cancel'
     const [activeRetryMenu, setActiveRetryMenu] = useState(null);
     const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
     const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
@@ -3466,6 +3477,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(userMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
+            if (/reschedule|postpone|change/i.test(userMessage)) {
+                setCurrentSchedulerType('reschedule');
+            } else if (/cancel|delete|remove/i.test(userMessage)) {
+                setCurrentSchedulerType('cancel');
+            } else {
+                setCurrentSchedulerType('create');
+            }
         }
         const currentTone = currentUser ? tone : 'neutral'; // Use default tone for public users
         if (currentTone && currentTone !== 'neutral') {
@@ -3674,6 +3692,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     } else if (streamData.type === 'tool_call') {
                                         if (['schedule_reminder', 'get_user_reminders', 'reschedule_reminder', 'cancel_reminder'].includes(streamData.name)) {
                                             setIsCurrentRequestScheduler(true);
+                                            if (streamData.name === 'reschedule_reminder') {
+                                                setCurrentSchedulerType('reschedule');
+                                            } else if (streamData.name === 'cancel_reminder') {
+                                                setCurrentSchedulerType('cancel');
+                                            } else {
+                                                setCurrentSchedulerType('create');
+                                            }
                                         }
                                     } else if (streamData.type === 'done') {
                                         isStreamingComplete = true;
@@ -3989,6 +4014,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } finally {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
+            setCurrentSchedulerType('create');
 
             // Auto-sync session title if it's a new conversation
             if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
@@ -4092,6 +4118,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(originalMessage);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
+            if (/reschedule|postpone|change/i.test(originalMessage)) {
+                setCurrentSchedulerType('reschedule');
+            } else if (/cancel|delete|remove/i.test(originalMessage)) {
+                setCurrentSchedulerType('cancel');
+            } else {
+                setCurrentSchedulerType('create');
+            }
         }
 
         // Remove the error message
@@ -4218,6 +4251,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } finally {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
+            setCurrentSchedulerType('create');
             setIsCurrentRequestDeepThinking(false);
             setIsCurrentRequestWebSearch(false);
         }
@@ -4739,6 +4773,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const isSchedulerRequest = /remind|schedule|timer|alarm|alert|clock|wake me up|wake up|notify|reminder|task|cancel|delete|reschedule|postpone/i.test(messageContent);
         if (isSchedulerRequest) {
             setIsCurrentRequestScheduler(true);
+            if (/reschedule|postpone|change/i.test(messageContent)) {
+                setCurrentSchedulerType('reschedule');
+            } else if (/cancel|delete|remove/i.test(messageContent)) {
+                setCurrentSchedulerType('cancel');
+            } else {
+                setCurrentSchedulerType('create');
+            }
         }
 
         try {
@@ -4851,6 +4892,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } finally {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
+            setCurrentSchedulerType('create');
             abortControllerRef.current = null;
         }
     };
@@ -7523,7 +7565,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {hasChatError ? (
                                             <span>Chat Error Detected</span>
                                         ) : isLoading ? (
-                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
+                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
                                         ) : showTypingIndicator ? (
                                             <span>Answering...</span>
                                         ) : (
@@ -8831,7 +8873,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.2s' }}></div>
                                             </div>
                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium flex items-center gap-2`}>
-                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
+                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
                                             </span>
                                         </div>
                                     </div>
