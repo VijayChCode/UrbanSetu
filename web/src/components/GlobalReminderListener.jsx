@@ -222,7 +222,7 @@ export default function GlobalReminderListener() {
           </h3>
 
           <p className="text-sm text-slate-300/90 mb-8 max-w-xs leading-relaxed">
-            This task was scheduled for <span className="text-indigo-300 font-semibold">{new Date(activeReminder.scheduledTime).toLocaleString()}</span>.
+            This task was scheduled for <span className="text-indigo-300 font-semibold">{new Date(activeReminder.scheduledTime).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).replace(',', '')}</span>.
           </p>
 
           {/* Action buttons */}

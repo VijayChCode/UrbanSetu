@@ -9800,7 +9800,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </div>
                                                                             <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3`}>
                                                                                 <FaCalendarAlt size={12} className="text-indigo-400" />
-                                                                                {new Date(reminder.scheduledTime).toLocaleString()}
+                                                                                {new Date(reminder.scheduledTime).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).replace(',', '')}
                                                                             </div>
                                                                             {isRescheduling && isRescheduling._id === reminder._id ? (
                                                                                 <div className="space-y-2 pt-1 border-t border-dashed border-gray-700">
@@ -9904,7 +9904,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         </div>
                                                                         <div className={`text-xs flex items-center gap-1.5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                                                             <FaCalendarAlt size={12} className="opacity-70" />
-                                                                            {new Date(reminder.scheduledTime).toLocaleString()}
+                                                                            {new Date(reminder.scheduledTime).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).replace(',', '')}
                                                                         </div>
                                                                     </div>
                                                                 ))}
