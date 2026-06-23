@@ -658,6 +658,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [activeRetryMenu, setActiveRetryMenu] = useState(null);
     const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
     const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
+    const [prePromptPreference, setPrePromptPreference] = useState(null); // 'think' | 'search' | null
     const [deleteReminderId, setDeleteReminderId] = useState(null);
     const [sessionId, setSessionId] = useState(null);
     const [currentChatName, setCurrentChatName] = useState('');
@@ -3870,6 +3871,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setPendingImages([]); // Clear pending images after they are attached
         }
 
+        // Apply pre-prompt preference directives
+        if (prePromptPreference === 'think') {
+            setIsCurrentRequestDeepThinking(true);
+            aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n[System Directive: Think longer and provide deep step-by-step reasoning]` : "[System Directive: Think longer and provide deep step-by-step reasoning]";
+        } else if (prePromptPreference === 'search') {
+            setIsCurrentRequestWebSearch(true);
+            aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n[System Directive: Search the web for latest listings, guides, and real estate information]` : "[System Directive: Search the web for latest listings, guides, and real estate information]";
+        }
+        setPrePromptPreference(null);
+
         setInputMessage('');
         setIsExpanded(false);
         // Reset height
@@ -4442,6 +4453,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsCurrentRequestScheduler(false);
             setCurrentSchedulerType('create');
             setCurrentRequestMediaType(null);
+            setIsCurrentRequestDeepThinking(false);
+            setIsCurrentRequestWebSearch(false);
 
             // Auto-sync session title if it's a new conversation
             if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
@@ -9893,6 +9906,46 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </div>
                                                             <span className="text-sm font-medium">Image Link</span>
                                                         </button>
+
+                                                        <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setPrePromptPreference(prev => prev === 'think' ? null : 'think');
+                                                                setShowInputOptions(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'}`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
+                                                                    <FaBrain size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Think longer</span>
+                                                            </div>
+                                                            {prePromptPreference === 'think' && (
+                                                                <FaCheck className={isDarkMode ? 'text-purple-400' : 'text-purple-600'} size={12} />
+                                                            )}
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setPrePromptPreference(prev => prev === 'search' ? null : 'search');
+                                                                setShowInputOptions(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'}`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-600'}`}>
+                                                                    <FaGlobe size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Search the web</span>
+                                                            </div>
+                                                            {prePromptPreference === 'search' && (
+                                                                <FaCheck className={isDarkMode ? 'text-teal-400' : 'text-teal-600'} size={12} />
+                                                            )}
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -9997,6 +10050,37 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 )}
                                                             </div>
                                                         ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Pre-prompt Preference Pill */}
+                                                {prePromptPreference && (
+                                                    <div className="flex px-4 py-1.5 mb-1 animate-fadeIn bg-transparent">
+                                                        <div className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-md border transition-all duration-300 cursor-default ${
+                                                            prePromptPreference === 'think'
+                                                                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400 dark:bg-purple-500/20 dark:text-purple-300 shadow-purple-500/5'
+                                                                : 'bg-teal-500/10 border-teal-500/30 text-teal-400 dark:bg-teal-500/20 dark:text-teal-300 shadow-teal-500/5'
+                                                        }`}>
+                                                            {prePromptPreference === 'think' ? (
+                                                                <>
+                                                                    <FaBrain className="text-purple-500 animate-pulse" size={12} />
+                                                                    <span>Think longer</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <FaGlobe className="text-teal-500 animate-pulse" size={12} />
+                                                                    <span>Search the web</span>
+                                                                </>
+                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPrePromptPreference(null)}
+                                                                className="ml-1 p-0.5 rounded-full hover:bg-black/20 dark:hover:bg-white/20 text-current transition-opacity duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer"
+                                                                title="Remove preference"
+                                                            >
+                                                                <FaTimes size={10} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 )}
 

@@ -594,7 +594,7 @@ export const chatWithGemini = async (req, res) => {
                 - If the "cancel_reminder" tool returns that confirmation is required (requires_confirmation: true), you MUST ask the user to confirm by outputting this exact XML tag in your response: \`<confirm-cancel id="REMINDER_ID" text="REMINDER_TEXT" />\`. Do NOT execute the cancellation until the user confirms.
                 - If the user explicitly confirms (e.g., in response to the options like "Yes, cancel the reminder..."), you MUST call the "cancel_reminder" tool with that reminderId and confirmed: true to finalize the deletion.
                 - When a user asks to reschedule, change, postpone, or modify the time of a reminder (e.g., "move my physics study reminder to 5 PM today"), you MUST first call "get_user_reminders" to retrieve the active list, identify the matching reminder ID, and then call the "reschedule_reminder" tool with that reminderId and the new ISO date/time string calculated relative to the CURRENT USER LOCAL TIME.
-             
+            
             12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
                 - If the user asks to identify a person, find a person's name, or analyze details not in the provided [VISION ANALYSIS] context, explain politely that you cannot determine specific personal identities or details from the image alone.
                 - Do NOT call "sentinel_image_auditor" unless the user explicitly asks to "audit", "verify", or "check quality" of an image. Never call it for general questions about what is in the image, who is in the image, or to identify people.
