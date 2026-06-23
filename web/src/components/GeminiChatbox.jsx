@@ -2507,11 +2507,41 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         applySessionSettings(data.data.settings);
                     }
 
+                    // Check if AI is answering (loading) and merge active messages
+                    let activeLocal = [];
+                    if (isLoading) {
+                        const lastMsg = messages[messages.length - 1];
+                        if (lastMsg) {
+                            if (lastMsg.role === 'assistant') {
+                                activeLocal = messages.slice(-2);
+                            } else if (lastMsg.role === 'user') {
+                                activeLocal = messages.slice(-1);
+                            }
+                        }
+                    }
+
+                    // Check if the user message in activeLocal is already in serverMessages
+                    const activeUserMsg = activeLocal.find(m => m.role === 'user');
+                    let isUserMsgSaved = false;
+                    if (activeUserMsg && serverMessages.length > 0) {
+                        const lastServerMsg = serverMessages[serverMessages.length - 1];
+                        isUserMsgSaved = lastServerMsg && 
+                                           lastServerMsg.role === 'user' && 
+                                           lastServerMsg.content === activeUserMsg.content;
+                    }
+
+                    // If user message is already saved by backend, remove it from activeLocal to prevent duplicates
+                    const finalActiveLocal = isUserMsgSaved && activeUserMsg
+                        ? activeLocal.filter(m => m !== activeUserMsg)
+                        : activeLocal;
+
+                    const finalMessages = [...serverMessages, ...finalActiveLocal];
+
                     const currentMessageCount = messages.length;
-                    const diff = serverMessages.length - currentMessageCount;
+                    const diff = finalMessages.length - currentMessageCount;
 
                     if (diff !== 0) {
-                        setMessages(serverMessages);
+                        setMessages(finalMessages);
                         if (diff > 0) {
                             toast.success(`Messages refreshed! ${diff} new messages loaded.`);
                         } else {
@@ -2520,16 +2550,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     } else {
                         // Check if any messages have been updated
                         let hasUpdates = false;
-                        for (let i = 0; i < serverMessages.length; i++) {
-                            if (serverMessages[i].content !== messages[i]?.content ||
-                                serverMessages[i].timestamp !== messages[i]?.timestamp) {
+                        for (let i = 0; i < finalMessages.length; i++) {
+                            if (finalMessages[i].content !== messages[i]?.content ||
+                                finalMessages[i].timestamp !== messages[i]?.timestamp ||
+                                finalMessages[i].isStreaming !== messages[i]?.isStreaming) {
                                 hasUpdates = true;
                                 break;
                             }
                         }
 
                         if (hasUpdates) {
-                            setMessages(serverMessages);
+                            setMessages(finalMessages);
                             toast.success('Messages refreshed! Updates loaded.');
                         } else {
                             toast.info('Messages are already up to date.');

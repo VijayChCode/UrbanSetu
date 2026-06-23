@@ -418,6 +418,31 @@ export const chatWithGemini = async (req, res) => {
         }
         // -------------------------------------------------------------
 
+        // Save user message immediately to the database so it's not lost
+        if (userId) {
+            try {
+                const chatHistory = await ChatHistory.findOrCreateSession(userId, currentSessionId);
+                const lastMsg = chatHistory.messages[chatHistory.messages.length - 1];
+                const isDuplicate = lastMsg && 
+                                    lastMsg.role === 'user' && 
+                                    lastMsg.content === userDisplayContent &&
+                                    (new Date() - new Date(lastMsg.timestamp)) < 10000; // within 10 seconds
+
+                if (!isDuplicate) {
+                    chatHistory.messages.push({
+                        role: 'user',
+                        content: userDisplayContent,
+                        timestamp: new Date(),
+                        ...media
+                    });
+                    await chatHistory.save();
+                    console.log('✅ User message saved immediately to backend history');
+                }
+            } catch (saveError) {
+                console.error('Error saving user message immediately:', saveError);
+            }
+        }
+
         const getSystemPrompt = async (tone, userMessage, user = null, clientTime = null) => {
             const clientDateObj = clientTime ? new Date(clientTime) : new Date();
             const timeInfo = `CURRENT USER LOCAL TIME: ${clientTime ? clientTime : clientDateObj.toString()} (ISO UTC: ${clientDateObj.toISOString()})`;
@@ -1053,13 +1078,19 @@ export const chatWithGemini = async (req, res) => {
                             console.error("Failed to auto-generate chat title (Streaming):", titleError);
                         }
                     }
-                    // Combine multiple adds into one save for efficiency and to avoid VersionError
-                    chatHistory.messages.push({
-                        role: 'user',
-                        content: userDisplayContent,
-                        timestamp: new Date(),
-                        ...media
-                    });
+                    // Check if the user message is already the last message to avoid duplicates
+                    const lastMsg = chatHistory.messages[chatHistory.messages.length - 1];
+                    const hasUserMsg = lastMsg && lastMsg.role === 'user' && lastMsg.content === userDisplayContent;
+                    
+                    if (!hasUserMsg) {
+                        chatHistory.messages.push({
+                            role: 'user',
+                            content: userDisplayContent,
+                            timestamp: new Date(),
+                            ...media
+                        });
+                    }
+
                     chatHistory.messages.push({
                         role: 'assistant',
                         content: fullResponse,
@@ -1085,12 +1116,16 @@ export const chatWithGemini = async (req, res) => {
                             // On collision, refetch and append
                             const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
                             if (latestHistory) {
-                                latestHistory.messages.push({
-                                    role: 'user',
-                                    content: userDisplayContent,
-                                    timestamp: new Date(),
-                                    ...media
-                                });
+                                const lastLatestMsg = latestHistory.messages[latestHistory.messages.length - 1];
+                                const hasUserMsgLatest = lastLatestMsg && lastLatestMsg.role === 'user' && lastLatestMsg.content === userDisplayContent;
+                                if (!hasUserMsgLatest) {
+                                    latestHistory.messages.push({
+                                        role: 'user',
+                                        content: userDisplayContent,
+                                        timestamp: new Date(),
+                                        ...media
+                                    });
+                                }
                                 latestHistory.messages.push({
                                     role: 'assistant',
                                     content: fullResponse,
@@ -1165,12 +1200,18 @@ export const chatWithGemini = async (req, res) => {
                     }
 
 
-                    chatHistory.messages.push({
-                        role: 'user',
-                        content: userDisplayContent,
-                        timestamp: new Date(),
-                        ...media
-                    });
+                    // Check if the user message is already the last message to avoid duplicates
+                    const lastMsg = chatHistory.messages[chatHistory.messages.length - 1];
+                    const hasUserMsg = lastMsg && lastMsg.role === 'user' && lastMsg.content === userDisplayContent;
+
+                    if (!hasUserMsg) {
+                        chatHistory.messages.push({
+                            role: 'user',
+                            content: userDisplayContent,
+                            timestamp: new Date(),
+                            ...media
+                        });
+                    }
 
                     chatHistory.messages.push({
                         role: 'assistant',
@@ -1196,12 +1237,16 @@ export const chatWithGemini = async (req, res) => {
                         if (saveError.name === 'VersionError') {
                             const latestHistory = await ChatHistory.findOne({ userId, sessionId: currentSessionId, isActive: true });
                             if (latestHistory) {
-                                latestHistory.messages.push({
-                                    role: 'user',
-                                    content: userDisplayContent,
-                                    timestamp: new Date(),
-                                    ...media
-                                });
+                                const lastLatestMsg = latestHistory.messages[latestHistory.messages.length - 1];
+                                const hasUserMsgLatest = lastLatestMsg && lastLatestMsg.role === 'user' && lastLatestMsg.content === userDisplayContent;
+                                if (!hasUserMsgLatest) {
+                                    latestHistory.messages.push({
+                                        role: 'user',
+                                        content: userDisplayContent,
+                                        timestamp: new Date(),
+                                        ...media
+                                    });
+                                }
                                 latestHistory.messages.push({
                                     role: 'assistant',
                                     content: responseText,
