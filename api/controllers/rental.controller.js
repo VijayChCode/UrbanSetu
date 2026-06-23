@@ -4441,4 +4441,51 @@ export const blockLoanUser = async (req, res, next) => {
   }
 };
 
+// Add a custom clause to an existing contract (append, don't replace)
+export const addContractClause = async (req, res, next) => {
+  try {
+    const { contractId } = req.params;
+    const { clause } = req.body;
+    const userId = req.user.id;
+
+    if (!clause || !clause.trim()) {
+      return res.status(400).json({ message: "Clause text is required." });
+    }
+
+    const contract = await RentLockContract.findOne({
+      $or: [
+        { _id: contractId },
+        { contractId: contractId }
+      ]
+    });
+
+    if (!contract) {
+      return res.status(404).json({ message: "Contract not found." });
+    }
+
+    // Verify user is tenant or landlord of this contract
+    const isTenant = String(contract.tenantId) === String(userId);
+    const isLandlord = String(contract.landlordId) === String(userId);
+
+    if (!isTenant && !isLandlord) {
+      return res.status(403).json({ message: "Only tenant or landlord can add clauses." });
+    }
+
+    // Append the clause (don't replace existing ones)
+    if (!contract.customClauses) {
+      contract.customClauses = [];
+    }
+
+    contract.customClauses.push(clause.trim());
+    await contract.save();
+
+    res.json({
+      success: true,
+      message: "Clause added successfully.",
+      customClauses: contract.customClauses
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 

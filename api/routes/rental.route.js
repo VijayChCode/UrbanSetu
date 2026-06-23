@@ -48,7 +48,8 @@ import {
   proxyDocumentDownload,
   sendLegalNotice,
   writeOffLoan,
-  blockLoanUser
+  blockLoanUser,
+  addContractClause
 } from '../controllers/rental.controller.js';
 import { draftLegalClause } from '../controllers/legalAssistant.controller.js';
 
@@ -63,6 +64,7 @@ router.get("/contracts/:contractId", verifyToken, getContract);
 router.post("/contracts/:contractId/sign", verifyToken, signContract);
 router.put("/contracts/:contractId/status", verifyToken, updateContractStatus); // Admin: Update contract status
 router.get("/contracts/:contractId/download", verifyToken, downloadContractPDF);
+router.post("/contracts/:contractId/add-clause", verifyToken, addContractClause); // Append AI-drafted clause to contract
 
 // Rent Wallet Routes
 router.get("/wallet/:contractId", verifyToken, getWallet);

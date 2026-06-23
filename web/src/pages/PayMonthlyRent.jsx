@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
@@ -46,6 +46,27 @@ export default function PayMonthlyRent() {
   });
   const [newBadges, setNewBadges] = useState([]);
   const [isTenant, setIsTenant] = useState(false);
+
+  // AI Legal Assistant State
+  const [customClauses, setCustomClauses] = useState([]);
+  const [newClauseInput, setNewClauseInput] = useState('');
+  const [draftingClause, setDraftingClause] = useState(false);
+  const [draftedClauseText, setDraftedClauseText] = useState('');
+  const [savingClause, setSavingClause] = useState(false);
+  const [ellipsis, setEllipsis] = useState('');
+  const clauseInputRef = useRef(null);
+
+  // Ellipsis animation for loading text
+  useEffect(() => {
+    if (draftingClause || savingClause) {
+      const interval = setInterval(() => {
+        setEllipsis(prev => (prev.length >= 3 ? '' : prev + '.'));
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setEllipsis('');
+    }
+  }, [draftingClause, savingClause]);
 
   useEffect(() => {
     if (currentUser) {
@@ -112,6 +133,7 @@ export default function PayMonthlyRent() {
       }
 
       setContract(contractObj);
+      setCustomClauses(contractObj.customClauses || []);
 
       // Fetch wallet - try to fetch regardless of walletId field
       // The API endpoint uses contractId to find the wallet
@@ -247,6 +269,66 @@ export default function PayMonthlyRent() {
     const amount = selectedPayment.amount || contract.lockedRentAmount || 0;
     const penalty = selectedPayment.penaltyAmount || 0;
     return amount + penalty;
+  };
+
+  // AI Legal Assistant: Draft a clause from user description
+  const handleDraftClause = async () => {
+    if (!newClauseInput.trim()) {
+      toast.error('Please describe the clause you want to add.');
+      return;
+    }
+
+    try {
+      setDraftingClause(true);
+      setDraftedClauseText('');
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts/draft-clause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userInput: newClauseInput })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to draft clause');
+      }
+
+      setDraftedClauseText(data.draftedClause);
+      toast.success('Clause drafted! Review it below, then save to contract.');
+    } catch (error) {
+      console.error('AI Drafter Error:', error);
+      toast.error('Failed to generate clause. Please try again.');
+    } finally {
+      setDraftingClause(false);
+    }
+  };
+
+  // Save drafted clause to the contract in DB (append)
+  const handleAddClauseToContract = async () => {
+    if (!draftedClauseText.trim() || !contract) return;
+
+    try {
+      setSavingClause(true);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/rental/contracts/${contract._id}/add-clause`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clause: draftedClauseText })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to save clause');
+      }
+
+      setCustomClauses(data.customClauses || [...customClauses, draftedClauseText]);
+      setDraftedClauseText('');
+      setNewClauseInput('');
+      toast.success('Clause saved to contract!');
+    } catch (error) {
+      console.error('Save Clause Error:', error);
+      toast.error(error.message || 'Failed to save clause.');
+    } finally {
+      setSavingClause(false);
+    }
   };
 
   const handleCreatePayment = async () => {
@@ -658,6 +740,96 @@ export default function PayMonthlyRent() {
                 landlord={contract.landlordId}
                 onDownload={() => { }}
               />
+            </div>
+
+            {/* AI Legal Assistant Section */}
+            <div className="mb-6 border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full uppercase font-bold">AI</span>
+                <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-300 border-none">AI Legal Assistant</h3>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-sm text-purple-800 dark:text-purple-300 mb-2">
+                  Want to add specific terms before paying? Describe them (e.g., &quot;Request receipt within 3 days&quot;, &quot;No penalty if paid within grace period&quot;) and our AI will draft a formal legal clause. New clauses are appended to your contract.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    ref={clauseInputRef}
+                    type="text"
+                    value={newClauseInput}
+                    onChange={(e) => setNewClauseInput(e.target.value)}
+                    placeholder="Describe your custom condition..."
+                    className="flex-1 p-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 w-full dark:bg-gray-800 dark:border-purple-600 dark:text-white dark:placeholder-gray-400"
+                    disabled={draftingClause || savingClause}
+                    onKeyDown={(e) => e.key === 'Enter' && handleDraftClause()}
+                  />
+                  <button
+                    onClick={handleDraftClause}
+                    disabled={draftingClause || !newClauseInput.trim() || savingClause}
+                    className="bg-purple-600 text-white px-4 py-3 sm:py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium w-full sm:w-auto"
+                  >
+                    {draftingClause ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        Drafting{ellipsis}
+                      </>
+                    ) : (
+                      <>
+                        <span>✨ Draft</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Drafted Clause Preview (before saving) */}
+              {draftedClauseText && (
+                <div className="mb-4 bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-purple-400 dark:border-purple-600 shadow-md">
+                  <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300 mb-2 flex items-center gap-1">
+                    📝 Drafted Clause Preview
+                  </h4>
+                  <p className="text-sm text-gray-800 dark:text-gray-300 italic mb-3">"{draftedClauseText}"</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleAddClauseToContract}
+                      disabled={savingClause}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
+                    >
+                      {savingClause ? (
+                        <>
+                          <UrbanSetuSpinner size="sm" isBright={true} />
+                          Saving{ellipsis}
+                        </>
+                      ) : (
+                        <>
+                          <FaCheck /> Save to Contract
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setDraftedClauseText('')}
+                      disabled={savingClause}
+                      className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
+                    >
+                      Discard
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Saved Custom Clauses */}
+              {customClauses.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300">Custom Clauses on Contract:</h4>
+                  {customClauses.map((clause, index) => (
+                    <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-800 flex items-start gap-3 shadow-sm">
+                      <span className="text-purple-500 mt-0.5 text-xs font-bold min-w-[20px]">{index + 1}.</span>
+                      <p className="text-sm text-gray-800 dark:text-gray-300 italic flex-1">"{clause}"</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4">
