@@ -106,7 +106,8 @@ export const chatWithGemini = async (req, res) => {
         enableStreaming = true,
         contextWindow = '4',
         selectedProperties,
-        clientTime
+        clientTime,
+        isOnlyAttachment
     } = req.body;
     const userId = req.user?.id;
     // Normalize client IP (take first one if it's a list from proxy)
@@ -320,7 +321,8 @@ export const chatWithGemini = async (req, res) => {
         };
 
 
-        const isRestricted = await moderateContent(userTypedMessage);
+        const isOnlyAttachmentCheck = isOnlyAttachment === true || userTypedMessage.startsWith('Attached:') || userTypedMessage.trim() === '';
+        const isRestricted = isOnlyAttachmentCheck ? false : await moderateContent(userTypedMessage);
 
         if (isRestricted) {
             console.warn(`[Moderation] Blocked restricted content from user ${userId || 'guest'}`);
