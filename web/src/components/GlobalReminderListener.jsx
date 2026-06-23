@@ -210,7 +210,7 @@ export default function GlobalReminderListener() {
           {/* Animated Alarm GIF */}
           <div className="w-20 h-20 rounded-full bg-indigo-500/10 flex items-center justify-center mb-6 border border-indigo-500/30 shadow-inner relative overflow-hidden">
             <span className="absolute inset-0 rounded-full bg-indigo-500/10 animate-ping opacity-75"></span>
-            <img src="/assets/images/placidplace-alarm-19387.gif" alt="Ringing" className="w-14 h-14 object-contain z-10" />
+            <img src="/assets/images/placidplace-alarm-19387.gif" alt="Ringing" className="w-full h-full object-cover scale-[2.2] z-10" />
           </div>
 
           <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 mb-3">
@@ -344,7 +344,7 @@ const MinimizedAlarmBubble = ({ taskText, onOpen, onDismiss }) => {
           }}
           title={`Ringing: ${taskText} (click to open)`}
         >
-          <img src="/assets/images/placidplace-alarm-19387.gif" alt="Ringing" className="w-10 h-10 object-contain z-10" />
+          <img src="/assets/images/placidplace-alarm-19387.gif" alt="Ringing" className="w-full h-full object-cover scale-[2.2] z-10" />
         </div>
 
         {/* Small dismiss button */}

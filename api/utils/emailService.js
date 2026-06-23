@@ -17734,7 +17734,7 @@ export const sendReminderNotificationEmail = async (email, { taskText, time, use
           </div>
           
           <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6366f1;">
-            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Task Reminder Triggered!</h2>
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Task Reminder!</h2>
             <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
               Hello ${username || 'User'},
             </p>
