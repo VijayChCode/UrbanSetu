@@ -595,6 +595,11 @@ export const chatWithGemini = async (req, res) => {
                 - If the user explicitly confirms (e.g., in response to the options like "Yes, cancel the reminder..."), you MUST call the "cancel_reminder" tool with that reminderId and confirmed: true to finalize the deletion.
                 - When a user asks to reschedule, change, postpone, or modify the time of a reminder (e.g., "move my physics study reminder to 5 PM today"), you MUST first call "get_user_reminders" to retrieve the active list, identify the matching reminder ID, and then call the "reschedule_reminder" tool with that reminderId and the new ISO date/time string calculated relative to the CURRENT USER LOCAL TIME.
              
+            12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
+                - If the user asks to identify a person, find a person's name, or analyze details not in the provided [VISION ANALYSIS] context, explain politely that you cannot determine specific personal identities or details from the image alone.
+                - Do NOT call "sentinel_image_auditor" unless the user explicitly asks to "audit", "verify", or "check quality" of an image. Never call it for general questions about what is in the image, who is in the image, or to identify people.
+                - If you need to refer to an image from previous turns, use the description in the history. Do NOT output raw JSON, image URLs, or tool call structures directly in your chat response.
+             
             GENERAL INSTRUCTIONS:
             - Always provide accurate, helpful, and professional responses.
             - When uncertain, recommend consulting with licensed real estate professionals.
@@ -665,15 +670,17 @@ export const chatWithGemini = async (req, res) => {
 
             if (role === 'user') {
                 let extra = '';
-                // Attempt to find matching message in DB to load ocrText and visionAnalysis
+                // Attempt to find matching message in DB to load ocrText, visionAnalysis and media URLs
                 const dbMsg = dbMessages.find(m => 
                     m.role === 'user' && 
-                    m.content === msg.content && 
-                    (m.ocrText || m.visionAnalysis)
+                    m.content === msg.content
                 );
 
                 const finalVision = dbMsg?.visionAnalysis || msg.visionAnalysis;
                 const finalOcr = dbMsg?.ocrText || msg.ocrText;
+                const finalImages = dbMsg?.images || msg.images || [];
+                const finalImageUrl = dbMsg?.imageUrl || msg.imageUrl;
+                const allUrls = [...(finalImages || []), ...(finalImageUrl ? [finalImageUrl] : [])].filter(Boolean);
 
                 if (finalVision) {
                     extra += `\n\n[VISION ANALYSIS - Visual content of the uploaded media]:\n${finalVision}`;
@@ -681,8 +688,11 @@ export const chatWithGemini = async (req, res) => {
                 if (finalOcr) {
                     extra += `\n\n[EXTRACTED TEXT (OCR) / TRANSCRIPT]:\n${finalOcr}`;
                 }
+                if (allUrls.length > 0) {
+                    extra += `\n\n[ATTACHED MEDIA URLS]:\n${allUrls.map(url => `- ${url}`).join('\n')}`;
+                }
 
-                // Increase content size limit to accommodate the vision analysis and OCR
+                // Increase content size limit to accommodate the vision analysis, OCR and media URLs
                 content = (content + extra).substring(0, 1500);
             } else {
                 content = content.substring(0, 500);
