@@ -156,6 +156,32 @@ router.post('/image', verifyToken, uploadImage.single('image'), async (req, res)
   }
 });
 
+// Upload image from URL
+router.post('/image-url', verifyToken, async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+    if (!imageUrl) {
+      return res.status(400).json({ message: 'No image URL provided' });
+    }
+
+    console.log('Uploading image from URL:', imageUrl);
+    const uploadResult = await cloudinary.v2.uploader.upload(imageUrl, {
+      folder: 'urbansetu-chat/images',
+      resource_type: 'image',
+    });
+
+    console.log('Image uploaded from URL successfully:', uploadResult.secure_url);
+    res.status(200).json({
+      message: 'Image uploaded successfully',
+      imageUrl: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
+    });
+  } catch (error) {
+    console.error('URL upload error:', error);
+    res.status(500).json({ message: 'Error uploading image from URL', error: error.message });
+  }
+});
+
 // Enhanced error handling middleware for multer and Cloudinary
 router.use((error, req, res, next) => {
   console.error('Upload error:', error);
