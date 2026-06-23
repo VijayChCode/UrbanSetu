@@ -182,7 +182,7 @@ const THINKING_TAGS = [
     "Ensuring accuracy..."
 ];
 
-const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, schedulerType = 'create', isDeepThinking = false, isWebSearch = false }) => {
+const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, schedulerType = 'create', isDeepThinking = false, isWebSearch = false, mediaType = null }) => {
     const [index, setIndex] = useState(0);
 
     const schedulerTags = schedulerType === 'reschedule' ? [
@@ -227,6 +227,54 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
         "Validating source accuracy..."
     ];
 
+    const imageTags = [
+        "Analyzing image visual layers...",
+        "Applying OCR text extraction...",
+        "Identifying objects & layouts...",
+        "Processing image metadata...",
+        "Extracting visual highlights...",
+        "Synthesizing image details...",
+        "Formulating answer..."
+    ];
+
+    const videoTags = [
+        "Analyzing video metadata...",
+        "Deconstructing video frames...",
+        "Processing audio-visual tracks...",
+        "Detecting motion & scenes...",
+        "Extracting frame segments...",
+        "Synthesizing video sequence...",
+        "Formulating answer..."
+    ];
+
+    const documentTags = [
+        "Opening document stream...",
+        "Parsing pages & layout...",
+        "Extracting text & paragraphs...",
+        "Detecting tables & data grids...",
+        "Structuring page summaries...",
+        "Synthesizing document insights...",
+        "Formulating answer..."
+    ];
+
+    const codeTags = [
+        "Parsing code syntax...",
+        "Analyzing project dependencies...",
+        "Mapping function execution flows...",
+        "Evaluating class interfaces...",
+        "Checking logical complexity...",
+        "Formulating code solution..."
+    ];
+
+    const audioTags = [
+        "Analyzing audio waveform...",
+        "Decoding frequency channels...",
+        "Running acoustic model...",
+        "Synthesizing voice transcription...",
+        "Extracting sound features...",
+        "Formulating response..."
+    ];
+
     let tagsToUse = THINKING_TAGS;
     if (isScheduler) {
         tagsToUse = schedulerTags;
@@ -234,11 +282,21 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
         tagsToUse = deepThinkingTags;
     } else if (isWebSearch) {
         tagsToUse = webSearchTags;
+    } else if (mediaType === 'image') {
+        tagsToUse = imageTags;
+    } else if (mediaType === 'video') {
+        tagsToUse = videoTags;
+    } else if (mediaType === 'document') {
+        tagsToUse = documentTags;
+    } else if (mediaType === 'code') {
+        tagsToUse = codeTags;
+    } else if (mediaType === 'audio') {
+        tagsToUse = audioTags;
     }
 
     useEffect(() => {
         setIndex(0);
-    }, [isScheduler, schedulerType, isDeepThinking, isWebSearch]);
+    }, [isScheduler, schedulerType, isDeepThinking, isWebSearch, mediaType]);
 
     useEffect(() => {
         let timer;
@@ -251,6 +309,8 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
                 delay = 5000; // Think longer!
             } else if (isWebSearch) {
                 delay = 3500; // Web search tags
+            } else if (mediaType) {
+                delay = 3000; // Media analysis tags
             } else if (index === 5) { // "Finalizing answer..."
                 delay = 8000; // Stay much longer on this one
             } else if (index > 5) {
@@ -267,7 +327,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
 
         processTags();
         return () => clearTimeout(timer);
-    }, [index, isScheduler, schedulerType, isDeepThinking, isWebSearch, tagsToUse.length]);
+    }, [index, isScheduler, schedulerType, isDeepThinking, isWebSearch, mediaType, tagsToUse.length]);
 
     return (
         <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
@@ -570,6 +630,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isOcrExtracting, setIsOcrExtracting] = useState({});
     const [isExtractingText, setIsExtractingText] = useState(false);
     const [extractionProgress, setExtractionProgress] = useState('');
+    const [currentRequestMediaType, setCurrentRequestMediaType] = useState(null);
     const [tone, setTone] = useState(() => localStorage.getItem('gemini_tone') || 'neutral'); // modes dropdown (tone)
     const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
     const headerMenuButtonRef = useRef(null);
@@ -3697,6 +3758,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         historyIndexRef.current = -1;
         lastUserMessageRef.current = userMessage;
 
+        if (messageImages.length > 0) {
+            setCurrentRequestMediaType('image');
+        } else {
+            setCurrentRequestMediaType(null);
+        }
         // Set loading state to show cancel button
         setIsLoading(true);
         setHasChatError(false);
@@ -4156,6 +4222,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
             setCurrentSchedulerType('create');
+            setCurrentRequestMediaType(null);
 
             // Auto-sync session title if it's a new conversation
             if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
@@ -5907,6 +5974,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     ...mediaPayload
                 }]);
 
+                let requestMediaType = 'document';
+                if (fileType === 'audio') {
+                    requestMediaType = 'audio';
+                } else if (fileType === 'video') {
+                    requestMediaType = 'video';
+                } else {
+                    const extension = file.name ? file.name.split('.').pop().toLowerCase() : '';
+                    if (['js', 'jsx', 'ts', 'tsx', 'py', 'json', 'html', 'css', 'md', 'xml', 'csv', 'sql'].includes(extension)) {
+                        requestMediaType = 'code';
+                    }
+                }
+                setCurrentRequestMediaType(requestMediaType);
                 setIsLoading(true);
 
                 const chatResponse = await authenticatedFetch(`${API_BASE_URL}/api/gemini/chat`, {
@@ -5943,6 +6022,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         } finally {
             setUploadingFile(false);
             setUploadProgress(0);
+            setIsLoading(false);
+            setCurrentRequestMediaType(null);
         }
     };
 
@@ -7745,7 +7826,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {hasChatError ? (
                                             <span>Chat Error Detected</span>
                                         ) : isLoading ? (
-                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
+                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} mediaType={currentRequestMediaType} />
                                         ) : showTypingIndicator ? (
                                             <span>Answering...</span>
                                         ) : (
@@ -9053,7 +9134,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.2s' }}></div>
                                             </div>
                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium flex items-center gap-2`}>
-                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} />
+                                                SetuAI is <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} mediaType={currentRequestMediaType} />
                                             </span>
                                         </div>
                                     </div>
