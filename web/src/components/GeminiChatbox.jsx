@@ -13170,27 +13170,27 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <div className="grid md:grid-cols-2 gap-4">
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Focus text input</span>
-                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + /</kbd>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + /</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Upload File</span>
-                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + U</kbd>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + U</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Voice Input</span>
-                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + A</kbd>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + A</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Image Link</span>
-                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + I</kbd>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + I</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Think longer (deep thinking)</span>
-                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + M</kbd>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + M</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Search the web</span>
-                                                    <kbd className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-750 text-xs font-mono">Ctrl + Shift + S</kbd>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + S</kbd>
                                                 </div>
                                             </div>
                                         </div>
