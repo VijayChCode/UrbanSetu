@@ -6943,7 +6943,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         });
     };
 
-    const renderConfirmationBubble = (message) => {
+    const renderConfirmationBubble = (message, msgIndex) => {
         if (message.role !== 'assistant' || !message.content) return null;
 
         const confirmCancelRegex = /<confirm-cancel\s+id=["']([^"']+)["']\s+text=["']([^"']+)["']\s*(?:\/>|>\s*<\/confirm-cancel>)/i;
@@ -6956,7 +6956,25 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Unique radio name for this message to prevent conflict across messages
         const radioName = `confirm_cancel_${reminderId}`;
 
-        const handleOptionClick = (optionText) => {
+        // Disable options if already executed or if there is a subsequent user message
+        const hasSubsequentUserMessage = msgIndex !== undefined && messages.slice(msgIndex + 1).some(m => m.role === 'user');
+        const isExecuted = message.confirmationExecuted || hasSubsequentUserMessage;
+        const selectedChoice = message.confirmationSelected;
+
+        const handleOptionClick = (optionText, choice) => {
+            if (msgIndex !== undefined) {
+                setMessages(prev => {
+                    const copy = [...prev];
+                    if (copy[msgIndex]) {
+                        copy[msgIndex] = {
+                            ...copy[msgIndex],
+                            confirmationExecuted: true,
+                            confirmationSelected: choice
+                        };
+                    }
+                    return copy;
+                });
+            }
             setInputMessage(optionText);
             handleSubmit(null, optionText);
         };
@@ -6977,44 +6995,54 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 <div className="space-y-2.5">
                     {/* Radio Button 1: Yes, cancel */}
                     <div 
-                        onClick={() => handleOptionClick(`Yes, cancel the reminder "${reminderText}" with ID "${reminderId}"`)}
-                        className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all ${
-                            isDarkMode 
-                                ? 'bg-gray-850 hover:bg-red-950/20 border-gray-850 hover:border-red-900/50 text-gray-300' 
-                                : 'bg-gray-50 hover:bg-red-50 border-gray-50 hover:border-red-200 text-gray-700'
+                        onClick={isExecuted ? null : () => handleOptionClick(`Yes, cancel the reminder "${reminderText}" with ID "${reminderId}"`, 'yes')}
+                        className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border transition-all ${
+                            isExecuted 
+                                ? 'opacity-50 cursor-not-allowed bg-gray-100/5 dark:bg-gray-800/10' 
+                                : `cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
+                                    isDarkMode 
+                                        ? 'bg-gray-850 hover:bg-red-950/20 border-gray-850 hover:border-red-900/50 text-gray-300' 
+                                        : 'bg-gray-50 hover:bg-red-50 border-gray-50 hover:border-red-200 text-gray-700'
+                                }`
                         }`}
                     >
                         <input
                             type="radio"
                             name={radioName}
                             id={`${radioName}_yes`}
-                            className="text-red-500 focus:ring-red-400 h-3.5 w-3.5 cursor-pointer"
+                            className="text-red-500 focus:ring-red-400 h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
                             onChange={() => {}} // Controlled by wrapper div click
-                            readOnly
+                            checked={selectedChoice === 'yes'}
+                            disabled={isExecuted}
                         />
-                        <label htmlFor={`${radioName}_yes`} className="text-xs font-bold cursor-pointer flex-1">
+                        <label htmlFor={`${radioName}_yes`} className={`text-xs font-bold flex-1 ${isExecuted ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                             Yes, cancel the reminder: "{reminderText}"
                         </label>
                     </div>
 
                     {/* Radio Button 2: No, keep */}
                     <div 
-                        onClick={() => handleOptionClick(`No, keep my reminder`)}
-                        className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all ${
-                            isDarkMode 
-                                ? 'bg-gray-850 hover:bg-blue-950/25 border-gray-850 hover:border-blue-900/50 text-gray-300' 
-                                : 'bg-gray-50 hover:bg-blue-50 border-gray-50 hover:border-blue-200 text-gray-700'
+                        onClick={isExecuted ? null : () => handleOptionClick(`No, keep my reminder`, 'no')}
+                        className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border transition-all ${
+                            isExecuted 
+                                ? 'opacity-50 cursor-not-allowed bg-gray-100/5 dark:bg-gray-800/10' 
+                                : `cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
+                                    isDarkMode 
+                                        ? 'bg-gray-850 hover:bg-blue-950/25 border-gray-850 hover:border-blue-900/50 text-gray-300' 
+                                        : 'bg-gray-50 hover:bg-blue-50 border-gray-50 hover:border-blue-200 text-gray-700'
+                                }`
                         }`}
                     >
                         <input
                             type="radio"
                             name={radioName}
                             id={`${radioName}_no`}
-                            className="text-blue-500 focus:ring-blue-400 h-3.5 w-3.5 cursor-pointer"
+                            className="text-blue-500 focus:ring-blue-400 h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
                             onChange={() => {}} // Controlled by wrapper div click
-                            readOnly
+                            checked={selectedChoice === 'no'}
+                            disabled={isExecuted}
                         />
-                        <label htmlFor={`${radioName}_no`} className="text-xs font-bold cursor-pointer flex-1">
+                        <label htmlFor={`${radioName}_no`} className={`text-xs font-bold flex-1 ${isExecuted ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                             No, keep this reminder
                         </label>
                     </div>
@@ -8459,7 +8487,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             </div>
                                                             
                                                             {/* Confirmation bubble if cancellation requires confirmation */}
-                                                            {renderConfirmationBubble(message)}
+                                                            {renderConfirmationBubble(message, index)}
 
                                                             {/* Recommended Properties Slider */}
                                                             {message.role === 'assistant' && message.recommendations && message.recommendations.length > 0 && (
