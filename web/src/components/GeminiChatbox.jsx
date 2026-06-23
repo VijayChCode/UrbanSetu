@@ -365,6 +365,11 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
                 delay = 6000; // Change very slowly for the "late" tags
             }
 
+            // Ensure the last 2 tags in ANY active set change slowly (e.g., 6000ms - 8000ms delay)
+            if (index >= tagsToUse.length - 2) {
+                delay = index === tagsToUse.length - 2 ? 8000 : 6000;
+            }
+
             timer = setTimeout(() => {
                 setIndex((prev) => {
                     if (prev >= tagsToUse.length - 1) return prev;
@@ -378,7 +383,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
     }, [index, isScheduler, schedulerType, isDeepThinking, isWebSearch, mediaType, tagsToUse.length]);
 
     return (
-        <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px] max-w-[200px]' : 'min-w-[220px] max-w-[280px]'} align-middle`}>
+        <div className={`overflow-hidden h-6 relative inline-block flex-shrink-0 ${isHeader ? 'min-w-[150px] max-w-[280px]' : 'min-w-[220px] max-w-[280px]'} align-middle`}>
             <div
                 className="transition-transform duration-1000 ease-in-out absolute inset-0 w-full flex flex-col"
                 style={{ transform: `translateY(-${index * 24}px)` }}
@@ -386,7 +391,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
                 {tagsToUse.map((tag, i) => (
                     <div
                         key={i}
-                        className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis`}
+                        className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90 text-[10px] md:text-xs' : `${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm`} font-medium whitespace-nowrap overflow-hidden text-ellipsis`}
                     >
                         {tag}
                     </div>
@@ -8108,7 +8113,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             </>
                                         )}
                                     </div>
-                                    <div className="text-[10px] md:text-xs text-white/80 truncate flex items-center gap-1">
+                                    <div className="text-[10px] md:text-xs text-white/80 flex items-center gap-1 min-w-0">
                                         {hasChatError ? (
                                             <span>Chat Error Detected</span>
                                         ) : isLoading ? (
@@ -8116,7 +8121,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         ) : showTypingIndicator ? (
                                             <span>Answering...</span>
                                         ) : (
-                                            <span>{displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}</span>
+                                            <span className="truncate">{displayedTitle !== 'SetuAI' ? 'Active Chat • Powered by SetuAI' : 'Online • Real Estate Expert Powered by Sentinel v2.0'}</span>
                                         )}
                                     </div>
                                 </div>
