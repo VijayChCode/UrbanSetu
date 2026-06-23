@@ -330,7 +330,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
     }, [index, isScheduler, schedulerType, isDeepThinking, isWebSearch, mediaType, tagsToUse.length]);
 
     return (
-        <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px]' : 'min-w-[160px]'} align-middle`}>
+        <div className={`overflow-hidden h-6 relative inline-block ${isHeader ? 'min-w-[140px] max-w-[200px]' : 'min-w-[220px] max-w-[280px]'} align-middle`}>
             <div
                 className="transition-transform duration-1000 ease-in-out absolute inset-0 w-full flex flex-col"
                 style={{ transform: `translateY(-${index * 24}px)` }}
@@ -338,7 +338,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
                 {tagsToUse.map((tag, i) => (
                     <div
                         key={i}
-                        className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap`}
+                        className={`h-6 flex items-center flex-shrink-0 animate-fadeIn ${isHeader ? 'text-white/90' : isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-xs sm:text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis`}
                     >
                         {tag}
                     </div>
@@ -6996,6 +6996,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (!enableMarkdown) return text;
 
         let processedText = text;
+
+        // Pre-process: Convert raw HTML <a> tags from LLM output to markdown links
+        // This prevents raw HTML attributes from showing as visible text
+        processedText = processedText.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi, (match, url, linkText) => {
+            return `[${linkText || url}](${url})`;
+        });
+
+        // Strip any remaining raw HTML tags (except our own generated ones) to prevent attribute leakage
+        // Preserve <br>, <strong>, <em> etc. that we generate, but remove unknown tags
+        processedText = processedText.replace(/<(?!\/?(br|strong|em|h[1-6]|li|ul|ol|table|thead|tbody|tr|th|td|div|span|pre|code|svg|path|rect|button|img)\b)[^>]+>/gi, '');
 
         // Process code blocks first (before other markdown)
         processedText = processedText.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
