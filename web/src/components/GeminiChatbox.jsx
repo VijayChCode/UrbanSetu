@@ -566,6 +566,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const lastUserMessageRef = useRef('');
     const [ocrResults, setOcrResults] = useState({});
+    const [isOcrExtracting, setIsOcrExtracting] = useState({});
     const [isExtractingText, setIsExtractingText] = useState(false);
     const [extractionProgress, setExtractionProgress] = useState('');
     const [tone, setTone] = useState(() => localStorage.getItem('gemini_tone') || 'neutral'); // modes dropdown (tone)
@@ -5813,6 +5814,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         // Run client-side OCR on the image in the background
                         (async () => {
                             try {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
                                 const text = await extractTextFromFile(file, (progressMsg) => {
                                     console.log(`[OCR ${file.name}] ${progressMsg}`);
                                 });
@@ -5821,6 +5823,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 }
                             } catch (ocrErr) {
                                 console.warn(`OCR skipped/failed for image ${file.name}:`, ocrErr);
+                            } finally {
+                                setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
                             }
                         })();
                     } catch (err) {
@@ -9409,7 +9413,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         <img
                                                                             src={img.url}
                                                                             alt={img.name}
-                                                                            className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${isAuditing[`chat_${img.id}`] ? 'blur-[1px]' : ''}`}
+                                                                            className={`w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
                                                                             onClick={() => {
                                                                                 setPreviewImages([img.url]);
                                                                                 setPreviewImageIndex(0);
@@ -9418,7 +9422,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         />
 
                                                                         {/* Sentinel Quality Badge */}
-                                                                        {!isAuditing[`chat_${img.id}`] && auditResults[`chat_${img.id}`] && (
+                                                                        {(!isAuditing[`chat_${img.id}`] && !isOcrExtracting[img.id]) && auditResults[`chat_${img.id}`] && (
                                                                             <div className="absolute top-1 left-1 flex flex-col gap-0.5 z-10 pointer-events-none">
                                                                                 <div className={`px-1 py-0.5 rounded text-[8px] font-bold text-white shadow-sm flex items-center gap-0.5 ${auditResults[`chat_${img.id}`].sentinelScore >= 80 ? 'bg-green-500' :
                                                                                         auditResults[`chat_${img.id}`].sentinelScore >= 50 ? 'bg-orange-500' : 'bg-red-500'
@@ -9439,10 +9443,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </div>
                                                                         )}
 
-                                                                        {isAuditing[`chat_${img.id}`] && (
+                                                                        {(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) && (
                                                                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-500/20 backdrop-blur-[1px]">
                                                                                 <UrbanSetuSpinner size="sm" isBright={true} />
-                                                                                <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse mt-1">Sentinel Auditing</span>
+                                                                                <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse mt-1 text-center px-1">
+                                                                                    {isAuditing[`chat_${img.id}`] && isOcrExtracting[img.id] ? "Auditing & OCR..." :
+                                                                                     isAuditing[`chat_${img.id}`] ? "Sentinel Auditing" : "Performing OCR..."}
+                                                                                </span>
                                                                             </div>
                                                                         )}
                                                                         <button
