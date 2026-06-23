@@ -9891,7 +9891,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                                 {/* Options Menu */}
                                                 {showInputOptions && (
-                                                    <div className={`absolute bottom-10 left-0 w-48 hover:w-72 group/menu rounded-lg shadow-xl border overflow-hidden z-50 transform origin-bottom-left transition-all duration-300 ease-in-out ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                                                    <div className={`absolute bottom-10 left-0 w-48 sm:w-64 group/menu rounded-lg shadow-xl border overflow-hidden z-50 transform origin-bottom-left transition-all duration-200 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -9915,7 +9915,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Upload File</span>
                                                             </div>
-                                                            <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+U</span>
+                                                            <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+U</span>
                                                         </button>
 
                                                         <button
@@ -9937,7 +9937,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Voice Input</span>
                                                             </div>
-                                                            <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+A</span>
+                                                            <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+A</span>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -9962,7 +9962,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Image Link</span>
                                                             </div>
-                                                            <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+I</span>
+                                                            <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+I</span>
                                                         </button>
 
                                                         <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
@@ -9985,7 +9985,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 {prePromptPreference === 'think' && (
                                                                     <FaCheck className={isDarkMode ? 'text-purple-400' : 'text-purple-600'} size={12} />
                                                                 )}
-                                                                <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+M</span>
+                                                                <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+M</span>
                                                             </div>
                                                         </button>
 
@@ -10007,7 +10007,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 {prePromptPreference === 'search' && (
                                                                     <FaCheck className={isDarkMode ? 'text-teal-400' : 'text-teal-650'} size={12} />
                                                                 )}
-                                                                <span className="text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+S</span>
+                                                                <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+S</span>
                                                             </div>
                                                         </button>
                                                     </div>
@@ -10139,7 +10139,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setPrePromptPreference(null)}
-                                                                className="ml-1 p-0.5 rounded-full hover:bg-black/20 dark:hover:bg-white/20 text-current transition-opacity duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer"
+                                                                className="ml-1 p-0.5 rounded-full hover:bg-black/20 dark:hover:bg-white/20 text-current transition-opacity duration-200 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                                                                 title="Remove preference"
                                                             >
                                                                 <FaTimes size={10} />
