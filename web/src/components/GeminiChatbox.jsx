@@ -13307,7 +13307,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 { title: 'Real Estate Expertise', desc: 'Deep knowledge of property trends, pricing, and legal processes.', icon: '🏢' },
                                                 { title: 'Live Property Search', desc: 'Can search and recommend local listings from UrbanSetu database.', icon: '🔍' },
                                                 { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
-                                                { title: 'Multi-Modal & OCR', desc: 'Advanced image OCR, document analysis, voice input, and video processing.', icon: '📷' },
+                                                {title: 'Multi-Modal & On-Device Face Recognition', desc: 'Advanced image OCR, on-device facial detection & descriptor matching, document analysis, voice input, and video processing.', icon: '📷'},
                                                 { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
                                                 { title: 'AI & Manual Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time via AI or manual creation.', icon: '⏰' },
                                                 { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
