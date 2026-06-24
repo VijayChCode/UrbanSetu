@@ -667,6 +667,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isAnalyzingFaces, setIsAnalyzingFaces] = useState({}); // format: { [imgTempId]: boolean }
     const [detectedFaces, setDetectedFaces] = useState({}); // format: { [imgTempId]: [{ name: '...', descriptor: [...] }] }
     const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
+    const urlFaceDescriptorsRef = useRef({}); // Cache for URL -> face descriptor mapping
+    const [taggingSentImageLoading, setTaggingSentImageLoading] = useState({}); // format: { [imageUrl]: boolean }
     const [deleteReminderId, setDeleteReminderId] = useState(null);
 
     // -------------------------------------------------------------
@@ -752,19 +754,131 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    const updateOcrTextFaceName = (ocrText, imgUrl, oldName, newName) => {
+        if (!ocrText) return ocrText;
+        const blocks = ocrText.split(/I've uploaded a image file:/);
+        const updatedBlocks = blocks.map(block => {
+            if (imgUrl && block.includes(imgUrl)) {
+                const faceMatch = block.match(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/);
+                const newFaceStr = `Identified Face(s)/Person(s) in Image:\n"""\n${newName}\n"""`;
+                if (faceMatch) {
+                    return block.replace(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/, newFaceStr);
+                } else {
+                    return block + `\n\n${newFaceStr}`;
+                }
+            }
+            return block;
+        });
+        return updatedBlocks.join("I've uploaded a image file:");
+    };
+
+    const parseFacesFromOcr = (ocrText, imgUrl) => {
+        if (!ocrText) return [];
+        const blocks = ocrText.split(/I've uploaded a image file:/);
+        for (const block of blocks) {
+            if (imgUrl && block.includes(imgUrl)) {
+                const faceMatch = block.match(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/);
+                if (faceMatch && faceMatch[1]) {
+                    return faceMatch[1]
+                        .split(',')
+                        .map(n => n.trim())
+                        .filter(n => n && !n.includes('Face AI detected a face') && n !== 'Unknown');
+                }
+            }
+        }
+        const faceMatch = ocrText.match(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/);
+        if (faceMatch && faceMatch[1]) {
+            return faceMatch[1]
+                .split(',')
+                .map(n => n.trim())
+                .filter(n => n && !n.includes('Face AI detected a face') && n !== 'Unknown');
+        }
+        return [];
+    };
+
+    const hasUnknownFace = (ocrText, imgUrl) => {
+        if (!ocrText) return false;
+        const blocks = ocrText.split(/I've uploaded a image file:/);
+        for (const block of blocks) {
+            if (imgUrl && block.includes(imgUrl)) {
+                return block.includes('Face AI detected a face') || block.includes('Identified Face');
+            }
+        }
+        return ocrText.includes('Face AI detected a face') || ocrText.includes('Identified Face');
+    };
+
+    const handleSentImageTagClick = async (imgUrl, currentName) => {
+        if (taggingSentImageLoading[imgUrl]) return;
+        
+        let descriptor = urlFaceDescriptorsRef.current[imgUrl];
+        
+        if (!descriptor) {
+            setTaggingSentImageLoading(prev => ({ ...prev, [imgUrl]: true }));
+            try {
+                await loadFaceApiModels();
+                const fetchUrl = imgUrl.startsWith('http') && !imgUrl.includes('localhost') && !imgUrl.includes('127.0.0.1')
+                    ? `${API_BASE_URL}/api/upload/proxy-image?url=${encodeURIComponent(imgUrl)}`
+                    : imgUrl;
+                    
+                const imgElement = await faceapi.fetchImage(fetchUrl);
+                const detections = await faceapi.detectAllFaces(imgElement)
+                    .withFaceLandmarks()
+                    .withFaceDescriptors();
+                    
+                if (detections && detections.length > 0) {
+                    descriptor = detections[0].descriptor;
+                    urlFaceDescriptorsRef.current[imgUrl] = descriptor;
+                } else {
+                    toast.error("No faces detected in this image to tag!");
+                    return;
+                }
+            } catch (err) {
+                console.error("Error detecting face from sent image:", err);
+                toast.error("Failed to analyze faces on this image.");
+                return;
+            } finally {
+                setTaggingSentImageLoading(prev => ({ ...prev, [imgUrl]: false }));
+            }
+        }
+        
+        setFaceTaggingModal({
+            isOpen: true,
+            imgId: imgUrl,
+            faceIndex: 0,
+            descriptor: descriptor,
+            name: currentName || ''
+        });
+    };
+
     const handleFaceTagSubmit = (e) => {
         if (e) e.preventDefault();
         if (!faceTaggingModal.name.trim()) return;
         
-        registerFace(faceTaggingModal.name.trim(), faceTaggingModal.descriptor);
+        const newName = faceTaggingModal.name.trim();
+        registerFace(newName, faceTaggingModal.descriptor);
         
-        setDetectedFaces(prev => {
-            const currentList = prev[faceTaggingModal.imgId] || [];
-            const updatedList = currentList.map((item, idx) => 
-                idx === faceTaggingModal.faceIndex ? { ...item, name: faceTaggingModal.name.trim() } : item
-            );
-            return { ...prev, [faceTaggingModal.imgId]: updatedList };
-        });
+        if (typeof faceTaggingModal.imgId === 'string' && (faceTaggingModal.imgId.startsWith('http') || faceTaggingModal.imgId.startsWith('/'))) {
+            const imgUrl = faceTaggingModal.imgId;
+            setMessages(prev => {
+                const updated = prev.map(msg => {
+                    if (msg.role === 'user' && msg.ocrText && msg.ocrText.includes(imgUrl)) {
+                        const updatedOcr = updateOcrTextFaceName(msg.ocrText, imgUrl, null, newName);
+                        return { ...msg, ocrText: updatedOcr };
+                    }
+                    return msg;
+                });
+                setTimeout(() => syncChatTreeToBackend(updated), 50);
+                return updated;
+            });
+        } else {
+            setDetectedFaces(prev => {
+                const currentList = prev[faceTaggingModal.imgId] || [];
+                const updatedList = currentList.map((item, idx) => 
+                    idx === faceTaggingModal.faceIndex ? { ...item, name: newName } : item
+                );
+                return { ...prev, [faceTaggingModal.imgId]: updatedList };
+            });
+        }
         
         setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
     };
@@ -9116,6 +9230,58 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     >
                                                                         <FaDownload size={14} />
                                                                     </button>
+                                                                )}
+
+                                                                {/* Face Recognition Tag Overlay for Sent Images */}
+                                                                {img && editingMessageIndex !== index && (
+                                                                    (() => {
+                                                                        const faces = parseFacesFromOcr(message.ocrText, img);
+                                                                        const faceName = faces[0];
+                                                                        const hasFace = faceName || hasUnknownFace(message.ocrText, img);
+                                                                        
+                                                                        if (taggingSentImageLoading[img]) {
+                                                                            return (
+                                                                                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-1 z-20">
+                                                                                    <span className="text-[8px] text-purple-400 font-bold animate-pulse">Running Face AI...</span>
+                                                                                </div>
+                                                                            );
+                                                                        }
+                                                                        
+                                                                        if (faceName) {
+                                                                            return (
+                                                                                <div 
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleSentImageTagClick(img, faceName);
+                                                                                    }}
+                                                                                    className="absolute bottom-0 inset-x-0 bg-black/75 hover:bg-black/90 text-white py-0.5 px-1 truncate flex items-center justify-center gap-1 z-15 select-none cursor-pointer transition-colors duration-200"
+                                                                                    title={`Face identified: ${faceName}. Click to modify tag.`}
+                                                                                >
+                                                                                    <FaUser size={6} className="text-purple-400" />
+                                                                                    <span className="text-[7.5px] font-bold tracking-tight truncate">
+                                                                                        {faceName}
+                                                                                    </span>
+                                                                                </div>
+                                                                            );
+                                                                        } else if (hasFace) {
+                                                                            return (
+                                                                                <div 
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleSentImageTagClick(img, '');
+                                                                                    }}
+                                                                                    className="absolute bottom-0 inset-x-0 bg-black/75 hover:bg-black/90 text-white py-0.5 px-1 truncate flex items-center justify-center gap-1 z-15 select-none cursor-pointer transition-opacity duration-200 opacity-0 group-hover:opacity-100"
+                                                                                    title="Click to tag this face"
+                                                                                >
+                                                                                    <FaUser size={6} className="text-purple-400 animate-pulse" />
+                                                                                    <span className="text-[7.5px] font-bold tracking-tight truncate">
+                                                                                        Tag Face
+                                                                                    </span>
+                                                                                </div>
+                                                                            );
+                                                                        }
+                                                                        return null;
+                                                                    })()
                                                                 )}
                                                             </div>
                                                         ))}
