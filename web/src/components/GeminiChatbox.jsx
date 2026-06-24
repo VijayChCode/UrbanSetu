@@ -279,6 +279,9 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
     const imageTags = [
         "Analyzing image visual layers...",
         "Applying OCR text extraction...",
+        "Running facial recognition...",
+        "Detecting face landmarks...",
+        "Matching known face descriptors...",
         "Identifying objects & layouts...",
         "Processing image metadata...",
         "Extracting visual highlights...",
