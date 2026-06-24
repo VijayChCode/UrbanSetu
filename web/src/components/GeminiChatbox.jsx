@@ -13,6 +13,7 @@ import { API_BASE_URL } from '../config/api';
 import ListingItem from './ListingItem';
 import BlogGuideItem from './BlogGuideItem';
 import { isMobileDevice } from '../utils/mobileUtils';
+import * as faceapi from '@vladmandic/face-api';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useImageAuditor } from '../hooks/useImageAuditor';
@@ -659,7 +660,108 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
     const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
     const [prePromptPreference, setPrePromptPreference] = useState(null); // 'think' | 'search' | null
+    const [isFaceApiLoading, setIsFaceApiLoading] = useState(false);
+    const [detectedFaces, setDetectedFaces] = useState({}); // format: { [imgTempId]: [{ name: '...', descriptor: [...] }] }
+    const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
     const [deleteReminderId, setDeleteReminderId] = useState(null);
+
+    // -------------------------------------------------------------
+    // FACE RECOGNITION UTILITIES (face-api.js)
+    // -------------------------------------------------------------
+    const loadFaceApiModels = async () => {
+        if (faceapi.nets.ssdMobilenetv1.params) return;
+        setIsFaceApiLoading(true);
+        try {
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+            console.log('🤖 Loading face-api.js models from CDN...');
+            await Promise.all([
+                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            console.log('✅ face-api.js models loaded successfully!');
+        } catch (err) {
+            console.error('❌ Failed to load face-api.js models:', err);
+        } finally {
+            setIsFaceApiLoading(false);
+        }
+    };
+
+    const getKnownFaces = () => {
+        try {
+            const stored = localStorage.getItem('setu_known_faces');
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            console.error('Error reading known faces:', e);
+            return [];
+        }
+    };
+
+    const registerFace = (name, descriptor) => {
+        try {
+            const knownFaces = getKnownFaces();
+            const descArray = Array.from(descriptor);
+            knownFaces.push({ name, descriptor: descArray });
+            localStorage.setItem('setu_known_faces', JSON.stringify(knownFaces));
+            toast.success(`Registered face as "${name}"!`);
+        } catch (e) {
+            console.error('Failed to register face:', e);
+            toast.error('Failed to save face registration.');
+        }
+    };
+
+    const runFacialRecognition = async (url, tempId) => {
+        try {
+            await loadFaceApiModels();
+            console.log(`👁️ Running client-side face detection on ${url}...`);
+            const img = await faceapi.fetchImage(url);
+            const detections = await faceapi.detectAllFaces(img)
+                .withFaceLandmarks()
+                .withFaceDescriptors();
+            
+            console.log(`👤 Detections completed. Found ${detections ? detections.length : 0} face(s).`);
+            
+            if (detections && detections.length > 0) {
+                const knownFaces = getKnownFaces();
+                const results = detections.map(det => {
+                    let bestMatch = { name: 'Unknown', distance: 1.0 };
+                    knownFaces.forEach(known => {
+                        const dist = faceapi.euclideanDistance(det.descriptor, new Float32Array(known.descriptor));
+                        if (dist < 0.6 && dist < bestMatch.distance) {
+                            bestMatch = { name: known.name, distance: dist };
+                        }
+                    });
+                    return {
+                        name: bestMatch.name,
+                        descriptor: Array.from(det.descriptor)
+                    };
+                });
+                setDetectedFaces(prev => ({ ...prev, [tempId]: results }));
+            } else {
+                setDetectedFaces(prev => ({ ...prev, [tempId]: [] }));
+            }
+        } catch (err) {
+            console.error('❌ Face recognition failed:', err);
+        }
+    };
+
+    const handleFaceTagSubmit = (e) => {
+        if (e) e.preventDefault();
+        if (!faceTaggingModal.name.trim()) return;
+        
+        registerFace(faceTaggingModal.name.trim(), faceTaggingModal.descriptor);
+        
+        setDetectedFaces(prev => {
+            const currentList = prev[faceTaggingModal.imgId] || [];
+            const updatedList = currentList.map((item, idx) => 
+                idx === faceTaggingModal.faceIndex ? { ...item, name: faceTaggingModal.name.trim() } : item
+            );
+            return { ...prev, [faceTaggingModal.imgId]: updatedList };
+        });
+        
+        setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
+    };
+    // -------------------------------------------------------------
     const [sessionId, setSessionId] = useState(null);
     const [currentChatName, setCurrentChatName] = useState('');
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -3862,7 +3964,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         }
                         ocrInfo = `\n\nExtracted Image Text Content (OCR):\n"""\n${truncatedOcr}\n"""`;
                     }
-                    return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}${ocrInfo}`;
+                    let faceInfo = '';
+                    if (detectedFaces[img.id]) {
+                        const faces = detectedFaces[img.id].map(f => f.name).filter(n => n && n !== 'Unknown');
+                        if (faces.length > 0) {
+                            faceInfo = `\n\nIdentified Face(s)/Person(s) in Image:\n"""\n${faces.join(', ')}\n"""`;
+                        }
+                    }
+                    return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}${ocrInfo}${faceInfo}`;
                 } else {
                     const fileType = img.type; // 'audio', 'video', 'document'
                     const fileUrl = img.url;
@@ -3916,6 +4025,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             aiPromptMessage = aiPromptMessage ? `${aiPromptMessage}\n\n${fileTexts}` : fileTexts;
             ocrTextToSend = fileTexts;
+
+            // Clean up detectedFaces for sent images
+            setDetectedFaces(prev => {
+                const updated = { ...prev };
+                pendingImages.forEach(img => {
+                    delete updated[img.id];
+                });
+                return updated;
+            });
 
             setPendingImages([]); // Clear pending images after they are attached
         }
@@ -6288,6 +6406,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Trigger pixel-level audit for the AI if it is an image
                     if (fileType === 'image') {
                         performAudit(file, tempId, 'chat');
+                        runFacialRecognition(fileUrl, tempId);
                     }
 
                     // Run text extraction/transcription in the background
@@ -10103,6 +10222,30 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 </span>
                                                                             </div>
                                                                         )}
+                                                                        {/* Client-side Face Recognition Tag Overlay */}
+                                                                        {img.type === 'image' && !isAuditing[`chat_${img.id}`] && !isOcrExtracting[img.id] && detectedFaces[img.id] && detectedFaces[img.id].length > 0 && (
+                                                                            <div 
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    const firstFace = detectedFaces[img.id][0];
+                                                                                    setFaceTaggingModal({
+                                                                                        isOpen: true,
+                                                                                        imgId: img.id,
+                                                                                        faceIndex: 0,
+                                                                                        descriptor: firstFace.descriptor,
+                                                                                        name: firstFace.name !== 'Unknown' ? firstFace.name : ''
+                                                                                    });
+                                                                                }}
+                                                                                className="absolute bottom-0 inset-x-0 bg-black/75 hover:bg-black/90 text-white py-0.5 px-1 truncate flex items-center justify-center gap-1 z-15 select-none cursor-pointer transition-colors duration-200"
+                                                                                title={detectedFaces[img.id][0].name === 'Unknown' ? "Click to tag this face" : `Face identified: ${detectedFaces[img.id][0].name}`}
+                                                                            >
+                                                                                <FaUser size={6} className="text-purple-400 animate-pulse" />
+                                                                                <span className="text-[7.5px] font-bold tracking-tight truncate">
+                                                                                    {detectedFaces[img.id][0].name === 'Unknown' ? 'Tag Face' : detectedFaces[img.id][0].name}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+
                                                                         <button
                                                                             onClick={() => setPendingImages(prev => prev.filter(p => p.id !== img.id))}
                                                                             className="absolute top-1 right-1 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all duration-200 border border-white/20 shadow-md z-20"
@@ -14263,6 +14406,68 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Face Tagging Modal */}
+            {faceTaggingModal.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fadeIn">
+                    <div className={`w-full max-w-md rounded-3xl p-6 shadow-2xl border transform transition-all animate-scaleUp ${isDarkMode ? 'bg-gray-950 border-gray-805 text-white' : 'bg-white border-gray-100 text-gray-800'}`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2.5 rounded-2xl ${isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-650'}`}>
+                                    <FaUser size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold">Tag Detected Face</h3>
+                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Associate a name with this face for future recognition</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' })}
+                                className={`p-1.5 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                            >
+                                <FaTimes size={16} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleFaceTagSubmit} className="space-y-4">
+                            <div>
+                                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Person's Name
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={faceTaggingModal.name}
+                                    onChange={(e) => setFaceTaggingModal(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="e.g. Mahesh Babu"
+                                    className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all outline-none ${
+                                        isDarkMode
+                                            ? 'bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900'
+                                            : 'bg-gray-50 border-gray-200 focus:border-purple-500 text-gray-800 focus:bg-white'
+                                    }`}
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' })}
+                                    className={`w-full py-3 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 border ${isDarkMode ? 'bg-gray-900 hover:bg-gray-800 border-gray-800 text-gray-300' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600'}`}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="w-full py-3 bg-purple-600 hover:bg-purple-750 shadow-lg shadow-purple-500/20 text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                                >
+                                    Save Tag
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
