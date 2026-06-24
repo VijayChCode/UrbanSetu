@@ -661,6 +661,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
     const [prePromptPreference, setPrePromptPreference] = useState(null); // 'think' | 'search' | null
     const [isFaceApiLoading, setIsFaceApiLoading] = useState(false);
+    const [isAnalyzingFaces, setIsAnalyzingFaces] = useState({}); // format: { [imgTempId]: boolean }
     const [detectedFaces, setDetectedFaces] = useState({}); // format: { [imgTempId]: [{ name: '...', descriptor: [...] }] }
     const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
     const [deleteReminderId, setDeleteReminderId] = useState(null);
@@ -711,6 +712,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const runFacialRecognition = async (url, tempId) => {
+        setIsAnalyzingFaces(prev => ({ ...prev, [tempId]: true }));
         try {
             await loadFaceApiModels();
             console.log(`👁️ Running client-side face detection on ${url}...`);
@@ -742,6 +744,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             }
         } catch (err) {
             console.error('❌ Face recognition failed:', err);
+        } finally {
+            setIsAnalyzingFaces(prev => ({ ...prev, [tempId]: false }));
         }
     };
 
@@ -10211,11 +10215,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </div>
                                                                         )}
 
-                                                                        {(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) && (
+                                                                        {(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id] || isAnalyzingFaces[img.id]) && (
                                                                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-blue-500/20 backdrop-blur-[1px]">
                                                                                 <UrbanSetuSpinner size="sm" isBright={true} />
                                                                                 <span className="text-[7px] font-bold text-white uppercase tracking-widest animate-pulse mt-1 text-center px-1">
-                                                                                    {isAuditing[`chat_${img.id}`] && isOcrExtracting[img.id] ? "Auditing & OCR..." :
+                                                                                    {isAuditing[`chat_${img.id}`] && isOcrExtracting[img.id] && isAnalyzingFaces[img.id] ? "Auditing, OCR & Face AI..." :
+                                                                                     isAnalyzingFaces[img.id] && isOcrExtracting[img.id] ? "OCR & Face AI..." :
+                                                                                     isAuditing[`chat_${img.id}`] && isAnalyzingFaces[img.id] ? "Auditing & Face AI..." :
+                                                                                     isAnalyzingFaces[img.id] ? "Face AI Analysis..." :
+                                                                                     isAuditing[`chat_${img.id}`] && isOcrExtracting[img.id] ? "Auditing & OCR..." :
                                                                                      isAuditing[`chat_${img.id}`] ? "Sentinel Auditing" :
                                                                                      img.type === 'audio' ? "Transcribing..." :
                                                                                      img.type === 'video' ? "Transcribing..." : "Parsing Text..."}
@@ -10223,7 +10231,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </div>
                                                                         )}
                                                                         {/* Client-side Face Recognition Tag Overlay */}
-                                                                        {img.type === 'image' && !isAuditing[`chat_${img.id}`] && !isOcrExtracting[img.id] && detectedFaces[img.id] && detectedFaces[img.id].length > 0 && (
+                                                                        {img.type === 'image' && !isAuditing[`chat_${img.id}`] && !isOcrExtracting[img.id] && !isAnalyzingFaces[img.id] && detectedFaces[img.id] && detectedFaces[img.id].length > 0 && (
                                                                             <div 
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
