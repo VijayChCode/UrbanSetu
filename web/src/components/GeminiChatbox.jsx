@@ -3973,9 +3973,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
                     let faceInfo = '';
                     if (detectedFaces[img.id]) {
-                        const faces = detectedFaces[img.id].map(f => f.name).filter(n => n && n !== 'Unknown');
+                        const faces = detectedFaces[img.id].map(f => f.name);
                         if (faces.length > 0) {
-                            faceInfo = `\n\nIdentified Face(s)/Person(s) in Image:\n"""\n${faces.join(', ')}\n"""`;
+                            const faceList = faces.map(n => n === 'Unknown' ? 'Unknown (Face AI detected a face, please use your vision intelligence to identify this person if asked)' : n);
+                            faceInfo = `\n\nIdentified Face(s)/Person(s) in Image:\n"""\n${faceList.join(', ')}\n"""`;
                         }
                     }
                     return `I've uploaded a image file: ${img.name}${auditInfo}. Please analyze it and help me with it. File URL: ${img.url}${ocrInfo}${faceInfo}`;
@@ -6378,6 +6379,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     controller: controller
                 }]);
 
+                if (fileType === 'image') {
+                    const localUrl = URL.createObjectURL(file);
+                    runFacialRecognition(localUrl, tempId);
+                }
+
                 try {
                     let uploadEndpoint = '';
                     let formData = new FormData();
@@ -6413,7 +6419,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Trigger pixel-level audit for the AI if it is an image
                     if (fileType === 'image') {
                         performAudit(file, tempId, 'chat');
-                        runFacialRecognition(fileUrl, tempId);
                     }
 
                     // Run text extraction/transcription in the background
@@ -6652,6 +6657,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 
                 const blob = await response.blob();
                 const file = new File([blob], 'external-image.jpg', { type: blob.type || 'image/jpeg' });
+
+                // Run facial recognition locally using blob Object URL
+                const localUrl = URL.createObjectURL(blob);
+                runFacialRecognition(localUrl, tempId);
 
                 // Run Sentinel audit on the proxied file object
                 performAudit(file, tempId, 'chat');
@@ -14435,12 +14444,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Associate a name with this face for future recognition</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' })}
-                                className={`p-1.5 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
-                            >
-                                <FaTimes size={16} />
-                            </button>
                         </div>
 
                         <form onSubmit={handleFaceTagSubmit} className="space-y-4">
