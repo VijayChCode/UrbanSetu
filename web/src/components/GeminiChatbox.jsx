@@ -782,7 +782,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     return faceMatch[1]
                         .split(',')
                         .map(n => n.trim())
-                        .filter(n => n && !n.includes('Face AI detected a face') && n !== 'Unknown');
+                        .filter(n => n && !n.includes('Face AI detected a face') && !n.includes('vision intelligence') && !n.startsWith('Unknown') && n !== 'Unknown');
                 }
             }
         }
@@ -791,7 +791,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return faceMatch[1]
                 .split(',')
                 .map(n => n.trim())
-                .filter(n => n && !n.includes('Face AI detected a face') && n !== 'Unknown');
+                .filter(n => n && !n.includes('Face AI detected a face') && !n.includes('vision intelligence') && !n.startsWith('Unknown') && n !== 'Unknown');
         }
         return [];
     };
@@ -4089,7 +4089,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     if (detectedFaces[img.id]) {
                         const faces = detectedFaces[img.id].map(f => f.name);
                         if (faces.length > 0) {
-                            const faceList = faces.map(n => n === 'Unknown' ? 'Unknown (Face AI detected a face, please use your vision intelligence to identify this person if asked)' : n);
+                            const faceList = faces.map(n => n === 'Unknown' ? 'Unknown (Face AI detected a face; please use your vision intelligence to identify this person if asked)' : n);
                             faceInfo = `\n\nIdentified Face(s)/Person(s) in Image:\n"""\n${faceList.join(', ')}\n"""`;
                         }
                     }
