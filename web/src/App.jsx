@@ -98,6 +98,7 @@ const AdminRequests = lazy(() => import("./pages/AdminRequests"));
 const AdminListings = lazy(() => import("./pages/AdminListings"));
 const AdminMyListings = lazy(() => import("./pages/AdminMyListings"));
 const AdminEditListing = lazy(() => import("./pages/AdminEditListing"));
+const RemindersPage = lazy(() => import("./pages/RemindersPage"));
 const Oauth = lazy(() => import("./components/Oauth"));
 const AdminAppointmentListing = lazy(() => import("./pages/AdminAppointmentListing"));
 const AdminReviews = lazy(() => import("./pages/AdminReviews"));
@@ -1378,6 +1379,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/user/help-center" element={<HelpCenter />} />
               <Route path="/user/help-center/article/:slug" element={<ArticleView />} />
               <Route path="/user/error-codes" element={<ErrorCodes />} />
+              <Route path="/user/reminders" element={<RemindersPage />} />
               <Route path="/user/agents" element={<FindAgent />} />
               <Route path="/user/agents/:id" element={<AgentProfile />} />
               <Route path="/user/market-trends" element={<MarketTrends />} />
@@ -1451,6 +1453,7 @@ function AppRoutes({ bootstrapped }) {
               <Route path="/admin/sentinel" element={<AdminSentinelDashboard />} />
               <Route path="/admin/year/:year" element={<YearInReview isAdmin={true} />} />
               <Route path="/admin/settings" element={<Settings />} />
+              <Route path="/admin/reminders" element={<RemindersPage />} />
               <Route path="/admin/view/:documentId" element={<ViewDocument />} />
               <Route path="/admin/view/preview" element={<ViewDocument />} />
               <Route path="/admin/view-chat/preview" element={<ViewChatDocument />} />

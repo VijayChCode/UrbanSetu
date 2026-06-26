@@ -543,7 +543,7 @@ export const chatWithGemini = async (req, res) => {
             - Appointments: /user/my-appointments
             - Rent Wallet / Pay Rent: /user/rent-wallet | /user/pay-monthly-rent
             - Contracts/Disputes/Loans: /user/rental-contracts | /user/disputes | /user/rental-loans
-            - Other User Pages: /user/settings | /user/ai | /user/route-planner | /user/rewards
+            - Other User Pages: /user/settings | /user/ai | /user/route-planner | /user/rewards | /user/reminders
             - Property Details: /listing/PROPERTY_ID (Replace PROPERTY_ID with actual ID)
             `;
 
@@ -561,7 +561,7 @@ export const chatWithGemini = async (req, res) => {
             1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions (non-real estate, e.g., world facts, math), be friendly, concise, and casual. Do NOT use the "search_properties" tool for these.
             2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
             3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
-            4. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?" or "Go to appointments" or "Show me X page", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)".
+            4. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?", "Go to appointments", "Show me my reminders", or "Where are my remainders?", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)" or "[My Reminders](https://urbansetu.vercel.app/user/reminders)".
             5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
@@ -594,6 +594,7 @@ export const chatWithGemini = async (req, res) => {
                 - If the "cancel_reminder" tool returns that confirmation is required (requires_confirmation: true), you MUST ask the user to confirm by outputting this exact XML tag in your response: \`<confirm-cancel id="REMINDER_ID" text="REMINDER_TEXT" />\`. Do NOT execute the cancellation until the user confirms.
                 - If the user explicitly confirms (e.g., in response to the options like "Yes, cancel the reminder..."), you MUST call the "cancel_reminder" tool with that reminderId and confirmed: true to finalize the deletion.
                 - When a user asks to reschedule, change, postpone, or modify the time of a reminder (e.g., "move my physics study reminder to 5 PM today"), you MUST first call "get_user_reminders" to retrieve the active list, identify the matching reminder ID, and then call the "reschedule_reminder" tool with that reminderId and the new ISO date/time string calculated relative to the CURRENT USER LOCAL TIME.
+                - **STANDALONE REMINDERS PAGE**: Inform the user they can visually view, manage, and schedule all their reminders dynamically on the dedicated, mobile-optimized Reminders page. Always suggest the absolute link using Markdown: \`[My Reminders](https://urbansetu.vercel.app/user/reminders)\` (requires them to be logged in).
             
             12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
                 - If the user asks to identify a person, find a person's name, or analyze details not in the provided [VISION ANALYSIS] context, explain politely that you cannot determine specific personal identities or details from the image alone.
