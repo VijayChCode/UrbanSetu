@@ -10,6 +10,7 @@ import { authenticatedFetch } from '../utils/auth';
 import { API_BASE_URL } from '../config/api';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { usePageTitle } from '../hooks/usePageTitle';
+import GeminiAIWrapper from '../components/GeminiAIWrapper';
 
 export default function RemindersPage() {
   usePageTitle("My Reminders - SetuAI");
@@ -618,6 +619,7 @@ export default function RemindersPage() {
           </div>
         </div>
       )}
+      <GeminiAIWrapper />
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
