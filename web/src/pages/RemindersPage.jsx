@@ -32,6 +32,7 @@ export default function RemindersPage() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [deleteReminderId, setDeleteReminderId] = useState(null);
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'history'
+  const [ringingReminderId, setRingingReminderId] = useState(window.activeRingingReminderId || null);
 
   const itemsPerPage = 5;
 
@@ -42,6 +43,15 @@ export default function RemindersPage() {
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
+  }, []);
+
+  // Listen to ringing reminder events
+  useEffect(() => {
+    const handleReminderRinging = (event) => {
+      setRingingReminderId(event.detail.reminderId);
+    };
+    window.addEventListener('reminderRinging', handleReminderRinging);
+    return () => window.removeEventListener('reminderRinging', handleReminderRinging);
   }, []);
 
   const getMinDateTime = () => {
@@ -166,8 +176,8 @@ export default function RemindersPage() {
     }
   };
 
-  const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed');
-  const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed');
+  const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r._id === ringingReminderId);
+  const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed' && r._id !== ringingReminderId);
 
   return (
     <div className={`min-h-screen py-12 px-4 sm:px-6 lg:px-8 font-outfit transition-colors duration-300 ${isDarkMode ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
@@ -382,16 +392,21 @@ export default function RemindersPage() {
                           <div
                             key={reminder._id}
                             className={`p-4 border rounded-2xl transition-all duration-300 hover:shadow-md ${
-                              isDarkMode 
-                                ? 'border-gray-800 bg-gray-950/40 hover:bg-gray-950/80' 
-                                : 'border-gray-200 bg-gray-50 hover:bg-gray-100/50'
+                              ringingReminderId === reminder._id
+                                ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                                : isDarkMode 
+                                  ? 'border-gray-800 bg-gray-950/40 hover:bg-gray-950/80' 
+                                  : 'border-gray-200 bg-gray-50 hover:bg-gray-100/50'
                             }`}
                             style={{ animation: `fadeIn 0.2s ease-out ${idx * 0.03}s backwards` }}
                           >
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <div className="flex-1">
-                                <h5 className={`text-sm font-bold leading-snug ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                  {reminder.taskText}
+                                <h5 className={`text-sm font-bold leading-snug ${isDarkMode ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
+                                  <span>{reminder.taskText}</span>
+                                  {ringingReminderId === reminder._id && (
+                                    <FaBell className="text-red-500 animate-ring-bell flex-shrink-0" size={14} title="Ringing" />
+                                  )}
                                 </h5>
                                 <div className={`text-xs font-semibold flex items-center gap-1.5 mt-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                   <FaCalendarAlt size={12} className="text-indigo-500" />
@@ -624,6 +639,20 @@ export default function RemindersPage() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ring-bell {
+          0%, 100% { transform: rotate(0); }
+          15% { transform: rotate(15deg); }
+          30% { transform: rotate(-15deg); }
+          45% { transform: rotate(10deg); }
+          60% { transform: rotate(-10deg); }
+          75% { transform: rotate(4deg); }
+          90% { transform: rotate(-4deg); }
+        }
+        .animate-ring-bell {
+          animation: ring-bell 1.5s infinite;
+          transform-origin: top center;
+          display: inline-block;
         }
       `}</style>
     </div>
