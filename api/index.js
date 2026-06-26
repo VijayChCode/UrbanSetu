@@ -782,12 +782,35 @@ io.on('connection', (socket) => {
   }
 
   // Allow clients to explicitly register their user room with validation
-  socket.on('registerUser', ({ userId }) => {
+  // Supports late authentication: if socket.user is null, tries to verify a provided JWT token
+  socket.on('registerUser', async ({ userId, token: clientToken }) => {
     if (userId) {
+      // If socket is not yet authenticated, attempt late authentication via token
       if (!socket.user || socket.user._id.toString() !== userId.toString()) {
-        console.warn(`[Socket Security] Unauthorized registerUser attempt by socket ${socket.id} for user ${userId}`);
-        return;
+        const tokenToVerify = clientToken || (socket.handshake.auth && socket.handshake.auth.token);
+        if (tokenToVerify && process.env.JWT_TOKEN) {
+          try {
+            const decoded = jwt.verify(tokenToVerify, process.env.JWT_TOKEN);
+            if (decoded.id && decoded.id.toString() === userId.toString()) {
+              const user = await User.findById(decoded.id);
+              if (user) {
+                socket.user = user;
+                socket.sessionId = decoded.sessionId;
+                console.log(`[Socket] Late authentication successful for socket ${socket.id}, user ${userId}`);
+              }
+            }
+          } catch (tokenErr) {
+            // Token verification failed - fall through to rejection
+          }
+        }
+
+        // Re-check after late auth attempt
+        if (!socket.user || socket.user._id.toString() !== userId.toString()) {
+          console.warn(`[Socket Security] Unauthorized registerUser attempt by socket ${socket.id} for user ${userId}`);
+          return;
+        }
       }
+
       const userIdStr = userId.toString();
       // Join both room formats for compatibility (userId and user_${userId})
       socket.join(userIdStr);

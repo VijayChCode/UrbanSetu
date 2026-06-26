@@ -52,8 +52,9 @@ function registerUserRoom() {
   try {
     const match = document.cookie.split('; ').find(row => row.startsWith('_id='));
     const userId = match ? decodeURIComponent(match.split('=')[1]) : null;
+    const token = getToken();
     if (userId && socket && socket.connected) {
-      socket.emit('registerUser', { userId });
+      socket.emit('registerUser', { userId, token });
     }
   } catch (_) { }
 }
@@ -67,23 +68,40 @@ function ensureSessionRoomRegistration() {
   }, 15000); // every 15s
 }
 
+// Periodically ensure we're joined to the user room (covers token refresh, late login, etc.)
+let userRegisterInterval = null;
+function ensureUserRoomRegistration() {
+  if (userRegisterInterval) return;
+  userRegisterInterval = setInterval(() => {
+    try { registerUserRoom(); } catch (_) { }
+  }, 30000); // every 30s
+}
+
 // Add socket event listeners for debugging
 socket.on('connect', () => {
   console.log('[Socket] Connected to server');
   registerSessionRoom();
   registerUserRoom();
   ensureSessionRoomRegistration();
+  ensureUserRoomRegistration();
 
   // Re-register user room after connection to ensure authentication
   const token = getToken();
   if (token) {
+    // If socket connected without auth but we have a token, force reconnect with token
+    if (!socket.auth || !socket.auth.token) {
+      console.log('[Socket] Connected without auth but token available, reconnecting with token...');
+      socket.auth = { token };
+      socket.disconnect().connect();
+      return;
+    }
     // Extract user ID from token if possible, or wait for server to set it
     try {
       const parts = token.split('.');
       if (parts.length === 3) {
         const payload = JSON.parse(atob(parts[1]));
         if (payload.id) {
-          socket.emit('registerUser', { userId: payload.id });
+          socket.emit('registerUser', { userId: payload.id, token });
         }
       }
     } catch (e) {
