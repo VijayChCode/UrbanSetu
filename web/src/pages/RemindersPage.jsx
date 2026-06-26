@@ -176,6 +176,48 @@ export default function RemindersPage() {
     }
   };
 
+  const handleSnoozeInline = async (reminderId) => {
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${reminderId}/snooze`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ minutes: 5 })
+      });
+      if (res.ok) {
+        toast.success("Reminder snoozed for 5 minutes");
+        window.activeRingingReminderId = null;
+        window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+        fetchReminders();
+      } else {
+        toast.error("Failed to snooze reminder");
+      }
+    } catch (err) {
+      console.error('Failed to snooze reminder:', err);
+      toast.error("Error snoozing reminder");
+    }
+  };
+
+  const handleDismissInline = async (reminderId) => {
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${reminderId}/dismiss`, {
+        method: 'PATCH'
+      });
+      if (res.ok) {
+        toast.success("Reminder dismissed");
+        window.activeRingingReminderId = null;
+        window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+        fetchReminders();
+      } else {
+        toast.error("Failed to dismiss reminder");
+      }
+    } catch (err) {
+      console.error('Failed to dismiss reminder:', err);
+      toast.error("Error dismissing reminder");
+    }
+  };
+
   const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r.status === 'triggered' || r._id === ringingReminderId);
   const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed' && r.status !== 'triggered' && r._id !== ringingReminderId);
 
@@ -237,7 +279,7 @@ export default function RemindersPage() {
               </div>
               <div>
                 <p className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Completed / Sent</p>
-                <h3 className="text-2xl font-black mt-0.5">{pastReminders.filter(r => r.status === 'sent').length}</h3>
+                <h3 className="text-2xl font-black mt-0.5">{pastReminders.filter(r => r.status === 'dismissed').length}</h3>
               </div>
             </div>
           </div>
@@ -448,6 +490,21 @@ export default function RemindersPage() {
                                     Cancel
                                   </button>
                                 </div>
+                              </div>
+                            ) : ringingReminderId === reminder._id ? (
+                              <div className="flex gap-2 border-t pt-3 mt-3 border-gray-100 dark:border-gray-800">
+                                <button
+                                  onClick={() => handleSnoozeInline(reminder._id)}
+                                  className="text-xs px-3 py-1.5 rounded-lg font-bold bg-slate-700 hover:bg-slate-650 text-white transition-colors"
+                                >
+                                  Snooze (5m)
+                                </button>
+                                <button
+                                  onClick={() => handleDismissInline(reminder._id)}
+                                  className="text-xs px-3 py-1.5 rounded-lg font-bold bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white transition-colors"
+                                >
+                                  Cancel Alarm
+                                </button>
                               </div>
                             ) : (
                               <div className="flex gap-2 border-t pt-3 mt-3 border-gray-100 dark:border-gray-800">

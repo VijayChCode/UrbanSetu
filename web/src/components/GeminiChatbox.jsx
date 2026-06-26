@@ -1155,6 +1155,48 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    const handleSnoozeInline = async (reminderId) => {
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${reminderId}/snooze`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ minutes: 5 })
+            });
+            if (res.ok) {
+                toast.success("Reminder snoozed for 5 minutes");
+                window.activeRingingReminderId = null;
+                window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+                fetchReminders();
+            } else {
+                toast.error("Failed to snooze reminder");
+            }
+        } catch (err) {
+            console.error('Failed to snooze reminder:', err);
+            toast.error("Error snoozing reminder");
+        }
+    };
+
+    const handleDismissInline = async (reminderId) => {
+        try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${reminderId}/dismiss`, {
+                method: 'PATCH'
+            });
+            if (res.ok) {
+                toast.success("Reminder dismissed");
+                window.activeRingingReminderId = null;
+                window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
+                fetchReminders();
+            } else {
+                toast.error("Failed to dismiss reminder");
+            }
+        } catch (err) {
+            console.error('Failed to dismiss reminder:', err);
+            toast.error("Error dismissing reminder");
+        }
+    };
+
     const handleReschedule = async (id, newTime) => {
         if (!newTime) {
             toast.warn("Please select a valid date and time.");
@@ -11035,6 +11077,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                             Cancel
                                                                                         </button>
                                                                                     </div>
+                                                                                </div>
+                                                                            ) : ringingReminderId === reminder._id ? (
+                                                                                <div className="flex gap-2 border-t pt-2 border-gray-150 dark:border-gray-700/50">
+                                                                                    <button
+                                                                                        onClick={() => handleSnoozeInline(reminder._id)}
+                                                                                        className="text-xs px-2.5 py-1 rounded font-medium transition-colors bg-slate-700 hover:bg-slate-650 text-white"
+                                                                                    >
+                                                                                        Snooze (5m)
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={() => handleDismissInline(reminder._id)}
+                                                                                        className="text-xs px-2.5 py-1 rounded font-medium transition-colors bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white"
+                                                                                    >
+                                                                                        Cancel Alarm
+                                                                                    </button>
                                                                                 </div>
                                                                             ) : (
                                                                                 <div className="flex gap-2 border-t pt-2 border-gray-150 dark:border-gray-700/50">
