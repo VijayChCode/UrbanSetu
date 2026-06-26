@@ -385,6 +385,7 @@ export default function RemindersPage() {
                                 ? 'border-gray-800 bg-gray-950/40 hover:bg-gray-950/80' 
                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100/50'
                             }`}
+                            style={{ animation: `fadeIn 0.2s ease-out ${idx * 0.03}s backwards` }}
                           >
                             <div className="flex items-start justify-between gap-4 mb-2">
                               <div className="flex-1">
@@ -523,6 +524,7 @@ export default function RemindersPage() {
                                 ? 'border-gray-850 bg-gray-950/20' 
                                 : 'border-gray-150 bg-gray-50/50'
                             }`}
+                            style={{ animation: `fadeIn 0.2s ease-out ${idx * 0.03}s backwards` }}
                           >
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
@@ -616,6 +618,12 @@ export default function RemindersPage() {
           </div>
         </div>
       )}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
