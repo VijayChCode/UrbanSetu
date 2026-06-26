@@ -275,6 +275,34 @@ const scheduleUserTaskReminders = (app) => {
   cron.schedule('* * * * *', async () => {
     try {
       const now = new Date();
+      const NOMINAL_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes nominal time
+
+      // Auto-dismiss any reminders in 'triggered' status for longer than nominal time (5 minutes)
+      const expiredReminders = await Reminder.find({
+        status: 'triggered',
+        scheduledTime: { $lt: new Date(now.getTime() - NOMINAL_EXPIRY_MS) }
+      });
+
+      if (expiredReminders.length > 0) {
+        console.log(`⏰ Found ${expiredReminders.length} expired triggered reminders. Auto-dismissing...`);
+        for (const reminder of expiredReminders) {
+          try {
+            reminder.status = 'dismissed';
+            await reminder.save();
+            
+            // Emit socket event to notify all user sessions/tabs to stop ringing
+            if (io) {
+              console.log(`🗣️ Emitting reminder_dismissed (expired) for reminder ${reminder._id} to user room`);
+              io.to(reminder.userId.toString()).emit('reminder_dismissed', {
+                reminderId: reminder._id.toString()
+              });
+            }
+          } catch (itemErr) {
+            console.error(`Error auto-dismissing expired reminder ${reminder._id}:`, itemErr);
+          }
+        }
+      }
+
       // Find all scheduled or snoozed reminders that are due
       const dueReminders = await Reminder.find({
         status: { $in: ['scheduled', 'snoozed'] },

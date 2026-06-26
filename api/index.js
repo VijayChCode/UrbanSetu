@@ -767,7 +767,16 @@ io.on('connection', (socket) => {
     const userIdStr = socket.user._id.toString();
     Reminder.find({ userId: userIdStr, status: 'triggered' })
       .then(pendingReminders => {
+        const now = new Date();
+        const NOMINAL_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes nominal time
         for (const reminder of pendingReminders) {
+          const timePassed = now.getTime() - new Date(reminder.scheduledTime).getTime();
+          if (timePassed > NOMINAL_EXPIRY_MS) {
+            console.log(`⏰ Reminder ${reminder._id} has exceeded nominal ringing time on handshake (${timePassed}ms > ${NOMINAL_EXPIRY_MS}ms). Auto-dismissing.`);
+            reminder.status = 'dismissed';
+            reminder.save().catch(err => console.error('Error auto-dismissing expired reminder on handshake:', err));
+            continue;
+          }
           console.log(`🗣️ Handshake Connection: Emitting missed triggered reminder for user ${userIdStr}: "${reminder.taskText}"`);
           socket.emit('reminder_triggered', {
             reminderId: reminder._id.toString(),
@@ -819,7 +828,16 @@ io.on('connection', (socket) => {
       // Deliver triggered reminders on explicit user registration
       Reminder.find({ userId: userIdStr, status: 'triggered' })
         .then(pendingReminders => {
+          const now = new Date();
+          const NOMINAL_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes nominal time
           for (const reminder of pendingReminders) {
+            const timePassed = now.getTime() - new Date(reminder.scheduledTime).getTime();
+            if (timePassed > NOMINAL_EXPIRY_MS) {
+              console.log(`⏰ Reminder ${reminder._id} has exceeded nominal ringing time on registerUser (${timePassed}ms > ${NOMINAL_EXPIRY_MS}ms). Auto-dismissing.`);
+              reminder.status = 'dismissed';
+              reminder.save().catch(err => console.error('Error auto-dismissing expired reminder on registerUser:', err));
+              continue;
+            }
             console.log(`🗣️ User Registration: Emitting missed triggered reminder for user ${userIdStr}: "${reminder.taskText}"`);
             socket.emit('reminder_triggered', {
               reminderId: reminder._id.toString(),
@@ -879,7 +897,16 @@ io.on('connection', (socket) => {
         userId: userIdStr,
         status: 'triggered'
       });
+      const now = new Date();
+      const NOMINAL_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes nominal time
       for (const reminder of pendingReminders) {
+        const timePassed = now.getTime() - new Date(reminder.scheduledTime).getTime();
+        if (timePassed > NOMINAL_EXPIRY_MS) {
+          console.log(`⏰ Reminder ${reminder._id} has exceeded nominal ringing time on presence ping (${timePassed}ms > ${NOMINAL_EXPIRY_MS}ms). Auto-dismissing.`);
+          reminder.status = 'dismissed';
+          await reminder.save();
+          continue;
+        }
         console.log(`🗣️ Socket connection: Emitting missed triggered reminder for user ${userIdStr}: "${reminder.taskText}"`);
         socket.emit('reminder_triggered', {
           reminderId: reminder._id.toString(),

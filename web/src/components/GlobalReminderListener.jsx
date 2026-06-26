@@ -29,6 +29,15 @@ export default function GlobalReminderListener() {
         return;
       }
 
+      // Skip triggering alarm if the scheduled time is older than the 5-minute nominal limit
+      const now = new Date();
+      const NOMINAL_EXPIRY_MS = 5 * 60 * 1000;
+      const timePassed = now.getTime() - new Date(data.scheduledTime).getTime();
+      if (timePassed > NOMINAL_EXPIRY_MS) {
+        console.log(`⏰ Received stale reminder trigger (${timePassed}ms passed). Skipping alarm playback.`);
+        return;
+      }
+
       // Stop existing audio and clear timeout if any
       if (audioRef.current) {
         audioRef.current.pause();
