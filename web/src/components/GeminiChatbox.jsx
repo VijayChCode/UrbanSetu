@@ -10972,8 +10972,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         ) : reminders.length === 0 ? (
                                             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No reminders found</p>
                                         ) : (() => {
-                                            const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed');
-                                            const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed');
+                                            const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r.status === 'triggered');
+                                            const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed' && r.status !== 'triggered');
                                             
                                             const activeTotalPages = Math.ceil(activeReminders.length / 3) || 1;
                                             const currentActivePage = Math.min(activePage, activeTotalPages);

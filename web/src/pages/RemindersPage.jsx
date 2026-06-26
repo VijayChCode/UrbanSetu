@@ -176,8 +176,8 @@ export default function RemindersPage() {
     }
   };
 
-  const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r._id === ringingReminderId);
-  const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed' && r._id !== ringingReminderId);
+  const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r.status === 'triggered' || r._id === ringingReminderId);
+  const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed' && r.status !== 'triggered' && r._id !== ringingReminderId);
 
   return (
     <div className={`min-h-screen py-12 px-4 sm:px-6 lg:px-8 font-outfit transition-colors duration-300 ${isDarkMode ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
