@@ -279,7 +279,7 @@ export default function RemindersPage() {
               </div>
               <div>
                 <p className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Completed / Sent</p>
-                <h3 className="text-2xl font-black mt-0.5">{pastReminders.filter(r => r.status === 'dismissed').length}</h3>
+                <h3 className="text-2xl font-black mt-0.5">{pastReminders.filter(r => r.status !== 'cancelled').length}</h3>
               </div>
             </div>
           </div>

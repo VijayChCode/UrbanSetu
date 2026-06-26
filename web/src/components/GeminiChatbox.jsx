@@ -1595,7 +1595,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         "Find properties under ₹50L in Bangalore",
         "What are the best areas for investment?",
         "Help me understand home loan process",
-        "Compare 2BHK vs 3BHK apartments"
+        "Compare 2BHK vs 3BHK apartments",
+        "Schedule a reminder for my property visit tomorrow at 10 AM",
+        "Set an alarm to follow up with the listing agent on Friday at 5 PM"
     ]);
     const [isLoadingMoreSuggestions, setIsLoadingMoreSuggestions] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
@@ -10795,7 +10797,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             { icon: '📋', text: 'Buying Guide', prompt: 'Guide me through the home buying process' },
                                             { icon: '📊', text: 'Investment Tips', prompt: 'Give me real estate investment advice' },
                                             { icon: '⚖️', text: 'Legal Info', prompt: 'Explain real estate legal requirements' },
-                                            { icon: '🔧', text: 'Property Management', prompt: 'Help with property management tips' }
+                                            { icon: '🔧', text: 'Property Management', prompt: 'Help with property management tips' },
+                                            { icon: '⏰', text: 'Set Reminder', prompt: 'Schedule a reminder for my property visit tomorrow at 10 AM' },
+                                            { icon: '🔔', text: 'Follow-up Alarm', prompt: 'Set an alarm to follow up with the listing agent on Friday at 5 PM' }
                                         ].map((action, idx) => (
                                             <button
                                                 key={idx}
