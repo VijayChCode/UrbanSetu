@@ -346,9 +346,9 @@ export default function RemindersPage() {
             <div className={`p-6 rounded-3xl border shadow-md min-h-[400px] flex flex-col justify-between ${
               isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
             }`}>
-              <div>
+              <div className={`flex-grow flex flex-col ${isLoadingReminders ? 'justify-center' : ''}`}>
                 {isLoadingReminders ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="flex flex-col items-center justify-center py-4 gap-4">
                     <UrbanSetuSpinner />
                     <p className={`text-sm font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       Loading reminders...
