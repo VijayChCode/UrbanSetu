@@ -566,21 +566,36 @@ export const cancelReminderTool = async ({
             });
         }
 
-        // Single reminder — validate ObjectId format before querying
+        // Single reminder — validate ObjectId format, fall back to task-text lookup
         const isValidObjectId = /^[a-f\d]{24}$/i.test(reminderId);
-        if (!isValidObjectId) {
-            return JSON.stringify({
-                success: false,
-                message: `Invalid reminder ID format: "${reminderId}". Please use get_user_reminders to find the correct ID.`
-            });
+        let reminder = null;
+
+        if (isValidObjectId) {
+            reminder = await Reminder.findOne({ _id: reminderId, userId });
         }
 
-        const reminder = await Reminder.findOne({ _id: reminderId, userId });
+        // Fallback: if not found by ID (or ID is not valid), search by taskText (partial, case-insensitive)
         if (!reminder) {
-            return JSON.stringify({
-                success: false,
-                message: "Reminder not found or you are unauthorized to modify it."
+            const activeReminders = await Reminder.find({
+                userId,
+                status: { $in: ['scheduled', 'snoozed', 'triggered'] }
             });
+            // Try exact match first, then partial
+            reminder = activeReminders.find(r =>
+                r.taskText.toLowerCase() === reminderId.toLowerCase()
+            ) || activeReminders.find(r =>
+                r.taskText.toLowerCase().includes(reminderId.toLowerCase()) ||
+                reminderId.toLowerCase().includes(r.taskText.toLowerCase())
+            );
+
+            if (!reminder) {
+                // Return the list so AI can present it to the user
+                const listSummary = activeReminders.map(r => `"${r.taskText}" (id: ${r._id})`).join(', ');
+                return JSON.stringify({
+                    success: false,
+                    message: `No active reminder matching "${reminderId}" was found.${activeReminders.length > 0 ? ` Active reminders: ${listSummary}` : ' You have no active reminders.'}`
+                });
+            }
         }
 
         // If not confirmed yet, return confirmation required status

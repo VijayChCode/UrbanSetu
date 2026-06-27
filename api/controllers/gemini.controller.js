@@ -585,17 +585,13 @@ export const chatWithGemini = async (req, res) => {
                - Once you have their listings, you can offer advice on improvements, price adjustments, or verification status to help them sell/rent faster.
                - Link their properties using the ID: "[Property Name](https://urbansetu.vercel.app/user/listing/ACTUAL_PROPERTY_ID)".
              
-            11. **AI TASK SCHEDULER & REMINDERS**:
-                - When the user asks to schedule, remind, set a timer, alarm, alert, clock, or create a task (e.g. "reminder for my study of physics in 5mins", "schedule a meeting at 4 PM", "remind me to check rents tomorrow"), you MUST use the "schedule_reminder" tool.
-                - **CRITICAL**: The user may spell it "remainder" or "remainders". Always treat "remainder/remainders" exactly as "reminder/reminders" for scheduling.
-                - Calculate the exact ISO date/time string for the 'scheduledTime' parameter by referencing the 'CURRENT USER LOCAL TIME' provided in the context. Ensure you calculate relative times (like "in 5 minutes", "in 1 hour", "tomorrow at 3pm") precisely from this reference clock.
-                - When a user asks about what reminders are active, canceled, or past (e.g. "what are my active reminders?", "list my tasks"), you MUST call the "get_user_reminders" tool to fetch their real-time state from the database. Do not rely on chat history memory for this, query the database.
-                - When a user asks to cancel, delete, abort, or remove a reminder (e.g., "cancel my physics study reminder"), you MUST first call "get_user_reminders" to retrieve the active list, identify the matching reminder ID, and then call the "cancel_reminder" tool with that reminderId and confirmed: false.
-                - If the "cancel_reminder" tool returns that confirmation is required (requires_confirmation: true), you MUST ask the user to confirm by outputting this exact XML tag in your response: \`<confirm-cancel id="REMINDER_ID" text="REMINDER_TEXT" />\`. Do NOT execute the cancellation until the user confirms.
-                - If the user explicitly confirms (e.g., in response to the options like "Yes, cancel the reminder..."), you MUST call the "cancel_reminder" tool with that reminderId and confirmed: true to finalize the deletion.
-                - When a user asks to reschedule, change, postpone, or modify the time of a reminder (e.g., "move my physics study reminder to 5 PM today"), you MUST first call "get_user_reminders" to retrieve the active list, identify the matching reminder ID, and then call the "reschedule_reminder" tool with that reminderId and the new ISO date/time string calculated relative to the CURRENT USER LOCAL TIME.
-                - **STANDALONE REMINDERS PAGE**: Inform the user they can visually view, manage, and schedule all their reminders dynamically on the dedicated, mobile-optimized Reminders page. Always suggest the absolute link using Markdown: \`[My Reminders](https://urbansetu.vercel.app/user/reminders)\` (requires them to be logged in).
-            
+            11. **REMINDERS**: Use "remainder/remainders" as "reminder/reminders".
+                - **Create**: Use "schedule_reminder". Calculate scheduledTime as ISO 8601 from CURRENT USER LOCAL TIME.
+                - **List**: Call "get_user_reminders" (never rely on chat history).
+                - **Cancel**: Call "get_user_reminders" → fuzzy-match taskText to user's description → call "cancel_reminder" (confirmed: false). On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed: true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
+                - **Reschedule**: "get_user_reminders" → match → "reschedule_reminder" with new ISO time.
+                - **Reminders page**: suggest [My Reminders](https://urbansetu.vercel.app/user/reminders).
+
             12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
                 - If the user asks to identify a person, find a person's name, or analyze details not in the provided [VISION ANALYSIS] context, explain politely that you cannot determine specific personal identities or details from the image alone.
                 - Do NOT call "sentinel_image_auditor" unless the user explicitly asks to "audit", "verify", or "check quality" of an image. Never call it for general questions about what is in the image, who is in the image, or to identify people.
