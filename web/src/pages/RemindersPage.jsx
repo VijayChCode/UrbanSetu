@@ -503,7 +503,7 @@ export default function RemindersPage() {
                                   onClick={() => handleDismissInline(reminder._id)}
                                   className="text-xs px-3 py-1.5 rounded-lg font-bold bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white transition-colors"
                                 >
-                                  Cancel Alarm
+                                  Dismiss Reminder
                                 </button>
                               </div>
                             ) : (

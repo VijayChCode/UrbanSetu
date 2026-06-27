@@ -11094,7 +11094,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                         onClick={() => handleDismissInline(reminder._id)}
                                                                                         className="text-xs px-2.5 py-1 rounded font-medium transition-colors bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white"
                                                                                     >
-                                                                                        Cancel Alarm
+                                                                                        Dismiss Reminder
                                                                                     </button>
                                                                                 </div>
                                                                             ) : (
