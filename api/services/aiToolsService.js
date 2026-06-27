@@ -537,6 +537,44 @@ export const cancelReminderTool = async ({
             });
         }
 
+        // Special case: cancel ALL active reminders for this user
+        if (reminderId === 'ALL' || reminderId === 'all') {
+            if (!confirmed) {
+                return JSON.stringify({
+                    success: false,
+                    requires_confirmation: true,
+                    reminderId: 'ALL',
+                    reminderText: 'All active reminders',
+                    message: 'Cancellation of all active reminders requires user confirmation.'
+                });
+            }
+            const activeReminders = await Reminder.find({
+                userId,
+                status: { $in: ['scheduled', 'snoozed', 'triggered'] }
+            });
+            if (activeReminders.length === 0) {
+                return JSON.stringify({ success: true, message: "No active reminders to cancel." });
+            }
+            await Reminder.updateMany(
+                { userId, status: { $in: ['scheduled', 'snoozed', 'triggered'] } },
+                { $set: { status: 'cancelled' } }
+            );
+            return JSON.stringify({
+                success: true,
+                message: `Successfully cancelled all ${activeReminders.length} active reminder(s).`,
+                cancelledCount: activeReminders.length
+            });
+        }
+
+        // Single reminder — validate ObjectId format before querying
+        const isValidObjectId = /^[a-f\d]{24}$/i.test(reminderId);
+        if (!isValidObjectId) {
+            return JSON.stringify({
+                success: false,
+                message: `Invalid reminder ID format: "${reminderId}". Please use get_user_reminders to find the correct ID.`
+            });
+        }
+
         const reminder = await Reminder.findOne({ _id: reminderId, userId });
         if (!reminder) {
             return JSON.stringify({

@@ -8113,7 +8113,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const isSelectedYes = selectedChoice === 'yes';
         const isSelectedNo = selectedChoice === 'no';
 
-        const handleOptionClick = (optionText, choice) => {
+        const handleOptionClick = async (optionText, choice, cancelId) => {
+            // Mark this confirmation bubble as executed immediately
             if (msgIndex !== undefined) {
                 setMessages(prev => {
                     const copy = [...prev];
@@ -8127,8 +8128,52 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     return copy;
                 });
             }
-            setInputMessage(optionText);
-            handleSubmit(null, optionText);
+
+            if (choice === 'yes' && cancelId) {
+                // DIRECT API CALL — bypass AI to prevent misinterpretation / phantom reminders
+                try {
+                    if (cancelId === 'ALL') {
+                        // Fetch all active reminders and cancel each one directly
+                        const listRes = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders`);
+                        if (listRes.ok) {
+                            const listData = await listRes.json();
+                            const activeOnes = (listData.reminders || []).filter(
+                                r => r.status === 'scheduled' || r.status === 'snoozed' || r.status === 'triggered'
+                            );
+                            if (activeOnes.length === 0) {
+                                toast.info("No active reminders to cancel.");
+                            } else {
+                                let successCount = 0;
+                                for (const r of activeOnes) {
+                                    const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${r._id}`, { method: 'DELETE' });
+                                    if (res.ok) successCount++;
+                                }
+                                toast.success(`${successCount} reminder(s) cancelled successfully.`);
+                                fetchReminders();
+                            }
+                        } else {
+                            toast.error("Failed to fetch reminders for bulk cancellation.");
+                        }
+                    } else {
+                        // Single reminder — cancel directly
+                        const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/reminders/${cancelId}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            toast.success("Reminder cancelled successfully.");
+                            fetchReminders();
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            toast.error(errData.message || "Failed to cancel reminder.");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error cancelling reminder from confirmation:", err);
+                    toast.error("Error cancelling reminder.");
+                }
+            } else {
+                // "No" — just let AI know the user chose to keep it
+                setInputMessage(optionText);
+                handleSubmit(null, optionText);
+            }
         };
 
         return (
@@ -8147,7 +8192,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 <div className="space-y-2.5">
                     {/* Radio Button 1: Yes, cancel */}
                     <div 
-                        onClick={isExecuted ? null : () => handleOptionClick(`Yes, cancel the reminder "${reminderText}" with ID "${reminderId}"`, 'yes')}
+                        onClick={isExecuted ? null : () => handleOptionClick(`Yes, cancel the reminder "${reminderText}" with ID "${reminderId}"`, 'yes', reminderId)}
                         className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border transition-all ${
                             isExecuted 
                                 ? `cursor-not-allowed ${
