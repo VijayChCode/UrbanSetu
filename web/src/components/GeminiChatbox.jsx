@@ -1247,7 +1247,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const dailyCount = reminders.filter(r => r.createdAt && new Date(r.createdAt) >= oneDayAgo).length;
         if (dailyCount >= 10) {
-            toast.error("Daily reminder limit reached (10 reminders/day). Please try again later.");
+            toast.error("Daily reminder limit reached (10 reminders/day). Please try again after 24 hrs.");
             return;
         }
 
@@ -2562,28 +2562,28 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Apply per-chat settings from session data
     const applySessionSettings = (sessionSettings) => {
         if (!sessionSettings || typeof sessionSettings !== 'object') return;
-        if (sessionSettings.messageLimit) {
+        if (sessionSettings.messageLimit !== undefined && sessionSettings.messageLimit !== null) {
             setMessageLimit(sessionSettings.messageLimit);
         }
-        if (sessionSettings.dataRetention) {
+        if (sessionSettings.dataRetention !== undefined && sessionSettings.dataRetention !== null) {
             setDataRetention(sessionSettings.dataRetention);
         }
-        if (sessionSettings.tone) {
+        if (sessionSettings.tone !== undefined && sessionSettings.tone !== null) {
             setTone(sessionSettings.tone);
         }
-        if (sessionSettings.responseLength) {
+        if (sessionSettings.responseLength !== undefined && sessionSettings.responseLength !== null) {
             setAiResponseLength(sessionSettings.responseLength);
         }
-        if (sessionSettings.creativity) {
+        if (sessionSettings.creativity !== undefined && sessionSettings.creativity !== null) {
             setAiCreativity(sessionSettings.creativity);
         }
-        if (sessionSettings.temperature) {
+        if (sessionSettings.temperature !== undefined && sessionSettings.temperature !== null) {
             setTemperature(parseFloat(sessionSettings.temperature));
         }
-        if (sessionSettings.topP) {
+        if (sessionSettings.topP !== undefined && sessionSettings.topP !== null) {
             setTopP(parseFloat(sessionSettings.topP));
         }
-        if (sessionSettings.contextWindow) {
+        if (sessionSettings.contextWindow !== undefined && sessionSettings.contextWindow !== null) {
             setContextWindow(sessionSettings.contextWindow);
         }
         if (sessionSettings.enableStreaming !== undefined) {
@@ -3502,15 +3502,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     }, [currentUser]);
     // Data retention cleanup effect
     useEffect(() => {
-        // Only run cleanup if dataRetention is a valid value
-        if (dataRetention && (dataRetention === '0' || !isNaN(parseInt(dataRetention)))) {
+        const isForever = dataRetention === '0' || dataRetention === 0 || dataRetention === 'forever';
+        // Only run cleanup if dataRetention is a valid value and NOT forever
+        if (dataRetention && !isForever && !isNaN(parseInt(dataRetention))) {
             cleanupOldData();
         }
 
-        // Set up periodic cleanup (every hour) - only if data retention is enabled
-        if (dataRetention && dataRetention !== '0') {
+        // Set up periodic cleanup (every hour) - only if data retention is enabled and not forever
+        if (dataRetention && !isForever) {
             const cleanupInterval = setInterval(() => {
-                if (dataRetention && (dataRetention === '0' || !isNaN(parseInt(dataRetention)))) {
+                if (dataRetention && !isForever && !isNaN(parseInt(dataRetention))) {
                     cleanupOldData();
                 }
             }, 60 * 60 * 1000);
@@ -7429,7 +7430,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Data retention cleanup function
     const cleanupOldData = async () => {
         try {
-            if (dataRetention === '0') return; // Forever - no cleanup
+            if (dataRetention === '0' || dataRetention === 0 || dataRetention === 'forever') return; // Forever - no cleanup
 
             const retentionDays = parseInt(dataRetention);
             if (isNaN(retentionDays) || retentionDays <= 0) return; // Invalid retention days

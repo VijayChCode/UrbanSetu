@@ -2315,7 +2315,7 @@ export const createReminder = async (req, res) => {
         if (dailyCount >= 10) {
             return res.status(429).json({
                 success: false,
-                message: 'Daily reminder limit reached (10 reminders/day). Please try again later.'
+                message: 'Daily reminder limit reached (10 reminders/day). Please try again after 24 hrs.'
             });
         }
 
