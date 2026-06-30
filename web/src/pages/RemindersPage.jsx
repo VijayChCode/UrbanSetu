@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import {
   FaClock, FaSync, FaCalendarAlt, FaChevronLeft, FaChevronRight,
   FaBell, FaPlus, FaTrash, FaCheckCircle, FaExclamationTriangle,
-  FaTimes, FaTrashAlt, FaHistory, FaCheck, FaBan
+  FaTimes, FaTrashAlt, FaHistory, FaCheck, FaBan, FaInfoCircle
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
@@ -18,6 +18,7 @@ export default function RemindersPage() {
   const currentUser = useSelector(state => state.user.currentUser);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
   const [reminders, setReminders] = useState([]);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const [isLoadingReminders, setIsLoadingReminders] = useState(false);
   const [isSchedulingReminder, setIsSchedulingReminder] = useState(false);
   
@@ -292,6 +293,14 @@ export default function RemindersPage() {
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center gap-3">
               <FaClock className="text-indigo-500 animate-pulse" />
               My Task Reminders
+              <button
+                type="button"
+                onClick={() => setShowInfoModal(true)}
+                className="text-gray-400 hover:text-indigo-500 transition-colors ml-1 cursor-pointer focus:outline-none flex items-center"
+                title="Learn more about reminders"
+              >
+                <FaInfoCircle size={18} />
+              </button>
             </h1>
             <p className={`text-sm mt-2 font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Schedule, reschedule, and manage your custom AI-driven task alerts and notifications.
@@ -789,6 +798,70 @@ export default function RemindersPage() {
           </div>
         </div>
       )}
+
+      {/* Info/About Reminders Modal */}
+      {showInfoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className={`w-full max-w-lg rounded-3xl p-6 border shadow-2xl animate-scaleIn ${
+            isDarkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-800'
+          }`}>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-150 dark:border-gray-800 mb-4">
+              <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500 flex items-center gap-2">
+                <FaInfoCircle className="text-indigo-500" />
+                About SetuAI Reminders
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowInfoModal(false)}
+                className={`p-1.5 rounded-full transition-colors ${
+                  isDarkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+                }`}
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+            <div className="space-y-4 text-sm leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              <p>
+                <strong>SetuAI Task Reminders</strong> is an integrated scheduling assistant designed to keep you on top of all your real-estate actions, appointments, and operations.
+              </p>
+              <div>
+                <h5 className="font-bold text-indigo-500 mb-1">⏰ Real-Time Alerts</h5>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Receive on-time push notifications, sound alerts, and email notifications directly to your inbox when a task is due. You can snooze ringing alarms for 5 minutes or dismiss them immediately.
+                </p>
+              </div>
+              <div>
+                <h5 className="font-bold text-indigo-500 mb-1">🤖 AI-Driven Commands</h5>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  You can chat with SetuAI to manage your schedule hands-free. Simply type instructions like:
+                </p>
+                <ul className="list-disc pl-5 mt-1.5 space-y-1 text-xs text-indigo-500 font-medium">
+                  <li><em>"Schedule a reminder to check Ocean Breeze apartments tomorrow at 10 am"</em></li>
+                  <li><em>"Tell me my active reminders"</em></li>
+                  <li><em>"Reschedule my call with the landlord to 5 pm"</em></li>
+                  <li><em>"Cancel the listing inspection reminder"</em></li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-bold text-indigo-500 mb-1">📈 Scheduling Limits & Rules</h5>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  To prevent abuse, there is a rate limit of <strong>10 reminders per 24 hours</strong>. Reminders cannot be scheduled in the past.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-150 dark:border-gray-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowInfoModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-indigo-500/10 cursor-pointer"
+              >
+                Close Info
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <GeminiAIWrapper />
       <style>{`
         @keyframes fadeIn {

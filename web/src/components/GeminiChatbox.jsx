@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -1078,6 +1078,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showBookmarks, setShowBookmarks] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [showReminders, setShowReminders] = useState(false);
+    const [showReminderInfoModal, setShowReminderInfoModal] = useState(false);
     const [reminders, setReminders] = useState([]);
     const [activePage, setActivePage] = useState(1);
     const [pastPage, setPastPage] = useState(1);
@@ -11025,6 +11026,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-905'}`}>
                                             <FaClock className="text-indigo-500" />
                                             Active Reminders
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowReminderInfoModal(true)}
+                                                className="text-gray-400 hover:text-indigo-500 transition-colors cursor-pointer focus:outline-none flex items-center"
+                                                title="Learn more about reminders"
+                                            >
+                                                <FaInfoCircle size={14} />
+                                            </button>
                                         </h4>
                                         <div className="flex items-center gap-1.5">
                                             <button
@@ -11359,6 +11368,66 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         <button onClick={() => setShowReminders(false)} className={`px-3 py-1.5 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 transition-opacity font-medium`}>Close</button>
                                     </div>
                                 </div>
+
+                                {showReminderInfoModal && (
+                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] rounded-2xl animate-fadeIn p-4">
+                                        <div className={`${isDarkMode ? 'bg-gray-805 bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-850'} rounded-xl border shadow-xl p-4 w-80 max-w-full max-h-[90%] overflow-y-auto flex flex-col animate-scaleIn`}>
+                                            <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700 mb-3 flex-shrink-0">
+                                                <h5 className="font-bold text-xs text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500 flex items-center gap-1.5">
+                                                    <FaInfoCircle className="text-indigo-500" />
+                                                    About SetuAI Reminders
+                                                </h5>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowReminderInfoModal(false)}
+                                                    className={`p-1 rounded-full transition-colors ${
+                                                        isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-150 text-gray-500'
+                                                    }`}
+                                                >
+                                                    <FaTimes size={12} />
+                                                </button>
+                                            </div>
+                                            <div className="flex-1 overflow-y-auto space-y-3 text-[11px] leading-relaxed pr-0.5">
+                                                <p>
+                                                    <strong>SetuAI Task Reminders</strong> is an integrated scheduling assistant designed to keep you on top of all your real-estate actions, appointments, and operations.
+                                                </p>
+                                                <div>
+                                                    <h6 className="font-bold text-indigo-500 mb-0.5">⏰ Real-Time Alerts</h6>
+                                                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                        Receive on-time push notifications, sound alerts, and email notifications directly to your inbox when a task is due. You can snooze ringing alarms for 5 minutes or dismiss them immediately.
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <h6 className="font-bold text-indigo-500 mb-0.5">🤖 AI-Driven Commands</h6>
+                                                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                        You can chat with SetuAI to manage your schedule hands-free. Simply type instructions like:
+                                                    </p>
+                                                    <ul className="list-disc pl-4 mt-0.5 space-y-0.5 font-medium text-indigo-500">
+                                                        <li><em>"Schedule a reminder to check Ocean Breeze apartments tomorrow at 10 am"</em></li>
+                                                        <li><em>"Tell me my active reminders"</em></li>
+                                                        <li><em>"Reschedule my call with the landlord to 5 pm"</em></li>
+                                                        <li><em>"Cancel the listing inspection reminder"</em></li>
+                                                    </ul>
+                                                </div>
+                                                <div>
+                                                    <h6 className="font-bold text-indigo-500 mb-0.5">📈 Scheduling Limits & Rules</h6>
+                                                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                        To prevent abuse, there is a rate limit of <strong>10 reminders per 24 hours</strong>. Reminders cannot be scheduled in the past.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-705 dark:border-gray-700 flex justify-end flex-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowReminderInfoModal(false)}
+                                                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition-colors"
+                                                >
+                                                    Close Info
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
