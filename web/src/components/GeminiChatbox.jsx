@@ -1090,6 +1090,51 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isCreatingReminder, setIsCreatingReminder] = useState(false);
     const [newReminderText, setNewReminderText] = useState('');
     const [newReminderDate, setNewReminderDate] = useState('');
+    const [timeTicker, setTimeTicker] = useState(Date.now());
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimeTicker(Date.now());
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const getDurationRemainingText = (scheduledTime) => {
+        const diffMs = new Date(scheduledTime) - new Date();
+        if (diffMs <= 0) return "Alert is now!";
+        
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const days = Math.floor(diffMins / (24 * 60));
+        const hours = Math.floor((diffMins % (24 * 60)) / 60);
+        const minutes = diffMins % 60;
+        
+        let timeString = "Alarm in ";
+        if (days > 0) {
+            timeString += `${days} day${days > 1 ? 's' : ''} `;
+        }
+        if (hours > 0) {
+            timeString += `${hours} hour${hours > 1 ? 's' : ''} `;
+        }
+        if (minutes > 0 || (days === 0 && hours === 0)) {
+            timeString += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+        }
+        return timeString.trim();
+    };
+
+    const formatAlarmDate = (scheduledTime) => {
+        const d = new Date(scheduledTime);
+        const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-US', { month: 'short' });
+        
+        let hours = d.getHours();
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        
+        return `${weekday}, ${day} ${month}, ${hours}:${minutes} ${ampm}`;
+    };
     const [chatSessions, setChatSessions] = useState([]);
     const [lifetimeUsage, setLifetimeUsage] = useState({ totalTokens: 0 });
     const [activeSessionTokens, setActiveSessionTokens] = useState(0);
@@ -11073,7 +11118,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         ) : reminders.length === 0 ? (
                                             <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8`}>No reminders found</p>
                                         ) : (() => {
-                                            const activeReminders = reminders.filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r.status === 'triggered');
+                                            const activeReminders = reminders
+                                                .filter(r => r.status === 'scheduled' || r.status === 'snoozed' || r.status === 'triggered')
+                                                .sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime));
                                             const pastReminders = reminders.filter(r => r.status !== 'scheduled' && r.status !== 'snoozed' && r.status !== 'triggered');
                                             
                                             const activeTotalPages = Math.ceil(activeReminders.length / 3) || 1;
@@ -11090,6 +11137,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <h5 className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>Active Reminders</h5>
                                                         {activeReminders.length > 0 ? (
                                                             <>
+                                                                {/* Next nearest alarm banner */}
+                                                                {(() => {
+                                                                    const nextReminder = activeReminders.find(r => new Date(r.scheduledTime) > new Date());
+                                                                    if (!nextReminder) return null;
+                                                                    return (
+                                                                        <div className={`mb-4 p-4 rounded-2xl text-center border transition-all duration-300 ${
+                                                                            isDarkMode 
+                                                                                ? 'bg-gradient-to-b from-indigo-950/20 to-purple-950/10 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.06)]' 
+                                                                                : 'bg-gradient-to-b from-indigo-50/70 to-purple-50/30 border-indigo-100 shadow-sm'
+                                                                        }`}>
+                                                                            <h2 className={`text-lg font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                                                {getDurationRemainingText(nextReminder.scheduledTime)}
+                                                                            </h2>
+                                                                            <p className={`text-xs font-bold mt-1 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                                                                {formatAlarmDate(nextReminder.scheduledTime)}
+                                                                            </p>
+                                                                            <p className={`text-[10px] font-medium mt-0.5 italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                                "{nextReminder.taskText}"
+                                                                            </p>
+                                                                        </div>
+                                                                    );
+                                                                })()}
+
                                                                 <div className="space-y-3">
                                                                     {activePageItems.map((reminder, idx) => (
                                                                         <div 
