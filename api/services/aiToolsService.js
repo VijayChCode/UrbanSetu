@@ -425,7 +425,7 @@ export const scheduleReminder = async ({
  * AI Tool: Get User Reminders
  * Purpose: Allows the AI to fetch all reminders for the current user to answer questions about active or past reminders.
  */
-export const getUserRemindersTool = async ({ userId }) => {
+export const getUserRemindersTool = async ({ status = 'all', userId }) => {
     try {
         if (!userId) {
             return JSON.stringify({
@@ -434,7 +434,14 @@ export const getUserRemindersTool = async ({ userId }) => {
             });
         }
 
-        const reminders = await Reminder.find({ userId }).sort({ scheduledTime: 1 });
+        const query = { userId };
+        if (status === 'active') {
+            query.status = { $in: ['scheduled', 'snoozed', 'triggered'] };
+        } else if (status === 'cancelled') {
+            query.status = 'cancelled';
+        }
+
+        const reminders = await Reminder.find(query).sort({ scheduledTime: 1 });
 
         return JSON.stringify({
             success: true,
@@ -801,7 +808,13 @@ export const toolDefinitions = [
             description: "Retrieve all scheduled, triggered, and cancelled reminders for the current logged-in user. Use this when the user asks what active, scheduled, past, or cancelled reminders they have present in the system.",
             parameters: {
                 type: "object",
-                properties: {},
+                properties: {
+                    status: {
+                        type: "string",
+                        enum: ["all", "active", "cancelled"],
+                        description: "Filter reminders by status ('all', 'active', 'cancelled'). Default is 'all'."
+                    }
+                },
                 required: []
             }
         }

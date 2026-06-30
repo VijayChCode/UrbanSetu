@@ -578,7 +578,7 @@ export const chatWithGemini = async (req, res) => {
                 - If the image/document contains a question, math problem, general knowledge quiz, or text query (e.g. "Which constitutional amendment introduced GST in India?"), directly address and answer the question naturally and concisely. Do NOT force a real estate connection or mention property listings.
                 - **CRITICAL**: If the user asks about their previous questions or inputs (e.g. "what is the before question I asked you"), do NOT quote, repeat, or display the system-generated visual description or OCR text headers (like "[VISION ANALYSIS - ...]" or "[EXTRACTED TEXT (OCR) - ...]"). Those are internal system descriptions. Refer to the user's attachment naturally as "the image you uploaded" or summarize the question it contained without leaking the system tags.
             8. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
-            9. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet), explicitly mention that the user must be logged in to access it.
+            9. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet, Reminders), explicitly mention that the user must be logged in to access it. However, if the CURRENT USER is already logged in (i.e. you see a specific username/email/ID in the user context), do NOT ask them to log in or say 'after logging in' since they are already authenticated.
             10. **OWNED PROPERTIES (LANDLORD/OWNED MODE)**: 
                - If the user asks about "my properties", "my listings", or "how are my houses performing", use the "get_user_listings" tool.
                - If they are NOT logged in, politely encourage them to [Sign In](https://urbansetu.vercel.app/sign-in) to see their personalized property dashboard.
@@ -587,9 +587,9 @@ export const chatWithGemini = async (req, res) => {
              
             11. **REMINDERS**: Use "remainder/remainders" as "reminder/reminders".
                 - **Create**: Use "schedule_reminder". Calculate scheduledTime as ISO 8601 from CURRENT USER LOCAL TIME.
-                - **List**: Call "get_user_reminders" (never rely on chat history).
-                - **Cancel**: Call "get_user_reminders" → fuzzy-match taskText to user's description → call "cancel_reminder" (confirmed: false). On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed: true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
-                - **Reschedule**: "get_user_reminders" → match → "reschedule_reminder" with new ISO time.
+                - **List**: ALWAYS call "get_user_reminders" with status: "active" (or "all" or "cancelled" depending on the query). Do NOT guess, output placeholder text like "(Using the get_user_reminders tool...)", or pretend to load data in your text response. You must generate the actual tool call immediately to fetch the user's real reminders.
+                - **Cancel**: Call "get_user_reminders" with status: "active" first -> fuzzy-match taskText to user's description -> call "cancel_reminder" (confirmed: false). On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed: true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
+                - **Reschedule**: Call "get_user_reminders" with status: "active" first -> match -> "reschedule_reminder" with new ISO time.
                 - **Reminders page**: suggest [My Reminders](https://urbansetu.vercel.app/user/reminders).
 
             12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
