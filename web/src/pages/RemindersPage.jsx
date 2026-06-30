@@ -39,7 +39,7 @@ export default function RemindersPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeTicker(Date.now());
-    }, 10000);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -47,7 +47,12 @@ export default function RemindersPage() {
     const diffMs = new Date(scheduledTime) - new Date();
     if (diffMs <= 0) return "Alert is now!";
     
-    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffSecs = Math.floor(diffMs / 1000);
+    if (diffSecs < 60) {
+      return `Alarm in ${diffSecs} second${diffSecs !== 1 ? 's' : ''}`;
+    }
+    
+    const diffMins = Math.floor(diffSecs / 60);
     const days = Math.floor(diffMins / (24 * 60));
     const hours = Math.floor((diffMins % (24 * 60)) / 60);
     const minutes = diffMins % 60;
@@ -59,7 +64,7 @@ export default function RemindersPage() {
     if (hours > 0) {
       timeString += `${hours} hour${hours > 1 ? 's' : ''} `;
     }
-    if (minutes > 0 || (days === 0 && hours === 0)) {
+    if (minutes > 0) {
       timeString += `${minutes} minute${minutes > 1 ? 's' : ''}`;
     }
     return timeString.trim();
