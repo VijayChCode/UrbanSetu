@@ -446,6 +446,7 @@ export const getUserRemindersTool = async ({ userId }) => {
 export const rescheduleReminderTool = async ({
     reminderId,
     newScheduledTime,
+    newReminderText,
     userId
 }) => {
     try {
@@ -496,6 +497,10 @@ export const rescheduleReminderTool = async ({
                 success: false,
                 message: `Only active scheduled reminders can be rescheduled. Current status is: ${reminder.status}`
             });
+        }
+
+        if (newReminderText && newReminderText.trim()) {
+            reminder.taskText = newReminderText.trim();
         }
 
         reminder.scheduledTime = targetTime;
@@ -791,7 +796,7 @@ export const toolDefinitions = [
         type: "function",
         function: {
             name: "reschedule_reminder",
-            description: "Reschedule an existing active scheduled reminder to a new date and time. Use this when the user asks to change, reschedule, move, or defer a reminder. First use get_user_reminders to find the active reminder ID.",
+            description: "Reschedule an existing active scheduled reminder to a new date and time. Use this when the user asks to change, reschedule, move, or defer a reminder. Optionally change/rename the reminder description text. First use get_user_reminders to find the active reminder ID.",
             parameters: {
                 type: "object",
                 properties: {
@@ -802,6 +807,10 @@ export const toolDefinitions = [
                     newScheduledTime: {
                         type: "string",
                         description: "The new absolute date and time, formatted as a valid ISO 8601 string (e.g., '2026-06-22T10:30:00.000Z')."
+                    },
+                    newReminderText: {
+                        type: "string",
+                        description: "Optional new text description for the reminder."
                     }
                 },
                 required: ["reminderId", "newScheduledTime"]

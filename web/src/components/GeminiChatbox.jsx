@@ -1086,6 +1086,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isSchedulingReminder, setIsSchedulingReminder] = useState(false);
     const [isRescheduling, setIsRescheduling] = useState(null);
     const [rescheduleDate, setRescheduleDate] = useState('');
+    const [rescheduleText, setRescheduleText] = useState('');
     const [isCreatingReminder, setIsCreatingReminder] = useState(false);
     const [newReminderText, setNewReminderText] = useState('');
     const [newReminderDate, setNewReminderDate] = useState('');
@@ -1197,7 +1198,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const handleReschedule = async (id, newTime) => {
+    const handleReschedule = async (id, newTime, newText) => {
         if (!newTime) {
             toast.warn("Please select a valid date and time.");
             return;
@@ -1213,12 +1214,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ scheduledTime: utcTime })
+                body: JSON.stringify({ scheduledTime: utcTime, taskText: newText })
             });
             if (res.ok) {
                 toast.success("Reminder rescheduled successfully");
                 fetchReminders();
                 setIsRescheduling(null);
+                setRescheduleText('');
             } else {
                 const errData = await res.json();
                 toast.error(errData.message || "Failed to reschedule reminder");
@@ -11104,23 +11106,39 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             </div>
                                                                             {isRescheduling && isRescheduling._id === reminder._id ? (
                                                                                 <div className="space-y-2 pt-1 border-t border-dashed border-gray-700">
-                                                                                    <input
-                                                                                        type="datetime-local"
-                                                                                        value={rescheduleDate}
-                                                                                        onChange={(e) => setRescheduleDate(e.target.value)}
-                                                                                        min={getMinDateTime()}
-                                                                                        style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
-                                                                                        className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
-                                                                                    />
+                                                                                    <div className="space-y-1">
+                                                                                        <label className={`text-[9px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Description</label>
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={rescheduleText}
+                                                                                            onChange={(e) => setRescheduleText(e.target.value)}
+                                                                                            placeholder="Task description..."
+                                                                                            className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="space-y-1">
+                                                                                        <label className={`text-[9px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>New Alert Time</label>
+                                                                                        <input
+                                                                                            type="datetime-local"
+                                                                                            value={rescheduleDate}
+                                                                                            onChange={(e) => setRescheduleDate(e.target.value)}
+                                                                                            min={getMinDateTime()}
+                                                                                            style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
+                                                                                            className={`w-full p-2 border rounded text-xs ${isDarkMode ? 'bg-gray-700 text-white border-gray-600 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
+                                                                                        />
+                                                                                    </div>
                                                                                     <div className="flex gap-2">
                                                                                         <button
-                                                                                            onClick={() => handleReschedule(reminder._id, rescheduleDate)}
+                                                                                            onClick={() => handleReschedule(reminder._id, rescheduleDate, rescheduleText)}
                                                                                             className="text-xs px-2.5 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
                                                                                         >
                                                                                             Save
                                                                                         </button>
                                                                                         <button
-                                                                                            onClick={() => setIsRescheduling(null)}
+                                                                                            onClick={() => {
+                                                                                                setIsRescheduling(null);
+                                                                                                setRescheduleText('');
+                                                                                            }}
                                                                                             className={`text-xs px-2.5 py-1.5 rounded font-medium border ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700' : 'bg-white hover:bg-gray-150 text-gray-700 border-gray-300'} transition-colors`}
                                                                                         >
                                                                                             Cancel
@@ -11151,6 +11169,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                             const offset = date.getTimezoneOffset();
                                                                                             const localDate = new Date(date.getTime() - (offset * 60 * 1000));
                                                                                             setRescheduleDate(localDate.toISOString().slice(0, 16));
+                                                                                            setRescheduleText(reminder.taskText || '');
                                                                                         }}
                                                                                         className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${isDarkMode ? 'bg-indigo-900/30 hover:bg-indigo-800 text-indigo-300' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'}`}
                                                                                     >

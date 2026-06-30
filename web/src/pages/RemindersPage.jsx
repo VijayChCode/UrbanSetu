@@ -30,6 +30,7 @@ export default function RemindersPage() {
   const [pastPage, setPastPage] = useState(1);
   const [isRescheduling, setIsRescheduling] = useState(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleText, setRescheduleText] = useState('');
   const [deleteReminderId, setDeleteReminderId] = useState(null);
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'history'
   const [ringingReminderId, setRingingReminderId] = useState(window.activeRingingReminderId || null);
@@ -125,7 +126,7 @@ export default function RemindersPage() {
     }
   };
 
-  const handleReschedule = async (id, newTime) => {
+  const handleReschedule = async (id, newTime, newText) => {
     if (!newTime) {
       toast.warn("Please select a valid date and time.");
       return;
@@ -141,12 +142,13 @@ export default function RemindersPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ scheduledTime: utcTime })
+        body: JSON.stringify({ scheduledTime: utcTime, taskText: newText })
       });
       if (res.ok) {
         toast.success("Reminder rescheduled successfully");
         fetchReminders();
         setIsRescheduling(null);
+        setRescheduleText('');
       } else {
         const errData = await res.json();
         toast.error(errData.message || "Failed to reschedule reminder");
@@ -466,6 +468,16 @@ export default function RemindersPage() {
                             {isRescheduling && isRescheduling._id === reminder._id ? (
                               <div className="mt-3 pt-3 border-t border-dashed border-gray-800 dark:border-gray-700 space-y-3">
                                 <div className="space-y-1">
+                                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Task Name</label>
+                                  <input
+                                    type="text"
+                                    value={rescheduleText}
+                                    onChange={(e) => setRescheduleText(e.target.value)}
+                                    placeholder="Task description..."
+                                    className={`w-full p-2.5 border rounded-xl text-xs ${isDarkMode ? 'bg-gray-900 text-white border-gray-850 focus:ring-indigo-500' : 'bg-white text-gray-900 border-gray-300 focus:ring-indigo-500'}`}
+                                  />
+                                </div>
+                                <div className="space-y-1">
                                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">New Alert Time</label>
                                   <input
                                     type="datetime-local"
@@ -478,13 +490,16 @@ export default function RemindersPage() {
                                 </div>
                                 <div className="flex gap-2">
                                   <button
-                                    onClick={() => handleReschedule(reminder._id, rescheduleDate)}
+                                    onClick={() => handleReschedule(reminder._id, rescheduleDate, rescheduleText)}
                                     className="text-xs px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-md hover:shadow-indigo-500/10"
                                   >
-                                    Save Time
+                                    Save Changes
                                   </button>
                                   <button
-                                    onClick={() => setIsRescheduling(null)}
+                                    onClick={() => {
+                                      setIsRescheduling(null);
+                                      setRescheduleText('');
+                                    }}
                                     className={`text-xs px-3 py-2 rounded-lg border font-bold transition-colors ${isDarkMode ? 'bg-gray-850 hover:bg-gray-800 text-gray-300 border-gray-750' : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'}`}
                                   >
                                     Cancel
@@ -515,6 +530,7 @@ export default function RemindersPage() {
                                     const offset = date.getTimezoneOffset();
                                     const localDate = new Date(date.getTime() - (offset * 60 * 1000));
                                     setRescheduleDate(localDate.toISOString().slice(0, 16));
+                                    setRescheduleText(reminder.taskText || '');
                                   }}
                                   className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-colors ${
                                     isDarkMode 

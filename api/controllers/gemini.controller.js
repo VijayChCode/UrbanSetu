@@ -2130,7 +2130,7 @@ export const rescheduleReminder = async (req, res) => {
     try {
         const userId = req.user.id;
         const { id } = req.params;
-        const { scheduledTime } = req.body;
+        const { scheduledTime, taskText } = req.body;
 
         if (!scheduledTime) {
             return res.status(400).json({
@@ -2152,6 +2152,10 @@ export const rescheduleReminder = async (req, res) => {
                 success: false,
                 message: 'Only scheduled reminders can be rescheduled'
             });
+        }
+
+        if (taskText && taskText.trim()) {
+            reminder.taskText = taskText.trim();
         }
 
         reminder.scheduledTime = new Date(scheduledTime);
