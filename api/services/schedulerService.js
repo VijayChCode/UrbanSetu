@@ -137,7 +137,7 @@ const scheduleDataRetentionCleanup = () => {
   cron.schedule('0 3 * * *', async () => {
     console.log('⏰ Running scheduled data retention cleanup...');
     try {
-      const result = await cleanupOldChatData(30); // Default 30 days retention
+      const result = await cleanupOldChatData(); // Respect individual session settings
       console.log('✅ Scheduled data retention cleanup completed:', result);
     } catch (error) {
       console.error('❌ Error in scheduled data retention cleanup:', error);
