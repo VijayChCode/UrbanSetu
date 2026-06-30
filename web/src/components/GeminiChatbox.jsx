@@ -1244,6 +1244,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             toast.warn("Cannot schedule a reminder in the past.");
             return;
         }
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const dailyCount = reminders.filter(r => r.createdAt && new Date(r.createdAt) >= oneDayAgo).length;
+        if (dailyCount >= 10) {
+            toast.error("Daily reminder limit reached (10 reminders/day). Please try again later.");
+            return;
+        }
+
         setIsSchedulingReminder(true);
         try {
             const utcTime = new Date(time).toISOString();

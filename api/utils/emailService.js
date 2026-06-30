@@ -17749,7 +17749,8 @@ export const sendReminderNotificationEmail = async (email, { taskText, time, use
             </p>
             
             <div style="text-align: center; margin: 25px 0;">
-              <a href="${clientBaseUrl}/user/ai" style="display: inline-block; background-color: #6366f1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 16px;">Open SetuAI Assistant</a>
+              <a href="${clientBaseUrl}/user/ai" style="display: inline-block; background-color: #6366f1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">Open SetuAI Assistant</a>
+              <a href="${clientBaseUrl}/user/reminders" style="display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">Manage My Reminders</a>
             </div>
           </div>
           

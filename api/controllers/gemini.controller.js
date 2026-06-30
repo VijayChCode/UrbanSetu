@@ -2305,6 +2305,20 @@ export const createReminder = async (req, res) => {
             });
         }
 
+        // Daily rate limit: check how many reminders the user scheduled in the last 24 hours
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const dailyCount = await Reminder.countDocuments({
+            userId,
+            createdAt: { $gte: oneDayAgo }
+        });
+
+        if (dailyCount >= 10) {
+            return res.status(429).json({
+                success: false,
+                message: 'Daily reminder limit reached (10 reminders/day). Please try again later.'
+            });
+        }
+
         const targetTime = new Date(scheduledTime);
         if (isNaN(targetTime.getTime())) {
             return res.status(400).json({
