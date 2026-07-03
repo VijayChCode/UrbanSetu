@@ -10,7 +10,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = false, isAdmin = false }) => {
     const { currentUser } = useSelector((state) => state.user);
     const [leaderboard, setLeaderboard] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [userRank, setUserRank] = useState(null);
     const [currentUserEntry, setCurrentUserEntry] = useState(null);
     const [freshBalance, setFreshBalance] = useState(null);
@@ -25,15 +26,20 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
     }, [limit]);
 
     useEffect(() => {
-        fetchLeaderboard(page);
+        const isInitial = leaderboard.length === 0;
+        fetchLeaderboard(page, isInitial);
         if (showYourStatus && currentUser) {
             fetchFreshBalance();
         }
     }, [page, limit]);
 
-    const fetchLeaderboard = async (currentPage = 1) => {
+    const fetchLeaderboard = async (currentPage = 1, isInitial = false) => {
         try {
-            setLoading(true);
+            if (isInitial) {
+                setInitialLoading(true);
+            } else {
+                setLoading(true);
+            }
             const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/leaderboard?limit=${limit}&page=${currentPage}`);
             const data = await res.json();
             if (data.success) {
@@ -56,6 +62,7 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
         } catch (error) {
             console.error(error);
         } finally {
+            setInitialLoading(false);
             setLoading(false);
         }
     };
@@ -159,7 +166,7 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
         </div>
     );
 
-    if (loading) {
+    if (initialLoading) {
         return <LeaderboardSkeleton showYourStatus={showYourStatus} />;
     }
 
@@ -228,7 +235,16 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                     </div>
                 )}
 
-                <div className="p-4 sm:p-8 space-y-4">
+                <div className="p-4 sm:p-8 space-y-4 relative">
+                    {/* Background Loading Blur Overlay */}
+                    {loading && (
+                        <div className="absolute inset-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-[2rem] transition-all duration-300">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">Loading standings...</span>
+                            </div>
+                        </div>
+                    )}
                     {leaderboard.length === 0 ? (
                         <div className="text-center py-20">
                             <FaTrophy className="text-6xl text-slate-100 dark:text-gray-700 mx-auto mb-4" />
