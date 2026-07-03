@@ -27,6 +27,9 @@ const AdminFAQs = () => {
   const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [faqToToggle, setFaqToToggle] = useState(null);
+  const [statusActionLoading, setStatusActionLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -307,33 +310,41 @@ const AdminFAQs = () => {
     setDeleteModal({ show: false, id: null });
   };
 
-  const toggleActive = async (faq) => {
+  const toggleActive = (faq) => {
+    setFaqToToggle(faq);
+    setShowStatusModal(true);
+  };
+
+  const updateFAQStatus = async (faqId, updates) => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/faqs/${faq._id}`, {
+      setStatusActionLoading(true);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/faqs/${faqId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          isActive: !faq.isActive
-        })
+        body: JSON.stringify(updates)
       });
 
       if (response.ok) {
+        toast.success(`FAQ status updated successfully`);
         // Update local state to reflect change immediately without refetching
         setFaqs(prevFaqs =>
           prevFaqs.map(f =>
-            f._id === faq._id ? { ...f, isActive: !f.isActive } : f
+            f._id === faqId ? { ...f, ...updates } : f
           )
         );
-        toast.success(`FAQ ${!faq.isActive ? 'activated' : 'deactivated'} successfully`);
+        setShowStatusModal(false);
+        setFaqToToggle(null);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || 'Failed to toggle FAQ status');
+        toast.error(errorData.message || 'Failed to update FAQ status');
       }
     } catch (error) {
-      console.error('❌ Error toggling FAQ status:', error);
-      toast.error('Failed to toggle FAQ status. Please try again.');
+      console.error('❌ Error updating FAQ status:', error);
+      toast.error('Failed to update FAQ status. Please try again.');
+    } finally {
+      setStatusActionLoading(false);
     }
   };
 
@@ -857,6 +868,121 @@ const AdminFAQs = () => {
                     Yes, Delete
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Confirmation Modal */}
+        {showStatusModal && faqToToggle && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-scale-in border border-gray-100 dark:border-gray-700 transition-all">
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-700/30">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <FaQuestionCircle className="w-5 h-5 text-orange-500" />
+                  Manage FAQ Status
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowStatusModal(false);
+                    setFaqToToggle(null);
+                  }}
+                  disabled={statusActionLoading}
+                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <FaTimes className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-6">
+                <div>
+                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Question</span>
+                  <h4 className="font-extrabold text-base text-gray-800 dark:text-white line-clamp-2">{faqToToggle.question}</h4>
+                </div>
+
+                <div>
+                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Category / Scope</span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600">
+                      {faqToToggle.category}
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${!faqToToggle.propertyId
+                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-100 dark:border-purple-800'
+                      : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-800'
+                      }`}>
+                      {!faqToToggle.propertyId ? <FaGlobe className="w-3 h-3" /> : <FaHome className="w-3 h-3" />}
+                      {!faqToToggle.propertyId ? 'Global' : 'Property Specific'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status Section */}
+                <div>
+                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Current Status</span>
+                  {faqToToggle.isActive ? (
+                    <div className="space-y-4">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                        <FaEye className="w-3.5 h-3.5" /> Active
+                      </span>
+                      <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500 dark:text-gray-400">Visibility:</span>
+                          <span className="font-bold text-gray-800 dark:text-gray-200">Visible to Public</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+                        <FaEyeSlash className="w-3.5 h-3.5" /> Offline
+                      </span>
+                      <div className="bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500 dark:text-gray-400">Visibility:</span>
+                          <span className="font-bold text-gray-800 dark:text-gray-200">Hidden from Public</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="p-6 bg-gray-50 dark:bg-gray-700/20 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+                {statusActionLoading ? (
+                  <div className="flex items-center justify-center py-2 text-orange-600 font-bold text-sm gap-2">
+                    <UrbanSetuSpinner size="sm" /> Updating status...
+                  </div>
+                ) : (
+                  <>
+                    {faqToToggle.isActive ? (
+                      <button
+                        onClick={() => updateFAQStatus(faqToToggle._id, { isActive: false })}
+                        className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <FaEyeSlash className="w-4 h-4" /> Deactivate (Set Offline)
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => updateFAQStatus(faqToToggle._id, { isActive: true })}
+                        className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <FaEye className="w-4 h-4" /> Activate (Set Active)
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setShowStatusModal(false);
+                        setFaqToToggle(null);
+                      }}
+                      className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-2xl font-bold transition-colors text-sm"
+                    >
+                      Close
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
