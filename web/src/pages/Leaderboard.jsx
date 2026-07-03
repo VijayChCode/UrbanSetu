@@ -145,7 +145,7 @@ export default function Leaderboard({ isAdmin = false }) {
                                     </div>
                                     <h3 className="font-extrabold text-lg text-gray-800 dark:text-white">List Properties</h3>
                                     <p className="text-gray-500 dark:text-gray-400 text-xs leading-relaxed">
-                                        Create high-quality verified rental listings. Earn up to <strong className="text-emerald-600 dark:text-emerald-400">250 SetuCoins</strong> for verified listings.
+                                        Create high-quality verified rental listings. Earn up to <strong className="text-emerald-600 dark:text-emerald-400">1000 SetuCoins</strong> for verified listings.
                                     </p>
                                 </div>
                                 <Link 

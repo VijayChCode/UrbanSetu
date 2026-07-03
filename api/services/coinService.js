@@ -392,10 +392,14 @@ class CoinService {
     /**
      * Get Leaderboard
      */
-    async getLeaderboard(limit = 10, isAdmin = false, requestingUserId = null) {
+    async getLeaderboard(limit = 10, isAdmin = false, requestingUserId = null, page = 1) {
+        const skip = (page - 1) * limit;
+        const totalUsers = await User.countDocuments({ 'gamification.totalCoinsEarned': { $gt: 0 } });
+
         const users = await User.find({ 'gamification.totalCoinsEarned': { $gt: 0 } })
             .select('username firstName lastName avatar gamification.totalCoinsEarned gamification.currentStreak')
             .sort({ 'gamification.totalCoinsEarned': -1 })
+            .skip(skip)
             .limit(limit);
 
         const leaderboard = users.map((u, index) => {
@@ -405,7 +409,7 @@ class CoinService {
                 : `${name}***`;
 
             const entry = {
-                rank: index + 1,
+                rank: skip + index + 1,
                 userId: u._id,
                 name: maskedName,
                 avatar: u.avatar,
@@ -422,7 +426,7 @@ class CoinService {
 
         // If requesting user is logged in and NOT in the top N, compute their rank
         let currentUserEntry = null;
-        if (requestingUserId) {
+        if (requestingUserId && !isAdmin) {
             const isInList = leaderboard.some(u => u.userId.toString() === requestingUserId.toString());
             if (!isInList) {
                 const requestingUser = await User.findById(requestingUserId)
@@ -447,7 +451,18 @@ class CoinService {
             }
         }
 
-        return { leaderboard, currentUserEntry };
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        return { 
+            leaderboard, 
+            currentUserEntry,
+            pagination: {
+                totalUsers,
+                totalPages,
+                currentPage: page,
+                limit
+            }
+        };
     }
 
     /**

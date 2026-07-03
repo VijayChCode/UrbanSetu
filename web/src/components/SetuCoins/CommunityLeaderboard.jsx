@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaCoins, FaTrophy, FaFire, FaCrown, FaMedal, FaStar, FaInfoCircle, FaEllipsisH } from 'react-icons/fa';
+import { FaCoins, FaTrophy, FaFire, FaCrown, FaMedal, FaStar, FaInfoCircle, FaEllipsisH, FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { authenticatedFetch } from '../../utils/auth';
 import LeaderboardSkeleton from '../skeletons/LeaderboardSkeleton';
@@ -15,20 +15,33 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
     const [currentUserEntry, setCurrentUserEntry] = useState(null);
     const [freshBalance, setFreshBalance] = useState(null);
 
+    // Pagination state for admin pagination
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalUsers, setTotalUsers] = useState(0);
+
     useEffect(() => {
-        fetchLeaderboard();
+        setPage(1);
+    }, [limit]);
+
+    useEffect(() => {
+        fetchLeaderboard(page);
         if (showYourStatus && currentUser) {
             fetchFreshBalance();
         }
-    }, [limit]);
+    }, [page, limit]);
 
-    const fetchLeaderboard = async () => {
+    const fetchLeaderboard = async (currentPage = 1) => {
         try {
             setLoading(true);
-            const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/leaderboard?limit=${limit}`);
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/coins/leaderboard?limit=${limit}&page=${currentPage}`);
             const data = await res.json();
             if (data.success) {
                 setLeaderboard(data.leaderboard);
+                if (data.pagination) {
+                    setTotalPages(data.pagination.totalPages || 1);
+                    setTotalUsers(data.pagination.totalUsers || 0);
+                }
 
                 if (currentUser) {
                     const myRank = data.leaderboard.find(u => u.userId === currentUser._id);
@@ -250,6 +263,54 @@ const CommunityLeaderboard = ({ limit = 10, showHeader = true, showYourStatus = 
                         </>
                     )}
                 </div>
+
+                {/* Pagination Controls (Only for Admin) */}
+                {isAdmin && totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-8 py-5 border-t border-slate-100 dark:border-gray-700 bg-slate-50/50 dark:bg-gray-800/30">
+                        <p className="text-xs font-bold text-slate-500 dark:text-gray-400">
+                            Showing <span className="font-extrabold text-indigo-600 dark:text-indigo-400">{(page - 1) * limit + 1}</span> to{' '}
+                            <span className="font-extrabold text-indigo-600 dark:text-indigo-400">{Math.min(page * limit, totalUsers)}</span> of{' '}
+                            <span className="font-extrabold text-indigo-600 dark:text-indigo-400">{totalUsers}</span> users
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPage(1)}
+                                disabled={page === 1}
+                                className="p-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 dark:disabled:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+                                title="First Page"
+                            >
+                                <FaAngleDoubleLeft />
+                            </button>
+                            <button
+                                onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                                disabled={page === 1}
+                                className="p-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 dark:disabled:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+                                title="Previous Page"
+                            >
+                                <FaChevronLeft />
+                            </button>
+                            <span className="px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs shadow-inner">
+                                Page {page} of {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={page === totalPages}
+                                className="p-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 dark:disabled:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+                                title="Next Page"
+                            >
+                                <FaChevronRight />
+                            </button>
+                            <button
+                                onClick={() => setPage(totalPages)}
+                                disabled={page === totalPages}
+                                className="p-2.5 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-slate-600 dark:disabled:hover:bg-gray-800 transition-all duration-200 shadow-sm"
+                                title="Last Page"
+                            >
+                                <FaAngleDoubleRight />
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {leaderboard.length > 0 && (
                     <div className="bg-slate-50 dark:bg-gray-800/50 p-4 text-center border-t border-slate-100 dark:border-gray-700">

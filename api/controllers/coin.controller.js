@@ -99,10 +99,16 @@ export const getReferralStats = async (req, res, next) => {
 export const getLeaderboard = async (req, res, next) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.query.page) || 1;
         const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'rootadmin');
         const requestingUserId = req.user?.id || null;
-        const result = await CoinService.getLeaderboard(limit, isAdmin, requestingUserId);
-        res.status(200).json({ success: true, leaderboard: result.leaderboard, currentUserEntry: result.currentUserEntry || null });
+        const result = await CoinService.getLeaderboard(limit, isAdmin, requestingUserId, page);
+        res.status(200).json({ 
+            success: true, 
+            leaderboard: result.leaderboard, 
+            currentUserEntry: result.currentUserEntry || null,
+            pagination: result.pagination || null
+        });
     } catch (error) {
         next(error);
     }
