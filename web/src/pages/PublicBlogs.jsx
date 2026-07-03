@@ -891,135 +891,146 @@ const PublicBlogs = () => {
         )}
 
         {/* Blogs Grid */}
-        {blogs.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-16 text-center animate-fade-in-up transition-colors">
-            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${showLikedOnly ? 'bg-red-50 dark:bg-red-950/30' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
-              {showLikedOnly ? (
-                <Heart className="w-10 h-10 text-red-500" />
-              ) : (
-                <SearchIcon className="w-10 h-10 text-blue-400 dark:text-blue-300" />
-              )}
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">
-              {showLikedOnly ? 'No liked blogs yet' : 'No articles found'}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto transition-colors">
-              {showLikedOnly 
-                ? 'Articles you like will appear here. Start exploring and click the heart icon on any blog detail page!'
-                : "We couldn't find any blog posts matching your criteria. Try different keywords or filters."}
-            </p>
-            <button
-              onClick={() => {
-                if (showLikedOnly) {
-                  setShowLikedOnly(false);
-                } else {
-                  setSearchTerm('');
-                  setSelectedCategories([]);
-                  setSelectedTags([]);
-                }
-              }}
-              className={`inline-flex items-center gap-2 px-6 py-3 text-white rounded-xl font-semibold transition-colors shadow-lg ${
-                showLikedOnly 
-                  ? 'bg-red-600 hover:bg-red-700 shadow-red-200 dark:shadow-red-900/40' 
-                  : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-blue-900/40'
-              }`}
-            >
-              {showLikedOnly ? 'Explore Blogs' : 'Clear Filters'}
-            </button>
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-black text-gray-800 dark:text-white capitalize">
+              {showLikedOnly ? 'My Liked Blogs' : (selectedCategories.length === 0 ? 'Latest Blogs' : `${selectedCategories.join(', ')} Blogs`)}
+            </h2>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {pagination.total} articles found
+            </span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogs.map((blog, index) => (
-              <article
-                key={blog._id}
-                className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-500 group flex flex-col h-full animate-fade-in-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
+
+          {blogs.length === 0 ? (
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-16 text-center animate-fade-in-up transition-colors">
+              <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${showLikedOnly ? 'bg-red-50 dark:bg-red-950/30' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                {showLikedOnly ? (
+                  <Heart className="w-10 h-10 text-red-500" />
+                ) : (
+                  <SearchIcon className="w-10 h-10 text-blue-400 dark:text-blue-300" />
+                )}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 transition-colors">
+                {showLikedOnly ? 'No liked blogs yet' : 'No articles found'}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto transition-colors">
+                {showLikedOnly 
+                  ? 'Articles you like will appear here. Start exploring and click the heart icon on any blog detail page!'
+                  : "We couldn't find any blog posts matching your criteria. Try different keywords or filters."}
+              </p>
+              <button
+                onClick={() => {
+                  if (showLikedOnly) {
+                    setShowLikedOnly(false);
+                  } else {
+                    setSearchTerm('');
+                    setSelectedCategories([]);
+                    setSelectedTags([]);
+                  }
+                }}
+                className={`inline-flex items-center gap-2 px-6 py-3 text-white rounded-xl font-semibold transition-colors shadow-lg ${
+                  showLikedOnly 
+                    ? 'bg-red-600 hover:bg-red-700 shadow-red-200 dark:shadow-red-900/40' 
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-blue-900/40'
+                }`}
               >
-                {/* Thumbnail */}
-                <div className="relative overflow-hidden h-56 flex-shrink-0">
-                  {blog.thumbnail ? (
-                    <AdvancedImage
-                      src={blog.thumbnail}
-                      alt={blog.title}
-                      className="w-full h-full transition-transform duration-700 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
-                      <div className="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
-                        <div className="text-3xl opacity-80">🏠</div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                  <div className="absolute top-4 left-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/90 backdrop-blur-md text-blue-600 shadow-lg">
-                      {blog.category}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 flex-grow flex flex-col">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    <Link to={`/blog/${blog.slug || blog._id}`}>
-                      {blog.title}
-                    </Link>
-                  </h2>
-
-                  <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 text-sm flex-grow leading-relaxed transition-colors">
-                    {truncateText(blog.excerpt || blog.content, 120)}
-                  </p>
-
-                  <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-auto transition-colors">
-                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs transition-colors">
-                          {blog.author?.username?.[0]?.toUpperCase() || 'U'}
+                {showLikedOnly ? 'Explore Blogs' : 'Clear Filters'}
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogs.map((blog, index) => (
+                <article
+                  key={blog._id}
+                  className="bg-white dark:bg-gray-900 rounded-2xl shadow-md hover:shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden transition-all duration-500 group flex flex-col h-full animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative overflow-hidden h-56 flex-shrink-0">
+                    {blog.thumbnail ? (
+                      <AdvancedImage
+                        src={blog.thumbnail}
+                        alt={blog.title}
+                        className="w-full h-full transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-50 dark:bg-gray-900/40 flex items-center justify-center transition-colors duration-300">
+                        <div className="text-center text-gray-400 dark:text-gray-500 flex flex-col items-center">
+                          <div className="text-3xl opacity-80">🏠</div>
                         </div>
-                        <span className="font-medium truncate max-w-[100px]">{blog.author?.username || 'Team'}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1" title="Views">
-                          <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                          <span>{blog.views || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1" title="Likes">
-                          <Heart className="w-4 h-4 text-red-400 dark:text-red-500" />
-                          <span>{blog.likes || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1" title="Date">
-                          <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                          <span>{new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Tags Preview */}
-                    {blog.tags && blog.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {blog.tags.slice(0, 2).map((tag, idx) => (
-                          <span key={idx} className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
-                            <Tag className="w-3 h-3" /> {tag}
-                          </span>
-                        ))}
-                        {blog.tags.length > 2 && (
-                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-1 rounded-md transition-colors">+{blog.tags.length - 2}</span>
-                        )}
                       </div>
                     )}
-
-                    <Link
-                      to={`/blog/${blog.slug || blog._id}`}
-                      className="flex items-center justify-center w-full gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white transition-all duration-300 group-hover:shadow-md"
-                    >
-                      Read Article <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                    <div className="absolute top-4 left-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/90 backdrop-blur-md text-blue-600 shadow-lg">
+                        {blog.category}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+
+                  {/* Content */}
+                  <div className="p-6 flex-grow flex flex-col">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      <Link to={`/blog/${blog.slug || blog._id}`}>
+                        {blog.title}
+                      </Link>
+                    </h2>
+
+                    <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 text-sm flex-grow leading-relaxed transition-colors">
+                      {truncateText(blog.excerpt || blog.content, 120)}
+                    </p>
+
+                    <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-auto transition-colors">
+                      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs transition-colors">
+                            {blog.author?.username?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                          <span className="font-medium truncate max-w-[100px]">{blog.author?.username || 'Team'}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1" title="Views">
+                            <Eye className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span>{blog.views || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1" title="Likes">
+                            <Heart className="w-4 h-4 text-red-400 dark:text-red-500" />
+                            <span>{blog.likes || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1" title="Date">
+                            <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span>{new Date(blog.publishedAt || blog.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tags Preview */}
+                      {blog.tags && blog.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {blog.tags.slice(0, 2).map((tag, idx) => (
+                            <span key={idx} className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
+                              <Tag className="w-3 h-3" /> {tag}
+                            </span>
+                          ))}
+                          {blog.tags.length > 2 && (
+                            <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-1 rounded-md transition-colors">+{blog.tags.length - 2}</span>
+                          )}
+                        </div>
+                      )}
+
+                      <Link
+                        to={`/blog/${blog.slug || blog._id}`}
+                        className="flex items-center justify-center w-full gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white transition-all duration-300 group-hover:shadow-md"
+                      >
+                        Read Article <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
         {/* Infinite Scroll Trigger and Skeleton */}
         {hasMore && (
           <div id="infinite-scroll-trigger" className="pt-4 pb-8 flex justify-center w-full">
