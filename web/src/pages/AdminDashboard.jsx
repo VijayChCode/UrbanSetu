@@ -455,11 +455,13 @@ export default function AdminDashboard() {
       let topWatchedProperties = [];
 
       try {
-        usersData = await usersRes.json();
+        const rawUsers = await usersRes.json();
+        usersData = Array.isArray(rawUsers) ? rawUsers : (rawUsers.items || rawUsers.users || []);
       } catch (e) { }
 
       try {
-        adminsData = await adminsRes.json();
+        const rawAdmins = await adminsRes.json();
+        adminsData = Array.isArray(rawAdmins) ? rawAdmins : (rawAdmins.items || rawAdmins.admins || []);
       } catch (e) { }
 
       try {
@@ -472,7 +474,8 @@ export default function AdminDashboard() {
       } catch (e) { }
 
       try {
-        listingsData = await listingsRes.json();
+        const rawListings = await listingsRes.json();
+        listingsData = Array.isArray(rawListings) ? rawListings : (rawListings.listings || rawListings.data || []);
       } catch (e) { }
 
       try {
