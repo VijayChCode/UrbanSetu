@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaTrophy, FaCoins, FaShareAlt, FaHandshake, FaAward, FaArrowRight, FaInfoCircle, FaCrown, FaUserShield } from "react-icons/fa";
 import { usePageTitle } from "../hooks/usePageTitle";
 import CommunityLeaderboard from "../components/SetuCoins/CommunityLeaderboard";
+import SetuCoinInfoModal from "../components/SetuCoins/SetuCoinInfoModal";
 import { useSelector } from "react-redux";
 
 export default function Leaderboard({ isAdmin = false }) {
@@ -11,6 +12,7 @@ export default function Leaderboard({ isAdmin = false }) {
 
     // Dynamic routing path prefix
     const linkPrefix = currentUser ? "/user" : "";
+    const [showCoinInfo, setShowCoinInfo] = useState(false);
 
     return (
         <div className="bg-gradient-to-br from-slate-50 via-indigo-50/40 to-purple-50 dark:from-gray-950 dark:via-slate-900 dark:to-gray-950 min-h-screen py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 relative overflow-hidden">
@@ -30,8 +32,17 @@ export default function Leaderboard({ isAdmin = false }) {
                     
                     {/* Left: Content */}
                     <div className="space-y-6 max-w-md text-left">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wider animate-pulse">
-                            🏆 SetuCoins Arena
+                        <div className="flex items-center gap-3">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-bold uppercase tracking-wider animate-pulse">
+                                🏆 SetuCoins Arena
+                            </div>
+                            <button
+                                onClick={() => setShowCoinInfo(true)}
+                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-indigo-200 hover:text-white transition-all duration-200 hover:scale-110"
+                                title="What are SetuCoins?"
+                            >
+                                <FaInfoCircle className="text-sm" />
+                            </button>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-none">
                             Community <br />
@@ -86,6 +97,12 @@ export default function Leaderboard({ isAdmin = false }) {
                         </div>
                     </div>
                 </div>
+
+                {/* SetuCoin Info Modal */}
+                <SetuCoinInfoModal
+                    isOpen={showCoinInfo}
+                    onClose={() => setShowCoinInfo(false)}
+                />
 
                 {/* How to Earn SetuCoins Grid (Regular User Context Only) */}
                 {!isAdmin && (
