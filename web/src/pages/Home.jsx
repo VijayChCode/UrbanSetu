@@ -8,7 +8,8 @@ import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import ListingItem from "../components/ListingItem";
 import ListingSkeletonGrid from "../components/skeletons/ListingSkeletonGrid";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { clearWelcomeBack } from "../redux/user/userSlice.js";
 import EncryptedText from "../components/ui/EncryptedText";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import AdvancedImage from "../components/AdvancedImage";
@@ -152,6 +153,8 @@ export default function Home() {
   usePageTitle("Dashboard - Find Your Dream Home");
 
   const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const [showWelcomeBackAlert, setShowWelcomeBackAlert] = useState(false);
   const [offerListings, setOfferListings] = useState([]);
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
@@ -383,8 +386,14 @@ export default function Home() {
   // Helper to determine if we are in user dashboard context for links
   const isUser = true; // Since this is Home.jsx, it usually implies a logged-in user context or main entry. 
   // Original code checked window.location.pathname.startsWith('/user'). 
-  // But standard links work fine too. We'll use the check for flexible routing if needed.
   const linkPrefix = currentUser ? "/user" : "";
+
+  useEffect(() => {
+    if (currentUser?.showWelcomeBack) {
+      setShowWelcomeBackAlert(true);
+      dispatch(clearWelcomeBack());
+    }
+  }, [currentUser, dispatch]);
 
   const [loading, setLoading] = useState(true);
 
@@ -1049,6 +1058,48 @@ export default function Home() {
       </div>
 
       <div className="relative z-10">
+
+        {/* Re-engagement Welcome Back Banner */}
+        {showWelcomeBackAlert && currentUser && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 animate-fade-in relative z-50">
+            <div className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-pink-500 to-indigo-600 text-white rounded-3xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/20">
+              {/* Background light effects */}
+              <div className="absolute inset-0 bg-white/10 opacity-30 backdrop-blur-sm pointer-events-none"></div>
+              <div className="absolute top-[-50%] left-[-20%] w-80 h-80 bg-white/20 rounded-full filter blur-2xl pointer-events-none animate-pulse"></div>
+
+              <div className="flex items-center gap-5 relative z-10 text-left">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-4xl shadow-inner animate-bounce">
+                  🎉
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+                    Welcome Back, {currentUser.firstName || currentUser.username || 'Friend'}!
+                  </h2>
+                  <p className="text-white/90 text-sm md:text-base font-semibold mt-1">
+                    We've missed you! The UrbanSetu community has grown with premium listings, active discussions, and new updates since your last visit. 🏙️✨
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3 relative z-10 w-full md:w-auto shrink-0 justify-end">
+                <Link
+                  to="/search"
+                  onClick={() => setShowWelcomeBackAlert(false)}
+                  className="px-6 py-3 bg-white text-indigo-600 hover:bg-indigo-50 rounded-2xl font-bold text-sm shadow-md hover:scale-105 transition-all duration-200"
+                >
+                  Explore New Properties 🔍
+                </Link>
+                <button
+                  onClick={() => setShowWelcomeBackAlert(false)}
+                  className="p-3 bg-white/15 hover:bg-white/25 rounded-2xl font-bold text-white transition-all text-sm border border-white/10"
+                  aria-label="Dismiss greeting"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hero Section */}
         <div className="relative pt-20 pb-16 lg:pt-32 lg:pb-28 overflow-hidden">

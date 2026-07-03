@@ -79,6 +79,11 @@ const userSlice = createSlice({
             state.isSigningOut = false;
             state.error = null;
             state.loading = false;
+        },
+        clearWelcomeBack: (state) => {
+            if (state.currentUser) {
+                state.currentUser.showWelcomeBack = false;
+            }
         }
     }
 });
@@ -89,6 +94,6 @@ export const {
     updateUserStart, updateUserSuccess, updateUserFailure, 
     deleteUserStart, deleteUserSuccess, deleteUserFailure, 
     signoutUserStart, signoutUserSuccess, signoutUserFailure,
-    resetSignoutState
+    resetSignoutState, clearWelcomeBack
 } = userSlice.actions;
 export default userSlice.reducer;

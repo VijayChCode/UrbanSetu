@@ -439,7 +439,8 @@ export const SignIn = async (req, res, next) => {
             token: accessToken,
             refreshToken,
             sessionId: session.sessionId,
-            emailNotificationStatus: 'pending'
+            emailNotificationStatus: 'pending',
+            showWelcomeBack: !!validUser.lastReEngagementEmailSent
         });
 
         // Defer non-critical logging, session limits, anomaly scans, and DB save updates to background thread
@@ -609,7 +610,8 @@ export const Google = async (req, res, next) => {
                 token: accessToken,
                 refreshToken,
                 sessionId: session.sessionId,
-                isNewUser: false
+                isNewUser: false,
+                showWelcomeBack: !!validUser.lastReEngagementEmailSent
             });
 
             // Defer non-critical tracking, session limits, Sentinel check, auditing, and DB saves to background
