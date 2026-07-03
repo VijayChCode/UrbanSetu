@@ -27,6 +27,9 @@ const PublicGuides = () => {
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [featuredGuides, setFeaturedGuides] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 });
@@ -108,7 +111,7 @@ const PublicGuides = () => {
     useEffect(() => {
         fetchFeaturedGuides();
         fetchTags();
-        fetchGuides();
+        fetchGuides(1, false);
         fetchUpcomingPost();
 
         if (currentUser) {
@@ -133,7 +136,7 @@ const PublicGuides = () => {
             if (diff <= 0) {
                 clearInterval(timer);
                 setUpcomingPost(null);
-                fetchGuides();
+                fetchGuides(1, false);
                 fetchFeaturedGuides();
             } else {
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -156,12 +159,7 @@ const PublicGuides = () => {
             } else {
                 setSuggestions([]);
             }
-
-            if (pagination.current === 1) {
-                fetchGuides(false); // Don't show loading for search
-            } else {
-                setPagination(prev => ({ ...prev, current: 1 }));
-            }
+            fetchGuides(1, false);
         }, 500); // 500ms debounce
 
         return () => clearTimeout(timeoutId);
@@ -180,17 +178,35 @@ const PublicGuides = () => {
 
     // Immediate filter effects
     useEffect(() => {
-        if (pagination.current === 1) {
-            fetchGuides(false); // Don't show full loading for filter changes
-        } else {
-            setPagination(prev => ({ ...prev, current: 1 }));
-        }
+        fetchGuides(1, false);
     }, [selectedCategory, selectedTags, showLikedOnly]);
 
-    // Pagination effect
+    // Infinite scroll observer effect
     useEffect(() => {
-        fetchGuides();
-    }, [pagination.current]);
+        if (!hasMore || loadingMore || loading) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            const first = entries[0];
+            if (first.isIntersecting) {
+                fetchGuides(pagination.current + 1, true);
+            }
+        }, {
+            root: null,
+            rootMargin: '100px',
+            threshold: 0.1
+        });
+
+        const target = document.getElementById('infinite-scroll-trigger');
+        if (target) {
+            observer.observe(target);
+        }
+
+        return () => {
+            if (target) {
+                observer.unobserve(target);
+            }
+        };
+    }, [hasMore, loadingMore, loading, pagination.current]);
 
     const fetchSuggestions = async () => {
         try {
@@ -510,12 +526,16 @@ const PublicGuides = () => {
         }
     };
 
-    const fetchGuides = async (showLoading = true) => {
+    const fetchGuides = async (pageNumber = 1, isLoadMore = false) => {
         try {
-            if (showLoading && guides.length === 0) setLoading(true);
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
 
             const params = new URLSearchParams({
-                page: pagination.current,
+                page: pageNumber,
                 limit: 9
             });
 
@@ -540,13 +560,27 @@ const PublicGuides = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                setGuides(data.data);
+                if (isLoadMore) {
+                    setGuides(prev => {
+                        const existingIds = new Set(prev.map(g => g._id));
+                        const newGuides = data.data.filter(g => !existingIds.has(g._id));
+                        return [...prev, ...newGuides];
+                    });
+                } else {
+                    setGuides(data.data);
+                }
                 setPagination(data.pagination);
+                setHasMore(data.pagination.current < data.pagination.pages);
             }
         } catch (error) {
             console.error('Error fetching guides:', error);
         } finally {
-            if (showLoading) setLoading(false);
+            if (isLoadMore) {
+                setLoadingMore(false);
+            } else {
+                setLoading(false);
+                setIsInitialLoad(false);
+            }
         }
     };
 
@@ -915,28 +949,34 @@ const PublicGuides = () => {
                         </div>
                     )}
 
-                    {/* Pagination */}
-                    {pagination.pages > 1 && (
-                        <div className="flex justify-center mt-12">
-                            <div className="flex bg-white dark:bg-gray-800 rounded-full shadow-lg p-1.5 border border-gray-100 dark:border-gray-700">
-                                <button
-                                    onClick={() => setPagination(p => ({ ...p, current: Math.max(1, p.current - 1) }))}
-                                    disabled={pagination.current === 1}
-                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full disabled:opacity-30 transition-colors"
-                                >
-                                    <ChevronLeft className="w-5 h-5" />
-                                </button>
-                                <div className="flex items-center px-4 font-bold text-sm text-gray-600 dark:text-gray-300">
-                                    Page {pagination.current} of {pagination.pages}
+                    {/* Infinite Scroll Trigger and Skeleton */}
+                    {hasMore && (
+                        <div id="infinite-scroll-trigger" className="pt-4 pb-8 flex justify-center w-full">
+                            {loadingMore && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full mt-8 animate-pulse">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full animate-pulse transition-colors duration-300">
+                                            <div className="h-56 bg-gray-200 dark:bg-gray-700 transition-colors duration-300"></div>
+                                            <div className="p-6 flex-grow flex flex-col">
+                                                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3 transition-colors duration-300"></div>
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2 transition-colors duration-300"></div>
+                                                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4 transition-colors duration-300"></div>
+                                                <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-auto">
+                                                    <div className="flex justify-between mb-4">
+                                                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                                                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                                                    </div>
+                                                    <div className="flex gap-2 mb-4">
+                                                        <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                                                        <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                                                    </div>
+                                                    <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-xl transition-colors duration-300"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <button
-                                    onClick={() => setPagination(p => ({ ...p, current: Math.min(p.pages, p.current + 1) }))}
-                                    disabled={pagination.current === pagination.pages}
-                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full disabled:opacity-30 transition-colors"
-                                >
-                                    <ChevronRight className="w-5 h-5" />
-                                </button>
-                            </div>
+                            )}
                         </div>
                     )}
 

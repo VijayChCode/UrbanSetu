@@ -26,6 +26,9 @@ const PublicBlogs = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [featuredBlogs, setFeaturedBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -96,7 +99,7 @@ const PublicBlogs = () => {
   // Separate useEffect for initial load and categories/tags
   useEffect(() => {
     fetchFeaturedBlogs();
-    fetchBlogs();
+    fetchBlogs(1, false);
     fetchCategories();
     fetchTags();
     fetchUpcomingPost();
@@ -123,7 +126,7 @@ const PublicBlogs = () => {
       if (diff <= 0) {
         clearInterval(timer);
         setUpcomingPost(null);
-        fetchBlogs();
+        fetchBlogs(1, false);
         fetchFeaturedBlogs();
       } else {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -146,12 +149,7 @@ const PublicBlogs = () => {
       } else {
         setSuggestions([]);
       }
-
-      if (pagination.current === 1) {
-        fetchBlogs(false); // Don't show loading for search
-      } else {
-        setPagination(prev => ({ ...prev, current: 1 }));
-      }
+      fetchBlogs(1, false);
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
@@ -170,17 +168,35 @@ const PublicBlogs = () => {
 
   // Immediate filter effects for category, tag, and liked feed changes
   useEffect(() => {
-    if (pagination.current === 1) {
-      fetchBlogs(false); // Don't show loading for immediate filter changes
-    } else {
-      setPagination(prev => ({ ...prev, current: 1 }));
-    }
+    fetchBlogs(1, false);
   }, [selectedCategories, selectedTags, showLikedOnly]);
 
-  // Pagination effect
+  // Infinite scroll observer effect
   useEffect(() => {
-    fetchBlogs();
-  }, [pagination.current]);
+    if (!hasMore || loadingMore || loading) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      const first = entries[0];
+      if (first.isIntersecting) {
+        fetchBlogs(pagination.current + 1, true);
+      }
+    }, {
+      root: null,
+      rootMargin: '100px',
+      threshold: 0.1
+    });
+
+    const target = document.getElementById('infinite-scroll-trigger');
+    if (target) {
+      observer.observe(target);
+    }
+
+    return () => {
+      if (target) {
+        observer.unobserve(target);
+      }
+    };
+  }, [hasMore, loadingMore, loading, pagination.current]);
 
   const toggleCategory = (category) => {
     setShowLikedOnly(false);
@@ -456,11 +472,15 @@ const PublicBlogs = () => {
     }
   };
 
-  const fetchBlogs = async (showLoading = true) => {
+  const fetchBlogs = async (pageNumber = 1, isLoadMore = false) => {
     try {
-      if (showLoading) setLoading(true);
+      if (isLoadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       const params = new URLSearchParams({
-        page: pagination.current,
+        page: pageNumber,
         limit: 9
       });
 
@@ -485,13 +505,27 @@ const PublicBlogs = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setBlogs(data.data);
+        if (isLoadMore) {
+          setBlogs(prev => {
+            const existingIds = new Set(prev.map(b => b._id));
+            const newBlogs = data.data.filter(b => !existingIds.has(b._id));
+            return [...prev, ...newBlogs];
+          });
+        } else {
+          setBlogs(data.data);
+        }
         setPagination(data.pagination);
+        setHasMore(data.pagination.current < data.pagination.pages);
       }
     } catch (error) {
       console.error('Error fetching blogs:', error);
     } finally {
-      if (showLoading) setLoading(false);
+      if (isLoadMore) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+        setIsInitialLoad(false);
+      }
     }
   };
 
@@ -986,31 +1020,34 @@ const PublicBlogs = () => {
             ))}
           </div>
         )}
-
-        {/* Pagination */}
-        {pagination.pages > 1 && (
-          <div className="mt-16 flex justify-center">
-            <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg p-2 flex items-center gap-2 border border-gray-100 dark:border-gray-800 transition-colors">
-              <button
-                onClick={() => setPagination(prev => ({ ...prev, current: prev.current - 1 }))}
-                disabled={pagination.current === 1}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center px-4 font-medium text-gray-700 dark:text-gray-300 transition-colors">
-                Page {pagination.current} <span className="text-gray-400 dark:text-gray-500 mx-2">/</span> {pagination.pages}
+        {/* Infinite Scroll Trigger and Skeleton */}
+        {hasMore && (
+          <div id="infinite-scroll-trigger" className="pt-4 pb-8 flex justify-center w-full">
+            {loadingMore && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full mt-8">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full animate-pulse transition-colors duration-300">
+                    <div className="h-56 bg-gray-200 dark:bg-gray-700 transition-colors duration-300"></div>
+                    <div className="p-6 flex-grow flex flex-col">
+                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-3 transition-colors duration-300"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2 transition-colors duration-300"></div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4 transition-colors duration-300"></div>
+                      <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-auto">
+                        <div className="flex justify-between mb-4">
+                          <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                          <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                          <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                          <div className="h-6 w-12 bg-gray-200 dark:bg-gray-700 rounded transition-colors duration-300"></div>
+                        </div>
+                        <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-xl transition-colors duration-300"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              <button
-                onClick={() => setPagination(prev => ({ ...prev, current: prev.current + 1 }))}
-                disabled={pagination.current === pagination.pages}
-                className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+            )}
           </div>
         )}
 
