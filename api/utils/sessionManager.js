@@ -448,17 +448,23 @@ export const enforceSessionLimits = async (userId, userRole, io) => {
 
     // Only enforce when exceeding the limit (not when equal)
     if (user.activeSessions.length > limit) {
-        // Prioritize logging out Web/Desktop sessions and protect Mobile App sessions
-        const appSessions = user.activeSessions.filter(s => s.device && (s.device.includes('UrbanSetu App') || s.device.includes('UrbanSetu Mobile App')));
-        const webSessions = user.activeSessions.filter(s => !(s.device && (s.device.includes('UrbanSetu App') || s.device.includes('UrbanSetu Mobile App'))));
-
-        const sortedWebSessions = webSessions.sort((a, b) => new Date(a.lastActive) - new Date(b.lastActive));
-        // Only ever remove web sessions. Never automatically force logout a Mobile App session. 
         const countToRemove = user.activeSessions.length - limit;
-        const sessionsToRemove = sortedWebSessions.slice(0, countToRemove);
+        let sessionsToRemove;
+
+        if (userRole === 'admin' || userRole === 'rootadmin') {
+            // Admin/Rootadmin: The mobile app doesn't support admin actions,
+            // so treat ALL sessions equally — evict the oldest regardless of platform.
+            const sortedAll = [...user.activeSessions].sort((a, b) => new Date(a.lastActive) - new Date(b.lastActive));
+            sessionsToRemove = sortedAll.slice(0, countToRemove);
+        } else {
+            // Regular users: Protect Mobile App sessions, only evict Web/Desktop sessions.
+            const webSessions = user.activeSessions.filter(s => !(s.device && (s.device.includes('UrbanSetu App') || s.device.includes('UrbanSetu Mobile App'))));
+            const sortedWebSessions = webSessions.sort((a, b) => new Date(a.lastActive) - new Date(b.lastActive));
+            sessionsToRemove = sortedWebSessions.slice(0, countToRemove);
+        }
 
         if (sessionsToRemove.length === 0) {
-            // Only mobile app sessions exist, or we can't remove any web ones. Abort enforcement to protect mobile.
+            // No eligible sessions to remove. Abort enforcement.
             return 0;
         }
 

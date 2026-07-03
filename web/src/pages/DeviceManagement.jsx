@@ -15,8 +15,6 @@ import DeviceManagementSkeleton from '../components/skeletons/DeviceManagementSk
 import { authenticatedFetch, clearAuthData } from '../utils/auth';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
-
-
 const ConfirmationModal = ({
   isOpen,
   onClose,
