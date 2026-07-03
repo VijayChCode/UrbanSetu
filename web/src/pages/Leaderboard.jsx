@@ -188,7 +188,7 @@ export default function Leaderboard({ isAdmin = false }) {
                     )}
                     
                     <CommunityLeaderboard
-                        limit={isAdmin ? 50 : 10}
+                        limit={10}
                         showHeader={true}
                         showYourStatus={!isAdmin}
                         isAdmin={isAdmin}
