@@ -288,7 +288,7 @@ const AdminBlogs = ({ type }) => {
 
   const fetchProperties = async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=1000&type=all&offer=false&furnished=false&parking=false`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=1000`);
       if (response.ok) {
         const data = await response.json();
         setProperties(Array.isArray(data) ? data : []);

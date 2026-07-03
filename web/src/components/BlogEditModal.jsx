@@ -629,7 +629,15 @@ const BlogEditModal = ({
                       .filter((p) => {
                         const s = propertySearch.trim().toLowerCase();
                         if (!s) return true;
-                        return (p.name || "").toLowerCase().includes(s) || (p._id || "").toLowerCase().includes(s);
+                        return (
+                          (p.name || "").toLowerCase().includes(s) ||
+                          (p._id || "").toLowerCase().includes(s) ||
+                          (p.description || "").toLowerCase().includes(s) ||
+                          (p.address || "").toLowerCase().includes(s) ||
+                          (p.landmark || "").toLowerCase().includes(s) ||
+                          (p.city || "").toLowerCase().includes(s) ||
+                          (p.state || "").toLowerCase().includes(s)
+                        );
                       })
                       .map(p => (
                         <option key={p._id} value={p._id}>

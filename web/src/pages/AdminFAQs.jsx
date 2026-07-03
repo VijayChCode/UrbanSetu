@@ -162,10 +162,9 @@ const AdminFAQs = () => {
       if (showLoading) setLoading(false);
     }
   };
-
   const fetchProperties = async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=1000&type=all&offer=false&furnished=false&parking=false`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=1000`);
       if (response.ok) {
         const data = await response.json();
         setProperties(Array.isArray(data) ? data : []);
@@ -174,7 +173,6 @@ const AdminFAQs = () => {
       console.error('Error fetching properties for FAQ:', error);
     }
   };
-
   const fetchSuggestions = async () => {
     try {
       const params = new URLSearchParams({
@@ -794,7 +792,15 @@ const AdminFAQs = () => {
                         .filter((p) => {
                           const s = propertySearch.trim().toLowerCase();
                           if (!s) return true;
-                          return (p.name || "").toLowerCase().includes(s) || (p.city || "").toLowerCase().includes(s);
+                          return (
+                            (p.name || "").toLowerCase().includes(s) ||
+                            (p._id || "").toLowerCase().includes(s) ||
+                            (p.description || "").toLowerCase().includes(s) ||
+                            (p.address || "").toLowerCase().includes(s) ||
+                            (p.landmark || "").toLowerCase().includes(s) ||
+                            (p.city || "").toLowerCase().includes(s) ||
+                            (p.state || "").toLowerCase().includes(s)
+                          );
                         })
                         .map(property => (
                           <option key={property._id} value={property._id}>

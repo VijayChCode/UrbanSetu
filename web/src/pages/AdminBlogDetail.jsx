@@ -414,9 +414,9 @@ const AdminBlogDetail = () => {
         const data = await response.json();
         setBlog(data.data);
         setShowEditModal(false);
-        toast.success('Blog updated successfully!');
+        toast.success("Blog updated successfully");
       } else {
-        toast.error('Error updating blog');
+        toast.error("Failed to update blog");
       }
     } catch (error) {
       console.error('Error updating blog:', error);
@@ -426,7 +426,7 @@ const AdminBlogDetail = () => {
 
   const fetchProperties = async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=1000&type=all&offer=false&furnished=false&parking=false`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/listing/get?limit=1000`);
       if (response.ok) {
         const data = await response.json();
         setProperties(Array.isArray(data) ? data : []);
@@ -447,7 +447,6 @@ const AdminBlogDetail = () => {
       console.error('Error fetching categories:', error);
     }
   };
-
 
   const handleShare = () => {
     setShareModal({
@@ -470,50 +469,6 @@ const AdminBlogDetail = () => {
     setSelectedImageIndex(index);
     setShowImagePreview(true);
   };
-
-  if (loading) {
-    return <BlogDetailSkeleton />;
-  }
-
-  if (unpublishedStatus) {
-    const isGuide = unpublishedBlogData?.type === 'guide';
-    const redirectPath = isGuide ? '/admin/guides' : '/admin/blogs';
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col justify-center items-center p-4 transition-colors duration-300">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 text-center animate-fade-in-up">
-          <div className="w-20 h-20 bg-yellow-50 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-200 dark:border-yellow-800 text-3xl">
-            {unpublishedStatus === 'scheduled' ? '📅' : '📝'}
-          </div>
-          <h2 className="text-2xl font-black text-gray-800 dark:text-white mb-3 tracking-tight">
-            {unpublishedStatus === 'scheduled' ? 'Scheduled Publication' : 'Draft Content'}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed text-sm">
-            {unpublishedStatus === 'scheduled' ? (
-              <>
-                The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is scheduled to go public on:
-                <span className="block font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/30 py-2 rounded-xl border border-blue-100 dark:border-blue-900/50">
-                  {new Date(unpublishedBlogData?.scheduledAt).toLocaleString(undefined, {
-                    dateStyle: 'long',
-                    timeStyle: 'short'
-                  })}
-                </span>
-              </>
-            ) : (
-              <>
-                The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is currently a draft and has not been published yet.
-              </>
-            )}
-          </p>
-          <button
-            onClick={() => navigate(redirectPath)}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" /> Back to {isGuide ? 'Guides' : 'Blogs'} Management
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (notFound) {
     const isGuide = window.location.pathname.includes('/guide/');
