@@ -14561,28 +14561,28 @@ export const sendAccountLockoutEmail = async (email, details) => {
                 <h3 style="color: #b91c1c; margin: 0 0 15px; font-size: 16px; display: flex; align-items: center;">
                    Activity Details
                 </h3>
-                <div style="display: grid; gap: 10px;">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #fee2e2; padding-bottom: 8px;">
-                        <span style="color: #7f1d1d; font-weight: 500;">Reason</span>
-                        <span style="color: #450a0a; font-weight: 600;">${attempts} failed attempts (${details.reason || 'Suspicious Activity'})</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #fee2e2; padding-bottom: 8px;">
-                        <span style="color: #7f1d1d; font-weight: 500;">IP Address</span>
-                        <span style="color: #450a0a; font-weight: 600;">${ipAddress || 'Unknown'}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #fee2e2; padding-bottom: 8px;">
-                        <span style="color: #7f1d1d; font-weight: 500;">Location</span>
-                        <span style="color: #450a0a; font-weight: 600;">${location || 'Unknown'}</span>
-                    </div>
-                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #fee2e2; padding-bottom: 8px;">
-                        <span style="color: #7f1d1d; font-weight: 500;">Device</span>
-                        <span style="color: #450a0a; font-weight: 600;">${device || 'Unknown'}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 0;">
-                        <span style="color: #7f1d1d; font-weight: 500;">Time</span>
-                        <span style="color: #450a0a; font-weight: 600;">${formatLocalizedTime(new Date(), ipAddress)}</span>
-                    </div>
-                </div>
+                <table style="width: 100%; border-collapse: collapse; font-family: inherit; font-size: 14px;">
+                    <tr style="border-bottom: 1px solid #fee2e2;">
+                        <td style="padding: 8px 0; color: #7f1d1d; font-weight: 500; text-align: left;">Reason:</td>
+                        <td style="padding: 8px 0; color: #450a0a; font-weight: 600; text-align: right;">${attempts} failed attempts (${details.reason || 'Suspicious Activity'})</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #fee2e2;">
+                        <td style="padding: 8px 0; color: #7f1d1d; font-weight: 500; text-align: left;">IP Address:</td>
+                        <td style="padding: 8px 0; color: #450a0a; font-weight: 600; text-align: right;">${ipAddress || 'Unknown'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #fee2e2;">
+                        <td style="padding: 8px 0; color: #7f1d1d; font-weight: 500; text-align: left;">Location:</td>
+                        <td style="padding: 8px 0; color: #450a0a; font-weight: 600; text-align: right;">${location || 'Unknown'}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #fee2e2;">
+                        <td style="padding: 8px 0; color: #7f1d1d; font-weight: 500; text-align: left;">Device:</td>
+                        <td style="padding: 8px 0; color: #450a0a; font-weight: 600; text-align: right;">${device || 'Unknown'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0 0 0; color: #7f1d1d; font-weight: 500; text-align: left;">Time:</td>
+                        <td style="padding: 8px 0 0 0; color: #450a0a; font-weight: 600; text-align: right;">${formatLocalizedTime(new Date(), ipAddress)}</td>
+                    </tr>
+                </table>
               </div>
               
               <p style="color: #374151; font-size: 16px; line-height: 1.6;">
