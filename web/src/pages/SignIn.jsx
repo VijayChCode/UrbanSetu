@@ -69,8 +69,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
     const [authInProgress, setAuthInProgress] = useState(null); // null, 'password', 'otp', 'google'
 
     // State to track OTP verification loading
-    // State to track OTP verification loading
     const [otpVerifyingLoading, setOtpVerifyingLoading] = useState(false);
+    const [showPolicyModal, setShowPolicyModal] = useState(false);
 
     // Navigation helper — called after successful auth to redirect to the right page
     const navigateAfterLogin = (data) => {
@@ -868,13 +868,23 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
 
                                         {/* Forgot Password Link under email (only before password step) */}
                                         {!emailStep && (
-                                            <div className="text-right mt-2">
+                                            <div className="flex items-center justify-between text-sm font-medium mt-2">
                                                 <Link
                                                     to={`/forgot-password?email=${encodeURIComponent(formData.email || '')}`}
-                                                    className={`text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                    className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
                                                 >
                                                     Forgot Password?
                                                 </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPolicyModal(true)}
+                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5 focus:outline-none"
+                                                >
+                                                    <span>Password Attempt Policy</span>
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         )}
                                     </div>
@@ -909,13 +919,23 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                 required
                                             />
 
-                                            <div className="text-right mt-2">
+                                            <div className="flex items-center justify-between text-sm font-medium mt-2">
                                                 <Link
                                                     to={`/forgot-password?email=${encodeURIComponent(formData.email)}`}
-                                                    className={`text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                    className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
                                                 >
                                                     Forgot Password?
                                                 </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPolicyModal(true)}
+                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5 focus:outline-none"
+                                                >
+                                                    <span>Password Attempt Policy</span>
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
                                     )}
@@ -1176,6 +1196,59 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                     </div>
                 </div>
             </AuthFormLayout>
+
+            {/* Password Attempt Policy Modal */}
+            {showPolicyModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl max-w-xl w-full border border-gray-200 dark:border-gray-700 animate-fade-in text-left">
+                        {/* Crimson Header Bar */}
+                        <div className="bg-gradient-to-r from-red-700 to-red-600 px-5 py-3.5 flex justify-between items-center text-white">
+                            <h3 className="font-bold text-lg tracking-wide">Please Note:</h3>
+                            <button 
+                                onClick={() => setShowPolicyModal(false)}
+                                className="bg-white hover:bg-gray-100 text-red-700 hover:text-red-800 rounded font-bold w-6 h-6 flex items-center justify-center transition-colors focus:outline-none"
+                                aria-label="Close modal"
+                            >
+                                &#x2715;
+                            </button>
+                        </div>
+                        
+                        {/* Modal Body */}
+                        <div className="p-6">
+                            <div className="bg-blue-50/50 dark:bg-slate-900/40 border border-blue-200/60 dark:border-slate-800 rounded-lg p-5 flex flex-col md:flex-row gap-5 items-center md:items-start">
+                                {/* Purple Exclamation Icon */}
+                                <div className="flex-shrink-0 bg-white dark:bg-gray-705 p-3 rounded-full border border-purple-200 dark:border-purple-900/40 shadow-sm">
+                                    <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                
+                                {/* Bulleted List */}
+                                <div className="flex-1">
+                                    <ul className="list-disc list-outside ml-5 space-y-3 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                                        <li>You are allowed a maximum of <strong className="text-gray-900 dark:text-white font-bold">5 incorrect password attempts</strong>.</li>
+                                        <li>After 5 failed attempts, your account will be <strong className="text-gray-900 dark:text-white font-bold">locked for 15 minutes</strong>.</li>
+                                        <li>During this lock period, you will not be able to log in or attempt to reset your password.</li>
+                                        <li>Once the 15-minute lock period has ended, you can try to log in again with the correct password.</li>
+                                        <li>If you have forgotten your password, use the <strong className="text-gray-900 dark:text-white font-bold">"Forgot Password"</strong> option to reset it.</li>
+                                        <li>Please ensure you remember your password to avoid getting locked out.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            {/* Divider and Footer Button */}
+                            <div className="border-t border-dashed border-gray-200 dark:border-gray-700 mt-6 pt-5 flex justify-center">
+                                <button
+                                    onClick={() => setShowPolicyModal(false)}
+                                    className="px-8 py-2 bg-purple-600 hover:bg-purple-750 text-white rounded-full font-semibold shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
