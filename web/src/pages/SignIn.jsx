@@ -869,12 +869,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                         {/* Forgot Password Link under email (only before password step) */}
                                         {!emailStep && (
                                             <div className="flex items-center justify-between text-sm font-medium mt-2">
-                                                <Link
-                                                    to={`/forgot-password?email=${encodeURIComponent(formData.email || '')}`}
-                                                    className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
-                                                >
-                                                    Forgot Password?
-                                                </Link>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPolicyModal(true)}
@@ -885,6 +879,12 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
                                                 </button>
+                                                <Link
+                                                    to={`/forgot-password?email=${encodeURIComponent(formData.email || '')}`}
+                                                    className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                >
+                                                    Forgot Password?
+                                                </Link>
                                             </div>
                                         )}
                                     </div>
@@ -920,12 +920,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                             />
 
                                             <div className="flex items-center justify-between text-sm font-medium mt-2">
-                                                <Link
-                                                    to={`/forgot-password?email=${encodeURIComponent(formData.email)}`}
-                                                    className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
-                                                >
-                                                    Forgot Password?
-                                                </Link>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPolicyModal(true)}
@@ -936,6 +930,12 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
                                                 </button>
+                                                <Link
+                                                    to={`/forgot-password?email=${encodeURIComponent(formData.email)}`}
+                                                    className={`text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors ${(authInProgress !== null || loading) ? 'opacity-50 pointer-events-none' : ''}`}
+                                                >
+                                                    Forgot Password?
+                                                </Link>
                                             </div>
                                         </div>
                                     )}
