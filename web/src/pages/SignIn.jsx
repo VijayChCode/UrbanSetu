@@ -1214,7 +1214,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                         </div>
                         
                         {/* Modal Body */}
-                        <div className="p-6">
+                        <div className="p-5 pb-4">
                             <div className="bg-blue-50/50 dark:bg-slate-900/40 border border-blue-200/60 dark:border-slate-800 rounded-lg p-5 flex flex-col md:flex-row gap-5 items-center md:items-start">
                                 {/* Purple Exclamation Icon */}
                                 <div className="flex-shrink-0 bg-white dark:bg-gray-705 p-3 rounded-full border border-purple-200 dark:border-purple-900/40 shadow-sm">
@@ -1237,7 +1237,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                             </div>
                             
                             {/* Divider and Footer Button */}
-                            <div className="border-t border-dashed border-gray-200 dark:border-gray-700 mt-6 pt-5 flex justify-center">
+                            <div className="border-t border-dashed border-gray-200 dark:border-gray-700 mt-4 pt-3.5 flex justify-center">
                                 <button
                                     onClick={() => setShowPolicyModal(false)}
                                     className="px-8 py-2 bg-purple-600 hover:bg-purple-750 text-white rounded-full font-semibold shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none"
