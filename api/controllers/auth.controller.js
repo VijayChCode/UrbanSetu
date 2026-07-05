@@ -371,7 +371,7 @@ export const SignIn = async (req, res, next) => {
             logSecurityEvent('account_locked_attempt', { email: emailLower, userId: validUser._id });
             const remainingMs = await getAccountLockRemainingMs(validUser._id, emailLower);
             const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
-            return next(errorHandler(423, `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's, or reset your password' : ''}.`));
+            return next(errorHandler(423, `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`));
         }
 
         if (validUser.status === 'suspended') {
@@ -1263,7 +1263,12 @@ export const resetPassword = async (req, res, next) => {
             }
         }
 
-        // No lockout check - removed as requested
+        // Block password reset if account is temporarily locked out
+        if (await isAccountLocked(user._id)) {
+            const remainingMs = await getAccountLockRemainingMs(user._id, user.email);
+            const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+            return next(errorHandler(423, `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`));
+        }
 
         // Count recent failed RESET PASSWORD attempts for this user (not login attempts)
         const recentResetAttempts = await PasswordLockout.aggregate([
@@ -1516,7 +1521,7 @@ export const sendLoginOTP = async (req, res, next) => {
                 const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
                 return res.status(423).json({
                     success: false,
-                    message: `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's, or reset your password' : ''}.`
+                    message: `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
                 });
             }
         } catch (_) { }

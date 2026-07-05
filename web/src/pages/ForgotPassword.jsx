@@ -267,6 +267,20 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
         return;
       }
 
+      // Handle locked account (423) early and stop flow
+      if (res.status === 423) {
+        let friendlyMessage = "Account is temporarily locked due to too many failed attempts. Try again later.";
+        try {
+          const errData = await res.clone().json();
+          if (errData && errData.message) {
+            friendlyMessage = errData.message;
+          }
+        } catch (_) { }
+        setOtpError(friendlyMessage);
+        setOtpLoading(false);
+        return;
+      }
+
       const data = await res.json();
 
       if (data.success) {

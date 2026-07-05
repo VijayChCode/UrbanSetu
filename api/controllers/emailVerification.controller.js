@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import DeletedAccount from "../models/deletedAccount.model.js";
 import { generateOTP, sendSignupOTPEmail, sendForgotPasswordOTPEmail, sendProfileEmailOTPEmail, sendAccountDeletionOTPEmail, sendTransferRightsOTPEmail, sendContractConfirmationOTPEmail } from "../utils/emailService.js";
 import { errorHandler } from "../utils/error.js";
-import { logSecurityEvent } from "../middleware/security.js";
+import { logSecurityEvent, isAccountLocked, getAccountLockRemainingMs } from "../middleware/security.js";
 import OtpTracking from "../models/otpTracking.model.js";
 import { validateEmail } from "../utils/emailValidation.js";
 
@@ -230,6 +230,16 @@ export const sendForgotPasswordOTP = async (req, res, next) => {
         }
       } catch (_) { }
       return res.status(404).json({ success: false, message: "No account found with that email address." });
+    }
+
+    // Block OTP sending if account is password-locked due to failed attempts
+    if (await isAccountLocked(user._id)) {
+      const remainingMs = await getAccountLockRemainingMs(user._id, user.email);
+      const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+      return res.status(423).json({
+        success: false,
+        message: `Account is temporarily locked due to too many failed attempts. Try again in about ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`
+      });
     }
 
     // Block OTP sending for suspended accounts

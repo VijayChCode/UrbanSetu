@@ -14587,7 +14587,7 @@ export const sendAccountLockoutEmail = async (email, details) => {
               
               <p style="color: #374151; font-size: 16px; line-height: 1.6;">
                 <strong>Was this you?</strong><br>
-                Please wait for the lockout to expire. You can then try again or reset your password.
+                Please wait for the lockout to expire. Once the lockout period ends, you can try logging in again or reset your password.
               </p>
 
                <p style="color: #374151; font-size: 16px; line-height: 1.6;">

@@ -70,15 +70,15 @@ export const trackFailedAttempt = async (identifier, userId = null) => {
                 return { attempts };
             }
 
-            await lockAccount(userId, 30 * 60 * 1000, { identifier, attempts, ipAddress: identifier }); // 30 minutes lockout
-
+            await lockAccount(userId, 15 * 60 * 1000, { identifier, attempts, ipAddress: identifier }); // 15 minutes lockout
+            
             // Send automated lockout email to user
             try {
                 const location = getLocationFromIP(identifier);
                 await sendAccountLockoutEmail(user.email, {
                     username: user.username,
                     attempts,
-                    lockoutDuration: '30 minutes',
+                    lockoutDuration: '15 minutes',
                     ipAddress: identifier,
                     location: location,
                     device: 'Unknown (Login Screen)', // We could parse User-Agent here if available in context
@@ -92,7 +92,7 @@ export const trackFailedAttempt = async (identifier, userId = null) => {
                 userId,
                 identifier,
                 attempts,
-                lockoutDuration: '30 minutes'
+                lockoutDuration: '15 minutes'
             });
         }
 
