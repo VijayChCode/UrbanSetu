@@ -22,6 +22,8 @@ import UpdatesSkeleton from '../components/skeletons/UpdatesSkeleton';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import SEO from '../components/SEO';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -268,23 +270,9 @@ const Updates = () => {
                                     </div>
 
                                     <div className="prose prose-blue dark:prose-invert prose-sm text-gray-600 dark:text-gray-300 mb-6 max-w-none">
-                                        {(() => {
-                                            // Simple markdown-like parser for the description
-                                            const lines = update.description.split('\n');
-                                            return lines.map((line, i) => {
-                                                const trimmed = line.trim();
-                                                if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
-                                                    return (
-                                                        <div key={i} className="flex items-start gap-2 mb-1.5 pl-1">
-                                                            <span className="text-blue-500 mt-1.5">•</span>
-                                                            <span className="flex-1">{trimmed.substring(1).trim()}</span>
-                                                        </div>
-                                                    );
-                                                }
-                                                if (trimmed === '') return <div key={i} className="h-2" />;
-                                                return <p key={i} className="mb-2 leading-relaxed">{line}</p>;
-                                            });
-                                        })()}
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {update.description}
+                                        </ReactMarkdown>
                                     </div>
 
                                     {/* Remaining Media Gallery (excluding hero if new_feature) */}

@@ -756,7 +756,7 @@ export default function AdminUpdates() {
                                     className="flex-1 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-lg shadow-blue-200"
                                     disabled={submitting}
                                 >
-                                    {submitting ? 'Saving...' : (editingUpdate ? 'Update Changes' : 'Publish Update')}
+                                    {submitting ? 'Saving...' : (editingUpdate ? 'Update Changes' : (formData.isActive ? 'Publish Update' : 'Draft Update'))}
                                 </button>
                             </div>
                         </form>
