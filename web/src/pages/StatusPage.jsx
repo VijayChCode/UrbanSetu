@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FaCheckCircle, FaSpinner, FaTimes, FaServer } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 export default function StatusPage() {
     usePageTitle("UrbanSetu Status");
@@ -112,11 +113,8 @@ export default function StatusPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 gap-3">
-                <FaSpinner className="animate-spin text-indigo-600 dark:text-indigo-400 text-3xl" />
-                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 animate-pulse">
-                    Loading status details...
-                </span>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                <UrbanSetuSpinner size="lg" text="Loading status details..." />
             </div>
         );
     }
@@ -478,7 +476,7 @@ export default function StatusPage() {
                                         disabled={isSubmitting}
                                         className="w-full sm:w-auto bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-wider text-xs py-3 px-6 rounded-md shadow-md transition-all active:scale-[0.98] flex items-center justify-center min-w-[200px]"
                                     >
-                                        {isSubmitting ? <FaSpinner className="animate-spin" /> : 'SUBSCRIBE TO INCIDENT'}
+                                        {isSubmitting ? <UrbanSetuSpinner size="sm" isBright={true} /> : 'SUBSCRIBE TO INCIDENT'}
                                     </button>
                                     
                                     <div className="text-xs text-slate-500 dark:text-slate-400 max-w-xs text-center sm:text-right space-y-1.5 leading-relaxed">
