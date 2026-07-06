@@ -111,7 +111,8 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
         setSuccessMsg('');
 
         try {
-            const res = await fetch('/api/config/maintenance-notify', {
+            const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+            const res = await fetch(`${apiBase}/api/config/maintenance-notify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -140,13 +141,14 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
         await new Promise(resolve => setTimeout(resolve, 1200));
 
         try {
+            const apiBase = import.meta.env.VITE_API_BASE_URL || '';
             // Ping health endpoint
-            const res = await fetch('/api/health');
+            const res = await fetch(`${apiBase}/api/health`);
             if (res.ok) {
                 const data = await res.json();
                 
                 // Also check if maintenance mode is enabled on the server config
-                const configRes = await fetch('/api/config');
+                const configRes = await fetch(`${apiBase}/api/config`);
                 let maintenanceEnabled = false;
                 if (configRes.ok) {
                     const configData = await configRes.json();

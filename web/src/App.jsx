@@ -1569,7 +1569,8 @@ export default function App({ bootstrapped }) {
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const res = await fetch('/api/config');
+        const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+        const res = await fetch(`${apiBase}/api/config`);
         if (res.ok) {
           const config = await res.json();
           if (config) {
