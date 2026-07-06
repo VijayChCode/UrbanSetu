@@ -171,8 +171,8 @@ export default function StatusPage() {
                                 </div>
                                 <div className="text-[10px] text-slate-500 dark:text-slate-400">0 hrs 44 mins</div>
                                 <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
-                                    <div className="text-[9px] uppercase tracking-wider text-slate-455 dark:text-slate-500 font-bold">Related</div>
-                                    <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                    <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">Related</div>
+                                    <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
                                         Upstream provider outage causing delays provisioning custom domains.
                                     </div>
                                 </div>
@@ -189,8 +189,8 @@ export default function StatusPage() {
                                     </div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">1 hrs 12 mins</div>
                                     <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
-                                        <div className="text-[9px] uppercase tracking-wider text-slate-405 dark:text-slate-500 font-bold">Related</div>
-                                        <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">Related</div>
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
                                             API gateway routing issues caused by upstream DNS resolution failures.
                                         </div>
                                     </div>
@@ -206,8 +206,8 @@ export default function StatusPage() {
                                     </div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">0 hrs 24 mins</div>
                                     <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
-                                        <div className="text-[9px] uppercase tracking-wider text-slate-405 dark:text-slate-500 font-bold">Related</div>
-                                        <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">Related</div>
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
                                             Scheduled schema migration recovery checks.
                                         </div>
                                     </div>
@@ -225,8 +225,8 @@ export default function StatusPage() {
                                     </div>
                                     <div className="text-[10px] text-slate-500 dark:text-slate-400">0 hrs 44 mins</div>
                                     <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
-                                        <div className="text-[9px] uppercase tracking-wider text-slate-455 dark:text-slate-500 font-bold">Related</div>
-                                        <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">Related</div>
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
                                             Database synchronization latency due to heavy read loads.
                                         </div>
                                     </div>
