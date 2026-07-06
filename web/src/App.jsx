@@ -456,7 +456,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
       return (
         <>
           {parts[0]}
-          <Link to="/status" className="underline font-bold text-white hover:text-amber-200 transition-colors">status page</Link>
+          <Link to="/status?tab=maintenanceupdates" className="underline font-bold text-white hover:text-amber-200 transition-colors">status page</Link>
           {parts[1]}
         </>
       );

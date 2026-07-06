@@ -4,8 +4,10 @@ import { toast } from 'react-toastify';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
     Plus, Edit, Trash2, Search, Filter,
-    Calendar, Tag, Image as ImageIcon, CheckCircle, XCircle, Video, Loader, Upload, Play
+    Calendar, Tag, Image as ImageIcon, CheckCircle, XCircle, Video, Loader, Upload, Play,
+    ArrowLeft, ArrowRight
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ImagePreview from "../components/ImagePreview";
 import VideoPreview from "../components/VideoPreview";
 import { authenticatedFetch } from '../utils/auth';
@@ -21,6 +23,12 @@ export default function AdminUpdates() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterCategory]);
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -342,6 +350,12 @@ export default function AdminUpdates() {
         return matchesSearch && matchesCategory;
     });
 
+    const totalItems = filteredUpdates.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedUpdates = filteredUpdates.slice(startIndex, endIndex);
+
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'rootadmin')) {
         return <div className="p-10 text-center text-red-500">Access Denied</div>;
     }
@@ -408,7 +422,13 @@ export default function AdminUpdates() {
                         <p>No updates found matching your criteria.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <motion.div 
+                        key={currentPage}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-x-auto"
+                    >
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700">
                                 <tr>
@@ -424,7 +444,7 @@ export default function AdminUpdates() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {filteredUpdates.map(update => (
+                                {paginatedUpdates.map(update => (
                                     <tr key={update._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-gray-900 dark:text-white">{update.title}</div>
@@ -486,6 +506,31 @@ export default function AdminUpdates() {
                                 ))}
                             </tbody>
                         </table>
+                    </motion.div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between p-4 sm:px-6 border-t border-gray-105 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/10">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            Showing page <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> of <span className="font-semibold dark:text-gray-305">{totalPages}</span>
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ArrowLeft size={14} /> Previous
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Next <ArrowRight size={14} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
