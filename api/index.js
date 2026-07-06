@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import { checkAndSendMaintenanceNotifications } from './utils/maintenanceNotifier.js';
 import userRouter from './routes/user.route.js'
 import authRouter from './routes/auth.route.js'
 import listingRouter from './routes/listing.route.js'
@@ -2188,6 +2189,10 @@ const startServer = () => {
 
       // Start scheduled synchronization
       startScheduledSync();
+
+      // Trigger pending notifications if maintenance mode is over
+      console.log('🚧 Checking for pending maintenance recovery notifications...');
+      await checkAndSendMaintenanceNotifications();
 
       console.log('🎉 Data synchronization system initialized successfully!');
     } catch (error) {

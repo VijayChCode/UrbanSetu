@@ -1,4 +1,5 @@
 import express from 'express';
+import MaintenanceNotification from '../models/maintenanceNotification.model.js';
 
 const router = express.Router();
 
@@ -140,6 +141,54 @@ router.get('/version', (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch version info'
+    });
+  }
+});
+
+// Register email for maintenance recovery notification
+router.post('/maintenance-notify', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address is required.'
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address.'
+      });
+    }
+
+    const lowercaseEmail = email.toLowerCase().trim();
+
+    // Check if email is already registered
+    const existing = await MaintenanceNotification.findOne({ email: lowercaseEmail });
+    
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'This email is already registered to receive updates.'
+      });
+    }
+
+    // Save notification request
+    const newNotification = new MaintenanceNotification({ email: lowercaseEmail });
+    await newNotification.save();
+
+    res.json({
+      success: true,
+      message: 'We will email you when we\'re back online!'
+    });
+  } catch (error) {
+    console.error('Error registering maintenance notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to register notification.'
     });
   }
 });

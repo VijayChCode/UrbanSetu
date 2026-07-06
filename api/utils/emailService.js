@@ -17775,5 +17775,60 @@ export const sendReminderNotificationEmail = async (email, { taskText, time, use
   }
 };
 
+// Maintenance Recovery Email
+export const sendMaintenanceRecoveryEmail = async (email) => {
+  try {
+    const subject = `UrbanSetu is Back Online!`;
+    const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3); position: relative;">
+              <span style="color: #ffffff; font-size: 36px; font-weight: bold; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%;">⚡</span>
+            </div>
+            <h1 style="color: #1f2937; margin: 0; font-size: 28px;">We are Back Online!</h1>
+            <p style="color: #6b7280; margin: 10px 0 0; font-size: 16px;">Renovations complete. Thank you for your patience.</p>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: left;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 10px 0;">
+              Hello,
+            </p>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 15px 0;">
+              Thank you for requesting to be notified. Our team has successfully upgraded the platform infrastructure to give you a faster and more secure experience.
+            </p>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0;">
+              You can now resume searching, listing, or managing properties.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${clientBaseUrl}" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;">
+              🚀 Visit UrbanSetu
+            </a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 15px 0 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    return await sendEmailWithRetry({
+      to: email,
+      subject: subject,
+      html: html
+    });
+  } catch (error) {
+    console.error('Error sending maintenance recovery email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 
 

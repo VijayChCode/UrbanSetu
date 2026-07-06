@@ -30,6 +30,8 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
     const [email, setEmail] = useState('');
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
     const [pingStatus, setPingStatus] = useState('idle'); // idle, pinging, online, offline
     const [pingLogs, setPingLogs] = useState([]);
 
@@ -100,16 +102,34 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
     };
 
     // 3. Email Subscription handler
-    const handleSubscribe = (e) => {
+    const handleSubscribe = async (e) => {
         e.preventDefault();
         if (!email) return;
 
         setIsSubmitting(true);
-        setTimeout(() => {
+        setErrorMsg('');
+        setSuccessMsg('');
+
+        try {
+            const res = await fetch('/api/config/maintenance-notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setIsSubscribed(true);
+                setSuccessMsg(data.message || "We will email you when we're back online!");
+                setEmail('');
+            } else {
+                setErrorMsg(data.message || "Failed to register notification.");
+            }
+        } catch (err) {
+            console.error('Error registering notification:', err);
+            setErrorMsg("Network error. Please check your internet connection.");
+        } finally {
             setIsSubmitting(false);
-            setIsSubscribed(true);
-            setEmail('');
-        }, 1500);
+        }
     };
 
     // 4. Interactive Server Ping
@@ -262,31 +282,38 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
                                 <FaPaperPlane className="text-indigo-500 text-sm" /> Get Notified
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-                                Subscribe to receive a notification as soon as we're back online.
+                                Enter your email to receive an alert as soon as we're back online.
                             </p>
                         </div>
                         {isSubscribed ? (
                             <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-bold bg-green-500/10 border border-green-500/20 p-3 rounded-xl">
-                                <FaCheckCircle /> Subscription Confirmed!
+                                <FaCheckCircle /> {successMsg || "We will email you when we're back online!"}
                             </div>
                         ) : (
-                            <form onSubmit={handleSubscribe} className="flex gap-2">
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email"
-                                    className="flex-1 px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all active:scale-[0.98] flex items-center justify-center min-w-[70px]"
-                                >
-                                    {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Notify'}
-                                </button>
-                            </form>
+                            <div className="w-full">
+                                <form onSubmit={handleSubscribe} className="flex gap-2">
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                        className="flex-1 px-3.5 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all active:scale-[0.98] flex items-center justify-center min-w-[70px]"
+                                    >
+                                        {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Notify'}
+                                    </button>
+                                </form>
+                                {errorMsg && (
+                                    <p className="text-xs text-red-500 dark:text-red-400 font-semibold mt-2 text-left">
+                                        {errorMsg}
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
 
