@@ -148,7 +148,7 @@ export default function StatusPage() {
 
     const renderUptimeBars = (statusVal, componentKey) => {
         return (
-            <div className="flex gap-[2px] sm:gap-[3px] h-10 items-end justify-between relative mt-2">
+            <div className="flex gap-[1px] xs:gap-[1.5px] sm:gap-[2px] md:gap-[3px] h-10 items-end justify-between relative mt-2">
                 {[...Array(90)].map((_, i) => {
                     const dayOffset = 89 - i;
                     const dateStr = getTooltipDate(dayOffset);
@@ -239,7 +239,7 @@ export default function StatusPage() {
                         <div 
                             key={i} 
                             className="group relative flex justify-center flex-1 h-6 sm:h-8"
-                            style={{ minWidth: '2px', maxWidth: '4px' }}
+                            style={{ minWidth: '1px', maxWidth: '4px' }}
                         >
                             <div 
                                 className={`w-full h-full rounded-[1px] ${color} cursor-pointer transition-all duration-150`}
@@ -290,7 +290,7 @@ export default function StatusPage() {
                         style={{ transform: currentTab === 'maintenanceupdates' ? 'translateX(-50%)' : 'translateX(0)' }}
                     >
                         {/* Tab 1: Current Status */}
-                        <div className="w-1/2 pr-3 sm:pr-6 shrink-0 transition-opacity duration-300">
+                        <div className="w-1/2 pr-3 sm:pr-6 shrink-0 transition-opacity duration-300 overflow-hidden min-w-0">
                             {/* Health Banner */}
                             {apiHealth.status === 'ok' ? (
                                 <div className="bg-emerald-500 dark:bg-emerald-600 text-white rounded-lg p-4 sm:p-5 font-bold text-sm sm:text-lg shadow-sm mb-6 sm:mb-8 flex items-center gap-3">
@@ -323,7 +323,7 @@ export default function StatusPage() {
                                     {renderUptimeBars(apiHealth.website, 'website')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>100.0 % uptime</span>
+                                        <span className="hidden xs:inline">100.0 % uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -341,7 +341,7 @@ export default function StatusPage() {
                                     {renderUptimeBars(apiHealth.dashboard, 'dashboard')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>{apiHealth.dashboard === 'ok' ? '100.0 %' : '99.8 %'} uptime</span>
+                                        <span className="hidden xs:inline">{apiHealth.dashboard === 'ok' ? '100.0 %' : '99.8 %'} uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -359,7 +359,7 @@ export default function StatusPage() {
                                     {renderUptimeBars(apiHealth.api, 'api')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>{apiHealth.api === 'ok' ? '100.0 %' : apiHealth.api === 'loading' ? '-- %' : '98.5 %'} uptime</span>
+                                        <span className="hidden xs:inline">{apiHealth.api === 'ok' ? '100.0 %' : apiHealth.api === 'loading' ? '-- %' : '98.5 %'} uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -377,7 +377,7 @@ export default function StatusPage() {
                                     {renderUptimeBars('ok', 'restApi')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>100.0 % uptime</span>
+                                        <span className="hidden xs:inline">100.0 % uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -395,7 +395,7 @@ export default function StatusPage() {
                                     {renderUptimeBars('ok', 'staticSites')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>100.0 % uptime</span>
+                                        <span className="hidden xs:inline">100.0 % uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -413,7 +413,7 @@ export default function StatusPage() {
                                     {renderUptimeBars('ok', 'customDomains')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>99.97 % uptime</span>
+                                        <span className="hidden xs:inline">99.97 % uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -431,7 +431,7 @@ export default function StatusPage() {
                                     {renderUptimeBars('ok', 'oneOffJobs')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
-                                        <span>100.0 % uptime</span>
+                                        <span className="hidden xs:inline">100.0 % uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
@@ -452,7 +452,7 @@ export default function StatusPage() {
                         </div>
 
                         {/* Tab 2: Maintenance Period */}
-                        <div className="w-1/2 pl-3 sm:pl-6 shrink-0 transition-opacity duration-300">
+                        <div className="w-1/2 pl-3 sm:pl-6 shrink-0 transition-opacity duration-300 overflow-hidden min-w-0">
                             {/* Maintenance Details */}
                             <div className="text-center py-4 sm:py-6">
                                 <h2 className="text-xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight mb-2">
