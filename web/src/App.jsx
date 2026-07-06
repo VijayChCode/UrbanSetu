@@ -1572,8 +1572,9 @@ export default function App({ bootstrapped }) {
         const apiBase = import.meta.env.VITE_API_BASE_URL || '';
         const res = await fetch(`${apiBase}/api/config`);
         if (res.ok) {
-          const config = await res.json();
-          if (config) {
+          const responseJson = await res.json();
+          if (responseJson && responseJson.success && responseJson.data) {
+            const config = responseJson.data;
             if (config.maintenance) {
               setMaintenanceConfig(config.maintenance);
             } else {

@@ -152,8 +152,8 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
                 let maintenanceEnabled = false;
                 if (configRes.ok) {
                     const configData = await configRes.json();
-                    if (configData && configData.maintenance) {
-                        maintenanceEnabled = configData.maintenance.enabled;
+                    if (configData && configData.success && configData.data && configData.data.maintenance) {
+                        maintenanceEnabled = configData.data.maintenance.enabled;
                     }
                 }
 
