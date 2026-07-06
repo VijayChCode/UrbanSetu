@@ -1506,16 +1506,53 @@ function AppRoutes({ bootstrapped }) {
 import MaintenancePage from "./pages/MaintenancePage";
 
 export default function App({ bootstrapped }) {
+  const [maintenanceConfig, setMaintenanceConfig] = useState(null);
+  const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
 
   // MAINTENANCE MODE TOGGLE
-  // Set this to true to halt all services and show the maintenance page
+  // Set this to true to force maintenance mode on the client regardless of the server setting.
   const MAINTENANCE_MODE = true;
 
-  // URL parameters and transfers are fully handled within AppRoutes to enable confirmation dialogs
+  useEffect(() => {
+    if (MAINTENANCE_MODE) {
+      setMaintenanceConfig({
+        enabled: true,
+        message: "We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space.",
+        endTime: null
+      });
+      setIsCheckingMaintenance(false);
+      return;
+    }
 
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch('/api/config');
+        if (res.ok) {
+          const config = await res.json();
+          if (config && config.maintenance) {
+            setMaintenanceConfig(config.maintenance);
+          } else {
+            setMaintenanceConfig({ enabled: false });
+          }
+        } else {
+          setMaintenanceConfig({ enabled: false });
+        }
+      } catch (err) {
+        console.warn('Failed to check server maintenance status:', err);
+        setMaintenanceConfig({ enabled: false });
+      } finally {
+        setIsCheckingMaintenance(false);
+      }
+    };
+    checkMaintenance();
+  }, [MAINTENANCE_MODE]);
 
-  if (MAINTENANCE_MODE) {
-    return <MaintenancePage />;
+  if (isCheckingMaintenance) {
+    return <LoadingSpinner />;
+  }
+
+  if (maintenanceConfig && maintenanceConfig.enabled) {
+    return <MaintenancePage config={maintenanceConfig} onRetry={() => window.location.reload()} />;
   }
 
   return (
