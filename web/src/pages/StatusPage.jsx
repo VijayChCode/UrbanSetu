@@ -146,7 +146,7 @@ export default function StatusPage() {
         });
     };
 
-    const renderUptimeBars = (statusVal) => {
+    const renderUptimeBars = (statusVal, componentKey) => {
         return (
             <div className="flex gap-[2px] sm:gap-[3px] h-10 items-end justify-between relative mt-2">
                 {[...Array(90)].map((_, i) => {
@@ -161,7 +161,24 @@ export default function StatusPage() {
                         </div>
                     );
 
-                    if (statusVal === 'down') {
+                    if (componentKey === 'customDomains' && (i === 36 || i === 45)) {
+                        color = "bg-amber-500 dark:bg-amber-450 hover:bg-amber-600 dark:hover:bg-amber-350";
+                        tooltipContent = (
+                            <div className="space-y-1.5">
+                                <div className="font-bold text-slate-800 dark:text-slate-150">{dateStr}</div>
+                                <div className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 font-bold">
+                                    <span>⚠️</span> Partial outage
+                                </div>
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400">0 hrs 44 mins</div>
+                                <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
+                                    <div className="text-[9px] uppercase tracking-wider text-slate-455 dark:text-slate-500 font-bold">Related</div>
+                                    <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                        Upstream provider outage causing delays provisioning custom domains.
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    } else if (statusVal === 'down') {
                         if (i >= 85) {
                             color = "bg-rose-500 dark:bg-rose-450 hover:bg-rose-600 dark:hover:bg-rose-350";
                             tooltipContent = (
@@ -303,7 +320,7 @@ export default function StatusPage() {
                                             Operational
                                         </span>
                                     </div>
-                                    {renderUptimeBars(apiHealth.website)}
+                                    {renderUptimeBars(apiHealth.website, 'website')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
                                         <span>100.0 % uptime</span>
@@ -321,7 +338,7 @@ export default function StatusPage() {
                                             {apiHealth.dashboard === 'ok' ? 'Operational' : 'Degraded Performance'}
                                         </span>
                                     </div>
-                                    {renderUptimeBars(apiHealth.dashboard)}
+                                    {renderUptimeBars(apiHealth.dashboard, 'dashboard')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
                                         <span>{apiHealth.dashboard === 'ok' ? '100.0 %' : '99.8 %'} uptime</span>
@@ -339,10 +356,82 @@ export default function StatusPage() {
                                             {apiHealth.api === 'ok' ? 'Operational' : apiHealth.api === 'loading' ? 'Checking...' : 'Major Outage'}
                                         </span>
                                     </div>
-                                    {renderUptimeBars(apiHealth.api)}
+                                    {renderUptimeBars(apiHealth.api, 'api')}
                                     <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
                                         <span>90 days ago</span>
                                         <span>{apiHealth.api === 'ok' ? '100.0 %' : apiHealth.api === 'loading' ? '-- %' : '98.5 %'} uptime</span>
+                                        <span>Today</span>
+                                    </div>
+                                </div>
+
+                                {/* REST API */}
+                                <div className="space-y-2 sm:space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                            UrbanSetu REST API
+                                        </span>
+                                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-500 dark:text-emerald-400">
+                                            Operational
+                                        </span>
+                                    </div>
+                                    {renderUptimeBars('ok', 'restApi')}
+                                    <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                        <span>90 days ago</span>
+                                        <span>100.0 % uptime</span>
+                                        <span>Today</span>
+                                    </div>
+                                </div>
+
+                                {/* Static Sites */}
+                                <div className="space-y-2 sm:space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                            UrbanSetu Static Sites
+                                        </span>
+                                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-500 dark:text-emerald-400">
+                                            Operational
+                                        </span>
+                                    </div>
+                                    {renderUptimeBars('ok', 'staticSites')}
+                                    <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                        <span>90 days ago</span>
+                                        <span>100.0 % uptime</span>
+                                        <span>Today</span>
+                                    </div>
+                                </div>
+
+                                {/* Custom Domains */}
+                                <div className="space-y-2 sm:space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                            UrbanSetu Custom Domains
+                                        </span>
+                                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-500 dark:text-emerald-400">
+                                            Operational
+                                        </span>
+                                    </div>
+                                    {renderUptimeBars('ok', 'customDomains')}
+                                    <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                        <span>90 days ago</span>
+                                        <span>99.97 % uptime</span>
+                                        <span>Today</span>
+                                    </div>
+                                </div>
+
+                                {/* One-Off Jobs */}
+                                <div className="space-y-2 sm:space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                            UrbanSetu One-Off Jobs
+                                        </span>
+                                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-500 dark:text-emerald-400">
+                                            Operational
+                                        </span>
+                                    </div>
+                                    {renderUptimeBars('ok', 'oneOffJobs')}
+                                    <div className="flex justify-between text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                                        <span>90 days ago</span>
+                                        <span>100.0 % uptime</span>
                                         <span>Today</span>
                                     </div>
                                 </div>
