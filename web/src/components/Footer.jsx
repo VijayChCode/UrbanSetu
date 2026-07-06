@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaHome, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCookie, FaShieldAlt, FaFileContract, FaEye, FaHandshake, FaRobot, FaExclamationTriangle } from 'react-icons/fa';
+import { FaHome, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCookie, FaShieldAlt, FaFileContract, FaEye, FaHandshake, FaRobot, FaExclamationTriangle, FaServer } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 
 import { API_BASE_URL } from '../config/api';
@@ -331,7 +331,7 @@ const Footer = () => {
 
           {/* Legal & Privacy */}
           <div className="space-y-3">
-            <h4 className="text-lg font-semibold dark:text-white">Legal & Privacy</h4>
+            <h4 className="text-lg font-semibold dark:text-white">Legal & Support</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to={
@@ -400,6 +400,15 @@ const Footer = () => {
                 >
                   <FaHandshake className="text-xs" />
                   Community Guidelines
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/status"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
+                >
+                  <FaServer className="text-xs text-green-500" />
+                  System Status
                 </Link>
               </li>
             </ul>

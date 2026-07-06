@@ -1,5 +1,6 @@
 import express from 'express';
 import MaintenanceNotification from '../models/maintenanceNotification.model.js';
+import { sendMaintenanceSubscriptionEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -179,6 +180,19 @@ router.post('/maintenance-notify', async (req, res) => {
     // Save notification request
     const newNotification = new MaintenanceNotification({ email: lowercaseEmail });
     await newNotification.save();
+
+    // Send confirmation email asynchronously
+    sendMaintenanceSubscriptionEmail(lowercaseEmail)
+      .then(result => {
+        if (result && result.success) {
+          console.log(`[MaintenanceNotification] Confirmation email sent to ${lowercaseEmail}`);
+        } else {
+          console.error(`[MaintenanceNotification] Failed to send confirmation email to ${lowercaseEmail}:`, result?.error);
+        }
+      })
+      .catch(err => {
+        console.error(`[MaintenanceNotification] Uncaught error sending confirmation email to ${lowercaseEmail}:`, err);
+      });
 
     res.json({
       success: true,

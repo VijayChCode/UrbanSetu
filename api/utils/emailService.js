@@ -17830,5 +17830,63 @@ export const sendMaintenanceRecoveryEmail = async (email) => {
   }
 };
 
+// Maintenance Subscription Confirmation Email
+export const sendMaintenanceSubscriptionEmail = async (email) => {
+  try {
+    const subject = `UrbanSetu - Maintenance Notification Registered`;
+    const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #7c3aed, #4c1d95); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 8px 16px rgba(124, 58, 237, 0.3); position: relative;">
+              <span style="color: #ffffff; font-size: 36px; font-weight: bold; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 50%;">🔔</span>
+            </div>
+            <h1 style="color: #1f2937; margin: 0; font-size: 24px;">Subscription Registered</h1>
+            <p style="color: #6b7280; margin: 10px 0 0; font-size: 15px;">UrbanSetu Maintenance Updates</p>
+          </div>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: left;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 10px 0;">
+              Hello,
+            </p>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 15px 0;">
+              You have successfully subscribed to receive updates for the upcoming **UrbanSetu Maintenance Period**.
+            </p>
+            <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0;">
+              We will send you an email notification as soon as the maintenance starts and another email once the systems are fully restored and the platform is back online.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${clientBaseUrl}/status" style="background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3); transition: all 0.3s ease;">
+              📋 View Live Status Page
+            </a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 5px 0 0; font-size: 12px;">
+              By subscribing you agree to our <a href="${clientBaseUrl}/privacy" style="color: #7c3aed; text-decoration: underline;">Privacy Policy</a>.
+            </p>
+            <p style="color: #9ca3af; margin: 15px 0 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    return await sendEmailWithRetry({
+      to: email,
+      subject: subject,
+      html: html
+    });
+  } catch (error) {
+    console.error('Error sending maintenance subscription email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 
 
