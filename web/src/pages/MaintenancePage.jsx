@@ -9,7 +9,7 @@ import {
   FaTwitter, 
   FaFacebook, 
   FaInstagram, 
-  FaLinkedin, 
+  FaYoutube, 
   FaServer, 
   FaCheckCircle, 
   FaExclamationCircle 
@@ -393,17 +393,17 @@ const MaintenancePage = ({ config = {}, onRetry }) => {
 
                     <div className="flex items-center justify-between flex-col sm:flex-row gap-4">
                         <div className="flex gap-4">
-                            <a href="https://twitter.com/urbansetu" target="_blank" rel="noreferrer" className="text-slate-450 hover:text-indigo-500 transition-colors">
+                            <a href="https://x.com/Vijay09862" target="_blank" rel="noreferrer" title="X" className="text-slate-450 hover:text-indigo-500 transition-colors">
                                 <FaTwitter className="text-lg" />
                             </a>
-                            <a href="https://facebook.com/urbansetu" target="_blank" rel="noreferrer" className="text-slate-450 hover:text-indigo-500 transition-colors">
+                            <a href="https://facebook.com/vijaychalendra09" target="_blank" rel="noreferrer" title="Facebook" className="text-slate-450 hover:text-indigo-500 transition-colors">
                                 <FaFacebook className="text-lg" />
                             </a>
-                            <a href="https://instagram.com/urbansetu" target="_blank" rel="noreferrer" className="text-slate-450 hover:text-indigo-500 transition-colors">
+                            <a href="https://instagram.com/vijaychalendra09" target="_blank" rel="noreferrer" title="Instagram" className="text-slate-450 hover:text-indigo-500 transition-colors">
                                 <FaInstagram className="text-lg" />
                             </a>
-                            <a href="https://linkedin.com/company/urbansetu" target="_blank" rel="noreferrer" className="text-slate-450 hover:text-indigo-500 transition-colors">
-                                <FaLinkedin className="text-lg" />
+                            <a href="https://www.youtube.com/@UrbanSetu-realestate" target="_blank" rel="noreferrer" title="YouTube" className="text-slate-450 hover:text-indigo-500 transition-colors">
+                                <FaYoutube className="text-lg" />
                             </a>
                         </div>
                         <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
