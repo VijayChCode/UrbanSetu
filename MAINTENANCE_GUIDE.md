@@ -8,30 +8,19 @@ This guide explains how to configure, activate, and deactivate **Full Maintenanc
 
 When active, the site redirects all users to a premium interactive maintenance screen showing a countdown, ongoing tasks, and a server connectivity ping status.
 
-### Activation Methods:
-
-#### Method A: Frontend Override (Fastest)
-In [`web/src/App.jsx`](./web/src/App.jsx), set the `MAINTENANCE_MODE` variable to `true`:
-```javascript
-const MAINTENANCE_MODE = true;
+### Activation Method:
+Configure your server environment variables (in your `.env` file or host dashboard like Render/Vercel):
+```bash
+MAINTENANCE_MODE=true
+MAINTENANCE_END_TIME=2026-07-06T18:00:00Z  # (Optional) ISO timestamp for the countdown clock
+MAINTENANCE_MESSAGE="Renovating infrastructure..."  # (Optional) Custom status message
 ```
 
-#### Method B: Backend Dynamic Control
-1. Ensure the frontend override is set to `false` in [`web/src/App.jsx`](./web/src/App.jsx):
-   ```javascript
-   const MAINTENANCE_MODE = false;
-   ```
-2. Configure your server environment variables (in your `.env` file or host dashboard like Render/Vercel):
-   ```bash
-   MAINTENANCE_MODE=true
-   MAINTENANCE_END_TIME=2026-07-06T18:00:00Z  # (Optional) ISO timestamp for the countdown clock
-   MAINTENANCE_MESSAGE="Renovating infrastructure..."  # (Optional) Custom status message
-   ```
-
 ### How to Stop/Deactivate:
-Set both variables to `false`:
-* **App.jsx**: `MAINTENANCE_MODE = false;`
-* **Env Variable**: `MAINTENANCE_MODE=false`
+Set the environment variable to `false`:
+```bash
+MAINTENANCE_MODE=false
+```
 
 ---
 

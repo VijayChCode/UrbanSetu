@@ -1566,21 +1566,7 @@ export default function App({ bootstrapped }) {
   const [upcomingConfig, setUpcomingConfig] = useState(null);
   const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
 
-  // MAINTENANCE MODE TOGGLE
-  // Set this to true to force maintenance mode on the client regardless of the server setting.
-  const MAINTENANCE_MODE = true;
-
   useEffect(() => {
-    if (MAINTENANCE_MODE) {
-      setMaintenanceConfig({
-        enabled: true,
-        message: "We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space.",
-        endTime: null
-      });
-      setIsCheckingMaintenance(false);
-      return;
-    }
-
     const checkMaintenance = async () => {
       try {
         const res = await fetch('/api/config');
@@ -1607,7 +1593,7 @@ export default function App({ bootstrapped }) {
       }
     };
     checkMaintenance();
-  }, [MAINTENANCE_MODE]);
+  }, []);
 
   if (isCheckingMaintenance) {
     return <LoadingSpinner />;
