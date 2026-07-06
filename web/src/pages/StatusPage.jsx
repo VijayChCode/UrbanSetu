@@ -104,7 +104,7 @@ export default function StatusPage() {
             {/* Header / Nav */}
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <div className="text-center py-8">
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-blue-650 dark:text-blue-400 tracking-tight mb-2">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight mb-2">
                         UrbanSetu Maintenance Period
                     </h1>
                     <p className="text-base text-slate-500 dark:text-slate-400 font-medium">
@@ -135,7 +135,7 @@ export default function StatusPage() {
                                 There will be no interruptions to already running sites, and users can continue to browse listings. However, creating listings or submitting appointments will be locked temporarily.
                             </p>
                             <p>
-                                If you need help, please get in touch at <a href="mailto:info.urbansetu@gmail.com" className="text-[#6366f1] hover:underline font-semibold">info.urbansetu@gmail.com</a> or talk to us on our community forum, <a href="https://urbansetu.vercel.app/user/community" target="_blank" rel="noopener noreferrer" className="text-[#6366f1] hover:underline font-semibold">https://urbansetu.vercel.app/user/community</a>.
+                                If you need help, please get in touch at <a href="mailto:info.urbansetu@gmail.com" className="text-[#6366f1] hover:underline font-semibold">info.urbansetu@gmail.com</a> or talk to us on our community forum, <a href="https://urbansetu.vercel.app/community" target="_blank" rel="noopener noreferrer" className="text-[#6366f1] hover:underline font-semibold">https://urbansetu.vercel.app/community</a>.
                             </p>
                             <div className="pt-2 text-xs text-slate-400 dark:text-slate-500">
                                 Posted 5 days ago. Jul 01, 2026 - 15:22 UTC
@@ -157,7 +157,7 @@ export default function StatusPage() {
                         ← Current Status
                     </Link>
                     <span>
-                        Powered by <span className="font-bold text-slate-550 dark:text-slate-450">UrbanSetu Statuspage</span>
+                        Powered by <span className="font-bold text-slate-500 dark:text-slate-400">UrbanSetu Statuspage</span>
                     </span>
                 </div>
             </div>
@@ -173,15 +173,15 @@ export default function StatusPage() {
                             </h2>
                             <button 
                                 onClick={() => setShowModal(false)}
-                                className="text-slate-400 hover:text-slate-650 dark:hover:text-white transition-colors text-2xl font-bold leading-none"
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors text-2xl font-bold leading-none"
                             >
                                 &times;
                             </button>
                         </div>
 
                         {/* Modal Body */}
-                        <p className="text-sm text-slate-600 dark:text-slate-350 mb-6 leading-relaxed">
-                            Subscribe to updates for <strong className="font-bold text-slate-850 dark:text-white">UrbanSetu Maintenance Period</strong> via email. You'll receive email notifications when incidents are updated.
+                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                            Subscribe to updates for <strong className="font-bold text-slate-900 dark:text-white">UrbanSetu Maintenance Period</strong> via email. You'll receive email notifications when incidents are updated.
                         </p>
 
                         {isSubscribed ? (
@@ -191,7 +191,7 @@ export default function StatusPage() {
                         ) : (
                             <form onSubmit={handleSubscribe} className="space-y-5">
                                 <div className="space-y-2">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-350 tracking-wider">
                                         VIA EMAIL:
                                     </label>
                                     <input
@@ -220,8 +220,8 @@ export default function StatusPage() {
                                         {isSubmitting ? <FaSpinner className="animate-spin" /> : 'SUBSCRIBE TO INCIDENT'}
                                     </button>
                                     
-                                    <p className="text-[10px] leading-relaxed text-slate-400 dark:text-slate-500 max-w-xs text-center sm:text-right">
-                                        By subscribing you agree to our <Link to="/privacy" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</Link>. This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-650 dark:text-indigo-400 hover:underline">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-650 dark:text-indigo-400 hover:underline">Terms of Service</a> apply.
+                                    <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 max-w-xs text-center sm:text-right">
+                                        By subscribing you agree to our <Link to="/privacy" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Privacy Policy</Link>. This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Terms of Service</a> apply.
                                     </p>
                                 </div>
                             </form>
