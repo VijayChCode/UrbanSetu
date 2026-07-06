@@ -1509,7 +1509,7 @@ export default function App({ bootstrapped }) {
 
   // MAINTENANCE MODE TOGGLE
   // Set this to true to halt all services and show the maintenance page
-  const MAINTENANCE_MODE = false;
+  const MAINTENANCE_MODE = true;
 
   // URL parameters and transfers are fully handled within AppRoutes to enable confirmation dialogs
 
