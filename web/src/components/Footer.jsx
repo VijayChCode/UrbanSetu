@@ -404,7 +404,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/status"
+                  to="/status?tab=currentstatus"
                   className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
                   <FaServer className="text-xs text-green-500" />

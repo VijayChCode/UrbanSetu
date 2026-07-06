@@ -17860,7 +17860,7 @@ export const sendMaintenanceSubscriptionEmail = async (email) => {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${clientBaseUrl}/status" style="background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3); transition: all 0.3s ease;">
+            <a href="${clientBaseUrl}/status?tab=currentstatus" style="background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3); transition: all 0.3s ease;">
               📋 View Live Status Page
             </a>
           </div>
