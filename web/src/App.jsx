@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate, useParams, Link } from "react-router-dom";
 import React, { useEffect, Suspense, lazy, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyAuthStart, verifyAuthSuccess, verifyAuthFailure, signoutUserSuccess, updateUserSuccess, signInSuccess, signoutUserStart } from "./redux/user/userSlice.js";
@@ -150,6 +150,7 @@ const Rewards = lazy(() => import('./pages/Rewards'));
 const YearInReview = lazy(() => import('./pages/YearInReview'));
 const AdminUpdates = lazy(() => import('./pages/AdminUpdates'));
 const Updates = lazy(() => import('./pages/Updates'));
+const StatusPage = lazy(() => import('./pages/StatusPage'));
 const LockAccount = lazy(() => import('./pages/security/LockAccount'));
 const UnlockAccount = lazy(() => import('./pages/security/UnlockAccount'));
 const Unsubscribe = lazy(() => import('./pages/Unsubscribe'));
@@ -455,7 +456,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
       return (
         <>
           {parts[0]}
-          <a href="/updates" className="underline font-bold text-white hover:text-amber-200 transition-colors">status page</a>
+          <Link to="/status" className="underline font-bold text-white hover:text-amber-200 transition-colors">status page</Link>
           {parts[1]}
         </>
       );
@@ -1363,6 +1364,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/updates" element={<Updates />} />
+            <Route path="/status" element={<StatusPage />} />
             <Route path="/ai/share/:shareToken" element={<SharedChatView />} />
             <Route path="/v/:token" element={<VideoEmbed />} />
             <Route path="/i/:token" element={<ImageEmbed />} />
