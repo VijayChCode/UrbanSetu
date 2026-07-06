@@ -72,8 +72,11 @@ export default function StatusPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
-                <FaSpinner className="animate-spin text-indigo-600 text-3xl" />
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 gap-3">
+                <FaSpinner className="animate-spin text-indigo-600 dark:text-indigo-400 text-3xl" />
+                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 animate-pulse">
+                    Loading status details...
+                </span>
             </div>
         );
     }
@@ -132,7 +135,7 @@ export default function StatusPage() {
                                 There will be no interruptions to already running sites, and users can continue to browse listings. However, creating listings or submitting appointments will be locked temporarily.
                             </p>
                             <p>
-                                If you need help, please get in touch at <a href="mailto:support@urbansetu.com" className="text-[#6366f1] hover:underline font-semibold">support@urbansetu.com</a> or talk to us on our community forum, <a href="https://community.urbansetu.com" target="_blank" rel="noopener noreferrer" className="text-[#6366f1] hover:underline font-semibold">https://community.urbansetu.com</a>.
+                                If you need help, please get in touch at <a href="mailto:info.urbansetu@gmail.com" className="text-[#6366f1] hover:underline font-semibold">info.urbansetu@gmail.com</a> or talk to us on our community forum, <a href="https://urbansetu.vercel.app/user/community" target="_blank" rel="noopener noreferrer" className="text-[#6366f1] hover:underline font-semibold">https://urbansetu.vercel.app/user/community</a>.
                             </p>
                             <div className="pt-2 text-xs text-slate-400 dark:text-slate-500">
                                 Posted 5 days ago. Jul 01, 2026 - 15:22 UTC
@@ -161,48 +164,66 @@ export default function StatusPage() {
 
             {/* Subscribe Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-fadeIn animate-duration-200">
-                    <div className="max-w-md w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-6 shadow-2xl relative text-left">
-                        <button 
-                            onClick={() => setShowModal(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-650 dark:hover:text-white transition-colors"
-                        >
-                            <FaTimes className="text-lg" />
-                        </button>
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/65 backdrop-blur-sm p-4 animate-fadeIn animate-duration-200">
+                    <div className="max-w-xl w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-lg p-6 shadow-2xl relative text-left">
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-250/60 dark:border-slate-700/80 mb-5">
+                            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">
+                                Subscribe to Incident
+                            </h2>
+                            <button 
+                                onClick={() => setShowModal(false)}
+                                className="text-slate-400 hover:text-slate-650 dark:hover:text-white transition-colors text-2xl font-bold leading-none"
+                            >
+                                &times;
+                            </button>
+                        </div>
 
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                            Subscribe to Updates
-                        </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-                            Enter your email to receive automated email notifications when this maintenance period starts and ends.
+                        {/* Modal Body */}
+                        <p className="text-sm text-slate-600 dark:text-slate-350 mb-6 leading-relaxed">
+                            Subscribe to updates for <strong className="font-bold text-slate-850 dark:text-white">UrbanSetu Maintenance Period</strong> via email. You'll receive email notifications when incidents are updated.
                         </p>
 
                         {isSubscribed ? (
-                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-bold bg-green-500/10 border border-green-500/20 p-3 rounded-xl animate-fadeIn">
-                                <FaCheckCircle /> {successMsg || "Notification registered! We will email you once we are back online."}
+                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-bold bg-green-500/10 border border-green-500/20 p-3 rounded-md animate-fadeIn mb-4">
+                                <FaCheckCircle /> {successMsg || "We will email you when we're back online!"}
                             </div>
                         ) : (
-                            <form onSubmit={handleSubscribe} className="space-y-3">
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email"
-                                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-all active:scale-[0.98] flex items-center justify-center"
-                                >
-                                    {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Subscribe'}
-                                </button>
+                            <form onSubmit={handleSubscribe} className="space-y-5">
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                                        VIA EMAIL:
+                                    </label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="email@example.com"
+                                        className="w-full px-3.5 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-violet-500 focus:border-violet-500 shadow-inner"
+                                    />
+                                </div>
+
                                 {errorMsg && (
                                     <p className="text-xs text-red-500 dark:text-red-400 font-semibold mt-1">
                                         {errorMsg}
                                     </p>
                                 )}
+
+                                {/* Modal Footer */}
+                                <div className="pt-5 border-t border-slate-250/60 dark:border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="w-full sm:w-auto bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold uppercase tracking-wider text-xs py-3 px-6 rounded-md shadow-md transition-all active:scale-[0.98] flex items-center justify-center min-w-[200px]"
+                                    >
+                                        {isSubmitting ? <FaSpinner className="animate-spin" /> : 'SUBSCRIBE TO INCIDENT'}
+                                    </button>
+                                    
+                                    <p className="text-[10px] leading-relaxed text-slate-400 dark:text-slate-500 max-w-xs text-center sm:text-right">
+                                        By subscribing you agree to our <Link to="/privacy" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</Link>. This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-650 dark:text-indigo-400 hover:underline">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-650 dark:text-indigo-400 hover:underline">Terms of Service</a> apply.
+                                    </p>
+                                </div>
                             </form>
                         )}
                     </div>

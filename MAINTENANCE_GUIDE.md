@@ -32,10 +32,18 @@ Shows a Render-style top alert banner (amber gradient) on all pages to inform us
 Configure the following server environment variables:
 ```bash
 UPCOMING_MAINTENANCE_MODE=true
+UPCOMING_MAINTENANCE_START_TIME=2026-07-08T08:30:00+05:30  # (Optional) ISO timestamp for the start of maintenance
 UPCOMING_MAINTENANCE_MESSAGE="We will be upgrading critical infrastructure on July 8th. Follow our status page for updates."
 ```
 
-> **Note**: Including the phrase **`"status page"`** anywhere in the message will automatically render it as a clickable hyperlink on the frontend pointing directly to the `/updates` log.
+> **Note**: Including the phrase **`"status page"`** anywhere in the message will automatically render it as a clickable hyperlink on the frontend pointing directly to the **`/status`** page.
+
+### 3. Maintenance Status Page (`/status`)
+Active users clicking `"status page"` in the banner are redirected to `/status` which displays:
+* The exact scheduled maintenance window (start and end times).
+* Detailed explanations of the upcoming upgrades.
+* Affected services (*Dashboard, Platform API, REST API, and One-Off Jobs*).
+* An interactive **"SUBSCRIBE TO UPDATES"** button and modal dialog for automated email notification requests.
 
 ### Dismissal Behavior:
 * Clicking the close `x` button on the banner stores a flag in the browser's `sessionStorage` (`upcoming_maintenance_dismissed: 'true'`).
