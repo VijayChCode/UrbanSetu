@@ -138,29 +138,111 @@ export default function StatusPage() {
         timeZoneName: 'short'
     }) : '10:30 AM IST';
 
+    const getTooltipDate = (dayOffset) => {
+        const date = new Date();
+        date.setDate(date.getDate() - dayOffset);
+        return date.toLocaleDateString('en-US', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
     const renderUptimeBars = (statusVal) => {
         return (
-            <div className="flex gap-[2px] sm:gap-[3px] h-6 sm:h-8 items-end justify-between">
+            <div className="flex gap-[2px] sm:gap-[3px] h-10 items-end justify-between relative mt-2">
                 {[...Array(90)].map((_, i) => {
-                    let color = "bg-emerald-500 dark:bg-emerald-450";
+                    const dayOffset = 89 - i;
+                    const dateStr = getTooltipDate(dayOffset);
+                    
+                    let color = "bg-emerald-500 dark:bg-emerald-450 hover:bg-emerald-600 dark:hover:bg-emerald-350";
+                    let tooltipContent = (
+                        <div>
+                            <div className="font-bold text-slate-800 dark:text-slate-100">{dateStr}</div>
+                            <div className="text-slate-500 dark:text-slate-400 mt-1">No downtime recorded on this day.</div>
+                        </div>
+                    );
+
                     if (statusVal === 'down') {
                         if (i >= 85) {
-                            color = "bg-rose-500 dark:bg-rose-450";
+                            color = "bg-rose-500 dark:bg-rose-450 hover:bg-rose-600 dark:hover:bg-rose-350";
+                            tooltipContent = (
+                                <div className="space-y-1.5">
+                                    <div className="font-bold text-slate-800 dark:text-slate-150">{dateStr}</div>
+                                    <div className="flex items-center gap-1.5 text-rose-500 dark:text-rose-400 font-bold">
+                                        <span>❌</span> Major outage
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">1 hrs 12 mins</div>
+                                    <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-405 dark:text-slate-500 font-bold">Related</div>
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                            API gateway routing issues caused by upstream DNS resolution failures.
+                                        </div>
+                                    </div>
+                                </div>
+                            );
                         } else if (i === 42 || i === 71) {
-                            color = "bg-amber-500 dark:bg-amber-450";
+                            color = "bg-amber-500 dark:bg-amber-450 hover:bg-amber-600 dark:hover:bg-amber-350";
+                            tooltipContent = (
+                                <div className="space-y-1.5">
+                                    <div className="font-bold text-slate-800 dark:text-slate-150">{dateStr}</div>
+                                    <div className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 font-bold">
+                                        <span>⚠️</span> Partial outage
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">0 hrs 24 mins</div>
+                                    <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-405 dark:text-slate-500 font-bold">Related</div>
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                            Scheduled schema migration recovery checks.
+                                        </div>
+                                    </div>
+                                </div>
+                            );
                         }
                     } else if (statusVal === 'degraded') {
                         if (i >= 88) {
-                            color = "bg-amber-500 dark:bg-amber-450";
+                            color = "bg-amber-500 dark:bg-amber-450 hover:bg-amber-600 dark:hover:bg-amber-350";
+                            tooltipContent = (
+                                <div className="space-y-1.5">
+                                    <div className="font-bold text-slate-800 dark:text-slate-150">{dateStr}</div>
+                                    <div className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 font-bold">
+                                        <span>⚠️</span> Partial outage
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">0 hrs 44 mins</div>
+                                    <div className="border-t border-slate-100 dark:border-slate-700/50 pt-1.5 mt-1.5">
+                                        <div className="text-[9px] uppercase tracking-wider text-slate-455 dark:text-slate-500 font-bold">Related</div>
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-450 mt-0.5 leading-relaxed">
+                                            Database synchronization latency due to heavy read loads.
+                                        </div>
+                                    </div>
+                                </div>
+                            );
                         }
                     }
+
                     return (
                         <div 
                             key={i} 
-                            className={`flex-1 h-6 sm:h-8 rounded-[1px] ${color} transition-all duration-300`} 
+                            className="group relative flex justify-center flex-1 h-6 sm:h-8"
                             style={{ minWidth: '2px', maxWidth: '4px' }}
-                            title={`Day ${90 - i}: ${statusVal === 'ok' ? '100% Uptime' : statusVal === 'degraded' && i >= 88 ? 'Degraded Performance' : statusVal === 'down' && i >= 85 ? 'System Offline' : '100% Uptime'}`}
-                        />
+                        >
+                            <div 
+                                className={`w-full h-full rounded-[1px] ${color} cursor-pointer transition-all duration-150`}
+                            />
+                            {/* Tooltip Popup */}
+                            <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-xl text-[11px] w-52 text-left z-50 text-slate-800 dark:text-slate-200 transition-all pointer-events-none">
+                                {tooltipContent}
+                                {/* Down Arrow */}
+                                <div 
+                                    className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-transparent border-t-white dark:border-t-slate-800" 
+                                    style={{ borderStyle: 'solid', borderWidth: '6px 6px 0 6px' }}
+                                />
+                                <div 
+                                    className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-transparent border-t-slate-200 dark:border-t-slate-700 -z-10" 
+                                    style={{ borderStyle: 'solid', borderWidth: '7px 7px 0 7px', marginTop: '1px' }}
+                                />
+                            </div>
+                        </div>
                     );
                 })}
             </div>
@@ -399,9 +481,14 @@ export default function StatusPage() {
                                         {isSubmitting ? <FaSpinner className="animate-spin" /> : 'SUBSCRIBE TO INCIDENT'}
                                     </button>
                                     
-                                    <p className="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 max-w-xs text-center sm:text-right">
-                                        By subscribing you agree to our <Link to="/privacy" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Privacy Policy</Link>. This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Terms of Service</a> apply.
-                                    </p>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 max-w-xs text-center sm:text-right space-y-1.5 leading-relaxed">
+                                        <p className="text-[12px] text-slate-600 dark:text-slate-300">
+                                            By subscribing you agree to our <Link to="/privacy" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Privacy Policy</Link>.
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                                            This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="text-violet-600 dark:text-violet-400 hover:underline font-semibold">Terms of Service</a> apply.
+                                        </p>
+                                    </div>
                                 </div>
                             </form>
                         )}
