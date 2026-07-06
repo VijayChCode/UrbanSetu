@@ -266,6 +266,11 @@ const LoadingSpinner = () => (
         66% { transform: translate(-20px, 20px) scale(0.9); }
         100% { transform: translate(0px, 0px) scale(1); }
       }
+      @keyframes slideDown {
+        0% { transform: translateY(-100%); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+      .animate-slideDown { animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       .animate-blob { animation: blob 7s infinite; }
       .animation-delay-2000 { animation-delay: 2s; }
       .animation-delay-4000 { animation-delay: 4s; }
@@ -425,7 +430,7 @@ function useSuspensionFetch() {
   }, [dispatch, navigate]);
 }
 
-function AppRoutes({ bootstrapped }) {
+function AppRoutes({ bootstrapped, upcomingConfig }) {
   const location = useLocation();
   const dispatch = useDispatch();
   const { currentUser, loading, isSigningOut } = useSelector((state) => state.user);
@@ -433,6 +438,30 @@ function AppRoutes({ bootstrapped }) {
   const [sessionChecked, setSessionChecked] = useState(false);
   const navigate = useNavigate(); // Fix: ensure navigate is defined
   const { playNotification } = useSoundEffects();
+
+  const [isBannerDismissed, setIsBannerDismissed] = useState(() => {
+    return sessionStorage.getItem('upcoming_maintenance_dismissed') === 'true';
+  });
+
+  const handleDismissBanner = () => {
+    sessionStorage.setItem('upcoming_maintenance_dismissed', 'true');
+    setIsBannerDismissed(true);
+  };
+
+  const renderMessage = (text) => {
+    if (!text) return "";
+    if (text.includes("status page")) {
+      const parts = text.split("status page");
+      return (
+        <>
+          {parts[0]}
+          <a href="/updates" className="underline font-bold text-white hover:text-amber-200 transition-colors">status page</a>
+          {parts[1]}
+        </>
+      );
+    }
+    return text;
+  };
 
   // Apply persisted theme (light/dark/system) globally and listen for changes
   useEffect(() => {
@@ -1162,6 +1191,33 @@ function AppRoutes({ bootstrapped }) {
     <>
       <NetworkStatus />
 
+      {/* Upcoming Maintenance Banner */}
+      {upcomingConfig && upcomingConfig.enabled && !isBannerDismissed && (
+        <div className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 dark:from-amber-900/95 dark:via-amber-950/95 dark:to-orange-950/95 text-white text-center py-2.5 px-4 text-xs font-semibold flex items-center justify-between gap-3 shadow-md relative z-[9999] border-b border-amber-600/30 transition-all duration-300 animate-slideDown">
+          <div className="flex-1 flex items-center justify-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <span className="font-bold tracking-wide uppercase bg-amber-650/45 dark:bg-amber-900/50 px-2 py-0.5 rounded text-[10px] mr-1.5 border border-amber-500/30">
+              Upcoming Maintenance
+            </span>
+            <span className="text-amber-100 font-medium">
+              {renderMessage(upcomingConfig.message)}
+            </span>
+          </div>
+          <button 
+            onClick={handleDismissBanner}
+            className="text-amber-300 hover:text-white transition-colors duration-200 p-1 hover:bg-white/10 rounded-full"
+            title="Dismiss notice"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Settings Syncing Loader Overlay */}
       {isSyncingSettings && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-4 animate-fadeIn animate-duration-200">
@@ -1507,6 +1563,7 @@ import MaintenancePage from "./pages/MaintenancePage";
 
 export default function App({ bootstrapped }) {
   const [maintenanceConfig, setMaintenanceConfig] = useState(null);
+  const [upcomingConfig, setUpcomingConfig] = useState(null);
   const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
 
   // MAINTENANCE MODE TOGGLE
@@ -1529,10 +1586,15 @@ export default function App({ bootstrapped }) {
         const res = await fetch('/api/config');
         if (res.ok) {
           const config = await res.json();
-          if (config && config.maintenance) {
-            setMaintenanceConfig(config.maintenance);
-          } else {
-            setMaintenanceConfig({ enabled: false });
+          if (config) {
+            if (config.maintenance) {
+              setMaintenanceConfig(config.maintenance);
+            } else {
+              setMaintenanceConfig({ enabled: false });
+            }
+            if (config.upcomingMaintenance) {
+              setUpcomingConfig(config.upcomingMaintenance);
+            }
           }
         } else {
           setMaintenanceConfig({ enabled: false });
@@ -1561,7 +1623,7 @@ export default function App({ bootstrapped }) {
         <HeaderProvider>
           <CallProvider>
             <BrowserRouter>
-              <AppRoutes bootstrapped={bootstrapped} />
+              <AppRoutes bootstrapped={bootstrapped} upcomingConfig={upcomingConfig} />
             </BrowserRouter>
           </CallProvider>
         </HeaderProvider>

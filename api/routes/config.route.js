@@ -22,6 +22,11 @@ router.get('/', (req, res) => {
         endTime: process.env.MAINTENANCE_END_TIME || null,
         message: process.env.MAINTENANCE_MESSAGE || "We're currently renovating our digital infrastructure to serve you better. Just like a prime property, quality takes time. We'll be back online shortly to help you find your dream space."
       },
+      upcomingMaintenance: {
+        enabled: process.env.UPCOMING_MAINTENANCE_MODE === 'true',
+        startTime: process.env.UPCOMING_MAINTENANCE_START_TIME || null,
+        message: process.env.UPCOMING_MAINTENANCE_MESSAGE || "We will be upgrading critical infrastructure. Follow our status page for updates."
+      },
       contact: {
         email: process.env.CONTACT_EMAIL || 'info.urbansetu@gmail.com',
         phone: process.env.CONTACT_PHONE || '+91 9876543210',
