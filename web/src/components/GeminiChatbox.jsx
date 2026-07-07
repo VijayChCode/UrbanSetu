@@ -13775,7 +13775,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showInfoModal && createPortal(
-                    <div ref={infoModalContainerRef} onScroll={handleInfoScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
+                    <>
+                        <div ref={infoModalContainerRef} onScroll={handleInfoScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
                         <div className="flex min-h-full items-center justify-center p-4">
                             <div
                                 onClick={e => e.stopPropagation()}
@@ -13934,6 +13935,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
+                        </div>
                         {/* Mobile Scroll Assist Controls */}
                         <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[110]" onClick={(e) => e.stopPropagation()}>
                             <button
@@ -13967,13 +13969,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <FaArrowDown size={16} />
                             </button>
                         </div>
-                    </div>
+                    </>
                     , document.body)
             }
 
             {
                 showTermsModal && createPortal(
-                    <div ref={termsModalContainerRef} onScroll={handleTermsScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={handleCloseTermsModal}>
+                    <>
+                        <div ref={termsModalContainerRef} onScroll={handleTermsScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={handleCloseTermsModal}>
                         <div className="flex min-h-full items-center justify-center p-4">
                             <div
                                 onClick={e => e.stopPropagation()}
@@ -14101,6 +14104,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
+                        </div>
                         {/* Mobile Scroll Assist Controls */}
                         <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[110]" onClick={(e) => e.stopPropagation()}>
                             <button
@@ -14134,7 +14138,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <FaArrowDown size={16} />
                             </button>
                         </div>
-                    </div>
+                    </>
                     , document.body)
             }
 
