@@ -1487,6 +1487,142 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     }, [showTermsModal]);
 
+    // Scroll States & Refs for Mobile View in Ratings & Feedback Modal
+    const [ratingsScrollAtTop, setRatingsScrollAtTop] = useState(true);
+    const [ratingsScrollAtBottom, setRatingsScrollAtBottom] = useState(false);
+    const ratingsModalContainerRef = useRef(null);
+
+    const updateRatingsScrollState = () => {
+        const el = ratingsModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setRatingsScrollAtTop(isTop);
+            setRatingsScrollAtBottom(isBottom);
+        }
+    };
+
+    const handleRatingsScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setRatingsScrollAtTop(isTop);
+        setRatingsScrollAtBottom(isBottom);
+    };
+
+    useEffect(() => {
+        if (showRatingsModal) {
+            setRatingsScrollAtTop(true);
+            setRatingsScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateRatingsScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showRatingsModal]);
+
+    // Scroll States & Refs for Mobile View in Feedback Details Modal
+    const [ratingDetailScrollAtTop, setRatingDetailScrollAtTop] = useState(true);
+    const [ratingDetailScrollAtBottom, setRatingDetailScrollAtBottom] = useState(false);
+    const ratingDetailModalContainerRef = useRef(null);
+
+    const updateRatingDetailScrollState = () => {
+        const el = ratingDetailModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setRatingDetailScrollAtTop(isTop);
+            setRatingDetailScrollAtBottom(isBottom);
+        }
+    };
+
+    const handleRatingDetailScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setRatingDetailScrollAtTop(isTop);
+        setRatingDetailScrollAtBottom(isBottom);
+    };
+
+    useEffect(() => {
+        if (showRatingDetailModal && selectedRating) {
+            setRatingDetailScrollAtTop(true);
+            setRatingDetailScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateRatingDetailScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showRatingDetailModal, selectedRating]);
+
+    // Scroll States & Refs for Mobile View in Message Reports Modal
+    const [adminReportsScrollAtTop, setAdminReportsScrollAtTop] = useState(true);
+    const [adminReportsScrollAtBottom, setAdminReportsScrollAtBottom] = useState(false);
+    const adminReportsModalContainerRef = useRef(null);
+
+    const updateAdminReportsScrollState = () => {
+        const el = adminReportsModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setAdminReportsScrollAtTop(isTop);
+            setAdminReportsScrollAtBottom(isBottom);
+        }
+    };
+
+    const handleAdminReportsScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setAdminReportsScrollAtTop(isTop);
+        setAdminReportsScrollAtBottom(isBottom);
+    };
+
+    useEffect(() => {
+        if (showAdminReportsModal) {
+            setAdminReportsScrollAtTop(true);
+            setAdminReportsScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateAdminReportsScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showAdminReportsModal]);
+
+    // Scroll States & Refs for Mobile View in Report Details Modal
+    const [reportDetailScrollAtTop, setReportDetailScrollAtTop] = useState(true);
+    const [reportDetailScrollAtBottom, setReportDetailScrollAtBottom] = useState(false);
+    const reportDetailModalContainerRef = useRef(null);
+
+    const updateReportDetailScrollState = () => {
+        const el = reportDetailModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setReportDetailScrollAtTop(isTop);
+            setReportDetailScrollAtBottom(isBottom);
+        }
+    };
+
+    const handleReportDetailScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setReportDetailScrollAtTop(isTop);
+        setReportDetailScrollAtBottom(isBottom);
+    };
+
+    useEffect(() => {
+        if (showReportDetailModal && selectedReportDetail) {
+            setReportDetailScrollAtTop(true);
+            setReportDetailScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateReportDetailScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showReportDetailModal, selectedReportDetail]);
+
 
     // Safety Policy Violation & Cooldown State
     const VIOLATION_LIMIT = 3;
@@ -12836,12 +12972,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 )
             }
 
-            {/* Ratings & Feedback modal (admin & user) */}
+            {/* Ratings & Feedback Modal */}
             {
                 showRatingsModal && createPortal(
-                    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
-                        <div className="flex min-h-full items-center justify-center p-4">
-                            <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn`}>
+                    <>
+                        <div ref={ratingsModalContainerRef} onScroll={handleRatingsScroll} className="fixed inset-0 z-[60] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingsModal(false)}>
+                            <div className="flex min-h-full items-center justify-center p-4">
+                                <div onClick={e => e.stopPropagation()} className={`relative w-full max-w-2xl rounded-xl shadow-2xl ${isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} animate-scaleIn`}>
                                 <div className={`sticky top-0 z-10 p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} flex items-center justify-between rounded-t-xl`}>
                                     <div>
                                         <h3 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">Ratings & Feedback</h3>
@@ -13033,7 +13170,41 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        </div>
+                        {/* Mobile Scroll Assist Controls */}
+                        <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[70]" onClick={(e) => e.stopPropagation()}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    ratingsModalContainerRef.current?.scrollBy({ top: -150, behavior: 'smooth' });
+                                }}
+                                disabled={ratingsScrollAtTop}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    ratingsScrollAtTop
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Up"
+                            >
+                                <FaArrowUp size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    ratingsModalContainerRef.current?.scrollBy({ top: 150, behavior: 'smooth' });
+                                }}
+                                disabled={ratingsScrollAtBottom}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    ratingsScrollAtBottom
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Down"
+                            >
+                                <FaArrowDown size={16} />
+                            </button>
+                        </div>
+                    </>
                     , document.body)
             }
 
@@ -14546,10 +14717,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Rating Detail Modal */}
             {
                 showRatingDetailModal && selectedRating && createPortal(
-                    <div className="fixed inset-0 z-[110] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
-                        <div className="flex min-h-full items-center justify-center p-4">
-                            <div
-                                onClick={e => e.stopPropagation()}
+                    <>
+                        <div ref={ratingDetailModalContainerRef} onScroll={handleRatingDetailScroll} className="fixed inset-0 z-[110] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowRatingDetailModal(false)}>
+                            <div className="flex min-h-full items-center justify-center p-4">
+                                <div
+                                    onClick={e => e.stopPropagation()}
                                 className={`w-full max-w-2xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
                             >
                                 {/* Header */}
@@ -14605,7 +14777,41 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        </div>
+                        {/* Mobile Scroll Assist Controls */}
+                        <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[120]" onClick={(e) => e.stopPropagation()}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    ratingDetailModalContainerRef.current?.scrollBy({ top: -150, behavior: 'smooth' });
+                                }}
+                                disabled={ratingDetailScrollAtTop}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    ratingDetailScrollAtTop
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Up"
+                            >
+                                <FaArrowUp size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    ratingDetailModalContainerRef.current?.scrollBy({ top: 150, behavior: 'smooth' });
+                                }}
+                                disabled={ratingDetailScrollAtBottom}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    ratingDetailScrollAtBottom
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Down"
+                            >
+                                <FaArrowDown size={16} />
+                            </button>
+                        </div>
+                    </>
                     , document.body)
             }
 
