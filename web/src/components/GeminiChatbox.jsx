@@ -1420,6 +1420,74 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showConsentModal, setShowConsentModal] = useState(false);
     const [openedTermsFromConsent, setOpenedTermsFromConsent] = useState(false);
 
+    // Scroll States & Refs for Mobile View in Info and Terms Modals
+    const [infoScrollAtTop, setInfoScrollAtTop] = useState(true);
+    const [infoScrollAtBottom, setInfoScrollAtBottom] = useState(false);
+    const infoModalContainerRef = useRef(null);
+
+    const [termsScrollAtTop, setTermsScrollAtTop] = useState(true);
+    const [termsScrollAtBottom, setTermsScrollAtBottom] = useState(false);
+    const termsModalContainerRef = useRef(null);
+
+    const updateInfoScrollState = () => {
+        const el = infoModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setInfoScrollAtTop(isTop);
+            setInfoScrollAtBottom(isBottom);
+        }
+    };
+
+    const updateTermsScrollState = () => {
+        const el = termsModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setTermsScrollAtTop(isTop);
+            setTermsScrollAtBottom(isBottom);
+        }
+    };
+
+    const handleInfoScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setInfoScrollAtTop(isTop);
+        setInfoScrollAtBottom(isBottom);
+    };
+
+    const handleTermsScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setTermsScrollAtTop(isTop);
+        setTermsScrollAtBottom(isBottom);
+    };
+
+    useEffect(() => {
+        if (showInfoModal) {
+            setInfoScrollAtTop(true);
+            setInfoScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateInfoScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showInfoModal]);
+
+    useEffect(() => {
+        if (showTermsModal) {
+            setTermsScrollAtTop(true);
+            setTermsScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateTermsScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showTermsModal]);
+
+
     // Safety Policy Violation & Cooldown State
     const VIOLATION_LIMIT = 3;
     const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -13707,7 +13775,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {
                 showInfoModal && createPortal(
-                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
+                    <div ref={infoModalContainerRef} onScroll={handleInfoScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowInfoModal(false)}>
                         <div className="flex min-h-full items-center justify-center p-4">
                             <div
                                 onClick={e => e.stopPropagation()}
@@ -13866,13 +13934,46 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
                             </div>
                         </div>
+                        {/* Mobile Scroll Assist Controls */}
+                        <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[110]" onClick={(e) => e.stopPropagation()}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    infoModalContainerRef.current?.scrollBy({ top: -150, behavior: 'smooth' });
+                                }}
+                                disabled={infoScrollAtTop}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    infoScrollAtTop
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Up"
+                            >
+                                <FaArrowUp size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    infoModalContainerRef.current?.scrollBy({ top: 150, behavior: 'smooth' });
+                                }}
+                                disabled={infoScrollAtBottom}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    infoScrollAtBottom
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Down"
+                            >
+                                <FaArrowDown size={16} />
+                            </button>
+                        </div>
                     </div>
                     , document.body)
             }
 
             {
                 showTermsModal && createPortal(
-                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={handleCloseTermsModal}>
+                    <div ref={termsModalContainerRef} onScroll={handleTermsScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={handleCloseTermsModal}>
                         <div className="flex min-h-full items-center justify-center p-4">
                             <div
                                 onClick={e => e.stopPropagation()}
@@ -13999,6 +14100,39 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        {/* Mobile Scroll Assist Controls */}
+                        <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[110]" onClick={(e) => e.stopPropagation()}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    termsModalContainerRef.current?.scrollBy({ top: -150, behavior: 'smooth' });
+                                }}
+                                disabled={termsScrollAtTop}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    termsScrollAtTop
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Up"
+                            >
+                                <FaArrowUp size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    termsModalContainerRef.current?.scrollBy({ top: 150, behavior: 'smooth' });
+                                }}
+                                disabled={termsScrollAtBottom}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    termsScrollAtBottom
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Down"
+                            >
+                                <FaArrowDown size={16} />
+                            </button>
                         </div>
                     </div>
                     , document.body)
