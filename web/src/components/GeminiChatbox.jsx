@@ -13944,6 +13944,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 `}
             </style>
 
+            {/* Info Modal */}
             {
                 showInfoModal && createPortal(
                     <>
@@ -14144,6 +14145,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     , document.body)
             }
 
+            {/* Terms and Conditions Modal */}
             {
                 showTermsModal && createPortal(
                     <>
@@ -14510,172 +14512,207 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Admin Reports Management Modal */}
             {
                 showAdminReportsModal && createPortal(
-                    <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
-                        <div className="flex min-h-full items-center justify-center p-4">
-                            <div
-                                onClick={e => e.stopPropagation()}
-                                className={`w-full max-w-5xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                            >
-                                {/* Header */}
-                                <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                                            <FaClipboardList className="text-red-500 text-xl" />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold">Message Reports</h2>
-                                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Manage and resolve reported content</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={fetchAdminReports}
-                                            title="Refresh Reports"
-                                            disabled={adminReportsLoading}
-                                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} flex items-center justify-center`}
-                                        >
-                                            {adminReportsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
-                                        </button>
-                                        <button
-                                            onClick={() => setShowAdminReportsModal(false)}
-                                            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                        >
-                                            <FaTimes size={20} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Filters */}
-                                <div className={`sticky top-[73px] z-[9] p-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'} flex gap-2 overflow-x-auto`}>
-                                    {['pending', 'resolved', 'dismissed', 'all'].map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => setAdminReportsFilter(status)}
-                                            className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${adminReportsFilter === status
-                                                ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
-                                                : `${isDarkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
-                                                }`}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Content */}
-                                <div className="p-6">
-                                    {adminReportsLoading ? (
-                                        <div className="flex justify-center items-center h-full">
-                                            <UrbanSetuSpinner size="xl" />
-                                        </div>
-                                    ) : adminReports.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                                            <div className={`p-6 rounded-full mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                                <FaCheckCircle className="text-green-500 text-4xl" />
+                    <>
+                        <div ref={adminReportsModalContainerRef} onScroll={handleAdminReportsScroll} className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={() => setShowAdminReportsModal(false)}>
+                            <div className="flex min-h-full items-center justify-center p-4">
+                                <div
+                                    onClick={e => e.stopPropagation()}
+                                    className={`w-full max-w-5xl rounded-2xl shadow-2xl ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                                >
+                                    {/* Header */}
+                                    <div className={`sticky top-0 z-10 flex items-center justify-between p-6 border-b rounded-t-2xl ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-red-500/20' : 'bg-red-100'}`}>
+                                                <FaClipboardList className="text-red-500 text-xl" />
                                             </div>
-                                            <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
-                                            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                                                There are no {adminReportsFilter !== 'all' ? adminReportsFilter : ''} reports to review at this time.
-                                            </p>
+                                            <div>
+                                                <h2 className="text-xl font-bold">Message Reports</h2>
+                                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Manage and resolve reported content</p>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                                            {adminReports.map(report => (
-                                                <div key={report._id} className={`rounded-xl p-5 border transition-all hover:shadow-lg ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
-                                                    <div className="flex justify-between items-start mb-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                                                                report.status === 'resolved' ? 'bg-green-100 text-green-700 border border-green-200' :
-                                                                    'bg-gray-100 text-gray-700 border border-gray-200'
-                                                                }`}>
-                                                                {report.status}
-                                                            </span>
-                                                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                                {new Date(report.createdAt).toLocaleDateString()}
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={fetchAdminReports}
+                                                title="Refresh Reports"
+                                                disabled={adminReportsLoading}
+                                                className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} flex items-center justify-center`}
+                                            >
+                                                {adminReportsLoading ? <UrbanSetuSpinner size="sm" /> : <FaSync size={16} />}
+                                            </button>
+                                            <button
+                                                onClick={() => setShowAdminReportsModal(false)}
+                                                className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                            >
+                                                <FaTimes size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Filters */}
+                                    <div className={`sticky top-[73px] z-[9] p-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-100 bg-white'} flex gap-2 overflow-x-auto`}>
+                                        {['pending', 'resolved', 'dismissed', 'all'].map(status => (
+                                            <button
+                                                key={status}
+                                                onClick={() => setAdminReportsFilter(status)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${adminReportsFilter === status
+                                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                                                    : `${isDarkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+                                                    }`}
+                                            >
+                                                {status}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="p-6">
+                                        {adminReportsLoading ? (
+                                            <div className="flex justify-center items-center h-full">
+                                                <UrbanSetuSpinner size="xl" />
+                                            </div>
+                                        ) : adminReports.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                                <div className={`p-6 rounded-full mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                                                    <FaCheckCircle className="text-green-500 text-4xl" />
+                                                </div>
+                                                <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
+                                                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
+                                                    There are no {adminReportsFilter !== 'all' ? adminReportsFilter : ''} reports to review at this time.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                                                {adminReports.map(report => (
+                                                    <div key={report._id} className={`rounded-xl p-5 border transition-all hover:shadow-lg ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200 shadow-sm'}`}>
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                                                    report.status === 'resolved' ? 'bg-green-100 text-green-700 border border-green-200' :
+                                                                        'bg-gray-100 text-gray-700 border border-gray-200'
+                                                                    }`}>
+                                                                    {report.status}
+                                                                </span>
+                                                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                    {new Date(report.createdAt).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                                <button
+                                                                    onClick={() => handleAdminReportDelete(report._id)}
+                                                                    className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
+                                                                    title="Delete Report"
+                                                                >
+                                                                    <FaTrash size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mb-3">
+                                                            <h3 className="font-semibold text-base mb-1">{report.category}</h3>
+                                                            <span className={`text-xs px-2 py-0.5 rounded border inline-block ${isDarkMode ? 'bg-indigo-900/30 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                                                                {report.subCategory}
                                                             </span>
                                                         </div>
-                                                        <div className="flex gap-1">
+
+                                                        {/* Summary Info */}
+                                                        <div className="mb-4">
+                                                            <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                                                {report.category} <span className="opacity-50 mx-1">•</span> <span className="text-xs font-normal opacity-80">{report.subCategory}</span>
+                                                            </div>
+                                                            <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                Reported by: <span className="font-medium">{report.reportedBy?.username || report.reportedBy?.email || 'Public Guest'}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 mb-4">
                                                             <button
-                                                                onClick={() => handleAdminReportDelete(report._id)}
-                                                                className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900/30 text-red-400' : 'hover:bg-red-50 text-red-500'}`}
-                                                                title="Delete Report"
+                                                                onClick={() => { setSelectedReportDetail(report); setShowReportDetailModal(true); }}
+                                                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
                                                             >
-                                                                <FaTrash size={14} />
+                                                                <FaExpand size={12} /> View Full Details
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="mb-4">
+                                                            <p className={`text-xs font-semibold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Reporter's Description:</p>
+                                                            <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{report.description}</p>
+                                                        </div>
+
+                                                        {report.adminNotes && (
+                                                            <div className={`mb-4 p-3 rounded-lg border ${isDarkMode ? 'bg-blue-900/20 border-blue-800 text-blue-200' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
+                                                                <p className="text-xs font-bold uppercase mb-1 opacity-70">Admin Notes:</p>
+                                                                <p className="text-sm">{report.adminNotes}</p>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="flex items-center justify-between pt-3 border-t border-dashed border-gray-600/30">
+                                                            <div className="flex gap-2">
+                                                                {report.status === 'pending' && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleAdminReportUpdate(report._id, 'resolved')}
+                                                                            className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg flex items-center gap-1 transition-colors shadow-sm"
+                                                                        >
+                                                                            <FaCheck size={12} /> Resolve
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleAdminReportUpdate(report._id, 'dismissed')}
+                                                                            className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors border ${isDarkMode ? 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}`}
+                                                                        >
+                                                                            <FaTimes size={12} /> Dismiss
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={() => { setSelectedAdminReport(report); setAdminNoteText(report.adminNotes || ''); setShowAdminNoteModal(true); }}
+                                                                className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-blue-900/20' : 'text-blue-600 hover:bg-blue-50'}`}
+                                                            >
+                                                                <FaCommentAlt size={12} /> {report.adminNotes ? 'Edit Note' : 'Add Note'}
                                                             </button>
                                                         </div>
                                                     </div>
-
-                                                    <div className="mb-3">
-                                                        <h3 className="font-semibold text-base mb-1">{report.category}</h3>
-                                                        <span className={`text-xs px-2 py-0.5 rounded border inline-block ${isDarkMode ? 'bg-indigo-900/30 text-indigo-300 border-indigo-800' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
-                                                            {report.subCategory}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Summary Info */}
-                                                    <div className="mb-4">
-                                                        <div className={`text-sm font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                                                            {report.category} <span className="opacity-50 mx-1">•</span> <span className="text-xs font-normal opacity-80">{report.subCategory}</span>
-                                                        </div>
-                                                        <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                            Reported by: <span className="font-medium">{report.reportedBy?.username || report.reportedBy?.email || 'Public Guest'}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2 mb-4">
-                                                        <button
-                                                            onClick={() => { setSelectedReportDetail(report); setShowReportDetailModal(true); }}
-                                                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-200 hover:bg-gray-50 text-gray-600'}`}
-                                                        >
-                                                            <FaExpand size={12} /> View Full Details
-                                                        </button>
-                                                    </div>
-
-                                                    <div className="mb-4">
-                                                        <p className={`text-xs font-semibold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Reporter's Description:</p>
-                                                        <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>{report.description}</p>
-                                                    </div>
-
-                                                    {report.adminNotes && (
-                                                        <div className={`mb-4 p-3 rounded-lg border ${isDarkMode ? 'bg-blue-900/20 border-blue-800 text-blue-200' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
-                                                            <p className="text-xs font-bold uppercase mb-1 opacity-70">Admin Notes:</p>
-                                                            <p className="text-sm">{report.adminNotes}</p>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="flex items-center justify-between pt-3 border-t border-dashed border-gray-600/30">
-                                                        <div className="flex gap-2">
-                                                            {report.status === 'pending' && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => handleAdminReportUpdate(report._id, 'resolved')}
-                                                                        className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg flex items-center gap-1 transition-colors shadow-sm"
-                                                                    >
-                                                                        <FaCheck size={12} /> Resolve
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleAdminReportUpdate(report._id, 'dismissed')}
-                                                                        className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors border ${isDarkMode ? 'bg-transparent border-gray-600 text-gray-300 hover:bg-gray-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}`}
-                                                                    >
-                                                                        <FaTimes size={12} /> Dismiss
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                        <button
-                                                            onClick={() => { setSelectedAdminReport(report); setAdminNoteText(report.adminNotes || ''); setShowAdminNoteModal(true); }}
-                                                            className={`px-3 py-1.5 text-sm rounded-lg flex items-center gap-1 transition-colors ${isDarkMode ? 'text-blue-400 hover:bg-blue-900/20' : 'text-blue-600 hover:bg-blue-50'}`}
-                                                        >
-                                                            <FaCommentAlt size={12} /> {report.adminNotes ? 'Edit Note' : 'Add Note'}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        {/* Mobile Scroll Assist Controls */}
+                        <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[105]" onClick={(e) => e.stopPropagation()}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    adminReportsModalContainerRef.current?.scrollBy({ top: -150, behavior: 'smooth' });
+                                }}
+                                disabled={adminReportsScrollAtTop}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    adminReportsScrollAtTop
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Up"
+                            >
+                                <FaArrowUp size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    adminReportsModalContainerRef.current?.scrollBy({ top: 150, behavior: 'smooth' });
+                                }}
+                                disabled={adminReportsScrollAtBottom}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    adminReportsScrollAtBottom
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Down"
+                            >
+                                <FaArrowDown size={16} />
+                            </button>
+                        </div>
+                    </>
                     , document.body)
             }
 
@@ -14884,74 +14921,109 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             {/* Report Detail Modal */}
             {
                 showReportDetailModal && selectedReportDetail && (
-                    <div className="fixed inset-0 z-[115] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowReportDetailModal(false)}>
-                        <div
-                            className={`w-full max-w-2xl flex flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
-                            onClick={e => e.stopPropagation()}
-                        >
-                            {/* Header */}
-                            <div className={`flex flex-shrink-0 items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg ${selectedReportDetail.status === 'resolved' ? 'bg-green-500/20 text-green-500' : selectedReportDetail.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-gray-500/20 text-gray-500'}`}>
-                                        <FaFlag size={20} />
+                    <>
+                        <div className="fixed inset-0 z-[115] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowReportDetailModal(false)}>
+                            <div
+                                onClick={e => e.stopPropagation()}
+                                className={`w-full max-w-2xl flex flex-col rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white text-gray-900'}`}
+                            >
+                                {/* Header */}
+                                <div className={`flex flex-shrink-0 items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg ${selectedReportDetail.status === 'resolved' ? 'bg-green-500/20 text-green-500' : selectedReportDetail.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-gray-500/20 text-gray-500'}`}>
+                                            <FaFlag size={20} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold">Report Details</h2>
+                                            <div className="flex items-center gap-2 text-xs opacity-70">
+                                                <span>{selectedReportDetail.reportedBy?.username || 'Public Guest'}</span>
+                                                <span>•</span>
+                                                <span>{new Date(selectedReportDetail.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => setShowReportDetailModal(false)}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+                                    >
+                                        <FaTimes size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Content */}
+                                <div ref={reportDetailModalContainerRef} onScroll={handleReportDetailScroll} className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                                    {/* Meta Info */}
+                                    <div className="flex gap-4 mb-6">
+                                        <div className={`flex-1 p-3 rounded-xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+                                            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Category</div>
+                                            <div className="font-semibold">{selectedReportDetail.category}</div>
+                                        </div>
+                                        <div className={`flex-1 p-3 rounded-xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+                                            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Context</div>
+                                            <div className="font-semibold">{selectedReportDetail.subCategory}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* User Description */}
+                                    <div className={`mb-6 p-4 rounded-xl border ${isDarkMode ? 'bg-red-900/10 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
+                                        <div className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">Report Description</div>
+                                        <p className="whitespace-pre-wrap font-medium">{selectedReportDetail.description}</p>
+                                    </div>
+
+                                    {/* User Prompt */}
+                                    {selectedReportDetail.prompt && (
+                                        <div className="mb-6">
+                                            <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">Reported User Prompt</div>
+                                            <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                                                <p className="whitespace-pre-wrap font-mono text-opacity-90">{selectedReportDetail.prompt}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* AI Response */}
                                     <div>
-                                        <h2 className="text-xl font-bold">Report Details</h2>
-                                        <div className="flex items-center gap-2 text-xs opacity-70">
-                                            <span>{selectedReportDetail.reportedBy?.username || 'Public Guest'}</span>
-                                            <span>•</span>
-                                            <span>{new Date(selectedReportDetail.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setShowReportDetailModal(false)}
-                                    className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'}`}
-                                >
-                                    <FaTimes size={20} />
-                                </button>
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                                {/* Meta Info */}
-                                <div className="flex gap-4 mb-6">
-                                    <div className={`flex-1 p-3 rounded-xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
-                                        <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Category</div>
-                                        <div className="font-semibold">{selectedReportDetail.category}</div>
-                                    </div>
-                                    <div className={`flex-1 p-3 rounded-xl border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
-                                        <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-1">Context</div>
-                                        <div className="font-semibold">{selectedReportDetail.subCategory}</div>
-                                    </div>
-                                </div>
-
-                                {/* User Description */}
-                                <div className={`mb-6 p-4 rounded-xl border ${isDarkMode ? 'bg-red-900/10 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
-                                    <div className="text-xs font-bold uppercase tracking-wider text-red-500 mb-2">Report Description</div>
-                                    <p className="whitespace-pre-wrap font-medium">{selectedReportDetail.description}</p>
-                                </div>
-
-                                {/* User Prompt */}
-                                {selectedReportDetail.prompt && (
-                                    <div className="mb-6">
-                                        <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">Reported User Prompt</div>
+                                        <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">Reported AI Response</div>
                                         <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                            <p className="whitespace-pre-wrap font-mono text-opacity-90">{selectedReportDetail.prompt}</p>
+                                            <p className="whitespace-pre-wrap text-opacity-90">{selectedReportDetail.messageContent}</p>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* AI Response */}
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider opacity-60 mb-2 border-b border-dashed border-gray-500/30 pb-1 inline-block">Reported AI Response</div>
-                                    <div className={`p-4 rounded-xl text-sm leading-relaxed ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                        <p className="whitespace-pre-wrap text-opacity-90">{selectedReportDetail.messageContent}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        {/* Mobile Scroll Assist Controls */}
+                        <div className="fixed bottom-6 right-6 md:hidden flex flex-col gap-2 z-[120]" onClick={(e) => e.stopPropagation()}>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    reportDetailModalContainerRef.current?.scrollBy({ top: -150, behavior: 'smooth' });
+                                }}
+                                disabled={reportDetailScrollAtTop}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    reportDetailScrollAtTop
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Up"
+                            >
+                                <FaArrowUp size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    reportDetailModalContainerRef.current?.scrollBy({ top: 150, behavior: 'smooth' });
+                                }}
+                                disabled={reportDetailScrollAtBottom}
+                                className={`p-3 rounded-full shadow-lg transition-all border ${
+                                    reportDetailScrollAtBottom
+                                        ? 'bg-gray-300 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border-gray-300 dark:border-gray-800 cursor-not-allowed opacity-50'
+                                        : 'bg-indigo-600 dark:bg-indigo-500 text-white border-indigo-600 dark:border-indigo-500 hover:scale-105 active:scale-95'
+                                }`}
+                                title="Scroll Down"
+                            >
+                                <FaArrowDown size={16} />
+                            </button>
+                        </div>
+                    </>
                 )
             }
 
