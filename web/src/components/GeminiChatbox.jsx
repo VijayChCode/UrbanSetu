@@ -13788,7 +13788,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 { title: 'AI & Manual Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time via AI or manual creation.', icon: '⏰' },
                                                 { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' },
                                                 { title: 'Think Longer', desc: 'Enables deep-thinking reasoning loops for advanced analytical queries and complex calculations.', icon: '💭' },
-                                                { title: 'Search the Web', desc: 'Fetches real-time market updates, external listings, and news directly from the internet.', icon: '🌎' }
+                                                { title: 'Search the Web', desc: 'Fetches real-time market updates, external listings, and news directly from the internet.', icon: '🌎' },
+                                                { title: 'Drag & Drop / Paste Uploads', desc: 'Instantly upload files and documents (up to 10MB) by dragging and dropping them into the chat, or paste images directly from your clipboard.', icon: '📎' }
                                             ].map((feat, i) => (
                                                 <div key={i} className={`p-4 rounded-xl border ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
                                                     <div className="text-2xl mb-2">{feat.icon}</div>
