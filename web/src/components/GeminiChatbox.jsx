@@ -1555,40 +1555,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     }, [showRatingDetailModal, selectedRating]);
 
-    // Scroll States & Refs for Mobile View in Message Reports Modal
-    const [adminReportsScrollAtTop, setAdminReportsScrollAtTop] = useState(true);
-    const [adminReportsScrollAtBottom, setAdminReportsScrollAtBottom] = useState(false);
-    const adminReportsModalContainerRef = useRef(null);
-
-    const updateAdminReportsScrollState = () => {
-        const el = adminReportsModalContainerRef.current;
-        if (el) {
-            const isTop = el.scrollTop <= 2;
-            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
-            setAdminReportsScrollAtTop(isTop);
-            setAdminReportsScrollAtBottom(isBottom);
-        }
-    };
-
-    const handleAdminReportsScroll = (e) => {
-        const target = e.currentTarget;
-        const isTop = target.scrollTop <= 2;
-        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
-        setAdminReportsScrollAtTop(isTop);
-        setAdminReportsScrollAtBottom(isBottom);
-    };
-
-    useEffect(() => {
-        if (showAdminReportsModal) {
-            setAdminReportsScrollAtTop(true);
-            setAdminReportsScrollAtBottom(false);
-            const timer = setTimeout(() => {
-                updateAdminReportsScrollState();
-            }, 100);
-            return () => clearTimeout(timer);
-        }
-    }, [showAdminReportsModal]);
-
     // Scroll States & Refs for Mobile View in Report Details Modal
     const [reportDetailScrollAtTop, setReportDetailScrollAtTop] = useState(true);
     const [reportDetailScrollAtBottom, setReportDetailScrollAtBottom] = useState(false);
@@ -2029,6 +1995,40 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [selectedAdminReport, setSelectedAdminReport] = useState(null);
 
     const [adminNoteText, setAdminNoteText] = useState('');
+
+    // Scroll States & Refs for Mobile View in Message Reports Modal
+    const [adminReportsScrollAtTop, setAdminReportsScrollAtTop] = useState(true);
+    const [adminReportsScrollAtBottom, setAdminReportsScrollAtBottom] = useState(false);
+    const adminReportsModalContainerRef = useRef(null);
+
+    const updateAdminReportsScrollState = () => {
+        const el = adminReportsModalContainerRef.current;
+        if (el) {
+            const isTop = el.scrollTop <= 2;
+            const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 5;
+            setAdminReportsScrollAtTop(isTop);
+            setAdminReportsScrollAtBottom(isBottom);
+        }
+    };
+
+    const handleAdminReportsScroll = (e) => {
+        const target = e.currentTarget;
+        const isTop = target.scrollTop <= 2;
+        const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5;
+        setAdminReportsScrollAtTop(isTop);
+        setAdminReportsScrollAtBottom(isBottom);
+    };
+
+    useEffect(() => {
+        if (showAdminReportsModal) {
+            setAdminReportsScrollAtTop(true);
+            setAdminReportsScrollAtBottom(false);
+            const timer = setTimeout(() => {
+                updateAdminReportsScrollState();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showAdminReportsModal]);
 
     // State for managing which message's "more options" menu is open
     const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
