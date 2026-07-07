@@ -3782,11 +3782,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 // 4. Think longer: Ctrl+Shift+M
                 else if (isCtrl && isShift && event.key.toLowerCase() === 'm') {
                     event.preventDefault();
+                    if (!currentUser) {
+                        toast.info('Please Login to use these Premium Features');
+                        return;
+                    }
                     setPrePromptPreference(prev => prev === 'think' ? null : 'think');
                 }
                 // 5. Search the web: Ctrl+Shift+S
                 else if (isCtrl && isShift && event.key.toLowerCase() === 's') {
                     event.preventDefault();
+                    if (!currentUser) {
+                        toast.info('Please Login to use these Premium Features');
+                        return;
+                    }
                     setPrePromptPreference(prev => prev === 'search' ? null : 'search');
                 }
             }
@@ -10421,6 +10429,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
+                                                                if (!currentUser) {
+                                                                    toast.info('Please Login to use these Premium Features');
+                                                                    setShowInputOptions(false);
+                                                                    return;
+                                                                }
                                                                 setPrePromptPreference(prev => prev === 'think' ? null : 'think');
                                                                 setShowInputOptions(false);
                                                             }}
@@ -10431,6 +10444,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     <FaBrain size={14} />
                                                                 </div>
                                                                 <span className="text-sm font-medium">Think longer</span>
+                                                                {!currentUser && (
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-bold ml-1">Premium</span>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-2 ml-auto">
                                                                 {prePromptPreference === 'think' && (
@@ -10443,6 +10459,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
+                                                                if (!currentUser) {
+                                                                    toast.info('Please Login to use these Premium Features');
+                                                                    setShowInputOptions(false);
+                                                                    return;
+                                                                }
                                                                 setPrePromptPreference(prev => prev === 'search' ? null : 'search');
                                                                 setShowInputOptions(false);
                                                             }}
@@ -10453,6 +10474,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     <FaGlobe size={14} />
                                                                 </div>
                                                                 <span className="text-sm font-medium">Search the web</span>
+                                                                {!currentUser && (
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-bold ml-1">Premium</span>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-2 ml-auto">
                                                                 {prePromptPreference === 'search' && (
@@ -13759,10 +13783,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 { title: 'Real Estate Expertise', desc: 'Deep knowledge of property trends, pricing, and legal processes.', icon: '🏢' },
                                                 { title: 'Live Property Search', desc: 'Can search and recommend local listings from UrbanSetu database.', icon: '🔍' },
                                                 { title: 'Smart Context', desc: 'Remembers conversation history and user preferences.', icon: '🧠' },
-                                                {title: 'Multi-Modal & On-Device Face Recognition', desc: 'Advanced image OCR, on-device facial detection & descriptor matching, document analysis, voice input, and video processing.', icon: '📷'},
+                                                { title: 'Multi-Modal & On-Device Face Recognition', desc: 'Advanced image OCR, on-device facial detection & descriptor matching, document analysis, voice input, and video processing.', icon: '📷' },
                                                 { title: 'Code & Math', desc: 'Capable of calculating mortgage EMIs and formatting code.', icon: '🔢' },
                                                 { title: 'AI & Manual Task Scheduler', desc: 'Schedule, reschedule, and manage task reminders and alarms in real-time via AI or manual creation.', icon: '⏰' },
-                                                { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' }
+                                                { title: 'Instant Translation', desc: 'Communicates fluently in multiple languages.', icon: '🌐' },
+                                                { title: 'Think Longer', desc: 'Enables deep-thinking reasoning loops for advanced analytical queries and complex calculations.', icon: '💭' },
+                                                { title: 'Search the Web', desc: 'Fetches real-time market updates, external listings, and news directly from the internet.', icon: '🌎' }
                                             ].map((feat, i) => (
                                                 <div key={i} className={`p-4 rounded-xl border ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
                                                     <div className="text-2xl mb-2">{feat.icon}</div>
