@@ -1520,7 +1520,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return () => clearTimeout(timer);
         }
     }, [showRatingsModal]);
-
+    
     // Scroll States & Refs for Mobile View in Feedback Details Modal
     const [ratingDetailScrollAtTop, setRatingDetailScrollAtTop] = useState(true);
     const [ratingDetailScrollAtBottom, setRatingDetailScrollAtBottom] = useState(false);
