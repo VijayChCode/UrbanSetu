@@ -422,7 +422,7 @@ export default function Settings() {
   const fetchTransferAdmins = async () => {
     try {
       setLoadingAdmins(true);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/management/admins`);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/user/approved-admins/${currentUser._id}`);
       const data = await res.json();
       if (res.ok) {
         // Only allow eligible targets: approved, active admins (not rootadmin/default)
