@@ -875,7 +875,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                     onClick={() => setShowPolicyModal(true)}
                                                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5 focus:outline-none"
                                                 >
-                                                    <span>Password Attempt Policy</span>
+                                                    <span className="hidden sm:inline">Password Attempt Policy</span>
+                                                    <span className="inline sm:hidden">Password Policy</span>
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
@@ -926,7 +927,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                     onClick={() => setShowPolicyModal(true)}
                                                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5 focus:outline-none"
                                                 >
-                                                    <span>Password Attempt Policy</span>
+                                                    <span className="hidden sm:inline">Password Attempt Policy</span>
+                                                    <span className="inline sm:hidden">Password Policy</span>
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
@@ -1021,7 +1023,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                     onClick={() => setShowOtpPolicyModal(true)}
                                                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5 focus:outline-none"
                                                 >
-                                                    <span>OTP Attempt Policy</span>
+                                                    <span className="hidden sm:inline">OTP Attempt Policy</span>
+                                                    <span className="inline sm:hidden">OTP Policy</span>
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
@@ -1096,7 +1099,8 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                                                 onClick={() => setShowOtpPolicyModal(true)}
                                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1.5 focus:outline-none"
                                             >
-                                                <span>OTP Attempt Policy</span>
+                                                <span className="hidden sm:inline">OTP Attempt Policy</span>
+                                                <span className="inline sm:hidden">OTP Policy</span>
                                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
