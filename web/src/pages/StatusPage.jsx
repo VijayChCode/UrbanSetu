@@ -235,6 +235,16 @@ export default function StatusPage() {
                         }
                     }
 
+                    let tooltipPositionClass = "left-1/2 -translate-x-1/2";
+                    let arrowPositionClass = "left-1/2 -translate-x-1/2";
+                    if (i < 8) {
+                        tooltipPositionClass = "left-[-8px]";
+                        arrowPositionClass = "left-[10px] -translate-x-1/2";
+                    } else if (i > 81) {
+                        tooltipPositionClass = "right-[-8px]";
+                        arrowPositionClass = "right-[10px] translate-x-1/2";
+                    }
+
                     return (
                         <div 
                             key={i} 
@@ -245,15 +255,15 @@ export default function StatusPage() {
                                 className={`w-full h-full rounded-[1px] ${color} cursor-pointer transition-all duration-150`}
                             />
                             {/* Tooltip Popup */}
-                            <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-xl text-[11px] w-52 text-left z-50 text-slate-800 dark:text-slate-200 transition-all pointer-events-none">
+                            <div className={`absolute bottom-full mb-2 hidden group-hover:flex flex-col bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg shadow-xl text-[11px] w-52 text-left z-50 text-slate-800 dark:text-slate-200 transition-all pointer-events-none ${tooltipPositionClass}`}>
                                 {tooltipContent}
                                 {/* Down Arrow */}
                                 <div 
-                                    className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-transparent border-t-white dark:border-t-slate-800" 
+                                    className={`absolute top-full w-0 h-0 border-transparent border-t-white dark:border-t-slate-800 ${arrowPositionClass}`} 
                                     style={{ borderStyle: 'solid', borderWidth: '6px 6px 0 6px' }}
                                 />
                                 <div 
-                                    className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-transparent border-t-slate-200 dark:border-t-slate-700 -z-10" 
+                                    className={`absolute top-full w-0 h-0 border-transparent border-t-slate-200 dark:border-t-slate-700 -z-10 ${arrowPositionClass}`} 
                                     style={{ borderStyle: 'solid', borderWidth: '7px 7px 0 7px', marginTop: '1px' }}
                                 />
                             </div>
