@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaExternalLinkAlt, FaTimes } from 'react-icons/fa';
 
-const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, clickable = true }) => {
+const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, clickable = true, isSentMessage = false }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -104,13 +104,17 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   if (loading) {
     return (
-      <div className={`relative bg-gray-100/50 dark:bg-[#1f2c34] border-l-4 border-l-indigo-500 dark:border-l-indigo-400 rounded-r-lg p-3 mb-2 max-w-full shadow-sm ${className}`}>
+      <div className={`relative ${
+        isSentMessage
+          ? 'bg-white/10 border-l-4 border-l-white/60 text-white'
+          : 'bg-gray-100/50 dark:bg-[#1f2c34] border-l-4 border-l-indigo-500 dark:border-l-indigo-400'
+      } rounded-r-lg p-3 mb-2 max-w-full shadow-sm ${className}`}>
         <div className="flex items-center space-x-3.5">
-          <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700/60 rounded animate-pulse flex-shrink-0"></div>
+          <div className={`w-14 h-14 ${isSentMessage ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700/60'} rounded animate-pulse flex-shrink-0`}></div>
           <div className="flex-1 min-w-0 max-w-full space-y-2">
-            <div className="h-3.5 bg-gray-200 dark:bg-gray-700/60 rounded animate-pulse w-1/3"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-700/60 rounded animate-pulse w-3/4"></div>
-            <div className="h-2.5 bg-gray-200 dark:bg-gray-700/60 rounded animate-pulse w-1/2"></div>
+            <div className={`h-3.5 ${isSentMessage ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700/60'} rounded animate-pulse w-1/3`}></div>
+            <div className={`h-3 ${isSentMessage ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700/60'} rounded animate-pulse w-3/4`}></div>
+            <div className={`h-2.5 ${isSentMessage ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700/60'} rounded animate-pulse w-1/2`}></div>
           </div>
         </div>
       </div>
@@ -119,14 +123,18 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   if (error || !preview) {
     return (
-      <div className={`relative bg-gray-100/50 dark:bg-[#1f2c34] border-l-4 border-l-gray-400 dark:border-l-gray-600 rounded-r-lg p-3 pr-10 mb-2 max-w-full shadow-sm ${className}`}>
+      <div className={`relative ${
+        isSentMessage
+          ? 'bg-white/10 border-l-4 border-l-white/40 text-white'
+          : 'bg-gray-100/50 dark:bg-[#1f2c34] border-l-4 border-l-gray-400 dark:border-l-gray-600'
+      } rounded-r-lg p-3 pr-10 mb-2 max-w-full shadow-sm ${className}`}>
         <div className="flex items-center space-x-3.5">
-          <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700/60 rounded flex items-center justify-center flex-shrink-0">
-            <FaExternalLinkAlt className="text-gray-400 dark:text-gray-500 text-lg" />
+          <div className={`w-14 h-14 ${isSentMessage ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700/60'} rounded flex items-center justify-center flex-shrink-0`}>
+            <FaExternalLinkAlt className={`${isSentMessage ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'} text-lg`} />
           </div>
           <div className="flex-1 min-w-0 max-w-full">
-            <div className="text-[13px] text-gray-950 dark:text-gray-100 font-semibold break-all">Link Preview Unavailable</div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 break-all mt-1">{url}</div>
+            <div className={`text-[13px] font-semibold break-all ${isSentMessage ? 'text-white' : 'text-gray-950 dark:text-gray-100'}`}>Link Preview Unavailable</div>
+            <div className={`text-[11px] break-all mt-1 ${isSentMessage ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>{url}</div>
           </div>
         </div>
         {onRemove && showRemoveButton && (
@@ -135,7 +143,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
               e.stopPropagation();
               onRemove();
             }}
-            className="absolute top-2 right-2 text-gray-400 dark:text-gray-500 hover:text-gray-650 dark:hover:text-gray-300 transition-colors p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700/50 flex-shrink-0 flex items-center justify-center"
+            className={`absolute top-2 right-2 ${isSentMessage ? 'text-white/60 hover:text-white hover:bg-white/10' : 'text-gray-400 dark:text-gray-500 hover:text-gray-655 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/50'} transition-colors p-1.5 rounded-full flex-shrink-0 flex items-center justify-center`}
             title="Remove preview"
           >
             <FaTimes className="text-[10px]" />
@@ -147,7 +155,13 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   return (
     <div
-      className={`relative bg-gray-100/50 dark:bg-[#1f2c34] border border-gray-200/40 dark:border-gray-700/40 border-l-4 border-l-indigo-500 dark:border-l-indigo-400 rounded-r-lg p-3 pr-10 mb-2 shadow-sm transition-colors max-w-full ${clickable ? 'cursor-pointer hover:bg-gray-200/50 dark:hover:bg-[#2a3942]' : ''} ${className}`}
+      className={`relative ${
+        isSentMessage
+          ? 'bg-black/15 border border-white/15 border-l-4 border-l-white/75 text-white'
+          : 'bg-gray-100/50 dark:bg-[#1f2c34] border border-gray-200/40 dark:border-gray-700/40 border-l-4 border-l-indigo-500 dark:border-l-indigo-400'
+      } rounded-r-lg p-3 pr-10 mb-2 shadow-sm transition-colors max-w-full ${
+        clickable ? (isSentMessage ? 'cursor-pointer hover:bg-black/25' : 'cursor-pointer hover:bg-gray-200/50 dark:hover:bg-[#2a3942]') : ''
+      } ${className}`}
       onClick={clickable ? handlePreviewClick : undefined}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
@@ -164,7 +178,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
             <img
               src={preview.image}
               alt={preview.title}
-              className="w-14 h-14 object-cover rounded-md border border-gray-200/20 dark:border-gray-700/20"
+              className={`w-14 h-14 object-cover rounded-md border ${isSentMessage ? 'border-white/20' : 'border-gray-200/20 dark:border-gray-700/20'}`}
               onError={(e) => {
                 e.target.style.display = 'none';
               }}
@@ -172,13 +186,19 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           </div>
         )}
         <div className="flex-1 min-w-0 max-w-full">
-          <h4 className="text-[13px] font-semibold text-gray-950 dark:text-gray-100 break-all line-clamp-1 tracking-tight leading-snug" title={preview.title}>
+          <h4 className={`text-[13px] font-semibold break-all line-clamp-1 tracking-tight leading-snug ${
+            isSentMessage ? 'text-white' : 'text-gray-950 dark:text-gray-100'
+          }`} title={preview.title}>
             {preview.title}
           </h4>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 break-all line-clamp-2 tracking-tight leading-normal" title={preview.description}>
+          <p className={`text-[11px] mt-1 break-all line-clamp-2 tracking-tight leading-normal ${
+            isSentMessage ? 'text-white/80' : 'text-gray-600 dark:text-gray-400'
+          }`} title={preview.description}>
             {preview.description}
           </p>
-          <div className="flex items-center space-x-1.5 mt-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 transition-colors">
+          <div className={`flex items-center space-x-1.5 mt-1.5 ${
+            isSentMessage ? 'text-white/60 hover:text-white/85' : 'text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400'
+          } transition-colors`}>
             <span className="text-[10px] font-medium uppercase tracking-wider break-all">{preview.siteName}</span>
             <FaExternalLinkAlt className="text-[9px] flex-shrink-0" />
           </div>
@@ -190,7 +210,11 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
             e.stopPropagation();
             onRemove();
           }}
-          className="absolute top-2 right-2 text-gray-400 dark:text-gray-500 hover:text-gray-650 dark:hover:text-gray-300 transition-colors p-1.5 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 flex-shrink-0 flex items-center justify-center"
+          className={`absolute top-2 right-2 ${
+            isSentMessage
+              ? 'text-white/60 hover:text-white hover:bg-white/10'
+              : 'text-gray-400 dark:text-gray-500 hover:text-gray-650 dark:hover:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+          } transition-colors p-1.5 rounded-full flex-shrink-0 flex items-center justify-center`}
           title="Remove preview"
         >
           <FaTimes className="text-[10px]" />
