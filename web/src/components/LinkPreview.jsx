@@ -133,7 +133,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           {onRemove && showRemoveButton && (
             <button
               onClick={onRemove}
-              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors flex-shrink-0"
             >
               <FaTimes className="text-sm" />
             </button>
@@ -172,10 +172,10 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
         <div className="flex-1 min-w-0 max-w-full">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0 max-w-full">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words line-clamp-2" title={preview.title}>
+              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 break-all line-clamp-2" title={preview.title}>
                 {preview.title}
               </h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 break-words line-clamp-2" title={preview.description}>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 break-all line-clamp-2" title={preview.description}>
                 {preview.description}
               </p>
               <div className="flex items-center space-x-2 mt-2">
@@ -186,7 +186,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
             {onRemove && showRemoveButton && (
               <button
                 onClick={onRemove}
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors ml-2"
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors ml-2 flex-shrink-0"
               >
                 <FaTimes className="text-sm" />
               </button>
