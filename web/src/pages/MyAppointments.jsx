@@ -9841,6 +9841,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                     className="max-w-xs"
                                                     showRemoveButton={false}
                                                     clickable={true}
+                                                    isSentMessage={isMe}
                                                   />
                                                 </div>
                                               );

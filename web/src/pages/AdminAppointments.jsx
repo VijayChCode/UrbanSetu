@@ -8708,6 +8708,7 @@ function AdminAppointmentRow({
                                                 className="max-w-xs"
                                                 showRemoveButton={false}
                                                 clickable={true}
+                                                isSentMessage={isMe}
                                               />
                                             </div>
                                           );
