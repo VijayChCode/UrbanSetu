@@ -784,8 +784,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         .map(n => n.trim())
                         .filter(n => n && !n.includes('Face AI detected a face') && !n.includes('vision intelligence') && !n.startsWith('Unknown') && n !== 'Unknown');
                 }
+                return []; // Found block for this image, but no faces are present
             }
         }
+        // Fallback for compatibility (only if no matching block was found at all)
         const faceMatch = ocrText.match(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/);
         if (faceMatch && faceMatch[1]) {
             return faceMatch[1]
@@ -804,6 +806,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return block.includes('Face AI detected a face') || block.includes('Identified Face');
             }
         }
+        // Fallback for compatibility (only if no matching block was found at all)
         return ocrText.includes('Face AI detected a face') || ocrText.includes('Identified Face');
     };
 
