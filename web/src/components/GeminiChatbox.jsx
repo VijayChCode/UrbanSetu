@@ -10288,6 +10288,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             <div className={`flex flex-col border-b ${isDarkMode ? 'border-gray-800/80' : 'border-gray-100'} mb-1.5 pb-1`}>
                                                                                 <div className="flex items-center gap-2 p-1">
                                                                                     <input
+                                                                                        autoFocus
                                                                                         type="text"
                                                                                         value={retryInstruction}
                                                                                         onChange={(e) => setRetryInstruction(e.target.value)}
