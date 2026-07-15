@@ -11240,7 +11240,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 )}
                             </form>
                             <div className={`text-[10.5px] text-center mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} select-none`}>
-                                SetuAI can make mistakes. Check important info.
+                                SetuAI can make mistakes. Check <button type="button" onClick={() => setShowTermsModal(true)} className="underline hover:text-gray-400 dark:hover:text-gray-300 transition-colors focus:outline-none">important info</button>.
                             </div>
                         </div>
                         {/* Quick Actions Modal */}
