@@ -5862,15 +5862,36 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             // 3. Create the new version
             const newVersionIndex = variants.length;
+            const newImages = editingMessageImages || [];
+            const newImageUrl = newImages.length === 1 ? newImages[0] : null;
+
+            // Filter OCR text to only include remaining images
+            let updatedOcrText = '';
+            if (originalMessage.ocrText) {
+                const ocrBlocks = originalMessage.ocrText.split(/I've uploaded a image file:/);
+                const keptBlocks = [];
+                for (const block of ocrBlocks) {
+                    if (!block.includes('File URL:')) {
+                        if (block.trim()) keptBlocks.push(block);
+                    } else {
+                        const hasMatchingImg = newImages.some(imgUrl => block.includes(imgUrl));
+                        if (hasMatchingImg) {
+                            keptBlocks.push(block);
+                        }
+                    }
+                }
+                updatedOcrText = keptBlocks.join("I've uploaded a image file:");
+            }
+
             const newVersion = {
                 content: editingMessageContent.trim(),
-                images: originalMessage.images,
-                imageUrl: originalMessage.imageUrl,
+                images: newImages,
+                imageUrl: newImageUrl,
                 audioUrl: originalMessage.audioUrl,
                 videoUrl: originalMessage.videoUrl,
                 documentUrl: originalMessage.documentUrl,
                 documentName: originalMessage.documentName,
-                ocrText: originalMessage.ocrText,
+                ocrText: updatedOcrText,
                 visionAnalysis: originalMessage.visionAnalysis,
                 tail: [], // New branch starts empty
                 timestamp: new Date().toISOString(),
@@ -5880,7 +5901,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const newMessage = {
                 ...originalMessage,
                 content: editingMessageContent.trim(),
-                // Keep the same media in the new version branch
+                images: newImages,
+                imageUrl: newImageUrl,
+                ocrText: updatedOcrText,
                 timestamp: newVersion.timestamp,
                 variants: [...variants, newVersion],
                 activeVersionIndex: newVersionIndex
@@ -5899,13 +5922,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             // 6. Send to API - passing the history only UP TO the edit point, plus any media
             await sendEditedMessageToAPI(editingMessageContent.trim(), nextMessages.slice(0, messageIndex), {
-                images: originalMessage.images,
-                imageUrl: originalMessage.imageUrl,
+                images: newImages,
+                imageUrl: newImageUrl,
                 audioUrl: originalMessage.audioUrl,
                 videoUrl: originalMessage.videoUrl,
                 documentUrl: originalMessage.documentUrl,
                 documentName: originalMessage.documentName,
-                ocrText: originalMessage.ocrText
+                ocrText: updatedOcrText
             });
 
 
