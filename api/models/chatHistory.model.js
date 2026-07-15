@@ -133,6 +133,10 @@ const chatHistorySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isPinned: {
+    type: Boolean,
+    default: false
+  },
   settings: {
     messageLimit: { type: String },
     dataRetention: { type: String },
@@ -216,8 +220,8 @@ chatHistorySchema.statics.getUserSessions = async function (userId) {
     userId,
     isActive: true
   })
-    .select('sessionId totalMessages totalTokens lastActivity createdAt name settings')
-    .sort({ lastActivity: -1 })
+    .select('sessionId totalMessages totalTokens lastActivity createdAt name settings isPinned')
+    .sort({ isPinned: -1, lastActivity: -1 })
     .limit(20); // Limit to last 20 sessions
 
   return sessions.map(session => ({
@@ -227,7 +231,8 @@ chatHistorySchema.statics.getUserSessions = async function (userId) {
     totalTokens: session.totalTokens || 0,
     lastMessageAt: session.lastActivity,
     createdAt: session.createdAt,
-    settings: session.settings || {}
+    settings: session.settings || {},
+    isPinned: session.isPinned || false
   }));
 };
 

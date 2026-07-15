@@ -268,7 +268,7 @@ export const clearAllChatHistory = async (req, res) => {
 export const updateChatSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const { messages, totalMessages, name, settings } = req.body;
+        const { messages, totalMessages, name, settings, isPinned } = req.body;
         const userId = req.user.id;
 
         if (!sessionId) {
@@ -278,14 +278,15 @@ export const updateChatSession = async (req, res) => {
             });
         }
 
-        // At least one of messages or name should be provided
+        // At least one of messages, name, settings, or isPinned should be provided
         const hasMessages = Array.isArray(messages);
         const hasName = typeof name === 'string';
         const hasSettings = settings && typeof settings === 'object';
-        if (!hasMessages && !hasName && !hasSettings) {
+        const hasPinned = typeof isPinned === 'boolean';
+        if (!hasMessages && !hasName && !hasSettings && !hasPinned) {
             return res.status(400).json({
                 success: false,
-                message: 'Nothing to update. Provide messages, name, or settings.'
+                message: 'Nothing to update. Provide messages, name, settings, or isPinned.'
             });
         }
 
@@ -397,6 +398,10 @@ export const updateChatSession = async (req, res) => {
                     if (!isNewNameGeneric || isOldNameGeneric) {
                         chatHistory.name = newName;
                     }
+                }
+                
+                if (hasPinned) {
+                    chatHistory.isPinned = isPinned;
                 }
                 
                 chatHistory.lastActivity = new Date();

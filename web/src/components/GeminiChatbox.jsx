@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle, FaPlus } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle, FaPlus, FaThumbtack } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -6313,6 +6313,29 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    const togglePinSession = async (sessionId, currentPinnedState) => {
+        if (!currentUser || !sessionId) return;
+        try {
+            const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${sessionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isPinned: !currentPinnedState })
+            });
+
+            if (response.ok) {
+                console.log(`Session pin state updated: ${!currentPinnedState}`);
+                toast.success(currentPinnedState ? 'Chat unpinned' : 'Chat pinned');
+                await loadChatSessions();
+            } else {
+                console.error('Failed to toggle session pin:', response.status);
+                toast.error('Failed to update pin state');
+            }
+        } catch (error) {
+            console.error('Error toggling session pin:', error);
+            toast.error('Failed to update pin state');
+        }
+    };
+
     const loadChatSessions = async () => {
         if (!currentUser) return [];
 
@@ -11875,6 +11898,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 Active
                                                                             </span>
                                                                         )}
+                                                                        {session.isPinned && (
+                                                                            <FaThumbtack size={10} className="text-indigo-500 dark:text-indigo-400 rotate-45 flex-shrink-0" />
+                                                                        )}
                                                                     </div>
                                                                     <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                                                         {new Date(session.lastMessageAt).toLocaleString()}
@@ -11930,6 +11956,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 className={`block w-full text-left px-3 py-2 text-sm ${isDarkMode ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-800 hover:bg-gray-100'}`}
                                                                             >
                                                                                 Delete chat
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={async (e) => {
+                                                                                    e.stopPropagation();
+                                                                                    await togglePinSession(session.sessionId, session.isPinned);
+                                                                                    setOpenHistoryMenuSessionId(null);
+                                                                                }}
+                                                                                className={`block w-full text-left px-3 py-2 text-sm ${isDarkMode ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-800 hover:bg-gray-100'}`}
+                                                                            >
+                                                                                {session.isPinned ? 'Unpin chat' : 'Pin chat'}
                                                                             </button>
                                                                             <button
                                                                                 onClick={async (e) => {
