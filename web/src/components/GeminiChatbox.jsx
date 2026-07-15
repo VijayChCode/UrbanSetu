@@ -11239,6 +11239,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </button>
                                 )}
                             </form>
+                            <div className={`text-[10.5px] text-center mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} select-none`}>
+                                SetuAI can make mistakes. Check important info.
+                            </div>
                         </div>
                         {/* Quick Actions Modal */}
                         {showQuickActions && (
