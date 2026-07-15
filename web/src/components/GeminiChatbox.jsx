@@ -1147,6 +1147,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
     const [isLoadingNewSession, setIsLoadingNewSession] = useState(false);
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [typingText, setTypingText] = useState('');
     const [showQuickActions, setShowQuickActions] = useState(false);
@@ -11960,8 +11962,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delete all chats?</h4>
                                     <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>This cannot be undone.</p>
                                     <div className="flex justify-end gap-2">
-                                        <button onClick={() => setShowDeleteAllModal(false)} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'}`}>Cancel</button>
-                                        <button onClick={async () => {
+                                        <button disabled={isDeleting} onClick={() => setShowDeleteAllModal(false)} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'} ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
+                                        <button disabled={isDeleting} onClick={async () => {
+                                            setIsDeleting(true);
                                             try {
                                                 await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions`, { method: 'DELETE' });
                                                 await createNewSession();
@@ -11971,9 +11974,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             } catch (e) {
                                                 toast.error('Failed to delete all chats');
                                             } finally {
+                                                setIsDeleting(false);
                                                 setShowDeleteAllModal(false);
                                             }
-                                        }} className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700">Delete</button>
+                                        }} className={`px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700 ${isDeleting ? 'opacity-75 cursor-not-allowed' : ''}`}>
+                                            {isDeleting ? 'Deleting...' : 'Delete'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -11986,8 +11992,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delete selected chats?</h4>
                                     <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>This cannot be undone.</p>
                                     <div className="flex justify-end gap-2">
-                                        <button onClick={() => setShowDeleteSelectedModal(false)} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'}`}>Cancel</button>
-                                        <button onClick={async () => {
+                                        <button disabled={isDeleting} onClick={() => setShowDeleteSelectedModal(false)} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'} ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
+                                        <button disabled={isDeleting} onClick={async () => {
+                                            setIsDeleting(true);
                                             try {
                                                 for (const id of selectedHistoryIds) { await deleteSession(id); }
                                                 setSelectedHistoryIds([]);
@@ -11996,9 +12003,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             } catch (e) {
                                                 toast.error('Failed to delete selected chats');
                                             } finally {
+                                                setIsDeleting(false);
                                                 setShowDeleteSelectedModal(false);
                                             }
-                                        }} className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700">Delete</button>
+                                        }} className={`px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700 ${isDeleting ? 'opacity-75 cursor-not-allowed' : ''}`}>
+                                            {isDeleting ? 'Deleting...' : 'Delete'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -12011,8 +12021,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delete this chat?</h4>
                                     <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>This cannot be undone.</p>
                                     <div className="flex justify-end gap-2">
-                                        <button onClick={() => setShowDeleteSingleModal(false)} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'}`}>Cancel</button>
-                                        <button onClick={async () => {
+                                        <button disabled={isDeleting} onClick={() => setShowDeleteSingleModal(false)} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'} ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
+                                        <button disabled={isDeleting} onClick={async () => {
+                                            setIsDeleting(true);
                                             try {
                                                 if (deleteTargetSessionId) { await deleteSession(deleteTargetSessionId); }
                                                 await loadChatSessions();
@@ -12020,11 +12031,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             } catch (e) {
                                                 toast.error('Failed to delete chat');
                                             } finally {
+                                                setIsDeleting(false);
                                                 setDeleteTargetSessionId(null);
                                                 setShowDeleteSingleModal(false);
                                                 setOpenHistoryMenuSessionId(null);
                                             }
-                                        }} className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700">Delete</button>
+                                        }} className={`px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700 ${isDeleting ? 'opacity-75 cursor-not-allowed' : ''}`}>
+                                            {isDeleting ? 'Deleting...' : 'Delete'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -12039,14 +12053,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         type="text"
                                         value={renameInput}
                                         onChange={(e) => setRenameInput(e.target.value)}
-                                        className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-500' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400'} rounded mb-4`}
+                                        className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-500' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400'} rounded mb-4 ${isRenaming ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         placeholder="Enter chat name"
                                         maxLength={80}
-                                    // Removed autoFocus - don't auto-focus input
+                                        disabled={isRenaming}
                                     />
                                     <div className="flex justify-end gap-2">
-                                        <button onClick={() => { setShowRenameModal(false); setRenameTargetSessionId(null); }} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'}`}>Cancel</button>
-                                        <button onClick={async () => {
+                                        <button disabled={isRenaming} onClick={() => { setShowRenameModal(false); setRenameTargetSessionId(null); }} className={`px-3 py-1.5 text-sm rounded border ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'} ${isRenaming ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
+                                        <button disabled={isRenaming} onClick={async () => {
+                                            setIsRenaming(true);
                                             try {
                                                 const name = renameInput.trim();
                                                 await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${renameTargetSessionId}`, {
@@ -12059,11 +12074,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             } catch {
                                                 toast.error('Failed to rename chat');
                                             } finally {
+                                                setIsRenaming(false);
                                                 setShowRenameModal(false);
                                                 setRenameTargetSessionId(null);
                                                 setOpenHistoryMenuSessionId(null);
                                             }
-                                        }} className={`px-3 py-1.5 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90`}>Save</button>
+                                        }} className={`px-3 py-1.5 text-sm rounded bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 ${isRenaming ? 'opacity-75 cursor-not-allowed' : ''}`}>
+                                            {isRenaming ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
