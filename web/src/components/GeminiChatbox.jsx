@@ -10702,7 +10702,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Upload File</span>
                                                             </div>
-                                                            <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+U</span>
+                                                            <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
+                                                                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                            }`}>Ctrl+U</span>
                                                         </button>
 
                                                         <button
@@ -10724,7 +10726,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Voice Input</span>
                                                             </div>
-                                                            <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+A</span>
+                                                            <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
+                                                                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                            }`}>Ctrl+Shift+A</span>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -10749,7 +10753,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Image Link</span>
                                                             </div>
-                                                            <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 ml-auto whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+I</span>
+                                                            <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
+                                                                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                            }`}>Ctrl+Shift+I</span>
                                                         </button>
 
                                                         <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
@@ -10780,7 +10786,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 {prePromptPreference === 'think' && (
                                                                     <FaCheck className={isDarkMode ? 'text-purple-400' : 'text-purple-600'} size={12} />
                                                                 )}
-                                                                <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+M</span>
+                                                                <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded whitespace-nowrap transition-opacity duration-300 ${
+                                                                    isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                                }`}>Ctrl+Shift+M</span>
                                                             </div>
                                                         </button>
 
@@ -10810,7 +10818,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 {prePromptPreference === 'search' && (
                                                                     <FaCheck className={isDarkMode ? 'text-teal-400' : 'text-teal-650'} size={12} />
                                                                 )}
-                                                                <span className="hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded bg-gray-750 text-gray-300 whitespace-nowrap transition-opacity duration-300">Ctrl+Shift+S</span>
+                                                                <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded whitespace-nowrap transition-opacity duration-300 ${
+                                                                    isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                                }`}>Ctrl+Shift+S</span>
                                                             </div>
                                                         </button>
                                                     </div>
