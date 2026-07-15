@@ -1146,6 +1146,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [activeSessionTokens, setActiveSessionTokens] = useState(0);
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
     const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
+    const [isLoadingNewSession, setIsLoadingNewSession] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [typingText, setTypingText] = useState('');
     const [showQuickActions, setShowQuickActions] = useState(false);
@@ -6442,81 +6443,84 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const createNewSession = async () => {
-        if (!currentUser) {
-            toast.info('Please log in to create new chat');
-            return;
-        }
-
-        try {
-
-            // Always save the current session to history before creating new one
-            const currentSessionId = getOrCreateSessionId();
-            if (messages.length > 0) {
-                // Save current session to history
-                const saveResponse = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        messages: messages,
-                        totalMessages: messages.length
-                    })
-                });
-
-                if (!saveResponse.ok) {
-                    console.error('Failed to save current chat');
-                }
-            }
-
-            // Now create a new session
-            const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.sessionId) {
-                    // Set the new session ID
-                    setSessionId(data.sessionId);
-                    localStorage.setItem('gemini_session_id', data.sessionId);
-
-                    // Reset messages to default welcome message
-                    const defaultMessage = {
-                        role: 'assistant',
-                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-                        timestamp: new Date().toISOString()
-                    };
-                    setMessages([defaultMessage]);
-                    setTotalMessageCount(0); // Reset total message count for new session
-                    setCurrentChatName('');
-                    setDisplayedTitle('SetuAI');
-                    setIsGeneratingTitle(false);
-
-                    // Clear ratings for new session
-                    setMessageRatings({});
-                    localStorage.setItem('gemini_ratings', JSON.stringify({}));
-
-                    // Clear bookmarks for new session
-                    setBookmarkedMessages([]);
-
-                    // Refresh chat sessions
-                    await loadChatSessions();
-
-                    toast.success('New chat created');
-                }
-            } else {
-                toast.error('Failed to create new chat');
-            }
-        } catch (error) {
-            console.error('Error creating new chat:', error);
-            toast.error('Failed to create new chat');
-        }
-    };
+     const createNewSession = async () => {
+         if (!currentUser) {
+             toast.info('Please log in to create new chat');
+             return;
+         }
+ 
+         setIsLoadingNewSession(true);
+         try {
+ 
+             // Always save the current session to history before creating new one
+             const currentSessionId = getOrCreateSessionId();
+             if (messages.length > 0) {
+                 // Save current session to history
+                 const saveResponse = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${currentSessionId}`, {
+                     method: 'PUT',
+                     headers: {
+                         'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify({
+                         messages: messages,
+                         totalMessages: messages.length
+                     })
+                 });
+ 
+                 if (!saveResponse.ok) {
+                     console.error('Failed to save current chat');
+                 }
+             }
+ 
+             // Now create a new session
+             const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions`, {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                 }
+             });
+ 
+             if (response.ok) {
+                 const data = await response.json();
+                 if (data.success && data.sessionId) {
+                     // Set the new session ID
+                     setSessionId(data.sessionId);
+                     localStorage.setItem('gemini_session_id', data.sessionId);
+ 
+                     // Reset messages to default welcome message
+                     const defaultMessage = {
+                         role: 'assistant',
+                         content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
+                         timestamp: new Date().toISOString()
+                     };
+                     setMessages([defaultMessage]);
+                     setTotalMessageCount(0); // Reset total message count for new session
+                     setCurrentChatName('');
+                     setDisplayedTitle('SetuAI');
+                     setIsGeneratingTitle(false);
+ 
+                     // Clear ratings for new session
+                     setMessageRatings({});
+                     localStorage.setItem('gemini_ratings', JSON.stringify({}));
+ 
+                     // Clear bookmarks for new session
+                     setBookmarkedMessages([]);
+ 
+                     // Refresh chat sessions
+                     await loadChatSessions();
+ 
+                     toast.success('New chat created');
+                 }
+             } else {
+                 toast.error('Failed to create new chat');
+             }
+         } catch (error) {
+             console.error('Error creating new chat:', error);
+             toast.error('Failed to create new chat');
+         } finally {
+             setIsLoadingNewSession(false);
+         }
+     };
     const deleteSession = async (sessionId) => {
         if (!currentUser) {
             toast.error('Please log in to delete chats');
@@ -8904,6 +8908,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         isExpanded ? 'w-full max-w-4xl h-[85vh] md:mb-12 md:mr-12' :
                             'w-full max-w-md h-full max-h-[90vh] md:w-96 md:h-[500px] md:mb-32 md:mr-6 md:max-h-[500px]'
                         } animate-slideUp`}>
+                        {/* New Chat Session Creation Loading Overlay */}
+                        {isLoadingNewSession && (
+                            <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex flex-col items-center justify-center z-[60] rounded-[inherit] animate-fadeIn">
+                                <UrbanSetuSpinner size="md" />
+                                <p className="text-sm text-white mt-3 font-semibold tracking-wide">Creating new chat...</p>
+                            </div>
+                        )}
                         {/* Screen reader only elements */}
                         {screenReaderSupport && (
                             <>
