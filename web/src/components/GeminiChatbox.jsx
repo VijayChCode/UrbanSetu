@@ -11250,7 +11250,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 )}
                             </form>
                             <div className={`text-[10.5px] text-center mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} select-none`}>
-                                SetuAI can make mistakes. Check <button type="button" onClick={() => setShowTermsModal(true)} className="underline hover:text-gray-400 dark:hover:text-gray-300 transition-colors focus:outline-none">important info</button>.
+                                SetuAI can make mistakes. Check important info.
                             </div>
                         </div>
                         {/* Quick Actions Modal */}
@@ -14274,6 +14274,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                     {/* Footer Info */}
                                     <div className={`text-center pt-6 pb-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                                        <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mb-1.5 font-medium`}>
+                                            SetuAI can make mistakes. Check important info.
+                                        </p>
                                         <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                             SetuAI v2.5.0 • Build 2024.12 • Powered by Sentinel UrbanSetu Tech Labs
                                         </p>
