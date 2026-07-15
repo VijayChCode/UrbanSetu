@@ -660,6 +660,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isCurrentRequestScheduler, setIsCurrentRequestScheduler] = useState(false);
     const [currentSchedulerType, setCurrentSchedulerType] = useState('create'); // 'create', 'reschedule', 'cancel'
     const [activeRetryMenu, setActiveRetryMenu] = useState(null);
+    const [retryInstruction, setRetryInstruction] = useState('');
     const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
     const [isCurrentRequestWebSearch, setIsCurrentRequestWebSearch] = useState(false);
     const [prePromptPreference, setPrePromptPreference] = useState(null); // 'think' | 'search' | null
@@ -5271,7 +5272,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     enableContextMemory: enableContextMemory,
                     contextWindow: contextWindow,
                     enableSystemPrompts: enableSystemPrompts,
-                    clientTime: new Date().toString()
+                    clientTime: new Date().toString(),
+                    changeInstruction: options.changeInstruction
                 }),
                 signal: abortControllerRef.current.signal
             });
@@ -10262,6 +10264,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                         ? null
                                                                                         : { index, previousUserMessage }
                                                                                 );
+                                                                                setRetryInstruction('');
                                                                             }
                                                                         }}
                                                                         disabled={isLoading || isBlockedByPolicy || (rateLimitInfo.remaining <= 0 && rateLimitInfo.role !== 'rootadmin')}
@@ -10282,9 +10285,53 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                     : 'bg-white/95 border-gray-200 text-gray-800'
                                                                             }`}
                                                                         >
-                                                                            <div className={`flex items-center justify-between px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400 border-b border-gray-800/80' : 'text-gray-500 border-b border-gray-100'} mb-1.5`}>
-                                                                                <span>Ask to change response</span>
-                                                                                <FaArrowUp size={10} className="opacity-70" />
+                                                                            <div className={`flex flex-col border-b ${isDarkMode ? 'border-gray-800/80' : 'border-gray-100'} mb-1.5 pb-1`}>
+                                                                                <div className="flex items-center gap-2 p-1">
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={retryInstruction}
+                                                                                        onChange={(e) => setRetryInstruction(e.target.value)}
+                                                                                        onKeyDown={(e) => {
+                                                                                            if (e.key === 'Enter' && retryInstruction.trim()) {
+                                                                                                e.preventDefault();
+                                                                                                retryMessage(activeRetryMenu.previousUserMessage, index, { changeInstruction: retryInstruction.trim().slice(0, 150) });
+                                                                                                setRetryInstruction('');
+                                                                                                setActiveRetryMenu(null);
+                                                                                            }
+                                                                                        }}
+                                                                                        maxLength={150}
+                                                                                        placeholder="Ask to change response..."
+                                                                                        className={`flex-1 text-[11px] px-2.5 py-1 rounded-lg focus:outline-none focus:ring-1 ${
+                                                                                            isDarkMode 
+                                                                                                ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500' 
+                                                                                                : 'bg-gray-50 border-gray-250 text-gray-800 placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500'
+                                                                                        }`}
+                                                                                    />
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            if (retryInstruction.trim()) {
+                                                                                                retryMessage(activeRetryMenu.previousUserMessage, index, { changeInstruction: retryInstruction.trim().slice(0, 150) });
+                                                                                                setRetryInstruction('');
+                                                                                                setActiveRetryMenu(null);
+                                                                                            }
+                                                                                        }}
+                                                                                        disabled={!retryInstruction.trim()}
+                                                                                        className={`p-1.5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                                                                                            retryInstruction.trim() 
+                                                                                                ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95' 
+                                                                                                : 'bg-gray-200/50 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-650'
+                                                                                        }`}
+                                                                                        title="Submit instruction"
+                                                                                    >
+                                                                                        <FaArrowUp size={8} />
+                                                                                    </button>
+                                                                                </div>
+                                                                                {retryInstruction.length > 100 && (
+                                                                                    <div className="text-[9px] text-right px-2 text-orange-500 font-medium">
+                                                                                        {retryInstruction.length}/150 chars
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                             
                                                                             <button

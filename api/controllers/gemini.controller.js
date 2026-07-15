@@ -108,7 +108,8 @@ export const chatWithGemini = async (req, res) => {
         contextWindow = '4',
         selectedProperties,
         clientTime,
-        isOnlyAttachment
+        isOnlyAttachment,
+        changeInstruction
     } = req.body;
     const userId = req.user?.id;
     // Normalize client IP (take first one if it's a list from proxy)
@@ -713,6 +714,12 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         // If image audits are already provided from the frontend, inject them into the message
         // so the AI doesn't redundantly try to call sentinel_image_auditor (which causes tool_use_failed errors)
         let finalUserMessage = fullPrompt;
+        if (changeInstruction) {
+            const sanitizedInstruction = String(changeInstruction).trim().slice(0, 150);
+            if (sanitizedInstruction) {
+                finalUserMessage += `\n\n[Instruction: Please revise and rewrite your response based on the following instruction: "${sanitizedInstruction}"]`;
+            }
+        }
 
         // If this is a retry/duplicate (no new images passed in request but matching message exists in DB),
         // restore the cached ocrText and visionAnalysis from the DB.
