@@ -7063,73 +7063,94 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
 
-        const url = imageLinkInput.trim();
+        // Parse URLs (separated by newlines, commas, or spaces)
+        const urls = imageLinkInput
+            .split(/[\s,\n]+/)
+            .map(u => u.trim())
+            .filter(u => {
+                if (!u) return false;
+                try {
+                    new URL(u);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            });
 
-        // Basic URL validation
-        try {
-            new URL(url);
-        } catch (_) {
-            toast.error('Invalid URL format');
+        if (urls.length === 0) {
+            toast.error('No valid image URLs found');
             return;
         }
 
         // Check image limit
         const currentImagesCount = pendingImages.length;
-        if (currentImagesCount >= 5) {
+        const remainingCapacity = 5 - currentImagesCount;
+
+        if (remainingCapacity <= 0) {
             toast.error('You can only upload up to 5 images. Please remove some before adding more.');
             return;
         }
 
-        const tempId = Date.now() + Math.random();
-
-        // Add to pending images immediately with the original URL (no uploading state needed as we don't upload to Cloudinary)
-        setPendingImages(prev => [...prev, {
-            id: tempId,
-            name: 'External Image',
-            type: 'image',
-            url: url,
-            uploading: false,
-            isExternal: true
-        }]);
+        // If the number of pasted URLs exceeds remaining slots, limit it
+        let urlsToAdd = urls;
+        if (urls.length > remainingCapacity) {
+            toast.warning(`Limit reached. Only adding the first ${remainingCapacity} valid image URLs.`);
+            urlsToAdd = urls.slice(0, remainingCapacity);
+        }
 
         setImageLinkInput('');
         setShowImageLinkModal(false);
 
-        // Fetch the image via the backend proxy to bypass CORS on the client for OCR & Sentinel Audit
-        (async () => {
-            try {
-                const proxyUrl = `${API_BASE_URL}/api/upload/proxy-image?url=${encodeURIComponent(url)}`;
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error('Failed to fetch proxy image');
-                
-                const blob = await response.blob();
-                const file = new File([blob], 'external-image.jpg', { type: blob.type || 'image/jpeg' });
+        // Add each URL
+        for (const url of urlsToAdd) {
+            const tempId = Date.now() + Math.random();
 
-                // Run facial recognition locally using blob Object URL
-                const localUrl = URL.createObjectURL(blob);
-                runFacialRecognition(localUrl, tempId);
+            // Add to pending images immediately with the original URL (no uploading state needed)
+            setPendingImages(prev => [...prev, {
+                id: tempId,
+                name: 'External Image',
+                type: 'image',
+                url: url,
+                uploading: false,
+                isExternal: true
+            }]);
 
-                // Run Sentinel audit on the proxied file object
-                performAudit(file, tempId, 'chat');
-
-                // Run OCR check in the background
+            // Fetch the image via the backend proxy to bypass CORS on the client for OCR & Sentinel Audit
+            (async () => {
                 try {
-                    setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
-                    const text = await extractTextFromFile(file, (progressMsg) => {
-                        console.log(`[OCR URL Image] ${progressMsg}`);
-                    });
-                    if (text && text.trim()) {
-                        setOcrResults(prev => ({ ...prev, [tempId]: text.trim() }));
+                    const proxyUrl = `${API_BASE_URL}/api/upload/proxy-image?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error('Failed to fetch proxy image');
+                    
+                    const blob = await response.blob();
+                    const file = new File([blob], 'external-image.jpg', { type: blob.type || 'image/jpeg' });
+
+                    // Run facial recognition locally using blob Object URL
+                    const localUrl = URL.createObjectURL(blob);
+                    runFacialRecognition(localUrl, tempId);
+
+                    // Run Sentinel audit on the proxied file object
+                    performAudit(file, tempId, 'chat');
+
+                    // Run OCR check in the background
+                    try {
+                        setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+                        const text = await extractTextFromFile(file, (progressMsg) => {
+                            console.log(`[OCR URL Image] ${progressMsg}`);
+                        });
+                        if (text && text.trim()) {
+                            setOcrResults(prev => ({ ...prev, [tempId]: text.trim() }));
+                        }
+                    } catch (ocrErr) {
+                        console.warn('OCR skipped/failed for URL image:', ocrErr);
+                    } finally {
+                        setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
                     }
-                } catch (ocrErr) {
-                    console.warn('OCR skipped/failed for URL image:', ocrErr);
-                } finally {
-                    setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
+                } catch (error) {
+                    console.warn('Failed to perform OCR & Audit via proxy:', error);
                 }
-            } catch (error) {
-                console.warn('Failed to perform OCR & Audit via proxy:', error);
-            }
-        })();
+            })();
+        }
     };
 
 
@@ -15189,66 +15210,112 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         <form onSubmit={handleImageLinkSubmit} className="space-y-4">
                             <div>
                                 <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    Paste Image Address
+                                    Paste Image Address(es)
                                 </label>
                                 <div className="relative group">
-                                    <input
-                                        type="text"
+                                    <textarea
                                         value={imageLinkInput}
                                         onChange={(e) => setImageLinkInput(e.target.value)}
-                                        placeholder="https://example.com/image.jpg"
-                                        className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
+                                        placeholder="Paste one or more image URLs here...&#10;(Separate multiple URLs with newlines, commas, or spaces)"
+                                        rows={3}
+                                        className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 resize-none ${isDarkMode
                                             ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50 placeholder-gray-500'
                                             : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50 placeholder-gray-400'
                                             }`}
                                         autoFocus
                                     />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                                    <div className="absolute right-3 top-4 opacity-30 group-focus-within:opacity-100 transition-opacity pointer-events-none">
                                         <FaImage size={18} className={isDarkMode ? 'text-indigo-400' : 'text-indigo-500'} />
                                     </div>
                                 </div>
 
                                 {/* URL Image Preview */}
-                                {imageLinkInput.trim() && (
-                                    <div className="mt-4 animate-fadeIn">
-                                        <div className={`p-2 rounded-xl border-2 overflow-hidden transition-all duration-500 hover:scale-[1.02] ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-indigo-100'}`}>
-                                            <div className="relative aspect-video rounded-lg overflow-hidden group/preview bg-black/5">
-                                                <img
-                                                    src={imageLinkInput}
-                                                    alt="Preview"
-                                                    className="w-full h-full object-contain cursor-pointer transition-transform duration-500 group-hover/preview:scale-105"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.nextSibling.style.display = 'flex';
-                                                    }}
-                                                    onLoad={(e) => {
-                                                        e.target.style.display = 'block';
-                                                        e.target.nextSibling.style.display = 'none';
-                                                    }}
-                                                    onClick={() => {
-                                                        setPreviewImages([imageLinkInput]);
-                                                        setPreviewImageIndex(0);
-                                                        setIsImagePreviewOpen(true);
-                                                    }}
-                                                />
-                                                <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 gap-2">
-                                                    <FaImage size={32} className="opacity-20" />
-                                                    <span className="text-[10px] font-medium uppercase tracking-widest opacity-50">Invalid Image URL</span>
-                                                </div>
+                                {(() => {
+                                    const parsedUrls = imageLinkInput
+                                        .split(/[\s,\n]+/)
+                                        .map(u => u.trim())
+                                        .filter(u => {
+                                            if (!u) return false;
+                                            try {
+                                                new URL(u);
+                                                return true;
+                                            } catch (_) {
+                                                return false;
+                                            }
+                                        });
 
-                                                {/* Hover Overlay for Preview */}
-                                                <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover/preview:opacity-100 pointer-events-none">
-                                                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30 text-white transform translate-y-4 group-hover/preview:translate-y-0 transition-all duration-300">
-                                                        <FaExpand size={14} />
+                                    if (parsedUrls.length === 0) return null;
+
+                                    return (
+                                        <div className="mt-4 animate-fadeIn max-h-48 overflow-y-auto pr-1">
+                                            <div className={`p-2.5 rounded-xl border-2 transition-all duration-300 ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-indigo-100'}`}>
+                                                {parsedUrls.length === 1 ? (
+                                                    <div className="relative aspect-video rounded-lg overflow-hidden group/preview bg-black/5">
+                                                        <img
+                                                            src={parsedUrls[0]}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-contain cursor-pointer transition-transform duration-500 group-hover/preview:scale-105"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                e.target.nextSibling.style.display = 'flex';
+                                                            }}
+                                                            onLoad={(e) => {
+                                                                e.target.style.display = 'block';
+                                                                e.target.nextSibling.style.display = 'none';
+                                                            }}
+                                                            onClick={() => {
+                                                                setPreviewImages([parsedUrls[0]]);
+                                                                setPreviewImageIndex(0);
+                                                                setIsImagePreviewOpen(true);
+                                                            }}
+                                                        />
+                                                        <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 gap-2">
+                                                            <FaImage size={32} className="opacity-20" />
+                                                            <span className="text-[10px] font-medium uppercase tracking-widest opacity-50">Invalid Image URL</span>
+                                                        </div>
+                                                        <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover/preview:opacity-100 pointer-events-none">
+                                                            <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30 text-white transform translate-y-4 group-hover/preview:translate-y-0 transition-all duration-300">
+                                                                <FaExpand size={14} />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {parsedUrls.map((url, idx) => (
+                                                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group/preview bg-black/5 border border-gray-200 dark:border-gray-700">
+                                                                <img
+                                                                    src={url}
+                                                                    alt={`Preview ${idx + 1}`}
+                                                                    className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                                                                    onError={(e) => {
+                                                                        e.target.style.display = 'none';
+                                                                        e.target.nextSibling.style.display = 'flex';
+                                                                    }}
+                                                                    onLoad={(e) => {
+                                                                        e.target.style.display = 'block';
+                                                                        e.target.nextSibling.style.display = 'none';
+                                                                    }}
+                                                                    onClick={() => {
+                                                                        setPreviewImages(parsedUrls);
+                                                                        setPreviewImageIndex(idx);
+                                                                        setIsImagePreviewOpen(true);
+                                                                    }}
+                                                                />
+                                                                <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 text-center p-1">
+                                                                    <FaImage size={16} className="opacity-20 mb-0.5" />
+                                                                    <span className="text-[8px] font-medium opacity-50 leading-none">Error</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
 
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    Tip: Right-click any image on the web and select "Copy image address" to get the direct link.
+                                    Tip: You can add up to 5 images per message. Separate multiple links with newlines, commas, or spaces.
                                 </p>
                             </div>
 
