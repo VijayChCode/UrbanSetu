@@ -15242,8 +15242,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                     Add Image Address
                                 </label>
-                                <div className="flex gap-2 items-center h-12">
-                                    <div className="relative flex-1 group h-full">
+                                <div className="flex gap-2 items-center">
+                                    <div className="relative flex-1 group">
                                         <input
                                             type="text"
                                             value={imageLinkInput}
@@ -15255,7 +15255,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 }
                                             }}
                                             placeholder="https://example.com/image.jpg"
-                                            className={`w-full h-full pl-4 pr-12 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
+                                            className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
                                                 ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50 placeholder-gray-500'
                                                 : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50 placeholder-gray-400'
                                                 }`}
@@ -15269,13 +15269,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         type="button"
                                         onClick={handleAddUrlToList}
                                         disabled={!imageLinkInput.trim()}
-                                        className={`h-full px-4.5 rounded-xl flex items-center justify-center transition-all duration-300 shadow-md ${imageLinkInput.trim()
-                                            ? `bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95 shadow-indigo-500/20`
+                                        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-md ${imageLinkInput.trim()
+                                            ? `bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 active:scale-95 shadow-indigo-500/20`
                                             : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-300 dark:border-gray-700'
                                             }`}
                                         title="Add URL to list"
                                     >
-                                        <FaPlus size={14} />
+                                        <FaPlus size={16} />
                                     </button>
                                 </div>
 
