@@ -1413,6 +1413,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [socialShareConfig, setSocialShareConfig] = useState({ url: '', title: '', description: '' });
     const [showImageLinkModal, setShowImageLinkModal] = useState(false);
     const [imageLinkInput, setImageLinkInput] = useState('');
+    const [imageLinkUrls, setImageLinkUrls] = useState([]);
     const [renameInput, setRenameInput] = useState('');
     const [refreshingBookmarks, setRefreshingBookmarks] = useState(false);
     const [initialSettingsSnapshot, setInitialSettingsSnapshot] = useState(null);
@@ -7050,6 +7051,41 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setUploadedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handleAddUrlToList = (e) => {
+        if (e) e.preventDefault();
+
+        const url = imageLinkInput.trim();
+        if (!url) return;
+
+        // Basic URL validation
+        try {
+            new URL(url);
+        } catch (_) {
+            toast.error('Invalid URL format');
+            return;
+        }
+
+        // Check if already in list
+        if (imageLinkUrls.includes(url)) {
+            toast.info('This URL is already added');
+            return;
+        }
+
+        // Check image limit
+        const totalCount = pendingImages.length + imageLinkUrls.length;
+        if (totalCount >= 5) {
+            toast.error('You can only add up to 5 images. Please remove some before adding more.');
+            return;
+        }
+
+        setImageLinkUrls(prev => [...prev, url]);
+        setImageLinkInput('');
+    };
+
+    const handleRemoveUrlFromList = (urlToRemove) => {
+        setImageLinkUrls(prev => prev.filter(url => url !== urlToRemove));
+    };
+
     const handleImageLinkSubmit = async (e) => {
         if (e) e.preventDefault();
 
@@ -7058,27 +7094,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return;
         }
 
-        if (!imageLinkInput.trim()) {
-            toast.error('Please enter a valid image URL');
-            return;
+        // If there's still valid text in the input field, add it automatically first
+        let finalUrls = [...imageLinkUrls];
+        const inputUrl = imageLinkInput.trim();
+        if (inputUrl) {
+            try {
+                new URL(inputUrl);
+                const totalCount = pendingImages.length + finalUrls.length;
+                if (totalCount < 5 && !finalUrls.includes(inputUrl)) {
+                    finalUrls.push(inputUrl);
+                }
+            } catch (_) {}
         }
 
-        // Parse URLs (separated by newlines, commas, or spaces)
-        const urls = imageLinkInput
-            .split(/[\s,\n]+/)
-            .map(u => u.trim())
-            .filter(u => {
-                if (!u) return false;
-                try {
-                    new URL(u);
-                    return true;
-                } catch (_) {
-                    return false;
-                }
-            });
-
-        if (urls.length === 0) {
-            toast.error('No valid image URLs found');
+        if (finalUrls.length === 0) {
+            toast.error('Please enter or add a valid image URL');
             return;
         }
 
@@ -7092,13 +7122,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
 
         // If the number of pasted URLs exceeds remaining slots, limit it
-        let urlsToAdd = urls;
-        if (urls.length > remainingCapacity) {
+        let urlsToAdd = finalUrls;
+        if (finalUrls.length > remainingCapacity) {
             toast.warning(`Limit reached. Only adding the first ${remainingCapacity} valid image URLs.`);
-            urlsToAdd = urls.slice(0, remainingCapacity);
+            urlsToAdd = finalUrls.slice(0, remainingCapacity);
         }
 
         setImageLinkInput('');
+        setImageLinkUrls([]);
         setShowImageLinkModal(false);
 
         // Add each URL
@@ -15193,7 +15224,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             {/* Image Link Modal */}
             {showImageLinkModal && (
-                <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => setShowImageLinkModal(false)}>
+                <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => { setShowImageLinkModal(false); setImageLinkUrls([]); }}>
                     <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl overflow-hidden border-2 transform transition-all scale-100 ${isDarkMode ? 'bg-gray-900 border-indigo-900/50 text-white' : 'bg-white border-indigo-100 text-gray-900'}`} onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
@@ -15210,51 +15241,56 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         <form onSubmit={handleImageLinkSubmit} className="space-y-4">
                             <div>
                                 <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    Paste Image Address(es)
+                                    Add Image Address
                                 </label>
-                                <div className="relative group">
-                                    <textarea
-                                        value={imageLinkInput}
-                                        onChange={(e) => setImageLinkInput(e.target.value)}
-                                        placeholder="Paste one or more image URLs here...&#10;(Separate multiple URLs with newlines, commas, or spaces)"
-                                        rows={3}
-                                        className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 resize-none ${isDarkMode
-                                            ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50 placeholder-gray-500'
-                                            : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50 placeholder-gray-400'
-                                            }`}
-                                        autoFocus
-                                    />
-                                    <div className="absolute right-3 top-4 opacity-30 group-focus-within:opacity-100 transition-opacity pointer-events-none">
-                                        <FaImage size={18} className={isDarkMode ? 'text-indigo-400' : 'text-indigo-500'} />
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1 group">
+                                        <input
+                                            type="text"
+                                            value={imageLinkInput}
+                                            onChange={(e) => setImageLinkInput(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    handleAddUrlToList();
+                                                }
+                                            }}
+                                            placeholder="https://example.com/image.jpg"
+                                            className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
+                                                ? 'bg-gray-800 border-gray-700 text-white focus:border-indigo-500/50 placeholder-gray-500'
+                                                : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50 placeholder-gray-400'
+                                                }`}
+                                            autoFocus
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                                            <FaImage size={18} className={isDarkMode ? 'text-indigo-400' : 'text-indigo-500'} />
+                                        </div>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddUrlToList}
+                                        disabled={!imageLinkInput.trim()}
+                                        className={`px-4 rounded-xl font-bold text-lg flex items-center justify-center transition-all ${imageLinkInput.trim()
+                                            ? `bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95`
+                                            : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
+                                            }`}
+                                        title="Add URL to list"
+                                    >
+                                        +
+                                    </button>
                                 </div>
 
-                                {/* URL Image Preview */}
-                                {(() => {
-                                    const parsedUrls = imageLinkInput
-                                        .split(/[\s,\n]+/)
-                                        .map(u => u.trim())
-                                        .filter(u => {
-                                            if (!u) return false;
-                                            try {
-                                                new URL(u);
-                                                return true;
-                                            } catch (_) {
-                                                return false;
-                                            }
-                                        });
-
-                                    if (parsedUrls.length === 0) return null;
-
-                                    return (
-                                        <div className="mt-4 animate-fadeIn max-h-48 overflow-y-auto pr-1">
-                                            <div className={`p-2.5 rounded-xl border-2 transition-all duration-300 ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-indigo-100'}`}>
-                                                {parsedUrls.length === 1 ? (
-                                                    <div className="relative aspect-video rounded-lg overflow-hidden group/preview bg-black/5">
+                                {/* URL Image Preview List */}
+                                {imageLinkUrls.length > 0 && (
+                                    <div className="mt-4 animate-fadeIn max-h-48 overflow-y-auto pr-1">
+                                        <div className={`p-2.5 rounded-xl border-2 transition-all duration-300 ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-indigo-100'}`}>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {imageLinkUrls.map((url, idx) => (
+                                                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group/preview bg-black/5 border border-gray-200 dark:border-gray-700">
                                                         <img
-                                                            src={parsedUrls[0]}
-                                                            alt="Preview"
-                                                            className="w-full h-full object-contain cursor-pointer transition-transform duration-500 group-hover/preview:scale-105"
+                                                            src={url}
+                                                            alt={`Preview ${idx + 1}`}
+                                                            className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
                                                             onError={(e) => {
                                                                 e.target.style.display = 'none';
                                                                 e.target.nextSibling.style.display = 'flex';
@@ -15264,58 +15300,37 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 e.target.nextSibling.style.display = 'none';
                                                             }}
                                                             onClick={() => {
-                                                                setPreviewImages([parsedUrls[0]]);
-                                                                setPreviewImageIndex(0);
+                                                                setPreviewImages(imageLinkUrls);
+                                                                setPreviewImageIndex(idx);
                                                                 setIsImagePreviewOpen(true);
                                                             }}
                                                         />
-                                                        <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 gap-2">
-                                                            <FaImage size={32} className="opacity-20" />
-                                                            <span className="text-[10px] font-medium uppercase tracking-widest opacity-50">Invalid Image URL</span>
+                                                        <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 text-center p-1">
+                                                            <FaImage size={16} className="opacity-20 mb-0.5" />
+                                                            <span className="text-[8px] font-medium opacity-50 leading-none">Error</span>
                                                         </div>
-                                                        <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover/preview:opacity-100 pointer-events-none">
-                                                            <div className="bg-white/20 backdrop-blur-md p-2 rounded-full border border-white/30 text-white transform translate-y-4 group-hover/preview:translate-y-0 transition-all duration-300">
-                                                                <FaExpand size={14} />
-                                                            </div>
-                                                        </div>
+                                                        
+                                                        {/* Delete Overlay */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemoveUrlFromList(url);
+                                                            }}
+                                                            className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-700 transition-colors"
+                                                            title="Remove image"
+                                                        >
+                                                            <FaTimes size={10} />
+                                                        </button>
                                                     </div>
-                                                ) : (
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        {parsedUrls.map((url, idx) => (
-                                                            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group/preview bg-black/5 border border-gray-200 dark:border-gray-700">
-                                                                <img
-                                                                    src={url}
-                                                                    alt={`Preview ${idx + 1}`}
-                                                                    className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
-                                                                    onError={(e) => {
-                                                                        e.target.style.display = 'none';
-                                                                        e.target.nextSibling.style.display = 'flex';
-                                                                    }}
-                                                                    onLoad={(e) => {
-                                                                        e.target.style.display = 'block';
-                                                                        e.target.nextSibling.style.display = 'none';
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        setPreviewImages(parsedUrls);
-                                                                        setPreviewImageIndex(idx);
-                                                                        setIsImagePreviewOpen(true);
-                                                                    }}
-                                                                />
-                                                                <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 text-center p-1">
-                                                                    <FaImage size={16} className="opacity-20 mb-0.5" />
-                                                                    <span className="text-[8px] font-medium opacity-50 leading-none">Error</span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                ))}
                                             </div>
                                         </div>
-                                    );
-                                })()}
+                                    </div>
+                                )}
 
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    Tip: You can add up to 5 images per message. Separate multiple links with newlines, commas, or spaces.
+                                    Tip: You can add up to 5 images per message. Type a URL and click "+" to add it.
                                 </p>
                             </div>
 
@@ -15332,15 +15347,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => setShowImageLinkModal(false)}
+                                    onClick={() => { setShowImageLinkModal(false); setImageLinkUrls([]); }}
                                     className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={!imageLinkInput.trim()}
-                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 ${imageLinkInput.trim()
+                                    disabled={imageLinkUrls.length === 0 && !imageLinkInput.trim()}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 ${(imageLinkUrls.length > 0 || imageLinkInput.trim())
                                         ? `bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 active:scale-[0.98]`
                                         : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
                                         }`}
