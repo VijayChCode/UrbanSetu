@@ -11672,7 +11672,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         {/* Chat History Modal */}
                         {showHistory && (
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl animate-fadeIn">
-                                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl w-96 max-w-full max-h-[80vh] flex flex-col animate-scaleIn`}>
+                                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl w-96 max-w-full max-h-[80vh] flex flex-col animate-scaleIn relative overflow-hidden`}>
+                                    {/* Session Loading Overlay covering the whole modal */}
+                                    {isLoadingSessionHistory && (
+                                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center z-50 animate-fadeIn">
+                                            <UrbanSetuSpinner size="md" />
+                                            <p className="text-sm text-white mt-3 font-semibold tracking-wide">Loading chat session...</p>
+                                        </div>
+                                    )}
+
                                     {/* Fixed Header */}
                                     <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                                         <h4 className={`font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -11707,14 +11715,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
 
                                     {/* Scrollable Content */}
-                                    <div className="flex-1 overflow-y-auto p-4 relative">
-                                        {/* Session Loading Overlay */}
-                                        {isLoadingSessionHistory && (
-                                            <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 rounded-lg animate-fadeIn">
-                                                <UrbanSetuSpinner size="md" />
-                                                <p className="text-sm text-white mt-3 font-medium">Loading chat session...</p>
-                                            </div>
-                                        )}
+                                    <div className="flex-1 overflow-y-auto p-4">
                                         {isLoadingSessions ? (
                                             <div className="flex flex-col items-center justify-center py-10 space-y-3 animate-fadeIn">
                                                 <UrbanSetuSpinner size="md" />
