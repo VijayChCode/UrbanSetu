@@ -1145,6 +1145,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [lifetimeUsage, setLifetimeUsage] = useState({ totalTokens: 0 });
     const [activeSessionTokens, setActiveSessionTokens] = useState(0);
     const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+    const [isLoadingSessionHistory, setIsLoadingSessionHistory] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [typingText, setTypingText] = useState('');
     const [showQuickActions, setShowQuickActions] = useState(false);
@@ -6325,7 +6326,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const loadSessionHistory = async (sessionId) => {
+    const loadSessionHistory = async (sessionId, closeModalOnSuccess = false) => {
+        setIsLoadingSessionHistory(true);
         try {
             const response = await authenticatedFetch(`${API_BASE_URL}/api/chat-history/session/${sessionId}`);
 
@@ -6373,12 +6375,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         applySessionSettings(data.data.settings);
                     }
 
+                    // Close history modal AFTER successful load
+                    if (closeModalOnSuccess) {
+                        setShowHistory(false);
+                        setOpenHistoryMenuSessionId(null);
+                    }
+
                     toast.success('Chat loaded successfully');
                 }
             }
         } catch (error) {
             console.error('Error loading chat:', error);
             toast.error('Failed to load chat');
+        } finally {
+            setIsLoadingSessionHistory(false);
         }
     };
 
@@ -11697,7 +11707,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </div>
 
                                     {/* Scrollable Content */}
-                                    <div className="flex-1 overflow-y-auto p-4">
+                                    <div className="flex-1 overflow-y-auto p-4 relative">
+                                        {/* Session Loading Overlay */}
+                                        {isLoadingSessionHistory && (
+                                            <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 rounded-lg animate-fadeIn">
+                                                <UrbanSetuSpinner size="md" />
+                                                <p className="text-sm text-white mt-3 font-medium">Loading chat session...</p>
+                                            </div>
+                                        )}
                                         {isLoadingSessions ? (
                                             <div className="flex flex-col items-center justify-center py-10 space-y-3 animate-fadeIn">
                                                 <UrbanSetuSpinner size="md" />
@@ -11740,11 +11757,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                     aria-label="Select chat"
                                                                 />
                                                                 <button
+                                                                    disabled={isLoadingSessionHistory}
                                                                     onClick={() => {
                                                                         const sName = session.name && !/^Chat \d/i.test(session.name) ? session.name : '';
                                                                         setCurrentChatName(sName);
-                                                                        loadSessionHistory(session.sessionId);
-                                                                        setShowHistory(false);
+                                                                        loadSessionHistory(session.sessionId, true);
                                                                     }}
                                                                     className="flex-1 text-left"
                                                                 >
