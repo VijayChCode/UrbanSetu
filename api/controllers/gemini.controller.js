@@ -34,7 +34,7 @@ const analyzeImageWithVision = async (imageUrls, userQuestion) => {
         ];
 
         // Add each image URL as a content part
-        for (const url of imageUrls.slice(0, 4)) { // Max 4 images
+        for (const url of imageUrls.slice(0, 5)) { // Max 5 images
             content.push({
                 type: "image_url",
                 image_url: { url: url }
