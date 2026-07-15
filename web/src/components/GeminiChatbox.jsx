@@ -247,7 +247,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
     ] : [
         "Analyzing Query...",
         "Identifying Tasks...",
-        "Creating Task...",
+        "Creating Scheduled Tasks...",
         "Finalizing Task Creation..."
     ];
 
