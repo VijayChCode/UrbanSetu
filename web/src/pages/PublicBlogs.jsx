@@ -387,6 +387,7 @@ const PublicBlogs = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          email: currentUser?.email,
           ...(unsubRecaptchaToken && { recaptchaToken: unsubRecaptchaToken })
         })
       });
@@ -1304,6 +1305,10 @@ const PublicBlogs = () => {
 
                 {unsubscribeStep === 'REASON' ? (
                   <>
+                    <div className="mb-4">
+                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block uppercase tracking-wider mb-1">Unsubscribing Email:</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800/60 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 block">{currentUser?.email}</span>
+                    </div>
                     <textarea
                       value={optOutReason}
                       onChange={(e) => setOptOutReason(e.target.value)}
