@@ -482,7 +482,7 @@ export default function StatusPage() {
                                     </div>
                                     <div className="md:w-3/4 space-y-3 sm:space-y-4 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                                         <p>
-                                            {upcoming?.message || `We will be upgrading critical infrastructure on July 8th. For up to 30 minutes, you will be unable to view, edit, create or deploy services and databases. The REST API and one-off jobs will also be unavailable.`}
+                                            {upcoming?.message || `We will be upgrading critical infrastructure soon. For up to 30 minutes, you will be unable to view, edit, create or deploy services and databases. The REST API and one-off jobs will also be unavailable.`}
                                         </p>
                                         <p>
                                             There will be no interruptions to already running sites, and users can continue to browse listings. However, creating listings or submitting appointments will be locked temporarily.
