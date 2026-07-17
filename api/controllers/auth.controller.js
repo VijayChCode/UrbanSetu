@@ -23,6 +23,7 @@ import OtpTracking from "../models/otpTracking.model.js";
 import DeletedAccount from "../models/deletedAccount.model.js";
 import AccountRevocation from "../models/accountRevocation.model.js";
 import { validateEmail } from "../utils/emailValidation.js";
+import Notification from "../models/notification.model.js";
 import { getDeviceInfo, getLocationFromIP } from "../utils/sessionManager.js";
 import SentinelSecurityService from "../services/SentinelSecurityService.js";
 
@@ -221,6 +222,20 @@ export const SignUp = async (req, res, next) => {
         })
 
         await newUser.save();
+
+        // Create welcome notification
+        try {
+            const welcomeNotification = new Notification({
+                userId: newUser._id,
+                type: 'welcome',
+                title: 'Welcome to UrbanSetu! 👋',
+                message: `Hello ${newUser.username}, welcome to UrbanSetu! Your account has been successfully created. We're excited to have you on board! Complete your profile to unlock custom features.`,
+            });
+            await welcomeNotification.save();
+            console.log(`✅ Welcome notification created for user: ${newUser._id}`);
+        } catch (notifError) {
+            console.error('❌ Failed to create welcome notification:', notifError);
+        }
 
         // Handle Referral Reward (Both Sides)
         if (resolvedReferredBy) {
@@ -798,6 +813,20 @@ export const Google = async (req, res, next) => {
                 lastLoginLocation: location
             })
             await newUser.save()
+
+            // Create welcome notification
+            try {
+                const welcomeNotification = new Notification({
+                    userId: newUser._id,
+                    type: 'welcome',
+                    title: 'Welcome to UrbanSetu! 👋',
+                    message: `Hello ${newUser.username}, welcome to UrbanSetu! Your account has been successfully created via Google. We're excited to have you on board!`,
+                });
+                await welcomeNotification.save();
+                console.log(`✅ Welcome notification created for Google user: ${newUser._id}`);
+            } catch (notifError) {
+                console.error('❌ Failed to create welcome notification for Google user:', notifError);
+            }
 
             // Handle Referral Reward for Google Sign-up (Both Sides)
             if (resolvedGoogleReferredBy) {

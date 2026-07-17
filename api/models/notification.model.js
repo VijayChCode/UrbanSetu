@@ -71,7 +71,8 @@ const notificationSchema = new mongoose.Schema(
         'client_error_report',
         'community_report',
         'video_issue_report',
-        'platform_update'
+        'platform_update',
+        'welcome'
       ],
     },
     title: {
