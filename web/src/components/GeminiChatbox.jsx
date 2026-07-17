@@ -667,7 +667,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isFaceApiLoading, setIsFaceApiLoading] = useState(false);
     const [isAnalyzingFaces, setIsAnalyzingFaces] = useState({}); // format: { [imgTempId]: boolean }
     const [detectedFaces, setDetectedFaces] = useState({}); // format: { [imgTempId]: [{ name: '...', descriptor: [...] }] }
-    const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
+    const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '', details: '' });
     const urlFaceDescriptorsRef = useRef({}); // Cache for URL -> face descriptor mapping
     const [taggingSentImageLoading, setTaggingSentImageLoading] = useState({}); // format: { [imageUrl]: boolean }
     const [deleteReminderId, setDeleteReminderId] = useState(null);
@@ -704,11 +704,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const registerFace = (name, descriptor) => {
+    const registerFace = (name, descriptor, details = '') => {
         try {
             const knownFaces = getKnownFaces();
             const descArray = Array.from(descriptor);
-            knownFaces.push({ name, descriptor: descArray });
+            const entry = { name, descriptor: descArray };
+            if (details && details.trim()) {
+                entry.details = details.trim().slice(0, 200);
+            }
+            knownFaces.push(entry);
             localStorage.setItem('setu_known_faces', JSON.stringify(knownFaces));
             toast.success(`Registered face as "${name}"!`);
         } catch (e) {
@@ -850,7 +854,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             imgId: imgUrl,
             faceIndex: 0,
             descriptor: descriptor,
-            name: currentName || ''
+            name: currentName || '',
+            details: ''
         });
     };
 
@@ -859,7 +864,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (!faceTaggingModal.name.trim()) return;
         
         const newName = faceTaggingModal.name.trim();
-        registerFace(newName, faceTaggingModal.descriptor);
+        const newDetails = (faceTaggingModal.details || '').trim().slice(0, 200);
+        registerFace(newName, faceTaggingModal.descriptor, newDetails);
         
         if (typeof faceTaggingModal.imgId === 'string' && (faceTaggingModal.imgId.startsWith('http') || faceTaggingModal.imgId.startsWith('/'))) {
             const imgUrl = faceTaggingModal.imgId;
@@ -884,7 +890,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             });
         }
         
-        setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' });
+        setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '', details: '' });
     };
     // -------------------------------------------------------------
     const [sessionId, setSessionId] = useState(null);
@@ -4415,7 +4421,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     if (detectedFaces[img.id]) {
                         const faces = detectedFaces[img.id].map(f => f.name);
                         if (faces.length > 0) {
-                            const faceList = faces.map(n => n === 'Unknown' ? 'Unknown (Face AI detected a face; please use your vision intelligence to identify this person if asked)' : n);
+                            const knownFacesForDetails = getKnownFaces();
+                            const faceList = faces.map(n => {
+                                if (n === 'Unknown') return 'Unknown (Face AI detected a face; please use your vision intelligence to identify this person if asked)';
+                                const knownEntry = knownFacesForDetails.find(kf => kf.name === n);
+                                if (knownEntry && knownEntry.details && knownEntry.details.trim()) {
+                                    return `${n} (Details: ${knownEntry.details.trim()})`;
+                                }
+                                return n;
+                            });
                             faceInfo = `\n\nIdentified Face(s)/Person(s) in Image:\n"""\n${faceList.join(', ')}\n"""`;
                         }
                     }
@@ -15345,6 +15359,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 onClose={() => setIsImagePreviewOpen(false)}
                 images={previewImages}
                 initialIndex={previewImageIndex}
+                onFaceDetected={(name, details, descriptor) => {
+                    registerFace(name, descriptor, details);
+                }}
             />
 
             {/* Image Link Modal */}
@@ -15606,10 +15623,37 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 />
                             </div>
 
+                            <div>
+                                <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Person's Details <span className={`font-normal normal-case tracking-normal ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>(optional)</span>
+                                </label>
+                                <textarea
+                                    value={faceTaggingModal.details}
+                                    onChange={(e) => {
+                                        if (e.target.value.length <= 200) {
+                                            setFaceTaggingModal(prev => ({ ...prev, details: e.target.value }));
+                                        }
+                                    }}
+                                    maxLength={200}
+                                    rows={2}
+                                    placeholder="e.g. Indian cricketer, captain of CSK"
+                                    className={`w-full px-4 py-2.5 rounded-xl border text-sm font-medium transition-all outline-none resize-none ${
+                                        isDarkMode
+                                            ? 'bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900'
+                                            : 'bg-gray-50 border-gray-200 focus:border-purple-500 text-gray-800 focus:bg-white'
+                                    }`}
+                                />
+                                {faceTaggingModal.details.length > 120 && (
+                                    <p className={`text-[10px] text-right mt-1 ${faceTaggingModal.details.length >= 200 ? 'text-red-400' : isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        {faceTaggingModal.details.length}/200 chars
+                                    </p>
+                                )}
+                            </div>
+
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '' })}
+                                    onClick={() => setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '', details: '' })}
                                     className={`w-full py-3 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 border ${isDarkMode ? 'bg-gray-900 hover:bg-gray-800 border-gray-800 text-gray-300' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600'}`}
                                 >
                                     Cancel

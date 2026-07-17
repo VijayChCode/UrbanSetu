@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { authenticatedFetch } from '../utils/auth';
+import * as faceapi from '@vladmandic/face-api';
 import {
   FaTimes,
   FaSearchPlus,
@@ -20,7 +21,8 @@ import {
   FaInfoCircle,
   FaTh,
   FaArrowLeft,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaUser
 } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { useImageFavorites } from '../contexts/ImageFavoritesContext';
@@ -61,7 +63,7 @@ const showToast = (message, type = 'info') => {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = null, metadata = {} }) => {
+const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = null, metadata = {}, onFaceDetected }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -115,10 +117,108 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimatingSwipe, setIsAnimatingSwipe] = useState(false);
 
+  // Face Detection State
+  const [isDetectingFaces, setIsDetectingFaces] = useState(false);
+  const [faceTagModal, setFaceTagModal] = useState({ isOpen: false, descriptor: null, detectedName: '', details: '' });
+
   const showFeedback = (msg) => {
     setFeedbackMessage(msg);
     if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
     feedbackTimeoutRef.current = setTimeout(() => setFeedbackMessage(null), 1500);
+  };
+
+  // -------------------------------------------------------------
+  // FACE DETECTION UTILITIES (face-api.js)
+  // -------------------------------------------------------------
+  const loadFaceApiModels = async () => {
+    if (faceapi.nets.ssdMobilenetv1.params) return;
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
+  };
+
+  const getKnownFaces = () => {
+    try {
+      const stored = localStorage.getItem('setu_known_faces');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const handleDetectFaces = async () => {
+    if (isDetectingFaces || !currentImageUrl) return;
+    setIsDetectingFaces(true);
+    showFeedback("Detecting faces...");
+    try {
+      await loadFaceApiModels();
+      const fetchUrl = currentImageUrl.startsWith('http') && !currentImageUrl.includes('localhost') && !currentImageUrl.includes('127.0.0.1')
+        ? `${API_BASE_URL}/api/upload/proxy-image?url=${encodeURIComponent(currentImageUrl)}`
+        : currentImageUrl;
+      const imgElement = await faceapi.fetchImage(fetchUrl);
+      const detections = await faceapi.detectAllFaces(imgElement)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      if (detections && detections.length > 0) {
+        const knownFaces = getKnownFaces();
+        let bestMatch = { name: '', distance: 1.0 };
+        const descriptor = detections[0].descriptor;
+        knownFaces.forEach(known => {
+          const dist = faceapi.euclideanDistance(descriptor, new Float32Array(known.descriptor));
+          if (dist < 0.6 && dist < bestMatch.distance) {
+            bestMatch = { name: known.name, distance: dist };
+          }
+        });
+        showFeedback(`${detections.length} face(s) detected!`);
+        setFaceTagModal({
+          isOpen: true,
+          descriptor: Array.from(descriptor),
+          detectedName: bestMatch.name || '',
+          details: ''
+        });
+      } else {
+        showFeedback("No faces detected");
+        showToast("No faces detected in this image.", "info");
+      }
+    } catch (err) {
+      console.error("Face detection failed:", err);
+      showFeedback("Detection failed");
+      showToast("Failed to analyze faces on this image.", "error");
+    } finally {
+      setIsDetectingFaces(false);
+    }
+  };
+
+  const handleFaceTagSave = (e) => {
+    if (e) e.preventDefault();
+    const name = faceTagModal.detectedName.trim();
+    if (!name) return;
+    const details = (faceTagModal.details || '').trim().slice(0, 200);
+    const descriptor = faceTagModal.descriptor;
+
+    // Save to localStorage
+    try {
+      const knownFaces = getKnownFaces();
+      const entry = { name, descriptor };
+      if (details) entry.details = details;
+      knownFaces.push(entry);
+      localStorage.setItem('setu_known_faces', JSON.stringify(knownFaces));
+      showToast(`Registered face as "${name}"!`, 'success');
+    } catch (err) {
+      console.error('Failed to save face:', err);
+      showToast('Failed to save face registration.', 'error');
+    }
+
+    // Notify parent (GeminiChatbox) if callback provided
+    if (onFaceDetected) {
+      onFaceDetected(name, details, descriptor);
+    }
+
+    setFaceTagModal({ isOpen: false, descriptor: null, detectedName: '', details: '' });
   };
 
   // Use image favorites context
@@ -1279,6 +1379,18 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           <FaShare size={16} />
         </button>
         <button
+          onClick={handleDetectFaces}
+          disabled={isDetectingFaces}
+          className={`p-2 rounded-lg transition-all duration-200 ${
+            isDetectingFaces
+              ? 'text-purple-400 bg-purple-400 bg-opacity-20 animate-pulse'
+              : 'text-white hover:text-purple-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title="Detect Faces"
+        >
+          {isDetectingFaces ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaUser size={16} />}
+        </button>
+        <button
           onClick={() => setShowInfo(prev => !prev)}
           className={`p-2 rounded-lg transition-all duration-200 ${showInfo
             ? 'text-blue-400 bg-blue-400 bg-opacity-20'
@@ -1370,6 +1482,18 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           ) : (
             <FaDownload size={14} />
           )}
+        </button>
+        <button
+          onClick={handleDetectFaces}
+          disabled={isDetectingFaces}
+          className={`p-1.5 rounded-lg transition-all duration-200 ${
+            isDetectingFaces
+              ? 'text-purple-400 bg-purple-400 bg-opacity-20 animate-pulse'
+              : 'text-white hover:text-purple-300 hover:bg-white hover:bg-opacity-20'
+          }`}
+          title="Detect Faces"
+        >
+          {isDetectingFaces ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaUser size={14} />}
         </button>
         <button
           onClick={() => setShowSettings(prev => !prev)}
@@ -1483,6 +1607,20 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                 </div>
               </button>
               <button
+                onClick={() => { handleDetectFaces(); setShowSettings(false); }}
+                disabled={isDetectingFaces}
+                className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${
+                  isDetectingFaces
+                    ? 'text-purple-400 bg-purple-400 bg-opacity-20'
+                    : 'text-white hover:text-purple-300 hover:bg-white hover:bg-opacity-20'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FaUser size={14} />
+                  <span>{isDetectingFaces ? 'Detecting...' : 'Detect Faces'}</span>
+                </div>
+              </button>
+              <button
                 onClick={() => { setShowAboutViewer(true); setShowSettings(false); }}
                 className="w-full text-left p-2 rounded-lg text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20 transition-all duration-200 border-t border-gray-600 mt-2 pt-3"
               >
@@ -1544,6 +1682,20 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                 <div className="flex items-center gap-2">
                   <FaUndo size={14} />
                   <span>Rotate Image</span>
+                </div>
+              </button>
+              <button
+                onClick={() => { handleDetectFaces(); setShowSettings(false); }}
+                disabled={isDetectingFaces}
+                className={`w-full text-left p-2 rounded-lg transition-all duration-200 ${
+                  isDetectingFaces
+                    ? 'text-purple-400 bg-purple-400 bg-opacity-20'
+                    : 'text-white hover:text-purple-300 hover:bg-white hover:bg-opacity-20'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FaUser size={14} />
+                  <span>{isDetectingFaces ? 'Detecting...' : 'Detect Faces'}</span>
                 </div>
               </button>
               <button
@@ -1851,6 +2003,81 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Face Tag Modal */}
+      {faceTagModal.isOpen && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-3xl p-6 shadow-2xl border transform transition-all bg-gray-950 border-gray-800 text-white animate-scaleIn">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-purple-500/20 text-purple-400">
+                  <FaUser size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Tag Detected Face</h3>
+                  <p className="text-xs text-gray-400">Associate a name with this face for future recognition</p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleFaceTagSave} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-400">
+                  Person's Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={faceTagModal.detectedName}
+                  onChange={(e) => setFaceTagModal(prev => ({ ...prev, detectedName: e.target.value }))}
+                  placeholder="e.g. Mahesh Babu"
+                  className="w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all outline-none bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-gray-400">
+                  Person's Details <span className="font-normal normal-case tracking-normal text-gray-600">(optional)</span>
+                </label>
+                <textarea
+                  value={faceTagModal.details}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 200) {
+                      setFaceTagModal(prev => ({ ...prev, details: e.target.value }));
+                    }
+                  }}
+                  maxLength={200}
+                  rows={2}
+                  placeholder="e.g. Indian cricketer, captain of CSK"
+                  className="w-full px-4 py-2.5 rounded-xl border text-sm font-medium transition-all outline-none resize-none bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900"
+                />
+                {faceTagModal.details.length > 120 && (
+                  <p className={`text-[10px] text-right mt-1 ${faceTagModal.details.length >= 200 ? 'text-red-400' : 'text-gray-500'}`}>
+                    {faceTagModal.details.length}/200 chars
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setFaceTagModal({ isOpen: false, descriptor: null, detectedName: '', details: '' })}
+                  className="w-full py-3 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 border bg-gray-900 hover:bg-gray-800 border-gray-800 text-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20 text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                >
+                  Save Tag
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
