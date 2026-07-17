@@ -10257,7 +10257,7 @@ function AdminAppointmentRow({
                     <h3 className="text-lg font-bold mb-4 text-red-600 flex items-center gap-2">
                       <FaTrash /> Delete Entire Chat
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">This will permanently delete all messages for this appointment. Enter admin password to confirm.</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">This will permanently delete all messages for this appointment, removing them from the user's side as well. Enter admin password to confirm.</p>
                     <input
                       type="password"
                       className="border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-3 py-2 w-full focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 mb-4"
