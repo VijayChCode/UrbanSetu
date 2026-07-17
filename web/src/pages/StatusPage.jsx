@@ -94,7 +94,7 @@ export default function StatusPage() {
             const data = await res.json();
             if (res.ok && data.success) {
                 setIsSubscribed(true);
-                setSuccessMsg(data.message || "We will email you when we're back online!");
+                setSuccessMsg("You have successfully subscribed. All updates will be notified.");
                 setEmail('');
                 setTimeout(() => {
                     setShowModal(false);
@@ -544,7 +544,7 @@ export default function StatusPage() {
 
                         {isSubscribed ? (
                             <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm font-bold bg-green-500/10 border border-green-500/20 p-3 rounded-md animate-fadeIn mb-4">
-                                <FaCheckCircle /> {successMsg || "We will email you when we're back online!"}
+                                <FaCheckCircle /> {successMsg || "You have successfully subscribed. All updates will be notified."}
                             </div>
                         ) : (
                             <form onSubmit={handleSubscribe} className="space-y-5">
