@@ -764,8 +764,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const blocks = ocrText.split(/I've uploaded a image file:/);
         const updatedBlocks = blocks.map(block => {
             if (imgUrl && block.includes(imgUrl)) {
+                const knownFacesForDetails = getKnownFaces();
+                const knownEntry = knownFacesForDetails.find(kf => kf.name === newName);
+                let faceDisplay = newName;
+                if (knownEntry && knownEntry.details && knownEntry.details.trim()) {
+                    faceDisplay = `${newName} (Details: ${knownEntry.details.trim()})`;
+                }
                 const faceMatch = block.match(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/);
-                const newFaceStr = `Identified Face(s)/Person(s) in Image:\n"""\n${newName}\n"""`;
+                const newFaceStr = `Identified Face(s)/Person(s) in Image:\n"""\n${faceDisplay}\n"""`;
                 if (faceMatch) {
                     return block.replace(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/, newFaceStr);
                 } else {
