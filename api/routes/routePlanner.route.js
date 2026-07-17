@@ -3,6 +3,7 @@ import { verifyToken } from '../utils/verify.js';
 import realTimeDataService from '../services/realTimeDataService.js';
 import { API_KEYS, API_ENDPOINTS } from '../config/apiKeys.js';
 import Route from '../models/Route.js';
+import { sendRoutePlannerShareEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -272,6 +273,36 @@ router.delete('/saved/:routeId', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting route:', error);
     res.status(500).json({ message: 'Server error deleting route.' });
+  }
+});
+
+// POST: Share a route and send automated email
+router.post('/share', verifyToken, async (req, res) => {
+  try {
+    const { name, stops, distance, duration, shareUrl } = req.body;
+    const email = req.user.email;
+
+    if (!stops || !shareUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'Stops and shareUrl are required'
+      });
+    }
+
+    const result = await sendRoutePlannerShareEmail(email, name, stops, distance, duration, shareUrl);
+
+    res.json({
+      success: true,
+      message: 'Automated route share email sent successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error sharing route/sending email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send route share email',
+      error: error.message
+    });
   }
 });
 

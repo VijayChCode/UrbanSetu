@@ -17888,5 +17888,60 @@ export const sendMaintenanceSubscriptionEmail = async (email) => {
   }
 };
 
+// Send Route Planner Share Email
+export const sendRoutePlannerShareEmail = async (email, routeName, stops, distance, duration, shareUrl) => {
+  const subject = `Your Shared Route: ${routeName || 'My Route'} - UrbanSetu`;
+  const stopsList = Array.isArray(stops) ? stops.join(' → ') : stops;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+      <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #7c3aed; margin: 0; font-size: 28px;">UrbanSetu Route Planner</h1>
+          <p style="color: #6b7280; margin: 10px 0 0 0;">Your Shared Route Details</p>
+        </div>
+        
+        <div style="background-color: #faf5ff; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #7c3aed; text-align: left;">
+          <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">Route Information</h2>
+          <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
+            <strong>Route Name:</strong> ${routeName || 'Planned Route'}
+          </p>
+          <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
+            <strong>Stops:</strong> ${stopsList}
+          </p>
+          <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 10px 0;">
+            <strong>Stats:</strong> Distance: ${distance} km • Est. Duration: ${duration} min
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <p style="color: #374151; margin-bottom: 20px; font-size: 15px;">Click the button below to view this route on UrbanSetu Route Planner:</p>
+          <a href="${shareUrl}" style="background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3); transition: all 0.3s ease;">
+            🗺️ View Shared Route
+          </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+          <p style="color: #9ca3af; margin: 15px 0 0; font-size: 12px;">
+            © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    return await sendEmailWithRetry({
+      to: email,
+      subject: subject,
+      html: html
+    });
+  } catch (error) {
+    console.error('Error sending route planner share email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+
 
 

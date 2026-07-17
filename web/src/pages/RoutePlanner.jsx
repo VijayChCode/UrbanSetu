@@ -87,6 +87,7 @@ export default function RoutePlanner() {
     title: '',
     description: ''
   });
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   const mapRef = useRef(null);
   const geocoderRefs = useRef([]);
@@ -1383,11 +1384,13 @@ export default function RoutePlanner() {
   };
 
   // Share route
-  const shareRoute = () => {
+  const shareRoute = async () => {
     if (!routeData) {
       toast.error('No route to share');
       return;
     }
+
+    setIsGeneratingLink(true);
 
     const stopsList = stops.filter(s => s.address).map(s => s.address.split(',')[0]).join(' → ');
     const description = `Route Details: ${stopsList}.\nDistance: ${routeStats?.distance} km • Duration: ${routeStats?.duration} min.\nPlan your trip with UrbanSetu!`;
@@ -1416,10 +1419,39 @@ export default function RoutePlanner() {
         title: 'Plan your route with UrbanSetu 🗺️',
         description: description
       });
+
+      // Send automated email if user is logged in
+      if (currentUser && currentUser.email) {
+        try {
+          const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+          const response = await authenticatedFetch(`${apiBase}/api/route-planner/share`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: `Route ${stops.filter(s => s.address).map(s => s.address.split(',')[0]).join(' → ')}`,
+              stops: stops.filter(s => s.address).map(s => s.address),
+              distance: routeStats?.distance || 0,
+              duration: routeStats?.duration || 0,
+              shareUrl: shareUrl
+            })
+          });
+
+          if (response.ok) {
+            toast.success('Route shared! An email with details has been sent to you.');
+          } else {
+            console.warn('Failed to send share email automatically');
+          }
+        } catch (emailErr) {
+          console.error('Error triggering route share email:', emailErr);
+        }
+      }
+
       setShowSharePanel(true);
     } catch (err) {
       console.error('Error creating share link:', err);
       toast.error('Failed to generate shareable link');
+    } finally {
+      setIsGeneratingLink(false);
     }
   };
 
@@ -2173,8 +2205,21 @@ export default function RoutePlanner() {
                           </>
                         )}
                       </button>
-                      <button onClick={shareRoute} className="flex-1 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium flex items-center justify-center gap-1 transition-colors">
-                        <FaShare /> Share
+                      <button 
+                        onClick={shareRoute} 
+                        disabled={isGeneratingLink}
+                        className="flex-1 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
+                      >
+                        {isGeneratingLink ? (
+                          <>
+                            <UrbanSetuSpinner size="sm" />
+                            Generating link...
+                          </>
+                        ) : (
+                          <>
+                            <FaShare /> Share
+                          </>
+                        )}
                       </button>
                       <button onClick={exportRoute} className="flex-1 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium flex items-center justify-center gap-1 transition-colors">
                         <FaDownload /> GPX
