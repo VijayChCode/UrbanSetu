@@ -3092,6 +3092,7 @@ function AdminAppointmentRow({
   const [forceTerminateReason, setForceTerminateReason] = useLocalState('');
   const [forceTerminateLoading, setForceTerminateLoading] = useLocalState(false);
   const [screenSharingStatus, setScreenSharingStatus] = useLocalState({ buyer: false, seller: false });
+  const [monitorRefreshing, setMonitorRefreshing] = useLocalState(false);
 
   // Audio activity detection for monitor
   const isBuyerSpeaking = useAudioActivity(buyerMonitorStream);
@@ -11656,24 +11657,40 @@ function AdminAppointmentRow({
                   </button>
                   <button
                     onClick={async () => {
-                      // Re-fetch latest active call before refreshing monitor
-                      let latestActive = activeLiveCall;
-                      if (!latestActive || !latestActive.callId) {
-                        latestActive = await fetchLatestActiveCall();
-                      }
-
-                      if (latestActive && latestActive.callId) {
-                        socket.emit('admin-monitor-join', { callId: latestActive.callId });
-                      } else {
-                        toast.info('No active call detected for this appointment.');
+                      setMonitorRefreshing(true);
+                      try {
+                        // Cleanup existing peers first for a fresh reconnection
                         cleanupMonitorPeers();
+                        // Re-fetch latest active call before refreshing monitor
+                        let latestActive = activeLiveCall;
+                        if (!latestActive || !latestActive.callId) {
+                          latestActive = await fetchLatestActiveCall();
+                        }
+
+                        if (latestActive && latestActive.callId) {
+                          socket.emit('admin-monitor-join', { callId: latestActive.callId });
+                        } else {
+                          toast.info('No active call detected for this appointment.');
+                          cleanupMonitorPeers();
+                        }
+                      } catch (err) {
+                        console.error('[Admin Monitor] Refresh error:', err);
+                        toast.error('Failed to refresh monitor');
+                      } finally {
+                        // Give some time for streams to reconnect before removing spinner
+                        setTimeout(() => setMonitorRefreshing(false), 1500);
                       }
                     }}
-                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 ml-2"
+                    disabled={monitorRefreshing}
+                    className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full border border-white/20 ml-2 transition-all ${
+                      monitorRefreshing
+                        ? 'bg-white/20 text-white/50 cursor-not-allowed'
+                        : 'bg-white/10 hover:bg-white/20 text-white'
+                    }`}
                     title="Refresh live monitor"
                   >
-                    <FaSync className="w-3 h-3" />
-                    Refresh
+                    <FaSync className={`w-3 h-3 ${monitorRefreshing ? 'animate-spin' : ''}`} />
+                    {monitorRefreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
                 </div>
               </div>
