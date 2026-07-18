@@ -2888,6 +2888,7 @@ function AdminAppointmentRow({
   const [passwordError, setPasswordError] = useLocalState("");
   const [showDeleteModal, setShowDeleteModal] = useLocalState(false);
   const [messageToDelete, setMessageToDelete] = useLocalState(null);
+  const [deleteMessageLoading, setDeleteMessageLoading] = useLocalState(false);
   const [passwordLoading, setPasswordLoading] = useLocalState(false);
   const [loadingComments, setLoadingComments] = useLocalState(false);
   const chatEndRef = React.useRef(null);
@@ -6258,6 +6259,7 @@ function AdminAppointmentRow({
     if (!messageToDelete) return;
 
     try {
+      setDeleteMessageLoading(true);
       // Handle call deletion (calls are stored in DB, we just remove from local display)
       if (messageToDelete.isCall || (messageToDelete._id && messageToDelete._id.startsWith('call-'))) {
         const callToDelete = messageToDelete.call || messageToDelete;
@@ -6265,8 +6267,6 @@ function AdminAppointmentRow({
           (call._id || call.callId) !== (callToDelete._id || callToDelete.callId)
         ));
         toast.success('Call removed from chat');
-        setShowDeleteModal(false);
-        setMessageToDelete(null);
         return;
       }
 
@@ -6346,10 +6346,11 @@ function AdminAppointmentRow({
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete message.');
+    } finally {
+      setDeleteMessageLoading(false);
+      setShowDeleteModal(false);
+      setMessageToDelete(null);
     }
-
-    setShowDeleteModal(false);
-    setMessageToDelete(null);
   };
 
   const handleDeleteChat = async () => {
@@ -10562,21 +10563,32 @@ function AdminAppointmentRow({
                 <div className="flex gap-3 justify-end">
                   <button
                     type="button"
+                    disabled={deleteMessageLoading}
                     onClick={() => {
                       setShowDeleteModal(false);
                       setMessageToDelete(null);
                     }}
-                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
+                    disabled={deleteMessageLoading}
                     onClick={handleConfirmDelete}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FaTrash size={14} />
-                    Delete
+                    {deleteMessageLoading ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaTrash size={14} />
+                        <span>Delete</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -11906,11 +11918,11 @@ function AdminAppointmentRow({
                             showBorder={true}
                             className="border-2 border-white/60 shadow-lg"
                           />
-                          <div className="flex flex-col">
-                            <span className="text-sm sm:text-base font-semibold text-white">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm sm:text-base font-semibold text-white truncate" title={appt.buyerId?.username || 'Buyer'}>
                               {appt.buyerId?.username || 'Buyer'}
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[10px] text-white/60 uppercase tracking-wide">Buyer Side</span>
                               <span
                                 className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${monitorAudioMuted.buyer ? 'bg-gray-700 text-white' : 'bg-green-600 text-white'
@@ -12001,11 +12013,11 @@ function AdminAppointmentRow({
                             showBorder={true}
                             className="border-2 border-white/60 shadow-lg"
                           />
-                          <div className="flex flex-col">
-                            <span className="text-sm sm:text-base font-semibold text-white">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm sm:text-base font-semibold text-white truncate" title={appt.sellerId?.username || 'Seller'}>
                               {appt.sellerId?.username || 'Seller'}
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[10px] text-white/60 uppercase tracking-wide">Seller Side</span>
                               <span
                                 className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${monitorAudioMuted.seller ? 'bg-gray-700 text-white' : 'bg-green-600 text-white'
