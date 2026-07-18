@@ -216,6 +216,50 @@ const extractTextFromFile = async (file, onProgress) => {
     throw new Error(`Text extraction not supported for .${extension} files.`);
 };
 
+const SUGG_TEMPLATES = [
+    // Real Estate
+    { icon: "🏠", label: "Find properties", description: "under ₹75L with 3 BHK in prime areas", prompt: "Find properties under ₹75L with 3 BHK in premium areas" },
+    { icon: "📊", label: "Compare options", description: "buying a flat vs an independent house", prompt: "Compare the benefits of buying a flat vs an independent house" },
+    { icon: "🏗️", label: "Investment hotspots", description: "top real estate investment areas this year", prompt: "What are the top real estate investment hotspots this year?" },
+    { icon: "💰", label: "Home loan help", description: "explain the loan approval process step-by-step", prompt: "Explain the home loan approval process step-by-step" },
+    { icon: "📍", label: "Best localities", description: "find family-friendly neighborhoods", prompt: "What are the best family-friendly localities to live in?" },
+    { icon: "🏢", label: "Commercial vs Residential", description: "which investment offers better returns?", prompt: "Should I invest in commercial or residential property for better long-term returns?" },
+    { icon: "📋", label: "Registration checklist", description: "stamp duty and registration procedures", prompt: "What is the typical stamp duty, registration fee, and document checklist for buying a property?" },
+    { icon: "🔑", label: "First-time buyer guide", description: "crucial tips before signing the contract", prompt: "Give me some crucial tips for a first-time home buyer before signing any contract" },
+
+    // General / Productivity
+    { icon: "⏰", label: "Set an alarm", description: "to follow up with my listing agent", prompt: "Set an alarm to follow up with my listing agent in 2 hours" },
+    { icon: "📅", label: "Schedule reminder", description: "for my property visit tomorrow", prompt: "Schedule a reminder for my property visit tomorrow at 11 AM" },
+    { icon: "✍️", label: "Draft an email", description: "negotiating rent for an apartment", prompt: "Draft a polite and professional email negotiating the rent for an apartment" },
+    { icon: "🧮", label: "Calculate EMI", description: "estimate monthly loan payment", prompt: "Help me calculate the monthly EMI for a home loan of ₹50 Lakhs at 8.5% interest for 20 years" },
+    { icon: "🧠", label: "Explain simply", description: "explain a complex real estate concept simply", prompt: "Explain a complex real estate concept (like FSI/FAR) in very simple terms" },
+    { icon: "💡", label: "Staging ideas", description: "styling tips to stage a property on a budget", prompt: "Give me some creative ideas to stage a living room for sale on a budget" },
+    { icon: "📝", label: "Summarize law", description: "summarize complex property acts or rules", prompt: "Summarize the key points of the RERA Act for property buyers" },
+    { icon: "🔍", label: "Research green homes", description: "learn about sustainable building features", prompt: "Research the latest green building certifications and their value for homes" }
+];
+
+const DYNAMIC_GREETINGS = [
+    "What's on your mind today?",
+    "How can I assist with your real estate needs today?",
+    "Looking for a home? Let's search together.",
+    "Ready to find your next investment? Ask me anything.",
+    "Need help scheduling visits or calculating loans?",
+    "Hello! How can SetuAI help you today?"
+];
+
+const getRandomSuggestions = () => {
+    const rePool = SUGG_TEMPLATES.slice(0, 8);
+    const genPool = SUGG_TEMPLATES.slice(8);
+    
+    // Pick 3 random real estate suggestions
+    const reSelected = [...rePool].sort(() => 0.5 - Math.random()).slice(0, 3);
+    // Pick 3 random general suggestions
+    const genSelected = [...genPool].sort(() => 0.5 - Math.random()).slice(0, 3);
+    
+    // Combine and shuffle them
+    return [...reSelected, ...genSelected].sort(() => 0.5 - Math.random());
+};
+
 const THINKING_TAGS = [
     "Thinking...",
     "Analyzing query...",
@@ -644,13 +688,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(forceModalOpen);
     const [previewVideo, setPreviewVideo] = useState(null);
-    const [messages, setMessages] = useState([
-        {
-            role: 'assistant',
-            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-            timestamp: new Date().toISOString()
-        }
-    ]);
+    const [messages, setMessages] = useState([]);
     const [messageHistoryPage, setMessageHistoryPage] = useState(1);
     const [hasMoreHistory, setHasMoreHistory] = useState(false);
     const [isLoadingPreviousMessages, setIsLoadingPreviousMessages] = useState(false);
@@ -900,6 +938,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
     // -------------------------------------------------------------
     const [sessionId, setSessionId] = useState(null);
+    const [currentSuggestions, setCurrentSuggestions] = useState([]);
+    const [currentGreeting, setCurrentGreeting] = useState('');
     const [currentChatName, setCurrentChatName] = useState('');
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const [displayedTitle, setDisplayedTitle] = useState('SetuAI');
@@ -1009,6 +1049,15 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }, 3000);
         return () => clearTimeout(timer);
     }, [isOpen, hasShownPrompt]);
+
+    // Initialize or randomize suggestions and greeting for empty state
+    useEffect(() => {
+        if (isOpen && messages.length === 0) {
+            setCurrentSuggestions(getRandomSuggestions());
+            const randomGreeting = DYNAMIC_GREETINGS[Math.floor(Math.random() * DYNAMIC_GREETINGS.length)];
+            setCurrentGreeting(randomGreeting);
+        }
+    }, [isOpen, sessionId, messages.length]);
 
     // Typewriter effect for header title
     useEffect(() => {
@@ -2804,13 +2853,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         localStorage.removeItem('gemini_public_history');
                         // Only reset messages if we aren't currently typing or loading (to avoid interrupting active session)
                         if (!isLoading && !isTyping) {
-                            setMessages([
-                                {
-                                    role: 'assistant',
-                                    content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-                                    timestamp: new Date().toISOString()
-                                }
-                            ]);
+                            setMessages([]);
                         }
                     }
                 }
@@ -2896,24 +2939,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
 
                     if (page === 1) {
-                        // Initial load - prepend welcome message if not present
-                        // Use the earliest message's timestamp (or session createdAt) so the welcome
-                        // message groups under the correct date divider, NOT today's date.
-                        const welcomeTimestamp = newMessages.length > 0
-                            ? (newMessages[0].timestamp || data.data.createdAt || new Date().toISOString())
-                            : new Date().toISOString();
-                        const defaultWelcome = {
-                            role: 'assistant',
-                            content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
-                            timestamp: welcomeTimestamp
-                        };
-                        let finalMessages = newMessages;
-                        if (finalMessages.length === 0) {
-                            finalMessages = [defaultWelcome];
-                        } else if (finalMessages[0].content !== defaultWelcome.content) {
-                            finalMessages = [defaultWelcome, ...finalMessages];
-                        }
-                        setMessages(finalMessages);
+                        setMessages(newMessages);
                         setMessageHistoryPage(1);
                         setIsLoadingPreviousMessages(false);
 
@@ -3040,20 +3066,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data.messages) {
-                    // Prepend welcome message if not present (same as loadSessionHistory)
-                    // Use the earliest message's timestamp so date dividers are correct
                     let serverMessages = data.data.messages;
-                    const welcomeTimestamp = serverMessages.length > 0
-                        ? (serverMessages[0].timestamp || data.data.createdAt || new Date().toISOString())
-                        : new Date().toISOString();
-                    const defaultWelcome = {
-                        role: 'assistant',
-                        content: "Hello! I'm SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?",
-                        timestamp: welcomeTimestamp
-                    };
-                    if (serverMessages.length === 0 || (serverMessages.length > 0 && serverMessages[0].content !== defaultWelcome.content)) {
-                        serverMessages = [defaultWelcome, ...serverMessages];
-                    }
 
                     // Apply per-chat settings if available in the refresh response
                     if (data.data.settings) {
@@ -6409,17 +6422,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data.messages && Array.isArray(data.data.messages)) {
-                    // Ensure the first message is always the default welcome message
-                    const defaultMessage = {
-                        role: 'assistant',
-                        content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-                        timestamp: new Date().toISOString()
-                    };
-
                     let sessionMessages = data.data.messages;
-                    if (sessionMessages.length === 0 || sessionMessages[0].content !== defaultMessage.content) {
-                        sessionMessages = [defaultMessage, ...sessionMessages];
-                    }
 
                     setMessages(sessionMessages);
                     // Update total message count from backend response
@@ -9642,6 +9645,60 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <div className={`flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg ${isDarkMode ? 'bg-gray-800/90 border-gray-700 text-blue-400' : 'bg-white/90 border-blue-100 text-blue-600'} backdrop-blur-md transform transition-all hover:scale-105`}>
                                         <UrbanSetuSpinner size="sm" />
                                         <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Empty Chat State Suggestions */}
+                            {messages.length === 0 && !isLoading && !isLoadingPreviousMessages && !isLoadingSessionHistory && (
+                                <div className="flex flex-col items-center justify-center min-h-[85%] my-auto py-8 px-2 sm:px-4 select-none animate-fadeIn w-full max-w-3xl mx-auto">
+                                    {/* Logo & Greeting */}
+                                    <div className="flex flex-col items-center mb-6">
+                                        <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/20 mb-4 transform transition-all hover:scale-110 duration-300">
+                                            <FaRobot className="text-white text-3xl" />
+                                        </div>
+                                        <h2 className={`text-xl sm:text-2xl font-extrabold text-center bg-clip-text text-transparent ${
+                                            isDarkMode 
+                                                ? 'bg-gradient-to-r from-gray-100 via-gray-300 to-gray-400' 
+                                                : `bg-gradient-to-r ${themeColors.primary}`
+                                        } tracking-tight px-4 leading-normal`}>
+                                            {currentGreeting || "How can I help you today?"}
+                                        </h2>
+                                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center max-w-md mt-2 px-6">
+                                            Ask SetuAI about property searches, loan processes, scheduling visits, or general questions.
+                                        </p>
+                                    </div>
+
+                                    {/* Suggestions Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-2">
+                                        {currentSuggestions.map((card, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => handleSmartSuggestion(card.prompt)}
+                                                className={`flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all duration-300 hover:scale-[1.01] hover:-translate-y-0.5 active:scale-95 ${
+                                                    isDarkMode
+                                                        ? 'bg-gray-800/40 border-gray-700/60 hover:bg-gray-800/80 hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                                                        : `bg-white/60 border-gray-200/80 hover:bg-white hover:${themeColors.border} hover:shadow-[0_8px_20px_rgba(59,130,246,0.06)]`
+                                                }`}
+                                            >
+                                                <span className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 text-lg ${
+                                                    isDarkMode 
+                                                        ? 'bg-gray-700/60 text-gray-300' 
+                                                        : `${themeColors.secondary} ${themeColors.accent}`
+                                                }`}>
+                                                    {card.icon}
+                                                </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+                                                        {card.label}
+                                                    </h3>
+                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">
+                                                        {card.description}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             )}

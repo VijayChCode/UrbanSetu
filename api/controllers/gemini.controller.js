@@ -1511,18 +1511,11 @@ export const createNewSession = async (req, res) => {
         // Generate new session ID
         const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Create new chat history with default welcome message
-        const defaultMessage = {
-            role: 'assistant',
-            content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-            timestamp: new Date().toISOString()
-        };
-
         const chatHistory = new ChatHistory({
             userId,
             sessionId: newSessionId,
-            messages: [defaultMessage],
-            totalMessages: 1
+            messages: [],
+            totalMessages: 0
         });
 
         await chatHistory.save();
