@@ -3016,6 +3016,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Clear chat history locally
     const clearLocalChatHistory = () => {
         setMessages([]);
+        setFloatingDateLabel('');
+        setIsScrolling(false);
         setTotalMessageCount(0); // Reset total message count for new session
         // Generate new session ID
         const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -4139,7 +4141,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (msg && msg.timestamp) {
                 const label = getDateLabel(msg.timestamp);
                 setFloatingDateLabel(label);
-                // Visibility is controlled by scroll activity; compute only updates label
+            } else {
+                setFloatingDateLabel('');
             }
         };
         compute();
@@ -6560,6 +6563,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
  
                      // Reset messages to empty array for dynamic empty state
                      setMessages([]);
+                     setFloatingDateLabel('');
+                     setIsScrolling(false);
                      setTotalMessageCount(0); // Reset total message count for new session
                      setCurrentChatName('');
                      setDisplayedTitle('SetuAI');
@@ -9616,7 +9621,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 onDrop={handleDrop}
                             >
                             {/* Floating Date Indicator (sticky below header) */}
-                            {floatingDateLabel && (
+                            {messages.length > 0 && floatingDateLabel && (
                                 <div className={`sticky top-0 left-0 right-0 z-30 pointer-events-none transition-all duration-500 ease-out ${isScrolling ? 'opacity-100 scale-100 translate-y-0 animate-floatingDateFadeIn' : 'opacity-0 scale-95 translate-y-2 animate-floatingDateFadeOut'
                                     }`}>
                                     <div className="w-full flex justify-center py-2">
