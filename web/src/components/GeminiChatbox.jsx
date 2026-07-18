@@ -3015,13 +3015,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Clear chat history locally
     const clearLocalChatHistory = () => {
-        setMessages([
-            {
-                role: 'assistant',
-                content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-                timestamp: new Date().toISOString()
-            }
-        ]);
+        setMessages([]);
         setTotalMessageCount(0); // Reset total message count for new session
         // Generate new session ID
         const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -6564,13 +6558,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                      setSessionId(data.sessionId);
                      localStorage.setItem('gemini_session_id', data.sessionId);
  
-                     // Reset messages to default welcome message
-                     const defaultMessage = {
-                         role: 'assistant',
-                         content: 'Hello! I\'m SetuAI your AI assistant powered by Groq and co-powered by Sentinel v2.0 Neural Engine (TensorFlow). How can I help you with your real estate needs today?',
-                         timestamp: new Date().toISOString()
-                     };
-                     setMessages([defaultMessage]);
+                     // Reset messages to empty array for dynamic empty state
+                     setMessages([]);
                      setTotalMessageCount(0); // Reset total message count for new session
                      setCurrentChatName('');
                      setDisplayedTitle('SetuAI');
