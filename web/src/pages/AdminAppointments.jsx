@@ -2918,6 +2918,8 @@ function AdminAppointmentRow({
   // Infinite scroll/pagination for chat
   const MESSAGES_PAGE_SIZE = 30;
   const [visibleCount, setVisibleCount] = useLocalState(MESSAGES_PAGE_SIZE);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useLocalState(false);
+  const loadingOlderRef = React.useRef(false);
   const [currentFloatingDate, setCurrentFloatingDate] = useLocalState('');
   const [isScrolling, setIsScrolling] = useLocalState(false);
   const [showShortcutTip, setShowShortcutTip] = useLocalState(false);
@@ -7870,8 +7872,50 @@ function AdminAppointmentRow({
 
                   // Render visible items
                   const visibleItems = mergedTimeline.slice(Math.max(0, mergedTimeline.length - Math.min(visibleCount, mergedTimeline.length)));
+                  const hasOlderMessages = mergedTimeline.length > visibleItems.length;
 
-                  return visibleItems.map((item, mapIndex) => {
+                  return (
+                    <>
+                      {/* Loading older messages indicator */}
+                      {isLoadingOlderMessages && (
+                        <div className="flex justify-center py-3 animate-fadeIn">
+                          <div className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg bg-gray-800/90 border-gray-700 text-blue-400 backdrop-blur-md">
+                            <UrbanSetuSpinner size="sm" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* "Load earlier messages" banner when there are older messages not yet rendered */}
+                      {hasOlderMessages && !isLoadingOlderMessages && (
+                        <div className="flex justify-center py-2">
+                          <button
+                            onClick={() => {
+                              loadingOlderRef.current = true;
+                              setIsLoadingOlderMessages(true);
+                              const container = chatContainerRef.current;
+                              const prevHeight = container ? container.scrollHeight : 0;
+                              setTimeout(() => {
+                                setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, localComments.length));
+                                requestAnimationFrame(() => {
+                                  if (container) {
+                                    const newHeight = container.scrollHeight;
+                                    container.scrollTop = newHeight - prevHeight;
+                                  }
+                                  setIsLoadingOlderMessages(false);
+                                  setTimeout(() => { loadingOlderRef.current = false; }, 300);
+                                });
+                              }, 150);
+                            }}
+                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-400 bg-gray-800/60 border border-gray-700 hover:bg-gray-700/80 hover:text-blue-300 transition-all duration-200 shadow-md hover:shadow-lg"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                            Load earlier messages ({mergedTimeline.length - visibleItems.length} more)
+                          </button>
+                        </div>
+                      )}
+
+                      {visibleItems.map((item, mapIndex) => {
                     const index = mergedTimeline.length - visibleItems.length + mapIndex;
                     const previousItem = index > 0 ? mergedTimeline[index - 1] : null;
                     const currentDate = item.timestamp;
@@ -8924,8 +8968,10 @@ function AdminAppointmentRow({
                         </div>
                       </React.Fragment>
                     );
-                  });
-                })()}
+                  })}
+                </>
+              );
+            })()}
 
                 <div ref={chatEndRef} />
               </div>
