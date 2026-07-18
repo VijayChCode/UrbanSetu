@@ -2946,6 +2946,87 @@ router.post('/:id/comments/removed/sync', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Undo remove-for-me (single comment)
+router.patch('/:id/comment/:commentId/undo-remove-for-me', verifyToken, async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(commentId)) {
+      return res.status(400).json({ message: 'Invalid appointment or comment ID.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const isParticipant = appointment.buyerId.toString() === userId || appointment.sellerId.toString() === userId;
+    if (!isParticipant) {
+      return res.status(403).json({ message: 'Not authorized to modify this appointment.' });
+    }
+
+    const comment = appointment.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found.' });
+    }
+
+    // Remove user from removedFor array
+    if (comment.removedFor && comment.removedFor.length > 0) {
+      comment.removedFor = comment.removedFor.filter(rid => rid.toString() !== userId.toString());
+    }
+
+    appointment.markModified('comments');
+    await appointment.save();
+
+    return res.status(200).json({ message: 'Comment restored for current user.' });
+  } catch (err) {
+    console.error('Error undoing remove-for-me:', err);
+    return res.status(500).json({ message: 'Failed to restore comment for user.' });
+  }
+});
+
+// POST: Bulk undo remove-for-me (multiple comments)
+router.post('/:id/comments/removed/undo-sync', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { removedIds } = req.body; // array of comment IDs to restore
+    const userId = req.user.id;
+
+    if (!Array.isArray(removedIds)) {
+      return res.status(400).json({ message: 'removedIds must be an array.' });
+    }
+
+    const appointment = await booking.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const isParticipant = appointment.buyerId.toString() === userId || appointment.sellerId.toString() === userId;
+    if (!isParticipant) {
+      return res.status(403).json({ message: 'Not authorized to modify this appointment.' });
+    }
+
+    const userIdStr = userId.toString();
+    for (const cid of removedIds) {
+      if (!mongoose.Types.ObjectId.isValid(cid)) continue;
+      const c = appointment.comments.id(cid);
+      if (!c) continue;
+      if (c.removedFor && c.removedFor.length > 0) {
+        c.removedFor = c.removedFor.filter(rid => rid.toString() !== userIdStr);
+      }
+    }
+
+    appointment.markModified('comments');
+    await appointment.save();
+
+    return res.status(200).json({ message: 'Removed comments restored.' });
+  } catch (err) {
+    console.error('Error undoing bulk remove-for-me:', err);
+    return res.status(500).json({ message: 'Failed to restore removed comments.' });
+  }
+});
+
 // PATCH: Star/unstar a comment
 router.patch('/:id/comment/:commentId/star', verifyToken, async (req, res) => {
   try {

@@ -4495,29 +4495,54 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   }
 
   // Undo functionality for messages deleted for me
-  const handleUndoDelete = () => {
+  const handleUndoDelete = async () => {
     if (recentlyDeletedMessage) {
+      // Support both single message and array of messages
+      const messagesToRestore = Array.isArray(recentlyDeletedMessage)
+        ? recentlyDeletedMessage
+        : [recentlyDeletedMessage];
+
       // Remove from locally removed IDs
-      const ids = getLocallyRemovedIds(appt._id);
-      const updatedIds = ids.filter(id => id !== recentlyDeletedMessage._id);
+      const localIds = getLocallyRemovedIds(appt._id);
+      const restoreIds = messagesToRestore.map(m => m._id);
+      const updatedIds = localIds.filter(id => !restoreIds.includes(id));
       localStorage.setItem(`removedDeletedMsgs_${appt._id}`, JSON.stringify(updatedIds));
 
-      // Find the correct position to insert the message back
+      // Call backend to actually undo the remove-for-me
+      try {
+        if (messagesToRestore.length === 1) {
+          // Single message undo
+          await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messagesToRestore[0]._id}/undo-remove-for-me`, {
+            method: 'PATCH',
+            body: JSON.stringify({})
+          });
+        } else {
+          // Bulk undo
+          await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/undo-sync`, {
+            method: 'POST',
+            body: JSON.stringify({ removedIds: restoreIds })
+          });
+        }
+      } catch (err) {
+        console.error('Failed to undo remove-for-me on server:', err);
+        // Still restore locally even if server call fails
+      }
+
+      // Find the correct position to insert all messages back
       setComments(prev => {
         const newComments = [...prev];
-        // Find where this message should be inserted based on timestamp
-        const insertIndex = newComments.findIndex(msg =>
-          new Date(msg.timestamp) > new Date(recentlyDeletedMessage.timestamp)
-        );
-
-        if (insertIndex === -1) {
-          // If no message is newer, add to the end
-          newComments.push(recentlyDeletedMessage);
-        } else {
-          // Insert at the correct position
-          newComments.splice(insertIndex, 0, recentlyDeletedMessage);
+        for (const msg of messagesToRestore) {
+          // Skip if already in comments (prevent duplicates)
+          if (newComments.some(c => c._id === msg._id)) continue;
+          const insertIndex = newComments.findIndex(existing =>
+            new Date(existing.timestamp) > new Date(msg.timestamp)
+          );
+          if (insertIndex === -1) {
+            newComments.push(msg);
+          } else {
+            newComments.splice(insertIndex, 0, msg);
+          }
         }
-
         return newComments;
       });
 
@@ -4528,18 +4553,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         setUndoTimer(null);
       }
 
-      toast.success('Message restored!');
+      const count = messagesToRestore.length;
+      toast.success(count === 1 ? 'Message restored!' : `${count} messages restored!`);
     }
   };
 
-  const startUndoTimer = (message) => {
+  const startUndoTimer = (messageOrMessages) => {
     // Clear any existing timer
     if (undoTimer) {
       clearTimeout(undoTimer);
     }
 
-    // Set the recently deleted message
-    setRecentlyDeletedMessage(message);
+    // Set the recently deleted message(s) - supports single or array
+    setRecentlyDeletedMessage(messageOrMessages);
 
     // Start 5 second timer
     const timer = setTimeout(() => {
@@ -4773,9 +4799,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
           ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
 
-          // Start undo timer for the first message (for bulk deletes, we'll show undo for the first one)
+          // Start undo timer for ALL deleted messages (supports bulk undo)
           if (messageToDelete.length > 0) {
-            startUndoTimer(messageToDelete[0]);
+            startUndoTimer(messageToDelete);
           }
 
           toast.success(`Deleted ${ids.length} messages for you!`);
@@ -11699,7 +11725,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30">
                 <div className="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-fadeIn">
                   <FaUndo className="text-white" />
-                  <span className="text-sm font-medium">Message deleted for you</span>
+                  <span className="text-sm font-medium">
+                    {Array.isArray(recentlyDeletedMessage)
+                      ? `${recentlyDeletedMessage.length} message${recentlyDeletedMessage.length !== 1 ? 's' : ''} deleted for you`
+                      : 'Message deleted for you'}
+                  </span>
                   <button
                     onClick={handleUndoDelete}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
