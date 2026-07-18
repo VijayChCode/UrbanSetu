@@ -3098,6 +3098,13 @@ function AdminAppointmentRow({
     seller: { isMuted: false, isVideoEnabled: true }
   });
 
+  // Auto-reset layout back to Split View if screen share ends
+  React.useEffect(() => {
+    if (focusedMonitorView === 'presentation' && !screenSharingStatus.buyer && !screenSharingStatus.seller) {
+      setFocusedMonitorView(null);
+    }
+  }, [screenSharingStatus.buyer, screenSharingStatus.seller, focusedMonitorView, setFocusedMonitorView]);
+
   // Audio activity detection for monitor
   const isBuyerSpeaking = useAudioActivity(buyerMonitorStream);
   const isSellerSpeaking = useAudioActivity(sellerMonitorStream);
@@ -11812,12 +11819,14 @@ function AdminAppointmentRow({
                       </button>
                       <button
                         onClick={() => {
-                          if (screenSharingStatus.buyer) toggleFocusView('buyer');
-                          else if (screenSharingStatus.seller) toggleFocusView('seller');
-                          else toast.info('No active presentation to focus on');
+                          if (screenSharingStatus.buyer || screenSharingStatus.seller) {
+                            setFocusedMonitorView('presentation');
+                          } else {
+                            toast.info('No active presentation to focus on');
+                          }
                         }}
-                        className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full border ${focusedMonitorView && ((focusedMonitorView === 'buyer' && screenSharingStatus.buyer) || (focusedMonitorView === 'seller' && screenSharingStatus.seller))
-                          ? 'bg-blue-500 text-white border-blue-400'
+                        className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full border ${focusedMonitorView === 'presentation'
+                          ? 'bg-blue-600 text-white border-blue-600'
                           : 'bg-transparent text-white/70 border-white/30 hover:border-white/70'
                           }`}
                         disabled={!screenSharingStatus.buyer && !screenSharingStatus.seller}
@@ -11872,9 +11881,23 @@ function AdminAppointmentRow({
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto">
-                    <div className={`p-4 sm:p-6 grid ${focusedMonitorView ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-4 sm:gap-6`}>
+                    <div className={`p-4 sm:p-6 grid ${
+                      focusedMonitorView === 'presentation'
+                        ? 'grid-cols-1 md:grid-cols-4'
+                        : focusedMonitorView
+                          ? 'grid-cols-1'
+                          : 'grid-cols-1 md:grid-cols-2'
+                    } gap-4 sm:gap-6`}>
                       {/* Buyer side */}
-                      <div className={`flex flex-col h-full rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 ${focusedMonitorView === 'buyer' ? 'ring-2 ring-yellow-300' : ''}`}>
+                      <div className={`flex flex-col h-full rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 ${
+                        focusedMonitorView === 'presentation'
+                          ? screenSharingStatus.buyer
+                            ? 'md:col-span-3 col-span-1 order-first ring-2 ring-blue-500'
+                            : 'md:col-span-1 col-span-1'
+                          : focusedMonitorView === 'buyer'
+                            ? 'ring-2 ring-yellow-300'
+                            : ''
+                      }`}>
                         <div className="flex items-center gap-3 mb-4">
                           <UserAvatar
                             user={{ username: appt.buyerId?.username, avatar: appt.buyerId?.avatar }}
@@ -11913,7 +11936,11 @@ function AdminAppointmentRow({
                             </div>
                           </div>
                         </div>
-                        <div className="flex-1 rounded-xl bg-black/60 flex flex-col items-center justify-center border border-white/10 relative overflow-hidden">
+                        <div className={`flex-1 rounded-xl bg-black/60 flex flex-col items-center justify-center border border-white/10 relative overflow-hidden ${
+                          focusedMonitorView === 'presentation' && !screenSharingStatus.buyer
+                            ? 'min-h-[150px] max-h-[200px] md:h-full md:max-h-full'
+                            : 'min-h-[300px]'
+                        }`}>
                           {buyerMonitorStream ? (
                             <>
                               <video
@@ -11957,7 +11984,15 @@ function AdminAppointmentRow({
                       </div>
 
                       {/* Seller side */}
-                      <div className={`flex flex-col h-full rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 ${focusedMonitorView === 'seller' ? 'ring-2 ring-yellow-300' : ''}`}>
+                      <div className={`flex flex-col h-full rounded-2xl bg-white/5 border border-white/10 p-4 sm:p-5 ${
+                        focusedMonitorView === 'presentation'
+                          ? screenSharingStatus.seller
+                            ? 'md:col-span-3 col-span-1 order-first ring-2 ring-blue-500'
+                            : 'md:col-span-1 col-span-1'
+                          : focusedMonitorView === 'seller'
+                            ? 'ring-2 ring-yellow-300'
+                            : ''
+                      }`}>
                         <div className="flex items-center gap-3 mb-4">
                           <UserAvatar
                             user={{ username: appt.sellerId?.username, avatar: appt.sellerId?.avatar }}
@@ -11996,7 +12031,11 @@ function AdminAppointmentRow({
                             </div>
                           </div>
                         </div>
-                        <div className="flex-1 rounded-xl bg-black/60 flex flex-col items-center justify-center border border-white/10 relative overflow-hidden">
+                        <div className={`flex-1 rounded-xl bg-black/60 flex flex-col items-center justify-center border border-white/10 relative overflow-hidden ${
+                          focusedMonitorView === 'presentation' && !screenSharingStatus.seller
+                            ? 'min-h-[150px] max-h-[200px] md:h-full md:max-h-full'
+                            : 'min-h-[300px]'
+                        }`}>
                           {sellerMonitorStream ? (
                             <>
                               <video

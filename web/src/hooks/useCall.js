@@ -1364,6 +1364,13 @@ export const useCall = () => {
 
         monitorPeer.on('connect', () => {
           console.log('[Monitor] Connected to admin monitor peer');
+          if (isScreenSharing) {
+            try {
+              monitorPeer.send(JSON.stringify({ type: 'status-update', isScreenSharing: true }));
+            } catch (e) {
+              console.warn('[Monitor] Error sending initial status to admin:', e);
+            }
+          }
         });
 
         monitorPeer.on('error', (err) => {
@@ -1377,6 +1384,24 @@ export const useCall = () => {
         });
 
         monitorPeersRef.current.set(adminSocketId, monitorPeer);
+
+        // If actively screen sharing, replace camera video track with screen share track immediately on monitor peer
+        if (isScreenSharing && screenShareStreamRef.current) {
+          const screenVideoTracks = screenShareStreamRef.current.getVideoTracks();
+          if (screenVideoTracks.length > 0) {
+            setTimeout(() => {
+              try {
+                const sender = monitorPeer._pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) {
+                  sender.replaceTrack(screenVideoTracks[0]);
+                  console.log('[Monitor] Replaced initial camera track with active screen share track for admin');
+                }
+              } catch (err) {
+                console.error('[Monitor] Error replacing initial track for admin monitor:', err);
+              }
+            }, 500);
+          }
+        }
       } catch (err) {
         console.error('[Monitor] Error creating admin monitor peer:', err);
       }
