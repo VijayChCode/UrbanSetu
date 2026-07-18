@@ -678,8 +678,8 @@ const SessionAuditLogs = () => {
                 Toggle Stats
               </button>
             </div>
-            {showAuditStats && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-in">
+             {showAuditStats && (
+              <div className={`grid grid-cols-1 ${currentUser?.role === 'rootadmin' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6 mb-8 animate-fade-in`}>
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-6 border border-green-100 dark:border-green-800 flex items-center gap-4">
                   <div className="bg-white dark:bg-gray-700 p-3 rounded-full shadow-sm text-green-500 dark:text-green-400">
                     <FaCheckCircle className="text-2xl" />
@@ -698,15 +698,17 @@ const SessionAuditLogs = () => {
                     <p className="text-3xl font-bold text-red-900 dark:text-red-100">{logs.filter(l => l.isSuspicious).length}</p>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-purple-100 dark:border-purple-800 flex items-center gap-4">
-                  <div className="bg-white dark:bg-gray-700 p-3 rounded-full shadow-sm text-purple-500 dark:text-purple-400">
-                    <FaShieldAlt className="text-2xl" />
+                {currentUser?.role === 'rootadmin' && (
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-purple-100 dark:border-purple-800 flex items-center gap-4">
+                    <div className="bg-white dark:bg-gray-700 p-3 rounded-full shadow-sm text-purple-500 dark:text-purple-400">
+                      <FaShieldAlt className="text-2xl" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-purple-800 dark:text-purple-300 uppercase tracking-wider">Admin Actions</p>
+                      <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{logs.filter(l => l.role === 'admin' || l.role === 'rootadmin').length}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-purple-800 dark:text-purple-300 uppercase tracking-wider">Admin Actions</p>
-                    <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{logs.filter(l => l.role === 'admin' || l.role === 'rootadmin').length}</p>
-                  </div>
-                </div>
+                )}
               </div>
             )}
             {/* Search and Filters */}
@@ -810,22 +812,24 @@ const SessionAuditLogs = () => {
                   </div>
 
                   {/* Role Filter */}
-                  <div>
-                    <label htmlFor="role-filter" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                      Role
-                    </label>
-                    <select
-                      id="role-filter"
-                      value={filterRole}
-                      onChange={(e) => setFilterRole(e.target.value)}
-                      className="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
-                    >
-                      <option value="all">All Roles</option>
-                      <option value="user">Users</option>
-                      <option value="admin">Admins</option>
-                      <option value="rootadmin">Root Admins</option>
-                    </select>
-                  </div>
+                  {currentUser?.role === 'rootadmin' && (
+                    <div>
+                      <label htmlFor="role-filter" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        Role
+                      </label>
+                      <select
+                        id="role-filter"
+                        value={filterRole}
+                        onChange={(e) => setFilterRole(e.target.value)}
+                        className="block w-full pl-3 pr-10 py-2.5 text-sm border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-all"
+                      >
+                        <option value="all">All Roles</option>
+                        <option value="user">Users</option>
+                        <option value="admin">Admins</option>
+                        <option value="rootadmin">Root Admins</option>
+                      </select>
+                    </div>
+                  )}
 
                   {/* Suspicious Activity Filter */}
                   <div>

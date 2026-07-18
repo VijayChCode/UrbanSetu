@@ -387,7 +387,7 @@ router.post('/admin/force-logout-all', verifyToken, async (req, res, next) => {
 // Root Admin: Get session audit logs
 router.get('/admin/audit-logs', verifyToken, async (req, res, next) => {
   try {
-    if (req.user.role !== 'rootadmin') {
+    if (req.user.role !== 'rootadmin' && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
@@ -399,12 +399,24 @@ router.get('/admin/audit-logs', verifyToken, async (req, res, next) => {
       userId,
       search = '',
       dateRange = 'all',
-      role = 'all',
       startDate,
       endDate
     } = req.query;
 
+    let role = req.query.role || 'all';
+
+    // Restrict standard admins to only see 'user' logs (exclude admin & rootadmin logs)
+    if (req.user.role === 'admin') {
+      role = 'user';
+    }
+
     let filter = {};
+    if (req.user.role === 'admin') {
+      filter.role = 'user';
+    } else if (role !== 'all') {
+      filter.role = role;
+    }
+
     if (action) filter.action = action;
     if (isSuspicious !== undefined && isSuspicious !== '') filter.isSuspicious = isSuspicious === 'true';
     if (userId) {
