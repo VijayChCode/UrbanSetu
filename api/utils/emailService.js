@@ -13044,7 +13044,7 @@ export const sendReportAcknowledgementEmail = async (email, reportDetails) => {
 
 // Send Shared Chat Link Email
 export const sendSharedChatLinkEmail = async (email, sharedLink, title, expiryDate, messageCount, shareToken = null) => {
-  const clientBaseUrl = 'https://urbansetu.vercel.app';
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
   const formattedExpiry = expiryDate ? new Date(expiryDate).toLocaleDateString('en-IN', {
     day: '2-digit',
     month: '2-digit',
