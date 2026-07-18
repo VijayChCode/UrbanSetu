@@ -11921,9 +11921,9 @@ function AdminAppointmentRow({
                                 autoPlay
                                 playsInline
                                 muted={monitorAudioMuted.buyer}
-                                className={`w-full h-full object-contain bg-black transition-all ${(monitorVideoHidden.buyer || !participantMediaStatus.buyer.isVideoEnabled) ? 'opacity-0' : ''}`}
+                                className={`w-full h-full object-contain bg-black transition-all ${(monitorVideoHidden.buyer || (!participantMediaStatus.buyer.isVideoEnabled && !screenSharingStatus.buyer)) ? 'opacity-0' : ''}`}
                               />
-                              {activeLiveCall?.callType === 'video' && !participantMediaStatus.buyer.isVideoEnabled ? (
+                              {activeLiveCall?.callType === 'video' && !participantMediaStatus.buyer.isVideoEnabled && !screenSharingStatus.buyer ? (
                                 <div className="absolute inset-0 bg-gray-950 flex flex-col items-center justify-center text-white gap-3 p-4 text-center">
                                   <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white/60 mb-1">
                                     <FaVideoSlash className="text-2xl" />
@@ -12004,9 +12004,9 @@ function AdminAppointmentRow({
                                 autoPlay
                                 playsInline
                                 muted={monitorAudioMuted.seller}
-                                className={`w-full h-full object-contain bg-black transition-all ${(monitorVideoHidden.seller || !participantMediaStatus.seller.isVideoEnabled) ? 'opacity-0' : ''}`}
+                                className={`w-full h-full object-contain bg-black transition-all ${(monitorVideoHidden.seller || (!participantMediaStatus.seller.isVideoEnabled && !screenSharingStatus.seller)) ? 'opacity-0' : ''}`}
                               />
-                              {activeLiveCall?.callType === 'video' && !participantMediaStatus.seller.isVideoEnabled ? (
+                              {activeLiveCall?.callType === 'video' && !participantMediaStatus.seller.isVideoEnabled && !screenSharingStatus.seller ? (
                                 <div className="absolute inset-0 bg-gray-950 flex flex-col items-center justify-center text-white gap-3 p-4 text-center">
                                   <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white/60 mb-1">
                                     <FaVideoSlash className="text-2xl" />
