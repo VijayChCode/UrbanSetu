@@ -4379,13 +4379,26 @@ function AdminAppointmentRow({
     const container = chatContainerRef.current;
     if (!container) return;
     const onScrollTopLoadMore = () => {
-      if (container.scrollTop <= 0 && localComments.length > visibleCount) {
+      if (container.scrollTop <= 30 && localComments.length > visibleCount && !loadingOlderRef.current) {
+        loadingOlderRef.current = true;
+        setIsLoadingOlderMessages(true);
         const prevHeight = container.scrollHeight;
-        setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, localComments.length));
+        // Small delay to show spinner before rendering more items
         setTimeout(() => {
-          const newHeight = container.scrollHeight;
-          container.scrollTop = newHeight - prevHeight;
-        }, 0);
+          setVisibleCount(prev => Math.min(prev + MESSAGES_PAGE_SIZE, localComments.length));
+          // Maintain scroll position after increasing items
+          requestAnimationFrame(() => {
+            if (container) {
+              const newHeight = container.scrollHeight;
+              container.scrollTop = newHeight - prevHeight;
+            }
+            setIsLoadingOlderMessages(false);
+            // Debounce: prevent rapid consecutive loads
+            setTimeout(() => {
+              loadingOlderRef.current = false;
+            }, 300);
+          });
+        }, 150);
       }
     };
     container.addEventListener('scroll', onScrollTopLoadMore);
