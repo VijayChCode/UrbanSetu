@@ -88,6 +88,8 @@ export const useCall = () => {
   const callStateRef = useRef(null);
   const localStreamRef = useRef(null); // Ref for localStream to access in monitor peer handlers
   const remoteIsScreenSharingRef = useRef(false); // Ref for remote screen sharing status to detect transitions
+  const preCallMutedRef = useRef(false); // Ref for preCallMuted to access in handleCallAccepted
+  const preCallVideoOffRef = useRef(false); // Ref for preCallVideoOff to access in handleCallAccepted
 
   // Admin monitor peers: Map of adminSocketId -> SimplePeer instance
   const monitorPeersRef = useRef(new Map());
@@ -220,7 +222,9 @@ export const useCall = () => {
     callStateRef.current = callState;
     localStreamRef.current = localStream;
     remoteIsScreenSharingRef.current = remoteIsScreenSharing;
-  }, [incomingCall, activeCall, callState, localStream, remoteIsScreenSharing]);
+    preCallMutedRef.current = preCallMuted;
+    preCallVideoOffRef.current = preCallVideoOff;
+  }, [incomingCall, activeCall, callState, localStream, remoteIsScreenSharing, preCallMuted, preCallVideoOff]);
 
   // Connection monitoring (Window level)
   useEffect(() => {
@@ -1119,13 +1123,25 @@ export const useCall = () => {
         callingSoundRef.current = null;
 
         // Apply pre-call preferences to the caller's active state
-        const callerMuted = preCallMuted;
-        const callerVideoOff = preCallVideoOff;
+        // CRITICAL: Use refs instead of state to avoid stale closure values.
+        // The state values (preCallMuted/preCallVideoOff) are captured when this
+        // useEffect registers, but the user may toggle them during the ringing phase.
+        // Refs always reflect the latest value.
+        const callerMuted = preCallMutedRef.current;
+        const callerVideoOff = preCallVideoOffRef.current;
         if (callerMuted) {
           setIsMuted(true);
+          // Also ensure actual audio tracks stay disabled
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach(track => { track.enabled = false; });
+          }
         }
         if (callerVideoOff) {
           setIsVideoEnabled(false);
+          // Also ensure actual video tracks stay disabled
+          if (localStreamRef.current) {
+            localStreamRef.current.getVideoTracks().forEach(track => { track.enabled = false; });
+          }
         }
         // Reset pre-call preferences
         setPreCallMuted(false);
