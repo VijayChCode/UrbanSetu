@@ -2693,6 +2693,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Undo functionality for messages deleted for me
   const [recentlyDeletedMessage, setRecentlyDeletedMessage] = useState(null);
   const [undoTimer, setUndoTimer] = useState(null);
+  const isRestoringMessagesRef = useRef(false); // Flag to prevent restored messages from being treated as new
   // Report modal states
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
@@ -2954,6 +2955,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   useEffect(() => {
     // Update ref if comments length resets (e.g. chat cleared)
     if (comments.length < prevSoundCommentsLengthRef.current) {
+      prevSoundCommentsLengthRef.current = comments.length;
+      return;
+    }
+
+    // Skip sound when restoring messages via undo (not a real new message)
+    if (isRestoringMessagesRef.current) {
       prevSoundCommentsLengthRef.current = comments.length;
       return;
     }
@@ -4528,6 +4535,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         // Still restore locally even if server call fails
       }
 
+      // Flag to prevent restored messages from being treated as new (unread count / auto-scroll)
+      isRestoringMessagesRef.current = true;
+
       // Find the correct position to insert all messages back
       setComments(prev => {
         const newComments = [...prev];
@@ -4545,6 +4555,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         }
         return newComments;
       });
+
+      // Reset the flag after React processes the state update
+      setTimeout(() => { isRestoringMessagesRef.current = false; }, 0);
 
       // Clear the undo state
       setRecentlyDeletedMessage(null);
@@ -6367,6 +6380,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     const newMessagesCount = newMessages.length;
     prevCommentsLengthRef.current = comments.length;
     prevCommentsRef.current = comments;
+
+    // Skip when restoring messages via undo — don't treat them as new
+    if (isRestoringMessagesRef.current) return;
 
     if (newMessagesCount > 0 && showChatModal) {
       // Check if any new messages are from current user (sent messages)
