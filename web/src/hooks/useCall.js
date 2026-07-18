@@ -200,6 +200,21 @@ export const useCall = () => {
     // Reset pre-call preferences
     setPreCallMuted(false);
     setPreCallVideoOff(false);
+
+    // Exit browser fullscreen if active on call cleanup
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => console.warn('Exit fullscreen failed:', err));
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } catch (err) {
+        console.warn('Error exiting fullscreen on cleanup:', err);
+      }
+    }
   }, [localStream, remoteStream, cameraStreamDuringScreenShare, stopCalling, stopRingtone]);
 
   // Apply pre-call preferences to stream tracks in real-time during ringing/initiating phase
@@ -1482,6 +1497,22 @@ export const useCall = () => {
 
   // Initialize call
   const initiateCall = async (appointmentId, receiverId, callType) => {
+    // Request fullscreen immediately for video calls to preserve user gesture
+    if (callType === 'video') {
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(err => console.warn('Early fullscreen request failed:', err));
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      } catch (err) {
+        console.warn('Failed to enter fullscreen on initiate:', err);
+      }
+    }
+
     try {
       // Check if socket is connected
       if (!socket || !socket.connected) {
@@ -1642,6 +1673,22 @@ export const useCall = () => {
   // Accept incoming call
   const acceptCall = async () => {
     if (!incomingCall) return;
+
+    // Request fullscreen immediately for video calls to preserve user gesture
+    if (incomingCall.callType === 'video') {
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().catch(err => console.warn('Early fullscreen request failed on accept:', err));
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      } catch (err) {
+        console.warn('Failed to enter fullscreen on accept:', err);
+      }
+    }
 
     try {
       // Enumerate cameras for video calls
