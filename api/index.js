@@ -1828,6 +1828,19 @@ io.on('connection', (socket) => {
           isScreenSharing
         });
       }
+
+      // Also forward status update to all monitoring admins
+      if (activeCall.monitors && activeCall.monitors.size > 0) {
+        activeCall.monitors.forEach(adminSocketId => {
+          io.to(adminSocketId).emit('remote-status-update', {
+            callId,
+            isMuted,
+            isVideoEnabled,
+            isScreenSharing,
+            fromRole: role
+          });
+        });
+      }
     }
   });
 
@@ -1858,13 +1871,15 @@ io.on('connection', (socket) => {
       activeCall.monitors.add(socket.id);
       activeCalls.set(callId, activeCall);
 
-      // Notify admin with basic context (used for labeling in UI)
+      // Notify admin with basic context (used for labeling in UI) and initial states
       socket.emit('admin-monitor-started', {
         callId,
         appointmentId: call.appointmentId.toString(),
         callerId: call.callerId.toString(),
         receiverId: call.receiverId.toString(),
-        callType: call.callType
+        callType: call.callType,
+        callerState: activeCall.callerState || { isMuted: false, isVideoEnabled: true, isScreenSharing: false },
+        receiverState: activeCall.receiverState || { isMuted: false, isVideoEnabled: true, isScreenSharing: false }
       });
 
       // Ask both participants to start sending a mirror of their local stream to this admin

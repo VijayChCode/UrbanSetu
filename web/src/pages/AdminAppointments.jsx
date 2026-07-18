@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { createPortal } from 'react-dom';
-import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaStar, FaRegStar, FaSync, FaCalendar, FaPhone, FaVideo, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload, FaDollarSign, FaHistory, FaCircle, FaVolumeUp, FaVolumeMute, FaEye, FaEyeSlash, FaExpand, FaCompress, FaPowerOff, FaCog, FaFileAlt, FaPlay, FaInfoCircle } from "react-icons/fa";
+import { FaTrash, FaSearch, FaPen, FaPaperPlane, FaUser, FaEnvelope, FaStar, FaRegStar, FaSync, FaCalendar, FaPhone, FaVideo, FaVideoSlash, FaMicrophoneSlash, FaUserShield, FaArchive, FaUndo, FaCommentDots, FaCheck, FaCheckDouble, FaBan, FaTimes, FaLightbulb, FaCopy, FaEllipsisV, FaFlag, FaCalendarAlt, FaCheckSquare, FaDownload, FaDollarSign, FaHistory, FaCircle, FaVolumeUp, FaVolumeMute, FaEye, FaEyeSlash, FaExpand, FaCompress, FaPowerOff, FaCog, FaFileAlt, FaPlay, FaInfoCircle } from "react-icons/fa";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextWithReadMore } from '../utils/linkFormatter.jsx';
 import UserAvatar from '../components/UserAvatar';
@@ -3093,6 +3093,10 @@ function AdminAppointmentRow({
   const [forceTerminateLoading, setForceTerminateLoading] = useLocalState(false);
   const [screenSharingStatus, setScreenSharingStatus] = useLocalState({ buyer: false, seller: false });
   const [monitorRefreshing, setMonitorRefreshing] = useLocalState(false);
+  const [participantMediaStatus, setParticipantMediaStatus] = useLocalState({
+    buyer: { isMuted: false, isVideoEnabled: true },
+    seller: { isMuted: false, isVideoEnabled: true }
+  });
 
   // Audio activity detection for monitor
   const isBuyerSpeaking = useAudioActivity(buyerMonitorStream);
@@ -3291,15 +3295,56 @@ function AdminAppointmentRow({
     setMonitorAudioMuted({ buyer: true, seller: true });
     setMonitorVideoHidden({ buyer: false, seller: false });
     setScreenSharingStatus({ buyer: false, seller: false });
-  }, [setBuyerMonitorStream, setSellerMonitorStream, setMonitorCallId, setFocusedMonitorView, setMonitorAudioMuted, setMonitorVideoHidden, setScreenSharingStatus]);
+    setParticipantMediaStatus({
+      buyer: { isMuted: false, isVideoEnabled: true },
+      seller: { isMuted: false, isVideoEnabled: true }
+    });
+  }, [setBuyerMonitorStream, setSellerMonitorStream, setMonitorCallId, setFocusedMonitorView, setMonitorAudioMuted, setMonitorVideoHidden, setScreenSharingStatus, setParticipantMediaStatus]);
 
   // Listen for monitor signaling events relevant to this appointment
   React.useEffect(() => {
     if (!socket) return;
 
-    const handleAdminMonitorStarted = ({ callId, appointmentId }) => {
+    const handleAdminMonitorStarted = ({ callId, appointmentId, callerState, receiverState }) => {
       if (!appt?._id || appointmentId !== appt._id.toString()) return;
       setMonitorCallId(callId);
+
+      // Initialize media states from callerState and receiverState
+      const buyerRole = monitorRoles.buyerRole;
+      const sellerRole = monitorRoles.sellerRole;
+
+      if (buyerRole && sellerRole) {
+        const buyerState = buyerRole === 'caller' ? callerState : receiverState;
+        const sellerState = sellerRole === 'caller' ? callerState : receiverState;
+
+        if (buyerState) {
+          setParticipantMediaStatus(prev => ({
+            ...prev,
+            buyer: {
+              isMuted: buyerState.isMuted || false,
+              isVideoEnabled: buyerState.isVideoEnabled !== false
+            }
+          }));
+          setScreenSharingStatus(prev => ({
+            ...prev,
+            buyer: buyerState.isScreenSharing || false
+          }));
+        }
+
+        if (sellerState) {
+          setParticipantMediaStatus(prev => ({
+            ...prev,
+            seller: {
+              isMuted: sellerState.isMuted || false,
+              isVideoEnabled: sellerState.isVideoEnabled !== false
+            }
+          }));
+          setScreenSharingStatus(prev => ({
+            ...prev,
+            seller: sellerState.isScreenSharing || false
+          }));
+        }
+      }
     };
 
     const handleMonitorOffer = ({ callId, fromRole, offer }) => {
@@ -3421,11 +3466,47 @@ function AdminAppointmentRow({
       setShowLiveMonitorModal(false);
     };
 
+    const handleRemoteStatusUpdateForMonitor = ({ callId, isMuted, isVideoEnabled, isScreenSharing, fromRole }) => {
+      if (!activeLiveCall || callId !== activeLiveCall.callId) return;
+
+      const buyerRole = monitorRoles.buyerRole;
+      const sellerRole = monitorRoles.sellerRole;
+
+      if (fromRole === buyerRole) {
+        if (isMuted !== undefined || isVideoEnabled !== undefined) {
+          setParticipantMediaStatus(prev => ({
+            ...prev,
+            buyer: {
+              isMuted: isMuted !== undefined ? isMuted : prev.buyer.isMuted,
+              isVideoEnabled: isVideoEnabled !== undefined ? isVideoEnabled : prev.buyer.isVideoEnabled
+            }
+          }));
+        }
+        if (isScreenSharing !== undefined) {
+          setScreenSharingStatus(prev => ({ ...prev, buyer: isScreenSharing }));
+        }
+      } else if (fromRole === sellerRole) {
+        if (isMuted !== undefined || isVideoEnabled !== undefined) {
+          setParticipantMediaStatus(prev => ({
+            ...prev,
+            seller: {
+              isMuted: isMuted !== undefined ? isMuted : prev.seller.isMuted,
+              isVideoEnabled: isVideoEnabled !== undefined ? isVideoEnabled : prev.seller.isVideoEnabled
+            }
+          }));
+        }
+        if (isScreenSharing !== undefined) {
+          setScreenSharingStatus(prev => ({ ...prev, seller: isScreenSharing }));
+        }
+      }
+    };
+
     socket.on('admin-monitor-started', handleAdminMonitorStarted);
     socket.on('webrtc-offer-monitor', handleMonitorOffer);
     socket.on('ice-candidate-monitor', handleMonitorICECandidate);
     socket.on('call-ended', handleCallEndedForMonitor);
     socket.on('call-monitor-error', handleMonitorError);
+    socket.on('remote-status-update', handleRemoteStatusUpdateForMonitor);
 
     return () => {
       socket.off('admin-monitor-started', handleAdminMonitorStarted);
@@ -3433,9 +3514,10 @@ function AdminAppointmentRow({
       socket.off('ice-candidate-monitor', handleMonitorICECandidate);
       socket.off('call-ended', handleCallEndedForMonitor);
       socket.off('call-monitor-error', handleMonitorError);
+      socket.off('remote-status-update', handleRemoteStatusUpdateForMonitor);
       cleanupMonitorPeers();
     };
-  }, [appt?._id, activeLiveCall, showLiveMonitorModal, MONITOR_STUN_SERVERS, cleanupMonitorPeers, setMonitorCallId, setShowLiveMonitorModal, monitorRoles, setScreenSharingStatus]);
+  }, [appt?._id, activeLiveCall, showLiveMonitorModal, MONITOR_STUN_SERVERS, cleanupMonitorPeers, setMonitorCallId, setShowLiveMonitorModal, monitorRoles, setScreenSharingStatus, setParticipantMediaStatus]);
 
   React.useEffect(() => {
     if (!showLiveMonitorModal) {
@@ -11818,6 +11900,11 @@ function AdminAppointmentRow({
                                   <FaVolumeUp className="text-white text-xs" />
                                 </div>
                               )}
+                              {participantMediaStatus.buyer.isMuted && (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-500/80 text-white ml-2">
+                                  <FaMicrophoneSlash className="text-[9px]" /> Mic Muted
+                                </span>
+                              )}
                               {screenSharingStatus.buyer && (
                                 <div className="flex items-center gap-1 bg-blue-600/90 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-pulse ml-2">
                                   <FaVideo className="text-[10px]" /> Presenting
@@ -11834,14 +11921,22 @@ function AdminAppointmentRow({
                                 autoPlay
                                 playsInline
                                 muted={monitorAudioMuted.buyer}
-                                className={`w-full h-full object-contain bg-black transition-all ${monitorVideoHidden.buyer ? 'opacity-30 blur-sm' : ''}`}
+                                className={`w-full h-full object-contain bg-black transition-all ${(monitorVideoHidden.buyer || !participantMediaStatus.buyer.isVideoEnabled) ? 'opacity-0' : ''}`}
                               />
-                              {activeLiveCall?.callType === 'video' && monitorVideoHidden.buyer && (
+                              {activeLiveCall?.callType === 'video' && !participantMediaStatus.buyer.isVideoEnabled ? (
+                                <div className="absolute inset-0 bg-gray-950 flex flex-col items-center justify-center text-white gap-3 p-4 text-center">
+                                  <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white/60 mb-1">
+                                    <FaVideoSlash className="text-2xl" />
+                                  </div>
+                                  <p className="text-sm font-semibold text-gray-200">Buyer's camera is off</p>
+                                  <p className="text-xs text-gray-400 max-w-[200px]">The user has stopped their video feed.</p>
+                                </div>
+                              ) : activeLiveCall?.callType === 'video' && monitorVideoHidden.buyer ? (
                                 <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white gap-2 text-xs sm:text-sm">
                                   <FaEyeSlash className="text-lg" />
                                   <span>Buyer video hidden locally</span>
                                 </div>
-                              )}
+                              ) : null}
                             </>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-center px-4">
@@ -11888,6 +11983,11 @@ function AdminAppointmentRow({
                                   <FaVolumeUp className="text-white text-xs" />
                                 </div>
                               )}
+                              {participantMediaStatus.seller.isMuted && (
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-500/80 text-white ml-2">
+                                  <FaMicrophoneSlash className="text-[9px]" /> Mic Muted
+                                </span>
+                              )}
                               {screenSharingStatus.seller && (
                                 <div className="flex items-center gap-1 bg-blue-600/90 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-pulse ml-2">
                                   <FaVideo className="text-[10px]" /> Presenting
@@ -11904,14 +12004,22 @@ function AdminAppointmentRow({
                                 autoPlay
                                 playsInline
                                 muted={monitorAudioMuted.seller}
-                                className={`w-full h-full object-contain bg-black transition-all ${monitorVideoHidden.seller ? 'opacity-30 blur-sm' : ''}`}
+                                className={`w-full h-full object-contain bg-black transition-all ${(monitorVideoHidden.seller || !participantMediaStatus.seller.isVideoEnabled) ? 'opacity-0' : ''}`}
                               />
-                              {activeLiveCall?.callType === 'video' && monitorVideoHidden.seller && (
+                              {activeLiveCall?.callType === 'video' && !participantMediaStatus.seller.isVideoEnabled ? (
+                                <div className="absolute inset-0 bg-gray-950 flex flex-col items-center justify-center text-white gap-3 p-4 text-center">
+                                  <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white/60 mb-1">
+                                    <FaVideoSlash className="text-2xl" />
+                                  </div>
+                                  <p className="text-sm font-semibold text-gray-200">Seller's camera is off</p>
+                                  <p className="text-xs text-gray-400 max-w-[200px]">The user has stopped their video feed.</p>
+                                </div>
+                              ) : activeLiveCall?.callType === 'video' && monitorVideoHidden.seller ? (
                                 <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white gap-2 text-xs sm:text-sm">
                                   <FaEyeSlash className="text-lg" />
                                   <span>Seller video hidden locally</span>
                                 </div>
-                              )}
+                              ) : null}
                             </>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-center px-4">
