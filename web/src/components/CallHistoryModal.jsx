@@ -13,6 +13,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showDeleteSingleModal, setShowDeleteSingleModal] = useState(false);
   const [callToDelete, setCallToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filters
   const [filterType, setFilterType] = useState('all');
@@ -55,7 +56,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
   const handleDeleteAll = async () => {
     if (!appointmentId) return;
     try {
-      setLoading(true);
+      setDeleting(true);
       await axios.delete(
         `${API_BASE_URL}/api/calls/history/${appointmentId}`,
         { withCredentials: true }
@@ -67,7 +68,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
       console.error('Error deleting all call history:', err);
       toast.error(err.response?.data?.message || 'Failed to delete call history.');
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
@@ -76,7 +77,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
     const id = callToDelete._id || callToDelete.callId;
     if (!id) return;
     try {
-      setLoading(true);
+      setDeleting(true);
       await axios.delete(
         `${API_BASE_URL}/api/calls/history/${appointmentId}/${id}`,
         { withCredentials: true }
@@ -91,7 +92,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
       console.error('Error deleting call history entry:', err);
       toast.error(err.response?.data?.message || 'Failed to delete call history entry.');
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
@@ -395,18 +396,29 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
                 <div className="flex gap-3 justify-end">
                   <button
                     type="button"
+                    disabled={deleting}
                     onClick={() => setShowDeleteAllModal(false)}
-                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
+                    disabled={deleting}
                     onClick={handleDeleteAll}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FaTrash size={14} />
-                    Delete All
+                    {deleting ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaTrash size={14} />
+                        <span>Delete All</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -434,21 +446,32 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
                 <div className="flex gap-3 justify-end">
                   <button
                     type="button"
+                    disabled={deleting}
                     onClick={() => {
                       setShowDeleteSingleModal(false);
                       setCallToDelete(null);
                     }}
-                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
+                    disabled={deleting}
                     onClick={handleDeleteSingle}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FaTrash size={14} />
-                    Delete
+                    {deleting ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" isBright={true} />
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaTrash size={14} />
+                        <span>Delete</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

@@ -2686,7 +2686,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [visibleActionsMessageId, setVisibleActionsMessageId] = useState(null);
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [deleteForBoth, setDeleteForBoth] = useState(true);
+  const [deleteMessageLoading, setDeleteMessageLoading] = useState(false);
   const [showClearChatModal, setShowClearChatModal] = useState(false);
+  const [clearChatLoading, setClearChatLoading] = useState(false);
 
   // Undo functionality for messages deleted for me
   const [recentlyDeletedMessage, setRecentlyDeletedMessage] = useState(null);
@@ -4720,6 +4722,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     if (!messageToDelete) return;
 
     try {
+      setDeleteMessageLoading(true);
       // Handle call deletion (calls are stored in DB, we just remove from local display)
       if (messageToDelete.isCall || (messageToDelete._id && messageToDelete._id.startsWith('call-'))) {
         const callToDelete = messageToDelete.call || messageToDelete;
@@ -4732,9 +4735,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           (call._id || call.callId) !== callId
         ));
         toast.success('Call removed from chat');
-        setShowDeleteModal(false);
-        setMessageToDelete(null);
-        setDeleteForBoth(true);
         return;
       }
 
@@ -4742,53 +4742,43 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       if (Array.isArray(messageToDelete)) {
         const ids = messageToDelete.map(m => m._id);
         if (deleteForBoth) {
-          try {
-            const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
-              method: 'DELETE',
-              body: JSON.stringify({ commentIds: ids })
-            });
-            if (!res.ok) {
-              const errorData = await res.json().catch(() => ({}));
-              throw { response: { status: res.status, data: errorData } };
-            }
-            const data = await res.json();
-            if (data?.comments) {
-              setComments(prev => data.comments.map(newC => {
-                const localC = prev.find(lc => lc._id === newC._id);
-                if (localC && localC.status === 'read' && newC.status !== 'read') {
-                  return { ...newC, status: 'read' };
-                }
-                return newC;
-              }));
-            }
-            toast.success(`Deleted ${ids.length} messages for everyone!`);
-          } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to delete selected messages.');
-            return;
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/bulk-delete`, {
+            method: 'DELETE',
+            body: JSON.stringify({ commentIds: ids })
+          });
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw { response: { status: res.status, data: errorData } };
           }
+          const data = await res.json();
+          if (data?.comments) {
+            setComments(prev => data.comments.map(newC => {
+              const localC = prev.find(lc => lc._id === newC._id);
+              if (localC && localC.status === 'read' && newC.status !== 'read') {
+                return { ...newC, status: 'read' };
+              }
+              return newC;
+            }));
+          }
+          toast.success(`Deleted ${ids.length} messages for everyone!`);
         } else {
-          try {
-            const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, {
-              method: 'POST',
-              body: JSON.stringify({ removedIds: ids })
-            });
-            if (!res.ok) {
-              const errorData = await res.json().catch(() => ({}));
-              throw { response: { status: res.status, data: errorData } };
-            }
-            setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
-            ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
-
-            // Start undo timer for the first message (for bulk deletes, we'll show undo for the first one)
-            if (messageToDelete.length > 0) {
-              startUndoTimer(messageToDelete[0]);
-            }
-
-            toast.success(`Deleted ${ids.length} messages for you!`);
-          } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to delete selected messages for you.');
-            return;
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, {
+            method: 'POST',
+            body: JSON.stringify({ removedIds: ids })
+          });
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw { response: { status: res.status, data: errorData } };
           }
+          setComments(prev => prev.filter(msg => !ids.includes(msg._id)));
+          ids.forEach(cid => addLocallyRemovedId(appt._id, cid));
+
+          // Start undo timer for the first message (for bulk deletes, we'll show undo for the first one)
+          if (messageToDelete.length > 0) {
+            startUndoTimer(messageToDelete[0]);
+          }
+
+          toast.success(`Deleted ${ids.length} messages for you!`);
         }
       } else if (deleteForBoth) {
         // Single delete for everyone
@@ -4831,16 +4821,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
+    } finally {
+      setDeleteMessageLoading(false);
+      setShowDeleteModal(false);
+      setMessageToDelete(null);
+      setDeleteForBoth(true);
     }
-
-    // Close modal and reset state
-    setShowDeleteModal(false);
-    setMessageToDelete(null);
-    setDeleteForBoth(true);
   };
 
   const handleClearChat = async () => {
     try {
+      setClearChatLoading(true);
       // Optimistically update local storage and UI
       const now = Date.now();
       localStorage.setItem(clearTimeKey, now);
@@ -4858,6 +4849,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       console.error('Failed to persist chat clear:', err);
       toast.error(err.response?.data?.message || 'Cleared locally, but failed to sync with server.');
     } finally {
+      setClearChatLoading(false);
       setShowClearChatModal(false);
     }
   };
@@ -12128,7 +12120,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   </p>
 
                   <div className="mb-6">
-                    <label className={`flex items-center gap-3 ${isChatSendBlocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                    <label className={`flex items-center gap-3 ${(isChatSendBlocked || deleteMessageLoading) ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                       <input
                         type="checkbox"
                         checked={deleteForBoth}
@@ -12139,19 +12131,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           }
                           setDeleteForBoth(e.target.checked);
                         }}
-                        disabled={isChatSendBlocked}
-                        className={`form-checkbox h-4 w-4 text-red-600 rounded border-gray-300 dark:border-gray-600 focus:ring-red-500 ${isChatSendBlocked ? 'opacity-50 cursor-not-allowed' : ''
+                        disabled={isChatSendBlocked || deleteMessageLoading}
+                        className={`form-checkbox h-4 w-4 text-red-600 rounded border-gray-300 dark:border-gray-600 focus:ring-red-500 ${(isChatSendBlocked || deleteMessageLoading) ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
                       />
-                      <span className={`text-sm ${isChatSendBlocked ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <span className={`text-sm ${(isChatSendBlocked || deleteMessageLoading) ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'}`}>
                         Also delete for{' '}
-                        <span className={`font-medium ${isChatSendBlocked ? 'text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                        <span className={`font-medium ${(isChatSendBlocked || deleteMessageLoading) ? 'text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                           {otherParty?.username || 'other user'}
                         </span>
                         {isChatSendBlocked && ' (Disabled for this appointment status)'}
                       </span>
                     </label>
-                    <p className={`text-xs mt-1 ml-7 ${isChatSendBlocked ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <p className={`text-xs mt-1 ml-7 ${(isChatSendBlocked || deleteMessageLoading) ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                       {isChatSendBlocked
                         ? (Array.isArray(messageToDelete) ? 'The selected messages will only be deleted for you' : 'The message will only be deleted for you')
                         : deleteForBoth
@@ -12175,31 +12167,44 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
+                  disabled={deleteMessageLoading}
                   onClick={() => {
                     setShowDeleteModal(false);
                     setMessageToDelete(null);
                     setDeleteForBoth(true);
                   }}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
+                  disabled={deleteMessageLoading}
                   onClick={handleConfirmDelete}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaTrash size={12} />
-                  {messageToDelete?.isCall || (messageToDelete?._id && messageToDelete._id.startsWith('call-'))
-                    ? 'Delete'
-                    : Array.isArray(messageToDelete)
-                      ? ((messageToDelete.every(m => m.senderEmail === currentUser.email) && deleteForBoth) ? 'Delete for everyone' : 'Delete for me')
-                      : (messageToDelete?.deleted
-                        ? 'Delete for me'
-                        : messageToDelete?.senderEmail === currentUser.email
-                          ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
-                          : 'Delete for me')
-                  }
+                  {deleteMessageLoading ? (
+                    <>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaTrash size={12} />
+                      <span>
+                        {messageToDelete?.isCall || (messageToDelete?._id && messageToDelete._id.startsWith('call-'))
+                          ? 'Delete'
+                          : Array.isArray(messageToDelete)
+                            ? ((messageToDelete.every(m => m.senderEmail === currentUser.email) && deleteForBoth) ? 'Delete for everyone' : 'Delete for me')
+                            : (messageToDelete?.deleted
+                              ? 'Delete for me'
+                              : messageToDelete?.senderEmail === currentUser.email
+                                ? (deleteForBoth ? 'Delete for everyone' : 'Delete for me')
+                                : 'Delete for me')
+                        }
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -12224,18 +12229,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
+                  disabled={clearChatLoading}
                   onClick={() => setShowClearChatModal(false)}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
+                  disabled={clearChatLoading}
                   onClick={handleClearChat}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaTrash size={12} />
-                  Clear Chat
+                  {clearChatLoading ? (
+                    <>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      <span>Clearing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaTrash size={12} />
+                      <span>Clear Chat</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -12482,7 +12498,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={() => { setShowReportModal(false); setReportingMessage(null); setReportReason(''); setReportDetails(''); }}
-                  className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  disabled={submittingReport}
+                  className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

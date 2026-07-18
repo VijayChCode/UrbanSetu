@@ -11445,7 +11445,7 @@ function AdminAppointmentRow({
                     {(reports || []).filter(r => reportsFilter === 'message' ? r.type === 'message' : r.type !== 'message').map((r, idx) => (
                       <div
                         key={r.notificationId || idx}
-                        className={`border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow ${r.messageId ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750' : ''}`}
+                        className={`border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow ${r.messageId ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700' : ''}`}
                         onClick={() => {
                           if (!r.messageId) return;
                           setShowReportsModal(false);
