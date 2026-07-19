@@ -928,7 +928,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                     content: toolResult
                 });
             }
-
+            
             // Call AI again with the tool results
             requestPayload = {
                 messages: messages,
