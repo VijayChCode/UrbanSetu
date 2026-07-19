@@ -8246,6 +8246,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         let processedText = text;
 
+        // Clean up 0x00, 0x01 etc. prefixes in headings before formatting
+        processedText = processedText
+            .replace(/^(0x\d{2}\s+)/gim, '')
+            .replace(/^(#{1,6}\s+)0x\d{2}\s+/gim, '$1');
+
         // Pre-process: Convert raw HTML <a> tags from LLM output to markdown links
         // This prevents raw HTML attributes from showing as visible text
         processedText = processedText.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi, (match, url, linkText) => {
