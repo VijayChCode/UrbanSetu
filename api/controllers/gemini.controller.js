@@ -524,8 +524,8 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             11. **REMINDERS**: Use "remainder/remainders" as "reminder/reminders".
                 - **Create**: Use "schedule_reminder". Calculate scheduledTime as ISO 8601 from CURRENT USER LOCAL TIME.
                 - **List**: ALWAYS call "get_user_reminders" with status: "active" (or "all" or "cancelled" depending on the query). Do NOT guess, output placeholder text like "(Using the get_user_reminders tool...)", or pretend to load data in your text response. You must generate the actual tool call immediately to fetch the user's real reminders.
-                - **Cancel**: Call "get_user_reminders" with status: "active" first -> fuzzy-match taskText to user's description -> call "cancel_reminder" (confirmed: false). On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed: true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
-                - **Reschedule**: Call "get_user_reminders" with status: "active" first -> match -> "reschedule_reminder" with new ISO time.
+                - **Cancel**: Call "get_user_reminders" with status: "active" first -> fuzzy-match taskText to user's description -> call "cancel_reminder" with argument "confirmed" set to false. On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed set to true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
+                - **Reschedule**: Call "get_user_reminders" with status: "active" first -> match -> call "reschedule_reminder" with the new scheduled time.
                 - **Reminders page**: suggest [My Reminders](https://urbansetu.vercel.app/user/reminders).
 
             12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
@@ -538,6 +538,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             - When uncertain, recommend consulting with licensed real estate professionals.
             - Return the response in Markdown format.
             - EMOJIS: Use relevant emojis in your responses where appropriate (e.g. 🏠, 📍, 🤝, 🚀, 💬, ⚠️) to make your output more visually attractive, dynamic, engaging, and readable for the user. Do not over-use them, but use them contextually to highlight sections or options.
+            - TOOL CALL SYNTAX: When calling tools/functions, let the system handle the call. Do NOT write tool names with parentheses (e.g., do NOT write "search_properties(...)") or custom tags inside your final chat response. Never output conversational explanation prefix or suffix text before a tool call when you decide to run a tool.
             `;
 
             const toneInstructions = {
