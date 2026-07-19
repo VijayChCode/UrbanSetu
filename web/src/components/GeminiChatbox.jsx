@@ -8260,11 +8260,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const codeBlocks = [];
         processedText = processedText.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
             codeBlocks.push({ type: 'block', language, code, match });
-            return `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length - 1}__`;
+            return `%%CODEBLOCKPLACEHOLDER${codeBlocks.length - 1}%%`;
         });
         processedText = processedText.replace(/`([^`]+)`/g, (match, code) => {
             codeBlocks.push({ type: 'inline', code, match });
-            return `__INLINE_CODE_PLACEHOLDER_${codeBlocks.length - 1}__`;
+            return `%%INLINECODEPLACEHOLDER${codeBlocks.length - 1}%%`;
         });
 
         // Parse LaTeX math expressions
@@ -8367,10 +8367,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         <pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${cleanCode}</code></pre>
                     </div>`;
                 }
-                processedText = processedText.replace(`__CODE_BLOCK_PLACEHOLDER_${i}__`, htmlReplacement);
+                processedText = processedText.replace(`%%CODEBLOCKPLACEHOLDER${i}%%`, htmlReplacement);
             } else if (block.type === 'inline') {
                 htmlReplacement = `<code class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 px-2 py-1 rounded text-sm font-mono border border-gray-300 dark:border-gray-600">${block.code}</code>`;
-                processedText = processedText.replace(`__INLINE_CODE_PLACEHOLDER_${i}__`, htmlReplacement);
+                processedText = processedText.replace(`%%INLINECODEPLACEHOLDER${i}%%`, htmlReplacement);
             }
         }
         // Process markdown tables (before processing other markdown elements)
