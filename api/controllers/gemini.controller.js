@@ -799,9 +799,9 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         let requestPayload = {
             messages: messages,
             model: GROQ_MODEL, // Llama 3 for tool use (Groq model ID)
-            temperature: getTemperature(creativity, tone, temperature),
+            temperature: 0.0, // Force 0.0 for tool use hop to ensure correct syntax formatting
             max_completion_tokens: getMaxTokens(responseLength, messages),
-            top_p: getTopP(topP),
+            top_p: 1.0, // Force 1.0 when temperature is 0.0
             stream: false, // Default to false for tool handling logic simplicity first
             tools: toolDefinitions,
             tool_choice: "auto"
@@ -933,6 +933,9 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             requestPayload = {
                 messages: messages,
                 model: GROQ_MODEL,
+                temperature: getTemperature(creativity, tone, temperature),
+                max_completion_tokens: getMaxTokens(responseLength, messages),
+                top_p: getTopP(topP),
                 stream: enableStreaming === true || enableStreaming === 'true' // Re-enable streaming for final answer if requested
             };
 
