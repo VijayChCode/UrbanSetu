@@ -8418,6 +8418,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
 
 
+        // Parse Setext-style headers (Text underlined with === or ---)
+        processedText = processedText
+            .replace(/^([^\r\n]+)\r?\n={3,}(?:\s*)$/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>')
+            .replace(/^([^\r\n]+)\r?\n-{3,}(?:\s*)$/gim, '<h2 class="text-xl font-semibold mt-4 mb-2">$1</h2>');
+
         // Process other markdown elements
         processedText = processedText
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => `<a href="${url.trim()}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`) // Links
