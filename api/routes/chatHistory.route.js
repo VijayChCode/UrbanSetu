@@ -7,7 +7,8 @@ import {
     clearChatHistory,
     clearAllChatHistory,
     deleteChatSession,
-    updateChatSession
+    updateChatSession,
+    getImageFaceTags
 } from '../controllers/chatHistory.controller.js';
 
 const router = express.Router();
@@ -20,6 +21,9 @@ router.post('/save', saveChatMessage);
 
 // Get chat history for a specific session
 router.get('/session/:sessionId', getChatHistory);
+
+// Get face tags of a specific image in a chat session
+router.get('/session/:sessionId/image-face-tags', getImageFaceTags);
 
 // Update an existing chat session
 router.put('/session/:sessionId', updateChatSession);

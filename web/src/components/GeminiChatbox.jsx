@@ -706,9 +706,43 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isAnalyzingFaces, setIsAnalyzingFaces] = useState({}); // format: { [imgTempId]: boolean }
     const [detectedFaces, setDetectedFaces] = useState({}); // format: { [imgTempId]: [{ name: '...', descriptor: [...] }] }
     const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '', details: '' });
+    const [isFaceTagRefreshing, setIsFaceTagRefreshing] = useState(false);
     const urlFaceDescriptorsRef = useRef({}); // Cache for URL -> face descriptor mapping
     const [taggingSentImageLoading, setTaggingSentImageLoading] = useState({}); // format: { [imageUrl]: boolean }
     const [deleteReminderId, setDeleteReminderId] = useState(null);
+
+    const handleFaceTagRefresh = async () => {
+        if (!faceTaggingModal.imgId) return;
+        const sessionId = getOrCreateSessionId();
+        if (!sessionId) return;
+        
+        setIsFaceTagRefreshing(true);
+        try {
+            const fetchUrl = `${API_BASE_URL}/api/chat-history/session/${sessionId}/image-face-tags?imageUrl=${encodeURIComponent(faceTaggingModal.imgId)}`;
+            const res = await authenticatedFetch(fetchUrl);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.faceTags && data.faceTags.length > 0) {
+                    const tag = data.faceTags[0];
+                    setFaceTaggingModal(prev => ({
+                        ...prev,
+                        name: tag.name || '',
+                        details: tag.details || ''
+                    }));
+                    toast.success("Successfully fetched face tag details from backend!");
+                } else {
+                    toast.info("No face tag details found for this image in the backend.");
+                }
+            } else {
+                toast.error("Failed to fetch face tag details from backend.");
+            }
+        } catch (error) {
+            console.error("Error refreshing face tag details:", error);
+            toast.error("Failed to refresh face tag details.");
+        } finally {
+            setIsFaceTagRefreshing(false);
+        }
+    };
 
     // -------------------------------------------------------------
     // FACE RECOGNITION UTILITIES (face-api.js)
@@ -15713,6 +15747,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Associate a name with this face for future recognition</p>
                                 </div>
                             </div>
+                            {/* Refresh Button */}
+                            <button
+                                type="button"
+                                disabled={isFaceTagRefreshing}
+                                onClick={handleFaceTagRefresh}
+                                className={`p-2 rounded-xl transition-all duration-300 ${isDarkMode ? 'hover:bg-gray-900 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'} ${isFaceTagRefreshing ? 'cursor-not-allowed animate-pulse' : 'hover:scale-[1.02] active:scale-95'}`}
+                                title="Sync from backend"
+                            >
+                                <FaSync className={`${isFaceTagRefreshing ? 'animate-spin text-purple-500' : ''}`} size={16} />
+                            </button>
                         </div>
 
                         <form onSubmit={handleFaceTagSubmit} className="space-y-4">
@@ -15723,6 +15767,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <input
                                     type="text"
                                     required
+                                    disabled={isFaceTagRefreshing}
                                     value={faceTaggingModal.name}
                                     onChange={(e) => setFaceTaggingModal(prev => ({ ...prev, name: e.target.value }))}
                                     placeholder="e.g. Mahesh Babu"
@@ -15730,7 +15775,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         isDarkMode
                                             ? 'bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900'
                                             : 'bg-gray-50 border-gray-200 focus:border-purple-500 text-gray-800 focus:bg-white'
-                                    }`}
+                                    } ${isFaceTagRefreshing ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900' : ''}`}
                                     autoFocus
                                 />
                             </div>
@@ -15740,6 +15785,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     Person's Details <span className={`font-normal normal-case tracking-normal ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>(optional)</span>
                                 </label>
                                 <textarea
+                                    disabled={isFaceTagRefreshing}
                                     value={faceTaggingModal.details}
                                     onChange={(e) => {
                                         if (e.target.value.length <= 200) {
@@ -15753,7 +15799,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         isDarkMode
                                             ? 'bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900'
                                             : 'bg-gray-50 border-gray-200 focus:border-purple-500 text-gray-800 focus:bg-white'
-                                    }`}
+                                    } ${isFaceTagRefreshing ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900' : ''}`}
                                 />
                                 {faceTaggingModal.details.length > 120 && (
                                     <p className={`text-[10px] text-right mt-1 ${faceTaggingModal.details.length >= 200 ? 'text-red-400' : isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -15765,16 +15811,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
+                                    disabled={isFaceTagRefreshing}
                                     onClick={() => setFaceTaggingModal({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '', details: '' })}
-                                    className={`w-full py-3 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 border ${isDarkMode ? 'bg-gray-900 hover:bg-gray-800 border-gray-800 text-gray-300' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600'}`}
+                                    className={`w-full py-3 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 border ${isDarkMode ? 'bg-gray-900 hover:bg-gray-800 border-gray-800 text-gray-300' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600'} ${isFaceTagRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-full py-3 bg-purple-600 hover:bg-purple-750 shadow-lg shadow-purple-500/20 text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95"
+                                    disabled={isFaceTagRefreshing}
+                                    className={`w-full py-3 bg-purple-600 hover:bg-purple-750 shadow-lg shadow-purple-500/20 text-white rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 ${isFaceTagRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    Save Tag
+                                    {isFaceTagRefreshing ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <FaSync className="animate-spin" size={14} /> Syncing...
+                                        </span>
+                                    ) : (
+                                        "Save Tag"
+                                    )}
                                 </button>
                             </div>
                         </form>

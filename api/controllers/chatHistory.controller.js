@@ -497,3 +497,73 @@ export const deleteChatSession = async (req, res) => {
         });
     }
 };
+
+export const getImageFaceTags = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { imageUrl } = req.query;
+        const userId = req.user.id;
+
+        if (!sessionId || !imageUrl) {
+            return res.status(400).json({
+                success: false,
+                message: 'Session ID and Image URL are required'
+            });
+        }
+
+        const chatHistory = await ChatHistory.findOne({
+            userId,
+            sessionId,
+            isActive: true
+        });
+
+        if (!chatHistory) {
+            return res.status(404).json({
+                success: false,
+                message: 'Chat session not found'
+            });
+        }
+
+        // Search for message containing the image URL
+        const matchedMsg = chatHistory.messages.find(m => 
+            (m.images && m.images.includes(imageUrl)) || 
+            (m.imageUrl === imageUrl) || 
+            (m.ocrText && m.ocrText.includes(imageUrl))
+        );
+
+        if (matchedMsg && matchedMsg.faceTags && matchedMsg.faceTags.length > 0) {
+            return res.status(200).json({
+                success: true,
+                faceTags: matchedMsg.faceTags
+            });
+        }
+
+        // If not found in main messages, search variants
+        for (const m of chatHistory.messages) {
+            if (m.variants && m.variants.length > 0) {
+                for (const v of m.variants) {
+                    if ((v.images && v.images.includes(imageUrl)) || (v.imageUrl === imageUrl) || (v.ocrText && v.ocrText.includes(imageUrl))) {
+                        if (v.faceTags && v.faceTags.length > 0) {
+                            return res.status(200).json({
+                                success: true,
+                                faceTags: v.faceTags
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            faceTags: []
+        });
+
+    } catch (error) {
+        console.error('Error fetching image face tags:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
