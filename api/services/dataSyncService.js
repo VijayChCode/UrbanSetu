@@ -489,19 +489,39 @@ export const getCachedData = () => {
  * Search cached properties
  */
 export const searchCachedProperties = (query, limit = 5) => {
+    const keywords = extractKeywords(query || '');
     const properties = Array.from(dataCache.properties.values());
 
-    if (!query || query.trim().length === 0) {
+    if (keywords.length === 0) {
         return properties.slice(0, limit);
     }
 
-    const searchTerm = query.toLowerCase();
-    const filtered = properties.filter(prop =>
-        prop.name.toLowerCase().includes(searchTerm) ||
-        prop.location.toLowerCase().includes(searchTerm) ||
-        prop.type.toLowerCase().includes(searchTerm) ||
-        prop.description.toLowerCase().includes(searchTerm)
-    );
+    // Score properties based on keyword matches
+    const scored = properties.map(prop => {
+        let score = 0;
+        const searchableText = `${prop.name} ${prop.location} ${prop.type} ${prop.description || ''}`.toLowerCase();
+        
+        keywords.forEach(keyword => {
+            if (searchableText.includes(keyword)) {
+                score++;
+                // Give extra weight to location matches (like city names)
+                if (prop.location.toLowerCase().includes(keyword)) {
+                    score += 2;
+                }
+                // Give extra weight to title/name matches
+                if (prop.name.toLowerCase().includes(keyword)) {
+                    score += 1.5;
+                }
+            }
+        });
+
+        return { prop, score };
+    });
+
+    const filtered = scored
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(item => item.prop);
 
     return filtered.slice(0, limit);
 };

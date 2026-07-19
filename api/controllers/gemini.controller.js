@@ -573,10 +573,11 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             ${websiteData}
 
             Remember:
-            - If the user's query is simple or general knowledge, keep it simple and do NOT use property tools.
-            - If they ask about the project/platform specifically, use the "Project Knowledge" section.
-            - Only call "search_properties" for property-related intents.
-            - Always try to provide a direct Link from the "Route Map" or "Help Articles" if relevant.
+             - If the user's query is simple or general knowledge, keep it simple and do NOT use property tools.
+             - If they ask about the project/platform specifically, use the "Project Knowledge" section.
+             - Only call "search_properties" for property-related intents.
+             - CRITICAL: The "LIVE WEBSITE DATA (Contextual)" section contains cached/historical listings only for general context. If the user is actively searching, filtering, listing, or requesting recommendations/suggestions for properties (e.g. asking for economical properties in a location), you MUST call the "search_properties" tool to query the database. Do NOT just copy, summarize, or pretend to retrieve data from the "LIVE WEBSITE DATA" cache if a property search is requested.
+             - Always try to provide a direct Link from the "Route Map" or "Help Articles" if relevant.
 
             Tone: ${toneInstructions[tone] || toneInstructions['neutral']}`;
         };
@@ -816,8 +817,12 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         try {
             completion = await groq.chat.completions.create(requestPayload);
         } catch (toolError) {
+            console.error('🔥 Groq API error during chat completion:', toolError);
+            if (toolError.error) {
+                console.error('🔥 Error object details:', JSON.stringify(toolError.error, null, 2));
+            }
             // Handle tool_use_failed errors by retrying without tools
-            if (toolError.status === 400 && toolError.error?.error?.code === 'tool_use_failed') {
+            if (toolError.status === 400 && (toolError.error?.error?.code === 'tool_use_failed' || toolError.message?.includes('tool_use_failed'))) {
                 console.warn('⚠️ Tool use failed, retrying without tools...');
                 const retryPayload = {
                     messages: messages,
