@@ -708,6 +708,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [faceTaggingModal, setFaceTaggingModal] = useState({ isOpen: false, imgId: null, faceIndex: null, descriptor: null, name: '', details: '' });
     const [isFaceTagRefreshing, setIsFaceTagRefreshing] = useState(false);
     const urlFaceDescriptorsRef = useRef({}); // Cache for URL -> face descriptor mapping
+    const isLoadingPreviousRef = useRef(false);
     const [taggingSentImageLoading, setTaggingSentImageLoading] = useState({}); // format: { [imageUrl]: boolean }
     const [deleteReminderId, setDeleteReminderId] = useState(null);
     const [copiedBlocks, setCopiedBlocks] = useState({});
@@ -2979,6 +2980,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const loadChatHistory = async (currentSessionId, page = 1) => {
         if (!currentUser || !currentSessionId) return;
+        if (isLoadingPreviousRef.current) return;
+
+        isLoadingPreviousRef.current = true;
 
         // Capture container and scroll height BEFORE loading state changes to handle tag removal correctly
         const container = messagesContainerRef.current;
@@ -3049,6 +3053,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             console.error('Error loading session history:', error);
             setIsLoadingPreviousMessages(false);
         } finally {
+            isLoadingPreviousRef.current = false;
             // Only set loaded to true if it was page 1
             if (page === 1) {
                 setIsHistoryLoaded(true);
@@ -3086,6 +3091,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         setFloatingDateLabel('');
         setIsScrolling(false);
         setTotalMessageCount(0); // Reset total message count for new session
+        setHasMoreHistory(false);
+        setMessageHistoryPage(1);
         // Generate new session ID
         const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         localStorage.setItem('gemini_session_id', newSessionId);
@@ -4221,7 +4228,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
             // Check for scroll near top to load previous messages
             // Threshold increased to 30px for better reliability
-            if (el.scrollTop <= 30 && hasMoreHistory && !isLoadingPreviousMessages) {
+            if (el.scrollTop <= 30 && hasMoreHistory && !isLoadingPreviousMessages && !isLoadingPreviousRef.current) {
                 console.log('Loading previous messages...');
                 const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
                 if (currentSessionId) {
@@ -6515,6 +6522,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     } else {
                         setTotalMessageCount(sessionMessages.length);
                     }
+                    setHasMoreHistory(data.data.hasMore || false);
+                    setMessageHistoryPage(1);
                     setSessionId(sessionId);
                     localStorage.setItem('gemini_session_id', sessionId);
 
@@ -6653,6 +6662,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                      setFloatingDateLabel('');
                      setIsScrolling(false);
                      setTotalMessageCount(0); // Reset total message count for new session
+                     setHasMoreHistory(false);
+                     setMessageHistoryPage(1);
                      setCurrentChatName('');
                      setDisplayedTitle('SetuAI');
                      setIsGeneratingTitle(false);
@@ -9723,8 +9734,32 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <div className="flex justify-center py-4 animate-fadeIn">
                                     <div className={`flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg ${isDarkMode ? 'bg-gray-800/90 border-gray-700 text-blue-400' : 'bg-white/90 border-blue-100 text-blue-600'} backdrop-blur-md transform transition-all hover:scale-105`}>
                                         <UrbanSetuSpinner size="sm" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Loading messages...</span>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Load Earlier Messages Button */}
+                            {hasMoreHistory && !isLoadingPreviousMessages && (
+                                <div className="flex justify-center py-2 animate-fadeIn">
+                                    <button
+                                        onClick={() => {
+                                            const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
+                                            if (currentSessionId && !isLoadingPreviousMessages && !isLoadingPreviousRef.current) {
+                                                loadChatHistory(currentSessionId, messageHistoryPage + 1);
+                                            }
+                                        }}
+                                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold shadow-md hover:shadow-lg transition-all duration-200 ${
+                                            isDarkMode 
+                                                ? 'text-blue-400 bg-gray-800/60 border border-gray-700 hover:bg-gray-700/80 hover:text-blue-300' 
+                                                : 'text-blue-600 bg-blue-50/60 border border-blue-100 hover:bg-blue-100/80 hover:text-blue-700'
+                                        }`}
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                        </svg>
+                                        Load earlier messages ({Math.max(0, totalMessageCount - messages.length)} more)
+                                    </button>
                                 </div>
                             )}
 
