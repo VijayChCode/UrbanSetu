@@ -379,6 +379,16 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     const handleKeyDown = (e) => {
       if (!isOpen) return;
 
+      // Ignore shortcuts if typing in input, textarea or contenteditable element
+      if (
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+         e.target.tagName === 'TEXTAREA' ||
+         e.target.isContentEditable)
+      ) {
+        return;
+      }
+
       // Show controls on any interaction
       if (!showControls) setShowControls(true);
 

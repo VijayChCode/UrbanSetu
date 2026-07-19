@@ -315,7 +315,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     if (!isOpen) return;
 
     const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT') return;
+      if (
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+         e.target.tagName === 'TEXTAREA' ||
+         e.target.isContentEditable)
+      ) {
+        return;
+      }
 
       switch (e.key.toLowerCase()) {
         case ' ': // Space - Play/Pause
