@@ -538,7 +538,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             - When uncertain, recommend consulting with licensed real estate professionals.
             - Return the response in Markdown format.
             - EMOJIS: Use relevant emojis in your responses where appropriate (e.g. 🏠, 📍, 🤝, 🚀, 💬, ⚠️) to make your output more visually attractive, dynamic, engaging, and readable for the user. Do not over-use them, but use them contextually to highlight sections or options.
-            - TOOL CALL SYNTAX: When calling tools/functions, let the system handle the call. Do NOT write tool names with parentheses (e.g., do NOT write "search_properties(...)") or custom tags inside your final chat response. Never output conversational explanation prefix or suffix text before a tool call when you decide to run a tool.
+            - TOOL CALLS: When calling tools, only output the tool call. Do not add conversational text before or after the tool call.
             `;
 
             const toneInstructions = {
