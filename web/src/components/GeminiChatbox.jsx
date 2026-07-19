@@ -8503,17 +8503,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 );
             }
 
-            // Restore protected HTML tags
-            const restoredPart = part.replace(/__HTML_PROTECTED_(\d+)__/g, (match, id) => {
-                const restored = protectedParts[parseInt(id)];
-                return restored !== undefined ? restored : match; // Return match (placeholder) if undefined
-            });
-
             // Handle image filenames in response (Task 2)
             // Pattern: something.png, something.jpg, something.jpeg, something.webp (case insensitive)
             const imagePattern = /\b([a-zA-Z0-9_-]+\.(?:png|jpg|jpeg|webp))\b/gi;
-            if (imagePattern.test(restoredPart)) {
-                const imgParts = restoredPart.split(imagePattern);
+            if (imagePattern.test(part)) {
+                const imgParts = part.split(imagePattern);
                 return (
                     <span key={index} className={isSentMessage ? "text-white" : ""}>
                         {imgParts.map((item, i) => {
@@ -8556,11 +8550,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 }
                                 return item;
                             }
-                            return <span key={i} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />;
+
+                            // Restore protected HTML tags for the text parts of the split image string
+                            const restoredItem = item.replace(/__HTML_PROTECTED_(\d+)__/g, (match, id) => {
+                                const restored = protectedParts[parseInt(id)];
+                                return restored !== undefined ? restored : match;
+                            });
+
+                            return <span key={i} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(restoredItem) }} />;
                         })}
                     </span>
                 );
             }
+
+            // Restore protected HTML tags
+            const restoredPart = part.replace(/__HTML_PROTECTED_(\d+)__/g, (match, id) => {
+                const restored = protectedParts[parseInt(id)];
+                return restored !== undefined ? restored : match; // Return match (placeholder) if undefined
+            });
 
             return <span key={index} className={isSentMessage ? "text-white" : ""} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(restoredPart) }} />;
         });
