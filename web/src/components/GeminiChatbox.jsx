@@ -710,6 +710,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const urlFaceDescriptorsRef = useRef({}); // Cache for URL -> face descriptor mapping
     const [taggingSentImageLoading, setTaggingSentImageLoading] = useState({}); // format: { [imageUrl]: boolean }
     const [deleteReminderId, setDeleteReminderId] = useState(null);
+    const [copiedBlocks, setCopiedBlocks] = useState({});
 
     const handleFaceTagRefresh = async () => {
         if (!faceTaggingModal.imgId) return;
@@ -5230,19 +5231,27 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         copyToClipboard(code);
 
                         // Visual feedback: Change icon to checkmark temporarily
-                        if (!btn.hasAttribute('data-original-html')) {
-                            btn.setAttribute('data-original-html', btn.innerHTML);
-                        }
-
-                        const checkIcon = `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-
-                        btn.innerHTML = checkIcon;
-
-                        setTimeout(() => {
-                            if (btn && document.contains(btn)) {
-                                btn.innerHTML = btn.getAttribute('data-original-html');
+                        const blockId = btn.getAttribute('data-block-id');
+                        if (blockId) {
+                            setCopiedBlocks(prev => ({ ...prev, [blockId]: true }));
+                            setTimeout(() => {
+                                setCopiedBlocks(prev => ({ ...prev, [blockId]: false }));
+                            }, 2000);
+                        } else {
+                            if (!btn.hasAttribute('data-original-html')) {
+                                btn.setAttribute('data-original-html', btn.innerHTML);
                             }
-                        }, 2000);
+
+                            const checkIcon = `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+                            btn.innerHTML = checkIcon;
+
+                            setTimeout(() => {
+                                if (btn && document.contains(btn)) {
+                                    btn.innerHTML = btn.getAttribute('data-original-html');
+                                }
+                            }, 2000);
+                        }
                     }
                 } catch (err) {
                     console.error('Failed to copy code:', err);
@@ -8241,7 +8250,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     // Enhanced markdown rendering function with code highlighting
-    const renderMarkdown = (text) => {
+    const renderMarkdown = (text, messageId = 'temp') => {
         if (!enableMarkdown) return text;
 
         let processedText = text;
@@ -8336,17 +8345,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     'md': 'markdown'
                 };
                 lang = languageMap[lang] || lang;
+                const blockId = `code-block-${messageId}-${i}`;
+                const isCopied = !!copiedBlocks[blockId];
+                const copyIconHtml = isCopied 
+                    ? `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg" class="text-green-400"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+                    : `<svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
 
                 if (enableCodeHighlighting) {
                     try {
                         const highlightedCode = Prism.highlight(cleanCode, Prism.languages[lang] || Prism.languages.text, lang);
-                        htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-700 dark:border-gray-600 bg-gray-900 dark:bg-gray-800"><div class="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-700 border-b border-gray-700 dark:border-gray-600"><span class="text-xs font-medium text-gray-400 uppercase">${lang}</span><button class="code-copy-btn p-1.5 rounded-lg text-gray-400 hover:text-white transition-all hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}"><svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><pre class="bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${highlightedCode}</code></pre></div>`;
+                        htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-700 dark:border-gray-600 bg-gray-900 dark:bg-gray-800 select-text"><div class="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-700 border-b border-gray-700 dark:border-gray-600 select-none"><span class="text-xs font-medium text-gray-400 uppercase select-none">${lang}</span><button class="code-copy-btn p-1.5 rounded-lg text-gray-400 hover:text-white transition-all hover:bg-white/10 flex items-center justify-center select-none" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}" data-block-id="${blockId}">${copyIconHtml}</button></div><pre class="bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-200 p-4 overflow-x-auto border-none m-0 select-text"><code class="language-${lang} select-text">${highlightedCode}</code></pre></div>`;
                     } catch (error) {
                         console.warn('Code highlighting failed:', error);
-                        htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800"><div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600"><span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">${lang}</span><button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}"><svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${cleanCode}</code></pre></div>`;
+                        htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 select-text"><div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 select-none"><span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase select-none">${lang}</span><button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center select-none" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}" data-block-id="${blockId}">${copyIconHtml}</button></div><pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0 select-text"><code class="language-${lang} select-text">${cleanCode}</code></pre></div>`;
                     }
                 } else {
-                    htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800"><div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600"><span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">${lang}</span><button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}"><svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1.2em" width="1.2em" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0"><code class="language-${lang}">${cleanCode}</code></pre></div>`;
+                    htmlReplacement = `<div class="code-block relative group my-4 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 select-text"><div class="flex items-center justify-between px-4 py-2 bg-gray-200 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600 select-none"><span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase select-none">${lang}</span><button class="code-copy-btn p-1.5 rounded-lg text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-all hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center select-none" aria-label="Copy code" title="Copy code" data-code="${encodeURIComponent(cleanCode)}" data-block-id="${blockId}">${copyIconHtml}</button></div><pre class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-200 p-4 overflow-x-auto border-none m-0 select-text"><code class="language-${lang} select-text">${cleanCode}</code></pre></div>`;
                 }
                 processedText = processedText.replace(`%%CODEBLOCKPLACEHOLDER${i}%%`, htmlReplacement);
             } else if (block.type === 'inline') {
@@ -8445,7 +8459,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
 
         // First process markdown
-        const markdownProcessed = renderMarkdown(cleanedText);
+        const markdownProcessed = renderMarkdown(cleanedText, message?._id || message?.id || 'temp');
 
         // Protect functionality: Extract generated <a> tags and other HTML from the string
         // We only want to auto-link URLs that appear in clear text, not inside existing tags
