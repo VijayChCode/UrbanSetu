@@ -359,7 +359,8 @@ export const updateChatSession = async (req, res) => {
                                         return {
                                             ...v,
                                             ocrText: v.ocrText || existingVariant.ocrText,
-                                            visionAnalysis: v.visionAnalysis || existingVariant.visionAnalysis
+                                            visionAnalysis: v.visionAnalysis || existingVariant.visionAnalysis,
+                                            faceTags: v.faceTags || existingVariant.faceTags
                                         };
                                     }
                                     return v;
@@ -378,7 +379,8 @@ export const updateChatSession = async (req, res) => {
                                 documentUrl: incomingMsg.documentUrl || existingMsg.documentUrl,
                                 documentName: incomingMsg.documentName || existingMsg.documentName,
                                 tokenUsage: incomingMsg.tokenUsage || existingMsg.tokenUsage,
-                                variants: mergedVariants
+                                variants: mergedVariants,
+                                faceTags: incomingMsg.faceTags || existingMsg.faceTags
                             };
                         }
                         return incomingMsg;

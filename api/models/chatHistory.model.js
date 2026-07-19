@@ -64,6 +64,11 @@ const chatHistorySchema = new mongoose.Schema({
       imageAudits: Object,
       ocrText: String,
       visionAnalysis: String,
+      faceTags: [{
+        name: { type: String, trim: true },
+        details: { type: String, trim: true },
+        descriptor: [Number]
+      }],
       tokenUsage: {
         promptTokens: Number,
         completionTokens: Number,
@@ -111,7 +116,12 @@ const chatHistorySchema = new mongoose.Schema({
     visionAnalysis: {
       type: String,
       default: undefined
-    }
+    },
+    faceTags: [{
+      name: { type: String, trim: true },
+      details: { type: String, trim: true },
+      descriptor: [Number]
+    }]
   }],
   totalMessages: {
     type: Number,

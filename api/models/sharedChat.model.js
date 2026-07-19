@@ -57,6 +57,11 @@ const sharedChatSchema = new mongoose.Schema({
         videoUrl: String,
         documentUrl: String,
         documentName: String,
+        faceTags: [{
+            name: { type: String, trim: true },
+            details: { type: String, trim: true },
+            descriptor: [Number]
+        }],
         variants: [{
             content: String,
             role: String,
@@ -69,6 +74,11 @@ const sharedChatSchema = new mongoose.Schema({
             videoUrl: String,
             documentUrl: String,
             documentName: String,
+            faceTags: [{
+                name: { type: String, trim: true },
+                details: { type: String, trim: true },
+                descriptor: [Number]
+            }],
             timestamp: { type: Date, default: Date.now },
             tail: { type: Array, default: [] }
         }],

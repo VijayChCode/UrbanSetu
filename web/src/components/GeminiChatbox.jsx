@@ -774,15 +774,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (detections && detections.length > 0) {
                 const knownFaces = getKnownFaces();
                 const results = detections.map(det => {
-                    let bestMatch = { name: 'Unknown', distance: 1.0 };
+                    let bestMatch = { name: 'Unknown', details: '', distance: 1.0 };
                     knownFaces.forEach(known => {
                         const dist = faceapi.euclideanDistance(det.descriptor, new Float32Array(known.descriptor));
                         if (dist < 0.6 && dist < bestMatch.distance) {
-                            bestMatch = { name: known.name, distance: dist };
+                            bestMatch = { name: known.name, details: known.details || '', distance: dist };
                         }
                     });
                     return {
                         name: bestMatch.name,
+                        details: bestMatch.details || '',
                         descriptor: Array.from(det.descriptor)
                     };
                 });
@@ -830,7 +831,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 if (faceMatch && faceMatch[1]) {
                     return faceMatch[1]
                         .split(',')
-                        .map(n => n.trim())
+                        .map(n => {
+                            const trimmed = n.trim();
+                            const detailsIdx = trimmed.indexOf(' (Details:');
+                            if (detailsIdx !== -1) {
+                                return trimmed.substring(0, detailsIdx).trim();
+                            }
+                            return trimmed;
+                        })
                         .filter(n => n && !n.includes('Face AI detected a face') && !n.includes('vision intelligence') && !n.startsWith('Unknown') && n !== 'Unknown');
                 }
                 return []; // Found block for this image, but no faces are present
@@ -841,7 +849,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (faceMatch && faceMatch[1]) {
             return faceMatch[1]
                 .split(',')
-                .map(n => n.trim())
+                .map(n => {
+                    const trimmed = n.trim();
+                    const detailsIdx = trimmed.indexOf(' (Details:');
+                    if (detailsIdx !== -1) {
+                        return trimmed.substring(0, detailsIdx).trim();
+                    }
+                    return trimmed;
+                })
                 .filter(n => n && !n.includes('Face AI detected a face') && !n.includes('vision intelligence') && !n.startsWith('Unknown') && n !== 'Unknown');
         }
         return [];
@@ -859,7 +874,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return ocrText.includes('Face AI detected a face') || ocrText.includes('Identified Face');
     };
 
-    const handleSentImageTagClick = async (imgUrl, currentName) => {
+    const handleSentImageTagClick = async (imgUrl, currentName, currentDetails = '') => {
         if (taggingSentImageLoading[imgUrl]) return;
         
         let descriptor = urlFaceDescriptorsRef.current[imgUrl];
@@ -899,7 +914,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             faceIndex: 0,
             descriptor: descriptor,
             name: currentName || '',
-            details: ''
+            details: currentDetails || ''
         });
     };
 
@@ -917,7 +932,24 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const updated = prev.map(msg => {
                     if (msg.role === 'user' && msg.ocrText && msg.ocrText.includes(imgUrl)) {
                         const updatedOcr = updateOcrTextFaceName(msg.ocrText, imgUrl, null, newName);
-                        return { ...msg, ocrText: updatedOcr };
+                        
+                        // Structured faceTags array management
+                        const existingFaceTags = msg.faceTags || [];
+                        const hasMatchingTag = existingFaceTags.some(ft => ft.name === newName);
+                        let updatedFaceTags = [...existingFaceTags];
+                        if (hasMatchingTag) {
+                            updatedFaceTags = updatedFaceTags.map(ft =>
+                                ft.name === newName ? { ...ft, details: newDetails } : ft
+                            );
+                        } else {
+                            updatedFaceTags = [{
+                                name: newName,
+                                details: newDetails,
+                                descriptor: Array.from(faceTaggingModal.descriptor || [])
+                            }];
+                        }
+                        
+                        return { ...msg, ocrText: updatedOcr, faceTags: updatedFaceTags };
                     }
                     return msg;
                 });
@@ -928,7 +960,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setDetectedFaces(prev => {
                 const currentList = prev[faceTaggingModal.imgId] || [];
                 const updatedList = currentList.map((item, idx) => 
-                    idx === faceTaggingModal.faceIndex ? { ...item, name: newName } : item
+                    idx === faceTaggingModal.faceIndex ? { ...item, name: newName, details: newDetails } : item
                 );
                 return { ...prev, [faceTaggingModal.imgId]: updatedList };
             });
@@ -4411,6 +4443,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         let documentUrl = '';
         let documentName = '';
         let ocrTextToSend = '';
+        let messageFaceTags = [];
 
         if (pendingImages.length > 0) {
             messageImages = pendingImages.filter(img => img.type === 'image').map(img => img.url).filter(Boolean);
@@ -4435,6 +4468,16 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     }
                     let faceInfo = '';
                     if (detectedFaces[img.id]) {
+                        // Collect face tags for this image
+                        detectedFaces[img.id].forEach(f => {
+                            if (f.name !== 'Unknown') {
+                                messageFaceTags.push({
+                                    name: f.name,
+                                    details: f.details || '',
+                                    descriptor: f.descriptor
+                                });
+                            }
+                        });
                         const faces = detectedFaces[img.id].map(f => f.name);
                         if (faces.length > 0) {
                             const knownFacesForDetails = getKnownFaces();
@@ -4549,7 +4592,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 videoUrl,
                 documentUrl,
                 documentName,
-                ocrText: ocrTextToSend || undefined
+                ocrText: ocrTextToSend || undefined,
+                faceTags: messageFaceTags.length > 0 ? messageFaceTags : undefined
             }];
         });
         // Increment total message count for accurate limit enforcement
@@ -9794,8 +9838,18 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 {/* Face Recognition Tag Overlay for Sent Images */}
                                                                 {img && editingMessageIndex !== index && (
                                                                     (() => {
-                                                                        const faces = parseFacesFromOcr(message.ocrText, img);
-                                                                        const faceName = faces[0];
+                                                                        let faceName = '';
+                                                                        let faceDetails = '';
+                                                                        if (message.faceTags && message.faceTags.length > 0) {
+                                                                            faceName = message.faceTags[0].name;
+                                                                            faceDetails = message.faceTags[0].details || '';
+                                                                        } else {
+                                                                            const faces = parseFacesFromOcr(message.ocrText, img);
+                                                                            faceName = faces[0] || '';
+                                                                            const knownFaces = getKnownFaces();
+                                                                            const matched = knownFaces.find(kf => kf.name === faceName);
+                                                                            if (matched) faceDetails = matched.details || '';
+                                                                        }
                                                                         const hasFace = faceName || hasUnknownFace(message.ocrText, img);
                                                                         
                                                                         if (taggingSentImageLoading[img]) {
@@ -9811,7 +9865,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 <div 
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        handleSentImageTagClick(img, faceName);
+                                                                                        handleSentImageTagClick(img, faceName, faceDetails);
                                                                                     }}
                                                                                     className="absolute bottom-0 inset-x-0 bg-black/75 hover:bg-black/90 text-white py-0.5 px-1 truncate flex items-center justify-center gap-1 z-15 select-none cursor-pointer transition-colors duration-200"
                                                                                     title={`Face identified: ${faceName}. Click to modify tag.`}
@@ -11050,7 +11104,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                         imgId: img.id,
                                                                                         faceIndex: 0,
                                                                                         descriptor: firstFace.descriptor,
-                                                                                        name: firstFace.name !== 'Unknown' ? firstFace.name : ''
+                                                                                        name: firstFace.name !== 'Unknown' ? firstFace.name : '',
+                                                                                        details: firstFace.details || ''
                                                                                     });
                                                                                 }}
                                                                                 className="absolute bottom-0 inset-x-0 bg-black/75 hover:bg-black/90 text-white py-0.5 px-1 truncate flex items-center justify-center gap-1 z-15 select-none cursor-pointer transition-colors duration-200"

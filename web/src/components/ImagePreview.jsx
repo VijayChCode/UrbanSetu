@@ -165,12 +165,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       if (detections && detections.length > 0) {
         const knownFaces = getKnownFaces();
-        let bestMatch = { name: '', distance: 1.0 };
+        let bestMatch = { name: '', details: '', distance: 1.0 };
         const descriptor = detections[0].descriptor;
         knownFaces.forEach(known => {
           const dist = faceapi.euclideanDistance(descriptor, new Float32Array(known.descriptor));
           if (dist < 0.6 && dist < bestMatch.distance) {
-            bestMatch = { name: known.name, distance: dist };
+            bestMatch = { name: known.name, details: known.details || '', distance: dist };
           }
         });
         showFeedback(`${detections.length} face(s) detected!`);
@@ -178,7 +178,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           isOpen: true,
           descriptor: Array.from(descriptor),
           detectedName: bestMatch.name || '',
-          details: ''
+          details: bestMatch.details || ''
         });
       } else {
         showFeedback("No faces detected");
