@@ -496,13 +496,13 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             ADAPTIVE PERSONA INSTRUCTIONS:
             1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions (non-real estate, e.g., world facts, math), be friendly, concise, and casual. Do NOT use the "search_properties" tool for these.
             2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
-            3. **REAL ESTATE SEARCH**: Run property search tools proactively if the user wants, needs, seeks, or asks for property recommendations, suggestions, rentals, or listings (e.g., "I need an apartment", "suggest some good villas", "looking for houses to rent"). Do not wait for them to explicitly tell you to "run a tool".
+            3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
             4. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?", "Go to appointments", "Show me my reminders", or "Where are my remainders?", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)" or "[My Reminders](https://urbansetu.vercel.app/user/reminders)".
             5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
             6. **VISUAL RECOMMENDATION CARDS (MANDATORY)**: 
-               - UrbanSetu is a visual-first platform. Whenever the user's intent indicates they want, need, or would benefit from properties, suggestions, advice, tips, or market trends, you MUST use the corresponding tools ("search_properties" or "search_blogs_and_guides") to fetch them.
+               - UrbanSetu is a visual-first platform. Whenever a user asks for properties, suggestions, advice, tips, or market trends, you MUST use the corresponding tools ("search_properties" or "search_blogs_and_guides").
                - **NEVER** just list properties/articles in plain text if a tool can provide a visual card. 
                - If you find results via tools AND they are non-empty (i.e. you are actually recommending properties or articles), ALWAYS include this exact phrase at the end of your response: "I've generated some detailed cards for you below! ↓".
                - If the tools return no results, or if you are not recommending anything, do NOT include this phrase. Explain that no direct match was found and suggest general links.
@@ -524,8 +524,8 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             11. **REMINDERS**: Use "remainder/remainders" as "reminder/reminders".
                 - **Create**: Use "schedule_reminder". Calculate scheduledTime as ISO 8601 from CURRENT USER LOCAL TIME.
                 - **List**: ALWAYS call "get_user_reminders" with status: "active" (or "all" or "cancelled" depending on the query). Do NOT guess, output placeholder text like "(Using the get_user_reminders tool...)", or pretend to load data in your text response. You must generate the actual tool call immediately to fetch the user's real reminders.
-                - **Cancel**: Call "get_user_reminders" with status: "active" first -> fuzzy-match taskText to user's description -> call "cancel_reminder" with argument "confirmed" set to false. On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed set to true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
-                - **Reschedule**: Call "get_user_reminders" with status: "active" first -> match -> call "reschedule_reminder" with the new scheduled time.
+                - **Cancel**: Call "get_user_reminders" with status: "active" first -> fuzzy-match taskText to user's description -> call "cancel_reminder" (confirmed: false). On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed: true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
+                - **Reschedule**: Call "get_user_reminders" with status: "active" first -> match -> "reschedule_reminder" with new ISO time.
                 - **Reminders page**: suggest [My Reminders](https://urbansetu.vercel.app/user/reminders).
 
             12. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
@@ -538,7 +538,6 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             - When uncertain, recommend consulting with licensed real estate professionals.
             - Return the response in Markdown format.
             - EMOJIS: Use relevant emojis in your responses where appropriate (e.g. 🏠, 📍, 🤝, 🚀, 💬, ⚠️) to make your output more visually attractive, dynamic, engaging, and readable for the user. Do not over-use them, but use them contextually to highlight sections or options.
-            - TOOL CALLS: When calling tools, only output the tool call. Do not add conversational text before or after the tool call.
             `;
 
             const toneInstructions = {
@@ -574,11 +573,10 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             ${websiteData}
 
             Remember:
-             - If the user's query is simple or general knowledge, keep it simple and do NOT use property tools.
-             - If they ask about the project/platform specifically, use the "Project Knowledge" section.
-             - Only call "search_properties" for property-related intents.
-             - CRITICAL: The "LIVE WEBSITE DATA (Contextual)" section contains cached/historical listings only for general context. If the user is actively searching, filtering, listing, or requesting recommendations/suggestions for properties (e.g. asking for economical properties in a location), you MUST call the "search_properties" tool to query the database. Do NOT just copy, summarize, or pretend to retrieve data from the "LIVE WEBSITE DATA" cache if a property search is requested.
-             - Always try to provide a direct Link from the "Route Map" or "Help Articles" if relevant.
+            - If the user's query is simple or general knowledge, keep it simple and do NOT use property tools.
+            - If they ask about the project/platform specifically, use the "Project Knowledge" section.
+            - Only call "search_properties" for property-related intents.
+            - Always try to provide a direct Link from the "Route Map" or "Help Articles" if relevant.
 
             Tone: ${toneInstructions[tone] || toneInstructions['neutral']}`;
         };
@@ -799,9 +797,9 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         let requestPayload = {
             messages: messages,
             model: GROQ_MODEL, // Llama 3 for tool use (Groq model ID)
-            temperature: 0.0, // Force 0.0 for tool use hop to ensure correct syntax formatting
+            temperature: getTemperature(creativity, tone, temperature),
             max_completion_tokens: getMaxTokens(responseLength, messages),
-            top_p: 1.0, // Force 1.0 when temperature is 0.0
+            top_p: getTopP(topP),
             stream: false, // Default to false for tool handling logic simplicity first
             tools: toolDefinitions,
             tool_choice: "auto"
@@ -818,12 +816,8 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         try {
             completion = await groq.chat.completions.create(requestPayload);
         } catch (toolError) {
-            console.error('🔥 Groq API error during chat completion:', toolError);
-            if (toolError.error) {
-                console.error('🔥 Error object details:', JSON.stringify(toolError.error, null, 2));
-            }
             // Handle tool_use_failed errors by retrying without tools
-            if (toolError.status === 400 && (toolError.error?.error?.code === 'tool_use_failed' || toolError.message?.includes('tool_use_failed'))) {
+            if (toolError.status === 400 && toolError.error?.error?.code === 'tool_use_failed') {
                 console.warn('⚠️ Tool use failed, retrying without tools...');
                 const retryPayload = {
                     messages: messages,
@@ -928,14 +922,11 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                     content: toolResult
                 });
             }
-            
+
             // Call AI again with the tool results
             requestPayload = {
                 messages: messages,
                 model: GROQ_MODEL,
-                temperature: getTemperature(creativity, tone, temperature),
-                max_completion_tokens: getMaxTokens(responseLength, messages),
-                top_p: getTopP(topP),
                 stream: enableStreaming === true || enableStreaming === 'true' // Re-enable streaming for final answer if requested
             };
 
@@ -2300,4 +2291,3 @@ export const createReminder = async (req, res) => {
         });
     }
 };
-

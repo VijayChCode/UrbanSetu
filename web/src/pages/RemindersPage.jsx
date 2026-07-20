@@ -134,7 +134,7 @@ export default function RemindersPage() {
 
   useEffect(() => {
     fetchReminders();
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   const handleCreateReminder = async (e) => {
     if (e) e.preventDefault();

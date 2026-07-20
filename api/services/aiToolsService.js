@@ -687,12 +687,12 @@ export const toolDefinitions = [
                         description: "City name (e.g., 'Mumbai', 'Bangalore')"
                     },
                     minPrice: {
-                        type: "string",
-                        description: "Minimum price in INR as a numeric string (e.g., '10000')"
+                        type: ["number", "string"],
+                        description: "Minimum price in INR"
                     },
                     maxPrice: {
-                        type: "string",
-                        description: "Maximum price in INR as a numeric string (e.g., '5000000')"
+                        type: ["number", "string"],
+                        description: "Maximum price in INR"
                     },
                     type: {
                         type: "string",
@@ -700,8 +700,8 @@ export const toolDefinitions = [
                         description: "Type of listing: 'sale', 'rent', or 'all'. Leave empty if not specified."
                     },
                     bedrooms: {
-                        type: "string",
-                        description: "Number of bedrooms required as a numeric string (e.g., '3')"
+                        type: ["number", "string"],
+                        description: "Number of bedrooms required (numeric)"
                     }
                 },
                 required: []

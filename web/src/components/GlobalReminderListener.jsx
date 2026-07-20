@@ -129,7 +129,7 @@ export default function GlobalReminderListener() {
       window.activeRingingReminderId = null;
       window.dispatchEvent(new CustomEvent('reminderRinging', { detail: { reminderId: null, isRinging: false } }));
     };
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   const handleDismiss = async () => {
     if (audioRef.current) {
