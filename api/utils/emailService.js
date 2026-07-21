@@ -724,6 +724,91 @@ export const sendContractConfirmationOTPEmail = async (email, otp) => {
   }
 };
 
+// Helper to parse basic markdown to clean HTML in email templates
+const formatMarkdownToHtml = (markdown) => {
+  if (!markdown) return '';
+  
+  // Escape HTML first to prevent XSS
+  let safeText = markdown
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+      
+  // Convert bold: **text**
+  safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #0f172a; font-weight: 700;">$1</strong>');
+  
+  // Convert italic: *text*
+  safeText = safeText.replace(/\*(.*?)\*/g, '<em style="color: #334155;">$1</em>');
+  
+  // Convert headers
+  safeText = safeText.replace(/^### (.*)$/gm, '<h3 style="color: #0f172a; font-size: 16px; font-weight: 700; margin-top: 18px; margin-bottom: 8px;">$1</h3>');
+  safeText = safeText.replace(/^## (.*)$/gm, '<h2 style="color: #0f172a; font-size: 18px; font-weight: 700; margin-top: 22px; margin-bottom: 10px;">$1</h2>');
+  safeText = safeText.replace(/^# (.*)$/gm, '<h1 style="color: #0f172a; font-size: 22px; font-weight: 800; margin-top: 26px; margin-bottom: 12px;">$1</h1>');
+
+  // Process lines to handle lists and paragraphs
+  const lines = safeText.split('\n');
+  let inList = false;
+  let listType = ''; // 'ul' or 'ol'
+  const processedLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    
+    if (!line) {
+      if (inList) {
+        processedLines.push(listType === 'ul' ? '</ul>' : '</ol>');
+        inList = false;
+      }
+      processedLines.push('<div style="height: 12px;"></div>');
+      continue;
+    }
+
+    // Check for unordered list
+    const ulMatch = line.match(/^[-*+]\s+(.*)$/);
+    if (ulMatch) {
+      if (!inList || listType !== 'ul') {
+        if (inList) {
+          processedLines.push(listType === 'ul' ? '</ul>' : '</ol>');
+        }
+        processedLines.push('<ul style="margin: 8px 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.65;">');
+        inList = true;
+        listType = 'ul';
+      }
+      processedLines.push(`<li style="margin-bottom: 6px;">${ulMatch[1]}</li>`);
+      continue;
+    }
+
+    // Check for ordered list
+    const olMatch = line.match(/^(\d+)\.\s+(.*)$/);
+    if (olMatch) {
+      if (!inList || listType !== 'ol') {
+        if (inList) {
+          processedLines.push(listType === 'ul' ? '</ul>' : '</ol>');
+        }
+        processedLines.push('<ol style="margin: 8px 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.65;">');
+        inList = true;
+        listType = 'ol';
+      }
+      processedLines.push(`<li style="margin-bottom: 6px;">${olMatch[2]}</li>`);
+      continue;
+    }
+
+    // Regular paragraph
+    if (inList) {
+      processedLines.push(listType === 'ul' ? '</ul>' : '</ol>');
+      inList = false;
+    }
+
+    processedLines.push(`<p style="margin: 6px 0; font-size: 14px; color: #475569; line-height: 1.65;">${line}</p>`);
+  }
+
+  if (inList) {
+    processedLines.push(listType === 'ul' ? '</ul>' : '</ol>');
+  }
+
+  return processedLines.join('\n');
+};
+
 // Send Update Announcement Email
 export const sendUpdateAnnouncementEmail = async (email, update) => {
   const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
@@ -735,61 +820,80 @@ export const sendUpdateAnnouncementEmail = async (email, update) => {
     to: email,
     subject: isAppLaunch ? `New App Launch: ${update.title} - UrbanSetu` : `New Update: ${update.title} - UrbanSetu`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px 20px; background-color: #f8fafc;">
+        <div style="background-color: #ffffff; padding: 40px 35px; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); border: 1px solid #f1f5f9;">
           
-          <!-- Header Image (if available) or Default -->
+          <!-- UrbanSetu Brand Header -->
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="display: inline-block; padding: 8px 16px; background-color: #f1f5f9; border-radius: 12px; font-weight: 800; font-size: 20px; letter-spacing: 0.5px; border: 1px solid #e2e8f0; font-family: sans-serif;">
+              <span style="color: #ca8a04;">Urban</span><span style="color: #4f46e5; margin-left: 2px;">Setu</span>
+            </div>
+          </div>
+
+          <!-- Header Image (if available) -->
           ${update.imageUrls && update.imageUrls.length > 0 ?
-        `<div style="margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
-               <img src="${update.imageUrls[0]}" alt="Update Image" style="width: 100%; height: auto; display: block;">
+            `<div style="margin-bottom: 30px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+               <img src="${update.imageUrls[0]}" alt="Update Banner" style="width: 100%; height: auto; display: block;">
              </div>` : ''
-      }
+          }
           
-          <div style="text-align: center; margin-bottom: 25px;">
-            <h1 style="color: #2563eb; margin: 0; font-size: 26px;">${update.title}</h1>
-            <p style="color: #6b7280; margin: 10px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
-              ${update.category ? update.category.replace('_', ' ') : 'Update Announcement'} • ${update.version || 'v1.0'}
-            </p>
+          <!-- Update Info -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h1 style="color: #0f172a; margin: 0; font-size: 26px; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px;">${update.title}</h1>
+            <div style="margin-top: 12px; text-align: center;">
+              <span style="background-color: #e0e7ff; color: #4f46e5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 30px; border: 1px solid #c7d2fe; display: inline-block; margin: 4px;">
+                ${update.category ? update.category.replace('_', ' ') : 'Update'}
+              </span>
+              <span style="background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 30px; border: 1px solid #e2e8f0; display: inline-block; margin: 4px;">
+                ${update.version || 'v1.0'}
+              </span>
+            </div>
           </div>
           
-          <div style="background-color: #f0f9ff; padding: 25px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #2563eb;">
-            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">${isAppLaunch ? "What's in this version?" : "What's New?"}</h2>
-            <div style="color: #4b5563; line-height: 1.6; white-space: pre-wrap;">${update.description}</div>
+          <!-- Details Card -->
+          <div style="background-color: #faf5ff; padding: 30px; border-radius: 16px; margin-bottom: 35px; border-left: 4px solid #8b5cf6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01); text-align: left;">
+            <h2 style="color: #0f172a; margin: 0 0 20px 0; font-size: 18px; font-weight: 800; letter-spacing: -0.3px;">${isAppLaunch ? "What's in this version?" : "What's New?"}</h2>
+            <div style="color: #334155; font-size: 15px; line-height: 1.7;">${formatMarkdownToHtml(update.description)}</div>
             
             ${update.tags && update.tags.length > 0 ? `
-              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e7ff;">
-                <p style="margin: 0; font-size: 12px; color: #6b7280;">Tags: 
-                  ${update.tags.map(tag => `<span style="background: #ffffff; color: #2563eb; padding: 2px 8px; border-radius: 12px; border: 1px solid #bfdbfe; margin-left: 5px;">${tag}</span>`).join('')}
+              <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed #e9d5ff;">
+                <p style="margin: 0; font-size: 12px; color: #6b7280; font-weight: 600;">
+                  Tags: 
+                  ${update.tags.map(tag => `<span style="background-color: #ffffff; color: #8b5cf6; padding: 3px 10px; border-radius: 30px; border: 1px solid #e9d5ff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 4px; display: inline-block;">#${tag}</span>`).join('')}
                 </p>
               </div>
             ` : ''}
           </div>
           
+          <!-- Action Buttons -->
           <div style="text-align: center; margin-bottom: 20px;">
-            <p style="color: #374151; margin-bottom: 15px;">${isAppLaunch ? 'Download the latest version now.' : 'Experience the new features firsthand.'}</p>
+            <p style="color: #475569; font-size: 14px; font-weight: 500; margin-bottom: 20px;">${isAppLaunch ? 'Download the latest version now.' : 'Experience the new features firsthand.'}</p>
             
-            <a href="${clientBaseUrl}${isAppLaunch ? '/download' : '/updates'}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">
-              ${isAppLaunch ? 'Go to Downloads' : 'View Full Changelog'}
-            </a>
-            
-            ${!isAppLaunch && update.actionUrl ? `
-              <a href="${update.actionUrl}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">
-                Explore Feature
+            <div style="margin-top: 10px;">
+              <a href="${clientBaseUrl}${isAppLaunch ? '/download' : '/updates'}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3); border: 1px solid #4f46e5; margin: 4px;">
+                ${isAppLaunch ? 'Go to Downloads' : 'View Full Changelog'}
               </a>
-            ` : isAppLaunch ? '' : `
-              <a href="${clientBaseUrl}/sign-in" style="display: inline-block; background-color: #ffffff; color: #2563eb; text-decoration: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; font-size: 15px; border: 2px solid #2563eb; margin: 5px;">
-                Sign In to Explore
-              </a>
-            `}
+              
+              ${!isAppLaunch && update.actionUrl ? `
+                <a href="${update.actionUrl}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-weight: 700; font-size: 14px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); border: 1px solid #10b981; margin: 4px;">
+                  Explore Feature
+                </a>
+              ` : isAppLaunch ? '' : `
+                <a href="${clientBaseUrl}/sign-in" style="display: inline-block; background-color: #ffffff; color: #4f46e5; text-decoration: none; padding: 13px 26px; border-radius: 12px; font-weight: 700; font-size: 14px; border: 2px solid #e2e8f0; margin: 4px;">
+                  Sign In to Explore
+                </a>
+              `}
+            </div>
           </div>
           
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+          <!-- Footer -->
+          <div style="text-align: center; margin-top: 40px; padding-top: 25px; border-top: 1px solid #f1f5f9;">
+            <p style="color: #94a3b8; margin: 0; font-size: 11px; line-height: 1.8;">
               © ${new Date().getFullYear()} UrbanSetu. All rights reserved.<br>
               You received this email because you are a registered user of UrbanSetu.
               <br><br>
               Don't want to receive these emails? 
-              <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a> from these emails.
+              <a href="${unsubscribeUrl}" style="color: #64748b; text-decoration: underline; font-weight: 600;">Unsubscribe</a> from these updates.
             </p>
           </div>
         </div>
