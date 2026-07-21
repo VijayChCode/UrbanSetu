@@ -538,6 +538,21 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
   const isYearPath = location.pathname.includes('/year/');
   const hideHeaderRoutes = ["/appointments"];
 
+  const shouldHideFooter = 
+    location.pathname === '/community' ||
+    location.pathname.startsWith('/community/post/') ||
+    location.pathname === '/user/community' ||
+    location.pathname.startsWith('/user/community/post/') ||
+    location.pathname === '/admin/community' ||
+    location.pathname.startsWith('/admin/community/post/') ||
+    location.pathname.startsWith('/view/') ||
+    location.pathname.startsWith('/user/view/') ||
+    location.pathname.startsWith('/admin/view/') ||
+    location.pathname.startsWith('/user/view-chat/') ||
+    location.pathname.startsWith('/admin/view-chat/') ||
+    location.pathname.startsWith('/user/route-planner') ||
+    location.pathname.startsWith('/admin/route-planner');
+
   const [pendingTransfer, setPendingTransfer] = useState(null);
   const [checkingTransferUser, setCheckingTransferUser] = useState(false);
 
@@ -1534,7 +1549,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
           </Routes>
         </NormalizeRoute>
       </Suspense>
-      <Footer />
+      {!shouldHideFooter && <Footer />}
       <ToastContainer
         position="top-center"
         autoClose={2000}
