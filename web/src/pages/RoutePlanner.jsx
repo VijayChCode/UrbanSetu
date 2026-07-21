@@ -114,6 +114,15 @@ export default function RoutePlanner() {
   // Global event delegation for geocoding popup actions to avoid event duplication
   useEffect(() => {
     const handleGlobalClick = (e) => {
+      const closeTarget = e.target.closest('.popup-close-btn');
+      if (closeTarget) {
+        e.preventDefault();
+        e.stopPropagation();
+        const popups = document.querySelectorAll('.mapboxgl-popup');
+        popups.forEach(p => p.remove());
+        return;
+      }
+
       const target = e.target.closest('#btn-set-start, #btn-set-start-click, #btn-add-stop, #btn-add-stop-click');
       if (!target) return;
 
@@ -305,7 +314,12 @@ export default function RoutePlanner() {
       })
         .setLngLat(coordinates)
         .setHTML(`
-          <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+          <div class="p-3 min-w-[200px] text-gray-800 dark:text-white bg-white dark:bg-gray-800 rounded-lg shadow-xl relative">
+            <button class="popup-close-btn absolute top-2.5 right-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors duration-150 flex items-center justify-center" aria-label="Close popup">
+              <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 352 512" height="10" width="10" xmlns="http://www.w3.org/2000/svg">
+                <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.19 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.19 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+              </svg>
+            </button>
             <span class="inline-block px-2 py-0.5 mb-1.5 text-[9px] font-bold text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 rounded-full">
               📍 Live Location
             </span>
