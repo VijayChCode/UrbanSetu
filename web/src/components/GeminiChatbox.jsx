@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle, FaPlus, FaThumbtack } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaPause, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle, FaPlus, FaThumbtack } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -2113,6 +2113,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [previewImages, setPreviewImages] = useState([]);
     const [previewImageIndex, setPreviewImageIndex] = useState(0);
     const [isDraggingOver, setIsDraggingOver] = useState(false); // Drag-and-drop visual feedback
+    const [playingAudioId, setPlayingAudioId] = useState(null);
+    const activeAudioRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (activeAudioRef.current) {
+                activeAudioRef.current.pause();
+                activeAudioRef.current = null;
+            }
+        };
+    }, []);
     const dragCounterRef = React.useRef(0); // Track nested drag enter/leave events
 
     // Reporting State
@@ -4385,6 +4396,30 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         if (validFiles.length > 0) {
             await uploadFilesAndSend(validFiles);
             toast.success(`📎 ${validFiles.length} file${validFiles.length > 1 ? 's' : ''} dropped — uploading now!`, { autoClose: 2000, toastId: 'drop-upload' });
+        }
+    };
+
+    const handleAudioPreviewClick = (img) => {
+        if (playingAudioId === img.id) {
+            if (activeAudioRef.current) {
+                activeAudioRef.current.pause();
+            }
+            setPlayingAudioId(null);
+        } else {
+            if (activeAudioRef.current) {
+                activeAudioRef.current.pause();
+            }
+            const audio = new Audio(img.url);
+            audio.play().catch(err => {
+                console.error("Error playing audio", err);
+                toast.error("Failed to play audio file");
+            });
+            activeAudioRef.current = audio;
+            setPlayingAudioId(img.id);
+            audio.onended = () => {
+                setPlayingAudioId(null);
+                activeAudioRef.current = null;
+            };
         }
     };
 
@@ -11137,17 +11172,43 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                 }}
                                                                             />
                                                                         ) : img.type === 'document' ? (
-                                                                            <div className={`w-full h-full flex flex-col items-center justify-center bg-indigo-500/10 dark:bg-indigo-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}>
+                                                                            <div
+                                                                                onClick={() => {
+                                                                                    if (img.uploading) return;
+                                                                                    const pathPrefix = currentUser ? (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin' : '/user') : '';
+                                                                                    const cleanUrl = img.url.split('?')[0];
+                                                                                    const ext = cleanUrl.split('.').pop().toLowerCase();
+                                                                                    let type = 'document';
+                                                                                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+                                                                                    else if (ext === 'pdf') type = 'pdf';
+
+                                                                                    const previewUrl = `${pathPrefix}/view/preview?url=${encodeURIComponent(img.url)}&name=${encodeURIComponent(img.name || 'Document')}&type=${type}&source=gemini_chatbox`;
+                                                                                    window.open(previewUrl, '_blank');
+                                                                                }}
+                                                                                className={`w-full h-full flex flex-col items-center justify-center bg-indigo-500/10 dark:bg-indigo-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
+                                                                                title="Click to view document"
+                                                                            >
                                                                                 <FaFileAlt className="text-indigo-600 dark:text-indigo-400 text-lg sm:text-xl" />
                                                                                 <span className="text-[8px] sm:text-[9px] text-gray-700 dark:text-gray-300 text-center truncate w-full mt-1 px-0.5 font-medium" title={img.name}>
                                                                                     {img.name}
                                                                                 </span>
                                                                             </div>
                                                                         ) : img.type === 'audio' ? (
-                                                                            <div className={`w-full h-full flex flex-col items-center justify-center bg-pink-500/10 dark:bg-pink-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}>
-                                                                                <FaMicrophone className="text-pink-600 dark:text-pink-400 text-lg sm:text-xl" />
+                                                                            <div
+                                                                                onClick={() => {
+                                                                                    if (img.uploading) return;
+                                                                                    handleAudioPreviewClick(img);
+                                                                                }}
+                                                                                className={`w-full h-full flex flex-col items-center justify-center bg-pink-500/10 dark:bg-pink-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
+                                                                                title={playingAudioId === img.id ? "Click to pause audio" : "Click to play audio"}
+                                                                            >
+                                                                                {playingAudioId === img.id ? (
+                                                                                    <FaPause className="text-pink-600 dark:text-pink-400 text-lg sm:text-xl animate-pulse" />
+                                                                                ) : (
+                                                                                    <FaMicrophone className="text-pink-600 dark:text-pink-400 text-lg sm:text-xl" />
+                                                                                )}
                                                                                 <span className="text-[8px] sm:text-[9px] text-gray-700 dark:text-gray-300 text-center truncate w-full mt-1 px-0.5 font-medium" title={img.name}>
-                                                                                    {img.name}
+                                                                                    {playingAudioId === img.id ? 'Playing...' : img.name}
                                                                                 </span>
                                                                             </div>
                                                                         ) : img.type === 'video' ? (
