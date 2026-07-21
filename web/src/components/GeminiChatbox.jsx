@@ -11123,6 +11123,25 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                     {img.name}
                                                                                 </span>
                                                                             </div>
+                                                                        ) : img.type === 'video' ? (
+                                                                            <div
+                                                                                className={`w-full h-full relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden bg-black ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
+                                                                                onClick={() => setPreviewVideo(img.url)}
+                                                                            >
+                                                                                <video
+                                                                                    src={img.url}
+                                                                                    className="w-full h-full object-cover"
+                                                                                    preload="metadata"
+                                                                                    muted
+                                                                                    playsInline
+                                                                                />
+                                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                                                    <FaPlay className="text-white text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" />
+                                                                                </div>
+                                                                                <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[7.5px] truncate px-1 py-0.5 text-center font-medium">
+                                                                                    {img.name}
+                                                                                </div>
+                                                                            </div>
                                                                         ) : (
                                                                             <div className={`w-full h-full flex flex-col items-center justify-center bg-red-500/10 dark:bg-red-500/20 p-1 cursor-pointer ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}>
                                                                                 <FaPlay className="text-red-600 dark:text-red-400 text-lg sm:text-xl" />
