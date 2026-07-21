@@ -551,7 +551,15 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
     location.pathname.startsWith('/user/view-chat/') ||
     location.pathname.startsWith('/admin/view-chat/') ||
     location.pathname.startsWith('/user/route-planner') ||
-    location.pathname.startsWith('/admin/route-planner');
+    location.pathname.startsWith('/admin/route-planner') ||
+    location.pathname === '/blogs' ||
+    location.pathname === '/user/blogs' ||
+    location.pathname === '/guides' ||
+    location.pathname === '/user/guides' ||
+    location.pathname.startsWith('/blog/') ||
+    location.pathname.startsWith('/user/blog/') ||
+    location.pathname.startsWith('/guide/') ||
+    location.pathname.startsWith('/user/guide/');
 
   const [pendingTransfer, setPendingTransfer] = useState(null);
   const [checkingTransferUser, setCheckingTransferUser] = useState(false);
