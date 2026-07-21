@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaHome, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCookie, FaShieldAlt, FaFileContract, FaEye, FaHandshake, FaRobot, FaExclamationTriangle, FaServer } from 'react-icons/fa';
+import { FaHome, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCookie, FaShieldAlt, FaFileContract, FaEye, FaHandshake, FaRobot, FaExclamationTriangle, FaServer, FaDownload, FaBullhorn, FaSearch, FaInfoCircle, FaHeadset, FaPlusCircle, FaCalendarAlt, FaRoute, FaCheckCircle, FaBookOpen, FaQuestionCircle, FaChartLine, FaBook, FaUserTie, FaCalculator } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 
 import { API_BASE_URL } from '../config/api';
@@ -124,13 +124,15 @@ const Footer = () => {
                         ? "/user"
                         : "/"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaHome className="text-xs" />
                   Home
                 </Link>
               </li>
               <li>
-                <Link to="/download" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                <Link to="/download" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaDownload className="text-xs" />
                   Downloads
                 </Link>
               </li>
@@ -143,8 +145,9 @@ const Footer = () => {
                         ? "/user/updates"
                         : "/updates"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaBullhorn className="text-xs" />
                   Updates
                 </Link>
               </li>
@@ -157,8 +160,9 @@ const Footer = () => {
                         ? "/user/search"
                         : "/search"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaSearch className="text-xs" />
                   Search Properties
                 </Link>
               </li>
@@ -171,16 +175,18 @@ const Footer = () => {
                         ? "/user/about"
                         : "/about"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaInfoCircle className="text-xs" />
                   About Us
                 </Link>
               </li>
               <li>
                 <Link
                   to={currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/support" : "/contact"}
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaHeadset className="text-xs" />
                   Contact
                 </Link>
               </li>
@@ -194,14 +200,16 @@ const Footer = () => {
               <li>
                 <Link to={(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin'))
                   ? "/admin/create-listing"
-                  : "/user/create-listing"} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                  : "/user/create-listing"} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaPlusCircle className="text-xs" />
                   List Property
                 </Link>
               </li>
               <li>
                 <Link to={(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin'))
                   ? "/admin/appointments"
-                  : "/user/my-appointments"} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                  : "/user/my-appointments"} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaCalendarAlt className="text-xs" />
                   Book Appointment
                 </Link>
               </li>
@@ -214,8 +222,9 @@ const Footer = () => {
                         ? "/user/ai"
                         : "/ai"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaRobot className="text-xs" />
                   AI Assistant
                 </Link>
               </li>
@@ -224,8 +233,9 @@ const Footer = () => {
                   to={(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin'))
                     ? "/admin/route-planner"
                     : "/user/route-planner"}
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaRoute className="text-xs" />
                   Route Planner
                 </Link>
               </li>
@@ -234,8 +244,9 @@ const Footer = () => {
                   to={(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin'))
                     ? "/admin/rental-contracts"
                     : "/user/rental-contracts"}
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaFileContract className="text-xs" />
                   Rental Contracts
                 </Link>
               </li>
@@ -244,7 +255,8 @@ const Footer = () => {
                   to={(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin'))
                     ? "/admin/property-verification"
                     : "/user/property-verification"}
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaCheckCircle className="text-xs" />
                   Property Verification
                 </Link>
               </li>
@@ -263,8 +275,9 @@ const Footer = () => {
                       ? "/admin/blogs"
                       : "/user/blogs"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaBookOpen className="text-xs" />
                   Real Estate Blogs
                 </Link>
               </li>
@@ -277,8 +290,9 @@ const Footer = () => {
                         ? "/user/help-center"
                         : "/help-center"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2"
                 >
+                  <FaQuestionCircle className="text-xs" />
                   Help Center
                 </Link>
               </li>
@@ -291,7 +305,8 @@ const Footer = () => {
                         ? "/user/market-trends"
                         : "/market-trends"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaChartLine className="text-xs" />
                   Market Trends
                 </Link>
               </li>
@@ -304,7 +319,8 @@ const Footer = () => {
                         ? "/user/guides"
                         : "/guides"
                   }
-                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                  className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaBook className="text-xs" />
                   Property Guides
                 </Link>
               </li>
@@ -315,14 +331,16 @@ const Footer = () => {
                     : currentUser
                       ? "/user/agents"
                       : "/agents"
-                } className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                } className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaUserTie className="text-xs" />
                   Find an Agent
                 </Link>
               </li>
               <li>
                 <Link to={(currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin'))
                   ? "/admin/investment-tools"
-                  : "/user/investment-tools"} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                  : "/user/investment-tools"} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-2">
+                  <FaCalculator className="text-xs" />
                   Investment Tools
                 </Link>
               </li>
