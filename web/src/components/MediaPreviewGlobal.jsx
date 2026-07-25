@@ -6,6 +6,12 @@ const MediaPreviewGlobal = () => {
 
     useEffect(() => {
         const handleOpen = (e) => {
+            // Pause any playing audio elements on the page when opening video preview
+            document.querySelectorAll('audio').forEach(audioEl => {
+                if (!audioEl.paused) {
+                    audioEl.pause();
+                }
+            });
             // Ensure we extract detail correctly for CustomEvent
             const { videos, index } = e.detail || {};
             if (videos) {

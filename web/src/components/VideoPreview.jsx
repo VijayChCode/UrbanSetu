@@ -220,6 +220,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = isMiniMode ? '' : 'hidden';
+
+      // Pause all active audio elements across the page when video preview opens
+      document.querySelectorAll('audio').forEach(audioEl => {
+        if (!audioEl.paused) {
+          audioEl.pause();
+        }
+      });
+
       // Reset playback states
       setIsLoading(true);
       setIsPlaying(true);
@@ -2040,7 +2048,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               isRecoveringRef.current = false;
             }
           }}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={() => {
+            setIsPlaying(true);
+            document.querySelectorAll('audio').forEach(audioEl => {
+              if (!audioEl.paused) {
+                audioEl.pause();
+              }
+            });
+          }}
           onPlaying={(e) => {
             setIsLoading(false);
             setIsEnded(false);
