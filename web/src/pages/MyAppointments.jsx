@@ -13054,12 +13054,70 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 ) : (
                                   <>
                                     {/* Audio Message */}
-                                    {(message.audioUrl || message.type === 'audio') && (
+                                    {message.audioUrl ? (
+                                      <div className="mb-2 w-full min-w-[260px] sm:min-w-[300px]">
+                                        <div className="relative">
+                                          <audio
+                                            src={message.audioUrl}
+                                            className="w-full"
+                                            controls
+                                            preload="metadata"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        </div>
+                                        <div className="mt-1.5 flex justify-between items-center">
+                                          <button
+                                            type="button"
+                                            className={`px-2.5 py-1 text-xs rounded-full shadow-sm border transition-colors ${isMe
+                                              ? 'bg-white/20 hover:bg-white/30 text-white border-white/30'
+                                              : 'bg-blue-600 text-white hover:bg-blue-700 border-transparent'
+                                              }`}
+                                            onClick={async (e) => {
+                                              e.stopPropagation();
+                                              try {
+                                                const response = await authenticatedFetch(message.audioUrl, { mode: 'cors' });
+                                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                const blob = await response.blob();
+                                                const blobUrl = window.URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = blobUrl;
+                                                a.download = message.audioName || `audio-${message._id || Date.now()}`;
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                a.remove();
+                                                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+                                                toast.success('Audio downloaded successfully');
+                                              } catch (error) {
+                                                const a = document.createElement('a');
+                                                a.href = message.audioUrl;
+                                                a.download = message.audioName || `audio-${message._id || Date.now()}`;
+                                                a.target = '_blank';
+                                                document.body.appendChild(a);
+                                                a.click();
+                                                a.remove();
+                                                toast.success('Audio download started');
+                                              }
+                                            }}
+                                            title="Download audio"
+                                          >
+                                            <span className="inline-flex items-center gap-1 text-[11px] font-medium">
+                                              <FaDownload className="w-3 h-3" />
+                                              Download
+                                            </span>
+                                          </button>
+                                          {message.audioName && (
+                                            <span className={`text-[11px] truncate max-w-[140px] ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                                              {message.audioName}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ) : message.type === 'audio' ? (
                                       <div className="mb-2 flex items-center gap-2 py-1">
                                         <FaMicrophone className={`text-sm ${isMe ? 'text-blue-200' : 'text-purple-500'}`} />
                                         <span className={`text-sm ${isMe ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}>Voice message</span>
                                       </div>
-                                    )}
+                                    ) : null}
                                     {/* Video Message */}
                                     {message.videoUrl && (
                                       <div className="mb-2 relative group max-w-full inline-block">
