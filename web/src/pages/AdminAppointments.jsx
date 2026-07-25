@@ -8442,9 +8442,14 @@ function AdminAppointmentRow({
                                                     // Add play event listener to pause other audios
                                                     audioEl.addEventListener('play', () => {
                                                       // Pause all other audio elements
-                                                      document.querySelectorAll('audio[data-audio-id]').forEach(otherAudio => {
+                                                      document.querySelectorAll('audio').forEach(otherAudio => {
                                                         if (otherAudio !== audioEl && !otherAudio.paused) {
                                                           otherAudio.pause();
+                                                        }
+                                                      });
+                                                      document.querySelectorAll('video').forEach(videoEl => {
+                                                        if (!videoEl.paused) {
+                                                          videoEl.pause();
                                                         }
                                                       });
                                                     });

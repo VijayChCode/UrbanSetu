@@ -9403,6 +9403,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                               videoUrl={c.videoUrl}
                                               onClick={(e) => {
                                                 e.stopPropagation();
+                                                document.querySelectorAll('audio, video').forEach(mediaEl => {
+                                                  if (!mediaEl.paused) {
+                                                    mediaEl.pause();
+                                                  }
+                                                });
                                                 const videoUrls = (comments || []).filter(msg => !!msg.videoUrl && !msg.deleted).map(msg => msg.videoUrl);
                                                 const startIndex = Math.max(0, videoUrls.indexOf(c.videoUrl));
                                                 window.dispatchEvent(new CustomEvent('open-media-preview', {
@@ -9422,6 +9427,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                     controls
                                                     preload="metadata"
                                                     onClick={(e) => e.stopPropagation()}
+                                             onPlay={(e) => {
+                                               document.querySelectorAll('audio').forEach(otherAudio => { if (otherAudio !== e.target && !otherAudio.paused) otherAudio.pause(); });
+                                               document.querySelectorAll('video').forEach(videoEl => { if (!videoEl.paused) videoEl.pause(); });
+                                             }}
                                                     ref={(audioEl) => {
                                                       if (audioEl && !audioEl.dataset.audioId) {
                                                         audioEl.dataset.audioId = c._id;
@@ -9433,9 +9442,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                         // Add play event listener to pause other audios
                                                         audioEl.addEventListener('play', () => {
                                                           // Pause all other audio elements
-                                                          document.querySelectorAll('audio[data-audio-id]').forEach(otherAudio => {
+                                                          document.querySelectorAll('audio').forEach(otherAudio => {
                                                             if (otherAudio !== audioEl && !otherAudio.paused) {
                                                               otherAudio.pause();
+                                                            }
+                                                          });
+                                                          // Pause all video elements
+                                                          document.querySelectorAll('video').forEach(videoEl => {
+                                                            if (!videoEl.paused) {
+                                                              videoEl.pause();
                                                             }
                                                           });
                                                         });
