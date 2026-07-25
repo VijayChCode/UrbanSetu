@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -2935,6 +2935,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [loadingStarredMessages, setLoadingStarredMessages] = useState(false);
   const [unstarringMessageId, setUnstarringMessageId] = useState(null);
   const [removingAllStarred, setRemovingAllStarred] = useState(false);
+
+  // Media modal states
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [mediaModalTab, setMediaModalTab] = useState('images');
+  const [mediaModalLoading, setMediaModalLoading] = useState(true);
 
   // Pinned messages states
   const [pinnedMessages, setPinnedMessages] = useState([]);
@@ -8708,6 +8713,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               <FaStar className="text-sm" />
                               Starred Messages
                             </button>
+                            {/* Media option */}
+                            <button
+                              className="w-full px-4 py-2 text-left text-sm text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30 flex items-center gap-2"
+                              onClick={() => {
+                                setShowMediaModal(true);
+                                setMediaModalTab('images');
+                                setMediaModalLoading(true);
+                                setShowChatOptionsMenu(false);
+                                setTimeout(() => setMediaModalLoading(false), 600);
+                              }}
+                            >
+                            <FaPhotoVideo className="text-sm" />
+                              Media
+                            </button>
 
                             {/* Select Messages option */}
                             <button
@@ -13287,6 +13306,420 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        ), document.body)
+      }
+      {/* Media Modal */}
+      {
+        showMediaModal && createPortal((
+          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowMediaModal(false)}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col transition-colors" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                  <FaPhotoVideo className="text-teal-500" />
+                  Media
+                </h3>
+                <button
+                  onClick={() => setShowMediaModal(false)}
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Close"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850 overflow-x-auto">
+                {[
+                  { key: 'images', label: 'Images', icon: <FaImage className="text-xs" /> },
+                  { key: 'videos', label: 'Videos', icon: <FaVideo className="text-xs" /> },
+                  { key: 'audio', label: 'Audio', icon: <FaVolumeUp className="text-xs" /> },
+                  { key: 'docs', label: 'Docs', icon: <FaFileAlt className="text-xs" /> },
+                  { key: 'links', label: 'Links', icon: <FaLink className="text-xs" /> },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    className={`flex-1 min-w-[80px] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all border-b-2 whitespace-nowrap ${
+                      mediaModalTab === tab.key
+                        ? 'text-teal-600 dark:text-teal-400 border-teal-500 bg-teal-50/50 dark:bg-teal-900/20'
+                        : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    onClick={() => {
+                      setMediaModalTab(tab.key);
+                      setMediaModalLoading(true);
+                      setTimeout(() => setMediaModalLoading(false), 400);
+                    }}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                    {/* Count badge */}
+                    {(() => {
+                      let count = 0;
+                      const msgs = comments || [];
+                      if (tab.key === 'images') count = msgs.filter(c => c.imageUrl && !c.deleted).length;
+                      else if (tab.key === 'videos') count = msgs.filter(c => c.videoUrl && !c.deleted).length;
+                      else if (tab.key === 'audio') count = msgs.filter(c => c.audioUrl && !c.deleted).length;
+                      else if (tab.key === 'docs') count = msgs.filter(c => c.documentUrl && !c.deleted).length;
+                      else if (tab.key === 'links') {
+                        const urlRegex = /(https?:\/\/[^\s]+)/gi;
+                        count = msgs.filter(c => !c.deleted && !c.imageUrl && !c.videoUrl && !c.audioUrl && !c.documentUrl && c.message && urlRegex.test(c.message)).length;
+                      }
+                      return count > 0 ? (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                          mediaModalTab === tab.key
+                            ? 'bg-teal-100 text-teal-700 dark:bg-teal-800 dark:text-teal-300'
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
+                        }`}>{count}</span>
+                      ) : null;
+                    })()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6" style={{ minHeight: '300px', maxHeight: 'calc(90vh - 180px)' }}>
+                {mediaModalLoading ? (
+                  /* Skeleton Loading */
+                  <div className="animate-pulse">
+                    {(mediaModalTab === 'images' || mediaModalTab === 'videos') ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-xl">
+                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex-shrink-0"></div>
+                            <div className="flex-1 space-y-2">
+                              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
+                              <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2"></div>
+                            </div>
+                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex-shrink-0"></div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Images Tab */}
+                    {mediaModalTab === 'images' && (() => {
+                      const imageMessages = (comments || []).filter(c => c.imageUrl && !c.deleted);
+                      if (imageMessages.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                          <FaImage className="text-5xl mb-4 opacity-50" />
+                          <p className="text-lg font-medium">No images</p>
+                          <p className="text-sm mt-1">Images shared in this chat will appear here</p>
+                        </div>
+                      );
+                      return (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {imageMessages.map((msg, idx) => (
+                            <div
+                              key={msg._id || idx}
+                              className="relative group aspect-square rounded-xl overflow-hidden cursor-pointer bg-gray-100 dark:bg-gray-700 hover:shadow-lg transition-all"
+                              onClick={() => {
+                                const imageUrls = imageMessages.map(m => m.imageUrl);
+                                setPreviewImages(imageUrls);
+                                setPreviewIndex(idx);
+                                setShowImagePreview(true);
+                              }}
+                            >
+                              <img
+                                src={msg.imageUrl}
+                                alt=""
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                                onError={(e) => { e.target.src = "https://via.placeholder.com/300x300?text=Image"; }}
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-white text-[10px] truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</p>
+                                <p className="text-white/70 text-[9px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Videos Tab */}
+                    {mediaModalTab === 'videos' && (() => {
+                      const videoMessages = (comments || []).filter(c => c.videoUrl && !c.deleted);
+                      if (videoMessages.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                          <FaVideo className="text-5xl mb-4 opacity-50" />
+                          <p className="text-lg font-medium">No videos</p>
+                          <p className="text-sm mt-1">Videos shared in this chat will appear here</p>
+                        </div>
+                      );
+                      return (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {videoMessages.map((msg, idx) => (
+                            <div
+                              key={msg._id || idx}
+                              className="relative group aspect-square rounded-xl overflow-hidden cursor-pointer bg-black hover:shadow-lg transition-all"
+                              onClick={() => {
+                                const videoUrls = videoMessages.map(m => m.videoUrl);
+                                window.dispatchEvent(new CustomEvent('open-media-preview', {
+                                  detail: { videos: videoUrls, index: idx }
+                                }));
+                              }}
+                            >
+                              <video
+                                src={msg.videoUrl}
+                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                preload="metadata"
+                                muted
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="bg-black/60 rounded-full p-3 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                                  <FaPlay className="text-white text-sm ml-0.5" />
+                                </div>
+                              </div>
+                              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-white text-[10px] truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</p>
+                                <p className="text-white/70 text-[9px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Audio Tab */}
+                    {mediaModalTab === 'audio' && (() => {
+                      const audioMessages = (comments || []).filter(c => c.audioUrl && !c.deleted);
+                      if (audioMessages.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                          <FaVolumeUp className="text-5xl mb-4 opacity-50" />
+                          <p className="text-lg font-medium">No audio messages</p>
+                          <p className="text-sm mt-1">Audio messages shared in this chat will appear here</p>
+                        </div>
+                      );
+                      return (
+                        <div className="space-y-2">
+                          {audioMessages.map((msg, idx) => (
+                            <div key={msg._id || idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                              <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <FaMicrophone className="text-teal-600 dark:text-teal-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <audio
+                                  src={msg.audioUrl}
+                                  className="w-full h-8"
+                                  controls
+                                  preload="metadata"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</span>
+                                  <span className="text-[10px] text-gray-400 dark:text-gray-500">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                                </div>
+                              </div>
+                              <button
+                                className="p-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors flex-shrink-0"
+                                title="Download"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    const response = await authenticatedFetch(msg.audioUrl, { mode: 'cors' });
+                                    if (!response.ok) throw new Error();
+                                    const blob = await response.blob();
+                                    const blobUrl = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = blobUrl;
+                                    a.download = msg.audioName || `audio-${msg._id || Date.now()}`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    a.remove();
+                                    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+                                    toast.success('Audio downloaded');
+                                  } catch {
+                                    const a = document.createElement('a');
+                                    a.href = msg.audioUrl;
+                                    a.download = msg.audioName || `audio-${msg._id || Date.now()}`;
+                                    a.target = '_blank';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    a.remove();
+                                  }
+                                }}
+                              >
+                                <FaDownload className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Docs Tab */}
+                    {mediaModalTab === 'docs' && (() => {
+                      const docMessages = (comments || []).filter(c => c.documentUrl && !c.deleted);
+                      if (docMessages.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                          <FaFileAlt className="text-5xl mb-4 opacity-50" />
+                          <p className="text-lg font-medium">No documents</p>
+                          <p className="text-sm mt-1">Documents shared in this chat will appear here</p>
+                        </div>
+                      );
+                      return (
+                        <div className="space-y-2">
+                          {docMessages.map((msg, idx) => {
+                            const cleanUrl = msg.documentUrl.split('?')[0];
+                            const ext = cleanUrl.split('.').pop().toLowerCase();
+                            const docName = msg.documentName || `Document.${ext}`;
+                            return (
+                              <div key={msg._id || idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                  ext === 'pdf' ? 'bg-red-100 dark:bg-red-900/40' :
+                                  ['doc', 'docx'].includes(ext) ? 'bg-blue-100 dark:bg-blue-900/40' :
+                                  ['xls', 'xlsx', 'csv'].includes(ext) ? 'bg-green-100 dark:bg-green-900/40' :
+                                  'bg-gray-100 dark:bg-gray-600'
+                                }`}>
+                                  <FaFileAlt className={`${
+                                    ext === 'pdf' ? 'text-red-600 dark:text-red-400' :
+                                    ['doc', 'docx'].includes(ext) ? 'text-blue-600 dark:text-blue-400' :
+                                    ['xls', 'xlsx', 'csv'].includes(ext) ? 'text-green-600 dark:text-green-400' :
+                                    'text-gray-600 dark:text-gray-400'
+                                  }`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{docName}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 uppercase font-medium">{ext}</span>
+                                    <span className="text-[10px] text-gray-400">•</span>
+                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</span>
+                                    <span className="text-[10px] text-gray-400">•</span>
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                    title="View"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      let type = 'document';
+                                      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+                                      else if (ext === 'pdf') type = 'pdf';
+                                      const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(msg.documentUrl)}&name=${encodeURIComponent(docName)}&type=${type}&appointmentId=${appt._id}&source=my_appointments`;
+                                      window.open(previewUrl, '_blank');
+                                    }}
+                                  >
+                                    <FaExternalLinkAlt className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    className="p-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
+                                    title="Download"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const response = await authenticatedFetch(msg.documentUrl, { mode: 'cors' });
+                                        if (!response.ok) throw new Error();
+                                        const blob = await response.blob();
+                                        const blobUrl = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = blobUrl;
+                                        a.download = docName;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+                                        toast.success('Document downloaded');
+                                      } catch {
+                                        const a = document.createElement('a');
+                                        a.href = msg.documentUrl;
+                                        a.download = docName;
+                                        a.target = '_blank';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                      }
+                                    }}
+                                  >
+                                    <FaDownload className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Links Tab */}
+                    {mediaModalTab === 'links' && (() => {
+                      const urlRegex = /(https?:\/\/[^\s]+)/gi;
+                      const linkMessages = (comments || []).filter(c => {
+                        if (c.deleted) return false;
+                        if (c.imageUrl || c.videoUrl || c.audioUrl || c.documentUrl) return false;
+                        return c.message && urlRegex.test(c.message);
+                      });
+                      if (linkMessages.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+                          <FaLink className="text-5xl mb-4 opacity-50" />
+                          <p className="text-lg font-medium">No links</p>
+                          <p className="text-sm mt-1">Links shared in this chat will appear here</p>
+                        </div>
+                      );
+                      return (
+                        <div className="space-y-2">
+                          {linkMessages.map((msg, idx) => {
+                            const msgUrlRegex = /(https?:\/\/[^\s]+)/gi;
+                            const urls = (msg.message || '').match(msgUrlRegex) || [];
+                            const firstUrl = urls[0] || '';
+                            let domain = '';
+                            try { domain = new URL(firstUrl).hostname; } catch { domain = firstUrl; }
+                            return (
+                              <div key={msg._id || idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <FaLink className="text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-blue-600 dark:text-blue-400 truncate hover:underline cursor-pointer" onClick={() => window.open(firstUrl, '_blank')}>{firstUrl}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{domain}</span>
+                                    <span className="text-[10px] text-gray-400">•</span>
+                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</span>
+                                    <span className="text-[10px] text-gray-400">•</span>
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                                  </div>
+                                  {msg.message && msg.message.length > firstUrl.length + 5 && (
+                                    <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{msg.message.replace(firstUrl, '').trim().substring(0, 80)}</p>
+                                  )}
+                                </div>
+                                <button
+                                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex-shrink-0"
+                                  title="Open link"
+                                  onClick={() => window.open(firstUrl, '_blank')}
+                                >
+                                  <FaExternalLinkAlt className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850">
+                <button
+                  onClick={() => setShowMediaModal(false)}
+                  className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium text-sm"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
