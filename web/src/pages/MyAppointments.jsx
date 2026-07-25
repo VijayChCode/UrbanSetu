@@ -13063,17 +13063,35 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             >
                               <div className="whitespace-pre-wrap break-words">
                                 {message.deleted ? (
-                                  <span className="flex items-center gap-1 text-gray-400 italic">
-                                    <FaBan className="inline-block text-lg" /> {message.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
-                                  </span>
-                                ) : (
-                                  <>
-                                    {/* Audio Message */}
-                                    {message.audioUrl ? (
+                                  <div>
+                                    <span className="flex items-center gap-1 text-gray-400 italic mb-2">
+                                      <FaBan className="inline-block text-lg" /> {message.senderEmail === currentUser.email ? "You deleted this message" : "This message was deleted."}
+                                    </span>
+                                    {(message.audioUrl || message.audio) && (
                                       <div className="mb-2 w-full min-w-[260px] sm:min-w-[300px]">
                                         <div className="relative">
                                           <audio
-                                            src={message.audioUrl}
+                                            src={message.audioUrl || message.audio}
+                                            className="w-full"
+                                            controls
+                                            preload="metadata"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        </div>
+                                        <div className="mt-1 text-xs text-gray-400 italic">
+                                          Preserved audio from deleted message: {message.audioName || 'Audio file'}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <>
+                                    {/* Audio Message */}
+                                    {(message.audioUrl || message.audio || message.type === 'audio') ? (
+                                      <div className="mb-2 w-full min-w-[260px] sm:min-w-[300px]">
+                                        <div className="relative">
+                                          <audio
+                                            src={message.audioUrl || message.audio || message.mediaUrl || message.fileUrl || message.url}
                                             className="w-full"
                                             controls
                                             preload="metadata"
@@ -13089,8 +13107,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                               }`}
                                             onClick={async (e) => {
                                               e.stopPropagation();
+                                              const targetUrl = message.audioUrl || message.audio || message.mediaUrl || message.fileUrl || message.url;
                                               try {
-                                                const response = await authenticatedFetch(message.audioUrl, { mode: 'cors' });
+                                                const response = await authenticatedFetch(targetUrl, { mode: 'cors' });
                                                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                                                 const blob = await response.blob();
                                                 const blobUrl = window.URL.createObjectURL(blob);
@@ -13104,7 +13123,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                 toast.success('Audio downloaded successfully');
                                               } catch (error) {
                                                 const a = document.createElement('a');
-                                                a.href = message.audioUrl;
+                                                a.href = targetUrl;
                                                 a.download = message.audioName || `audio-${message._id || Date.now()}`;
                                                 a.target = '_blank';
                                                 document.body.appendChild(a);

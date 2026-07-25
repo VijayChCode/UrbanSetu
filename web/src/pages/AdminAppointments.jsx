@@ -11173,6 +11173,18 @@ function AdminAppointmentRow({
                                         <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-3">
                                           <audio
                                             src={message.audioUrl}
+                                         onPlay={(e) => {
+                                           document.querySelectorAll('audio').forEach(otherAudio => {
+                                             if (otherAudio !== e.target && !otherAudio.paused) {
+                                               otherAudio.pause();
+                                             }
+                                           });
+                                           document.querySelectorAll('video').forEach(videoEl => {
+                                             if (!videoEl.paused) {
+                                               videoEl.pause();
+                                             }
+                                           });
+                                         }}
                                             className="w-full"
                                             controls
                                             preload="metadata"
