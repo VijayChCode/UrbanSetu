@@ -111,7 +111,7 @@ const convertEmojiToText = (emoji) => {
     '💪': 'Strong',
     '🙏': 'Thanks'
   };
-  return emojiToText[emoji] || emoji.replace(/[^\x00-\x7F]/g, '?'); // Replace non-ASCII with ?
+  return emojiToText[emoji] || emoji.replace(/[^\x00-\x7F]/g, '');
 };
 
 /**
@@ -616,7 +616,7 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
 
             pdf.setTextColor(...textColor);
             pdf.setFontSize(8);
-            pdf.text('📷 Image', isCurrentUser ? pageWidth - margin - 35 : margin + 55, yPosition + 22, { align: 'center' });
+            pdf.text('Image', isCurrentUser ? pageWidth - margin - 35 : margin + 55, yPosition + 22, { align: 'center' });
             yPosition += placeholderHeight + 5;
 
             // Add clickable image URL below the placeholder (for text-only export)
@@ -796,7 +796,7 @@ export const exportEnhancedChatToPDF = async (appointment, comments, currentUser
           const isVideo = !!message.videoUrl;
           const isDocument = !!message.documentUrl && !isVideo;
           const isAudio = !!message.audioUrl && !isVideo && !isDocument;
-          const label = isVideo ? '🎬 Video' : isDocument ? '📄 Document' : '🎧 Audio';
+          const label = isVideo ? 'Video' : isDocument ? 'Document' : 'Audio';
           const rawLink = isVideo ? message.videoUrl : isDocument ? message.documentUrl : message.audioUrl;
           const name = isAudio ? (message.audioName || 'Audio') :
             isVideo ? (message.videoName || 'Video') :
