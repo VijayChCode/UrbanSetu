@@ -13314,25 +13314,30 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       {/* Media Modal */}
       {
         showMediaModal && createPortal((
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowMediaModal(false)}>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col transition-colors" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4" onClick={() => setShowMediaModal(false)}>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col transition-colors border border-gray-200 dark:border-gray-800" onClick={(e) => e.stopPropagation()}>
               {/* Header */}
-              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                  <FaPhotoVideo className="text-teal-500" />
-                  Media
-                </h3>
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl">
+                    <FaPhotoVideo className="text-lg text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-white leading-tight">Media Gallery</h3>
+                    <p className="text-[11px] text-blue-100 opacity-90">Browse photos, videos, documents & links</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowMediaModal(false)}
-                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-xl transition-all"
                   title="Close"
                 >
-                  <FaTimes className="w-4 h-4" />
+                  <FaTimes className="w-4.5 h-4.5" />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850 overflow-x-auto">
+              <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-100/70 dark:bg-gray-900 overflow-x-auto px-2 sm:px-4">
                 {[
                   { key: 'images', label: 'Images', icon: <FaImage className="text-xs" /> },
                   { key: 'videos', label: 'Videos', icon: <FaVideo className="text-xs" /> },
@@ -13342,19 +13347,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 ].map(tab => (
                   <button
                     key={tab.key}
-                    className={`flex-1 min-w-[80px] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all border-b-2 whitespace-nowrap ${
+                    className={`px-3.5 sm:px-5 py-3 text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all border-b-2 whitespace-nowrap shrink-0 ${
                       mediaModalTab === tab.key
-                        ? 'text-teal-600 dark:text-teal-400 border-teal-500 bg-teal-50/50 dark:bg-teal-900/20'
-                        : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400 bg-white dark:bg-gray-800 rounded-t-lg shadow-xs'
+                        : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'
                     }`}
                     onClick={() => {
                       setMediaModalTab(tab.key);
                       setMediaModalLoading(true);
-                      setTimeout(() => setMediaModalLoading(false), 400);
+                      setTimeout(() => setMediaModalLoading(false), 350);
                     }}
                   >
                     {tab.icon}
-                    {tab.label}
+                    <span>{tab.label}</span>
                     {/* Count badge */}
                     {(() => {
                       let count = 0;
@@ -13368,10 +13373,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         count = msgs.filter(c => !c.deleted && !c.imageUrl && !c.videoUrl && !c.audioUrl && !c.documentUrl && c.message && urlRegex.test(c.message)).length;
                       }
                       return count > 0 ? (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           mediaModalTab === tab.key
-                            ? 'bg-teal-100 text-teal-700 dark:bg-teal-800 dark:text-teal-300'
-                            : 'bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300'
+                            : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                         }`}>{count}</span>
                       ) : null;
                     })()}
@@ -13380,26 +13385,28 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               </div>
 
               {/* Tab Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6" style={{ minHeight: '300px', maxHeight: 'calc(90vh - 180px)' }}>
+              <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 bg-white dark:bg-gray-900" style={{ minHeight: '300px', maxHeight: 'calc(90vh - 180px)' }}>
                 {mediaModalLoading ? (
-                  /* Skeleton Loading */
-                  <div className="animate-pulse">
+                  /* Premium Skeleton Loading */
+                  <div className="animate-pulse space-y-4">
                     {(mediaModalTab === 'images' || mediaModalTab === 'videos') ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                         {Array.from({ length: 8 }).map((_, i) => (
-                          <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                          <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-700 opacity-40"></div>
+                          </div>
                         ))}
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <div key={i} className="flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-xl">
-                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex-shrink-0"></div>
-                            <div className="flex-1 space-y-2">
-                              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
-                              <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2"></div>
+                          <div key={i} className="flex items-center gap-3 p-3.5 bg-gray-100 dark:bg-gray-800/70 border border-gray-200/50 dark:border-gray-700/50 rounded-xl">
+                            <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-xl shrink-0"></div>
+                            <div className="flex-1 space-y-2 min-w-0">
+                              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded-md w-3/4"></div>
+                              <div className="h-3 bg-gray-200 dark:bg-gray-700/60 rounded-md w-1/2"></div>
                             </div>
-                            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex-shrink-0"></div>
+                            <div className="w-8 h-8 bg-gray-300 dark:bg-gray-700 rounded-lg shrink-0"></div>
                           </div>
                         ))}
                       </div>
@@ -13412,17 +13419,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       const imageMessages = (comments || []).filter(c => c.imageUrl && !c.deleted);
                       if (imageMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                          <FaImage className="text-5xl mb-4 opacity-50" />
-                          <p className="text-lg font-medium">No images</p>
-                          <p className="text-sm mt-1">Images shared in this chat will appear here</p>
+                          <FaImage className="text-5xl mb-3 opacity-40" />
+                          <p className="text-base font-semibold">No images shared yet</p>
+                          <p className="text-xs mt-1 text-gray-400">Photos sent in this chat will appear here</p>
                         </div>
                       );
                       return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                           {imageMessages.map((msg, idx) => (
                             <div
                               key={msg._id || idx}
-                              className="relative group aspect-square rounded-xl overflow-hidden cursor-pointer bg-gray-100 dark:bg-gray-700 hover:shadow-lg transition-all"
+                              className="relative group aspect-square rounded-2xl overflow-hidden cursor-pointer bg-gray-100 dark:bg-gray-800 shadow-xs hover:shadow-md transition-all border border-gray-200/60 dark:border-gray-800"
                               onClick={() => {
                                 const imageUrls = imageMessages.map(m => m.imageUrl);
                                 setPreviewImages(imageUrls);
@@ -13437,9 +13444,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 loading="lazy"
                                 onError={(e) => { e.target.src = "https://via.placeholder.com/300x300?text=Image"; }}
                               />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-white text-[10px] truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</p>
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors" />
+                              <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-white text-[11px] font-medium truncate">{msg.senderName || msg.senderEmail || 'User'}</p>
                                 <p className="text-white/70 text-[9px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
                               </div>
                             </div>
@@ -13453,17 +13460,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       const videoMessages = (comments || []).filter(c => c.videoUrl && !c.deleted);
                       if (videoMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                          <FaVideo className="text-5xl mb-4 opacity-50" />
-                          <p className="text-lg font-medium">No videos</p>
-                          <p className="text-sm mt-1">Videos shared in this chat will appear here</p>
+                          <FaVideo className="text-5xl mb-3 opacity-40" />
+                          <p className="text-base font-semibold">No videos shared yet</p>
+                          <p className="text-xs mt-1 text-gray-400">Videos sent in this chat will appear here</p>
                         </div>
                       );
                       return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                           {videoMessages.map((msg, idx) => (
                             <div
                               key={msg._id || idx}
-                              className="relative group aspect-square rounded-xl overflow-hidden cursor-pointer bg-black hover:shadow-lg transition-all"
+                              className="relative group aspect-square rounded-2xl overflow-hidden cursor-pointer bg-black shadow-xs hover:shadow-md transition-all border border-gray-800"
                               onClick={() => {
                                 const videoUrls = videoMessages.map(m => m.videoUrl);
                                 window.dispatchEvent(new CustomEvent('open-media-preview', {
@@ -13478,12 +13485,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 muted
                               />
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="bg-black/60 rounded-full p-3 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                                <div className="bg-black/60 rounded-full p-3 backdrop-blur-md group-hover:scale-110 transition-transform border border-white/20">
                                   <FaPlay className="text-white text-sm ml-0.5" />
                                 </div>
                               </div>
-                              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-white text-[10px] truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</p>
+                              <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-white text-[11px] font-medium truncate">{msg.senderName || msg.senderEmail || 'User'}</p>
                                 <p className="text-white/70 text-[9px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
                               </div>
                             </div>
@@ -13497,34 +13504,37 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       const audioMessages = (comments || []).filter(c => c.audioUrl && !c.deleted);
                       if (audioMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                          <FaVolumeUp className="text-5xl mb-4 opacity-50" />
-                          <p className="text-lg font-medium">No audio messages</p>
-                          <p className="text-sm mt-1">Audio messages shared in this chat will appear here</p>
+                          <FaVolumeUp className="text-5xl mb-3 opacity-40" />
+                          <p className="text-base font-semibold">No audio messages</p>
+                          <p className="text-xs mt-1 text-gray-400">Audio recordings sent in this chat will appear here</p>
                         </div>
                       );
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           {audioMessages.map((msg, idx) => (
-                            <div key={msg._id || idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                              <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <FaMicrophone className="text-teal-600 dark:text-teal-400" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <audio
-                                  src={msg.audioUrl}
-                                  className="w-full h-8"
-                                  controls
-                                  preload="metadata"
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</span>
-                                  <span className="text-[10px] text-gray-400 dark:text-gray-500">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                            <div key={msg._id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 bg-gray-50 dark:bg-gray-800/60 hover:bg-blue-50/40 dark:hover:bg-gray-800 border border-gray-200/70 dark:border-gray-700/60 rounded-xl transition-all min-w-0">
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center shrink-0">
+                                  <FaMicrophone className="text-base" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <audio
+                                    src={msg.audioUrl}
+                                    className="w-full h-8 max-w-xs sm:max-w-md"
+                                    controls
+                                    preload="metadata"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <div className="flex items-center gap-2 mt-1 flex-wrap text-[11px] text-gray-500 dark:text-gray-400">
+                                    <span className="truncate max-w-[140px]">{msg.senderName || msg.senderEmail || 'User'}</span>
+                                    <span>•</span>
+                                    <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                                  </div>
                                 </div>
                               </div>
                               <button
-                                className="p-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors flex-shrink-0"
-                                title="Download"
+                                className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 rounded-lg transition-colors shrink-0 self-end sm:self-center flex items-center gap-1.5 text-xs font-medium"
+                                title="Download Audio"
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   try {
@@ -13552,6 +13562,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 }}
                               >
                                 <FaDownload className="w-3.5 h-3.5" />
+                                <span className="sm:hidden">Download</span>
                               </button>
                             </div>
                           ))}
@@ -13564,46 +13575,43 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       const docMessages = (comments || []).filter(c => c.documentUrl && !c.deleted);
                       if (docMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                          <FaFileAlt className="text-5xl mb-4 opacity-50" />
-                          <p className="text-lg font-medium">No documents</p>
-                          <p className="text-sm mt-1">Documents shared in this chat will appear here</p>
+                          <FaFileAlt className="text-5xl mb-3 opacity-40" />
+                          <p className="text-base font-semibold">No documents shared yet</p>
+                          <p className="text-xs mt-1 text-gray-400">Files and PDFs sent in this chat will appear here</p>
                         </div>
                       );
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           {docMessages.map((msg, idx) => {
                             const cleanUrl = msg.documentUrl.split('?')[0];
                             const ext = cleanUrl.split('.').pop().toLowerCase();
                             const docName = msg.documentName || `Document.${ext}`;
                             return (
-                              <div key={msg._id || idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                  ext === 'pdf' ? 'bg-red-100 dark:bg-red-900/40' :
-                                  ['doc', 'docx'].includes(ext) ? 'bg-blue-100 dark:bg-blue-900/40' :
-                                  ['xls', 'xlsx', 'csv'].includes(ext) ? 'bg-green-100 dark:bg-green-900/40' :
-                                  'bg-gray-100 dark:bg-gray-600'
-                                }`}>
-                                  <FaFileAlt className={`${
-                                    ext === 'pdf' ? 'text-red-600 dark:text-red-400' :
-                                    ['doc', 'docx'].includes(ext) ? 'text-blue-600 dark:text-blue-400' :
-                                    ['xls', 'xlsx', 'csv'].includes(ext) ? 'text-green-600 dark:text-green-400' :
-                                    'text-gray-600 dark:text-gray-400'
-                                  }`} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{docName}</p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 uppercase font-medium">{ext}</span>
-                                    <span className="text-[10px] text-gray-400">•</span>
-                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</span>
-                                    <span className="text-[10px] text-gray-400">•</span>
-                                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                              <div key={msg._id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 bg-gray-50 dark:bg-gray-800/60 hover:bg-blue-50/40 dark:hover:bg-gray-800 border border-gray-200/70 dark:border-gray-700/60 rounded-xl transition-all min-w-0">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                    ext === 'pdf' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                                    ['doc', 'docx'].includes(ext) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                                    ['xls', 'xlsx', 'csv'].includes(ext) ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
+                                    'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                                  }`}>
+                                    <FaFileAlt className="text-base" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-100 truncate break-all" title={docName}>{docName}</p>
+                                    <div className="flex items-center gap-2 mt-1 flex-wrap text-[11px] text-gray-500 dark:text-gray-400">
+                                      <span className="uppercase font-bold text-[10px] px-1.5 py-0.2 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">{ext}</span>
+                                      <span>•</span>
+                                      <span className="truncate max-w-[120px]">{msg.senderName || msg.senderEmail || 'User'}</span>
+                                      <span>•</span>
+                                      <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1 flex-shrink-0">
+                                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-200/50 dark:border-gray-700/50 w-full sm:w-auto justify-end">
                                   <button
-                                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                    title="View"
+                                    className="px-2.5 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 rounded-lg transition-colors flex items-center gap-1.5"
+                                    title="View Document"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       let type = 'document';
@@ -13613,11 +13621,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                       window.open(previewUrl, '_blank');
                                     }}
                                   >
-                                    <FaExternalLinkAlt className="w-3.5 h-3.5" />
+                                    <FaExternalLinkAlt className="w-3 h-3" />
+                                    <span>View</span>
                                   </button>
                                   <button
-                                    className="p-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
-                                    title="Download"
+                                    className="px-2.5 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 rounded-lg transition-colors flex items-center gap-1.5"
+                                    title="Download Document"
                                     onClick={async (e) => {
                                       e.stopPropagation();
                                       try {
@@ -13644,7 +13653,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                       }
                                     }}
                                   >
-                                    <FaDownload className="w-3.5 h-3.5" />
+                                    <FaDownload className="w-3 h-3" />
+                                    <span>Download</span>
                                   </button>
                                 </div>
                               </div>
@@ -13664,13 +13674,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       });
                       if (linkMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                          <FaLink className="text-5xl mb-4 opacity-50" />
-                          <p className="text-lg font-medium">No links</p>
-                          <p className="text-sm mt-1">Links shared in this chat will appear here</p>
+                          <FaLink className="text-5xl mb-3 opacity-40" />
+                          <p className="text-base font-semibold">No links shared yet</p>
+                          <p className="text-xs mt-1 text-gray-400">Web links sent in this chat will appear here</p>
                         </div>
                       );
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           {linkMessages.map((msg, idx) => {
                             const msgUrlRegex = /(https?:\/\/[^\s]+)/gi;
                             const urls = (msg.message || '').match(msgUrlRegex) || [];
@@ -13678,29 +13688,32 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             let domain = '';
                             try { domain = new URL(firstUrl).hostname; } catch { domain = firstUrl; }
                             return (
-                              <div key={msg._id || idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <FaLink className="text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-blue-600 dark:text-blue-400 truncate hover:underline cursor-pointer" onClick={() => window.open(firstUrl, '_blank')}>{firstUrl}</p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{domain}</span>
-                                    <span className="text-[10px] text-gray-400">•</span>
-                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{msg.senderName || msg.senderEmail || 'Unknown'}</span>
-                                    <span className="text-[10px] text-gray-400">•</span>
-                                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                              <div key={msg._id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 bg-gray-50 dark:bg-gray-800/60 hover:bg-blue-50/40 dark:hover:bg-gray-800 border border-gray-200/70 dark:border-gray-700/60 rounded-xl transition-all min-w-0">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shrink-0">
+                                    <FaLink className="text-base" />
                                   </div>
-                                  {msg.message && msg.message.length > firstUrl.length + 5 && (
-                                    <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{msg.message.replace(firstUrl, '').trim().substring(0, 80)}</p>
-                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 truncate break-all hover:underline cursor-pointer" onClick={() => window.open(firstUrl, '_blank')}>{firstUrl}</p>
+                                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 flex-wrap">
+                                      <span className="font-medium text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{domain}</span>
+                                      <span>•</span>
+                                      <span className="truncate max-w-[120px]">{msg.senderName || msg.senderEmail || 'User'}</span>
+                                      <span>•</span>
+                                      <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''}</span>
+                                    </div>
+                                    {msg.message && msg.message.length > firstUrl.length + 5 && (
+                                      <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{msg.message.replace(firstUrl, '').trim()}</p>
+                                    )}
+                                  </div>
                                 </div>
                                 <button
-                                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex-shrink-0"
+                                  className="px-2.5 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 rounded-lg transition-colors shrink-0 self-end sm:self-center flex items-center gap-1.5"
                                   title="Open link"
                                   onClick={() => window.open(firstUrl, '_blank')}
                                 >
-                                  <FaExternalLinkAlt className="w-3.5 h-3.5" />
+                                  <FaExternalLinkAlt className="w-3 h-3" />
+                                  <span>Open</span>
                                 </button>
                               </div>
                             );
@@ -13713,10 +13726,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">UrbanSetu Chat Media</span>
                 <button
                   onClick={() => setShowMediaModal(false)}
-                  className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium text-sm"
+                  className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md shadow-blue-500/20 font-semibold text-xs sm:text-sm transition-all"
                 >
                   Close
                 </button>
