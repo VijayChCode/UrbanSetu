@@ -42,7 +42,8 @@ import {
   FaVideo,
   FaVolumeUp as FaVolumeIcon,
   FaClosedCaptioning,
-  FaCheckCircle
+  FaCheckCircle,
+  FaKeyboard
 } from 'react-icons/fa';
 
 import SocialSharePanel from './SocialSharePanel';
@@ -146,6 +147,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
   const [isBottomControlsHovered, setIsBottomControlsHovered] = useState(false);
   const [showAboutPlayer, setShowAboutPlayer] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportIssueType, setReportIssueType] = useState(null);
   const [reportingIssue, setReportingIssue] = useState(false);
@@ -255,6 +257,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       setIsMiniMode(false);
       setMiniSize({ width: 320, height: 192 });
       setShowAboutPlayer(false);
+      setShowShortcutsModal(false);
       setVideoBlobUrl(null);
     }
     return () => {
@@ -507,7 +510,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           break;
         case 'escape':
           e.preventDefault();
-          handleCloseRequest();
+          if (showShortcutsModal) {
+            setShowShortcutsModal(false);
+          } else {
+            handleCloseRequest();
+          }
+          break;
+        case '?':
+        case 'h':
+          e.preventDefault();
+          setShowShortcutsModal(prev => !prev);
           break;
       }
       setShowControls(true);
@@ -2401,6 +2413,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group border-t border-white/5 mt-1 pt-3"
+              onClick={() => { setShowShortcutsModal(true); setContextMenu({ ...contextMenu, show: false }); }}
+            >
+              <FaKeyboard className="text-sm text-white/60 group-hover:text-white" />
+              <span className="text-[13px] text-white/90">Keyboard Shortcuts</span>
+            </div>
+
+            <div
+              className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
               onClick={() => { setShowAboutPlayer(true); setContextMenu({ ...contextMenu, show: false }); }}
             >
               <FaInfoCircle className="text-sm text-white/60 group-hover:text-white" />
@@ -2816,6 +2836,143 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         </div>
       )
       }
+
+      {/* Keyboard Shortcuts Modal */}
+      {showShortcutsModal && (
+        <div
+          className="absolute inset-0 z-[10001] flex items-center justify-center bg-black/75 backdrop-blur-md animate-fadeIn p-4"
+          onClick={() => setShowShortcutsModal(false)}
+        >
+          <div
+            className="bg-[#18181b] border border-white/10 p-6 max-sm:p-4 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col text-left relative overflow-hidden animate-scaleIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                  <FaKeyboard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">Keyboard Shortcuts</h3>
+                  <p className="text-xs text-white/50">Quick controls & navigation for UrbanSetu player</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowShortcutsModal(false)}
+                className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl p-2 transition-colors"
+                title="Close (Esc)"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Shortcuts Grid List */}
+            <div className="overflow-y-auto custom-scrollbar py-4 space-y-6 flex-1 pr-1">
+              {/* Playback Controls */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-blue-400 mb-3 flex items-center gap-2">
+                  <FaPlay className="text-[10px]" /> Playback & Navigation
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { label: 'Play / Pause', keys: ['Space', 'K'] },
+                    { label: 'Seek -5s / +5s', keys: ['←', '→'] },
+                    { label: 'Seek -10s / +10s', keys: ['J', 'L'] },
+                    { label: 'Frame Prev / Next', keys: [',', '.'] },
+                    { label: 'Jump to 0% - 90%', keys: ['0', '1..9'] },
+                    { label: 'Seek to Start / End', keys: ['Home', 'End'] },
+                    { label: 'Speed Up / Slow Down', keys: ['Shift + >', 'Shift + <'] },
+                    { label: 'Prev / Next Video', keys: ['Ctrl + ←', 'Ctrl + →'] },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                      <span className="text-xs font-medium text-white/80">{item.label}</span>
+                      <div className="flex gap-1.5">
+                        {item.keys.map((k, ki) => (
+                          <kbd key={ki} className="px-2 py-0.5 bg-white/10 border border-white/15 rounded text-[11px] font-mono font-semibold text-blue-300 shadow-sm">
+                            {k}
+                          </kbd>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* View & Audio */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-purple-400 mb-3 flex items-center gap-2">
+                  <FaVolumeUp className="text-[10px]" /> Display & Audio
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { label: 'Toggle Fullscreen', keys: ['F'] },
+                    { label: 'Toggle Mini Player', keys: ['I'] },
+                    { label: 'Mute / Unmute', keys: ['M'] },
+                    { label: 'Volume Up / Down', keys: ['↑', '↓'] },
+                    { label: 'Zoom In / Out', keys: ['+', '-'] },
+                    { label: 'Reset Zoom & Position', keys: ['Z'] },
+                    { label: 'Rotate 90° Clockwise', keys: ['R'] },
+                    { label: 'Brightness / Volume Scroll', keys: ['Wheel (Left/Right)'] },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                      <span className="text-xs font-medium text-white/80">{item.label}</span>
+                      <div className="flex gap-1.5">
+                        {item.keys.map((k, ki) => (
+                          <kbd key={ki} className="px-2 py-0.5 bg-white/10 border border-white/15 rounded text-[11px] font-mono font-semibold text-purple-300 shadow-sm">
+                            {k}
+                          </kbd>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gestures & Options */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-emerald-400 mb-3 flex items-center gap-2">
+                  <FaTools className="text-[10px]" /> Actions & Gestures
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { label: 'Share Panel', keys: ['S'] },
+                    { label: 'Download Video', keys: ['D'] },
+                    { label: 'Close Player / Dialog', keys: ['Esc'] },
+                    { label: 'Context Menu Options', keys: ['Right Click'] },
+                    { label: 'Temporary 2x Speed', keys: ['Hold Click / Touch'] },
+                    { label: 'Cumulative Seek', keys: ['Double Tap Left/Right'] },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                      <span className="text-xs font-medium text-white/80">{item.label}</span>
+                      <div className="flex gap-1.5">
+                        {item.keys.map((k, ki) => (
+                          <kbd key={ki} className="px-2 py-0.5 bg-white/10 border border-white/15 rounded text-[11px] font-mono font-semibold text-emerald-300 shadow-sm">
+                            {k}
+                          </kbd>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-white/40 font-medium">
+                Tip: Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/15 font-mono text-[10px]">Esc</kbd> or <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/15 font-mono text-[10px]">?</kbd> anytime.
+              </span>
+              <button
+                onClick={() => setShowShortcutsModal(false)}
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-500/20"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <SocialSharePanel isOpen={showSharePanel} onClose={() => { setShowSharePanel(false); setShareUrl(null); if (wasPlayingRef.current) setIsPlaying(true); }} url={shareUrl || ""} title="Check out this video on UrbanSetu!" isLoading={isGeneratingShare} />
     </div >
