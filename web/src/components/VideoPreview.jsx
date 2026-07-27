@@ -2461,11 +2461,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       {/* Bottom Controls Bar */}
       {!isMiniMode && (
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent px-4 pb-4 pt-10 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}
+          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent px-4 pb-2.5 pt-8 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}
           onMouseEnter={() => setIsBottomControlsHovered(true)}
           onMouseLeave={() => setIsBottomControlsHovered(false)}
         >
-          <div className="w-full space-y-1.5">
+          <div className="w-full space-y-1">
             <div
               className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer relative group/slider"
               onMouseMove={(e) => {
@@ -2644,34 +2644,34 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             </div>
 
             {/* ── Action Row — mirrors mobile VideoViewer layout ── */}
-            <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-1.5 mt-0">
+            <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-1 mt-0">
               {!isFullscreen && (
                 <>
                   <button
                     onClick={toggleMiniMode}
                     title="Picture in Picture"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
                   >
                     <FaClone size={13} />
                     <span className="hidden sm:inline">Mini</span>
                   </button>
-                  <div className="w-px h-4 bg-white/15 mx-0.5" />
+                  <div className="w-px h-3 bg-white/15 mx-0.5" />
                 </>
               )}
               <button
                 onClick={handleRotate}
                 title="Rotate"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
               >
                 <FaUndo size={13} />
                 <span className="hidden sm:inline">Rotate</span>
               </button>
-              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              <div className="w-px h-3 bg-white/15 mx-0.5" />
               <div className="relative" ref={speedMenuRef}>
                 <button
                   onClick={toggleSpeed}
                   title="Playback Speed"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-95 text-xs font-semibold min-w-[52px] ${showSpeedMenu ? 'bg-white/20 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all active:scale-95 text-xs font-semibold min-w-[52px] ${showSpeedMenu ? 'bg-white/20 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
                 >
                   <FaTachometerAlt size={13} />
                   <span>{playbackRate}x</span>
@@ -2705,24 +2705,24 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   </div>
                 )}
               </div>
-              <div className="w-px h-4 bg-white/15 mx-0.5" />
+              <div className="w-px h-3 bg-white/15 mx-0.5" />
               {!isFullscreen && (
                 <>
                   <button
                     onClick={toggleShare}
                     title="Share"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
                   >
                     <FaShareAlt size={13} />
                     <span className="hidden sm:inline">Share</span>
                   </button>
-                  <div className="w-px h-4 bg-white/15 mx-0.5" />
+                  <div className="w-px h-3 bg-white/15 mx-0.5" />
                 </>
               )}
               <button
                 onClick={handleDownload}
                 title={downloadState === 'downloading' ? "Cancel Download" : "Download"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all active:scale-95 text-xs font-semibold ${downloadState === 'downloading' ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20 shadow-lg animate-pulse' : 'text-white/70 hover:text-white hover:bg-white/10'
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all active:scale-95 text-xs font-semibold ${downloadState === 'downloading' ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20 shadow-lg animate-pulse' : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
                 disabled={downloadState === 'completed'}
               >
