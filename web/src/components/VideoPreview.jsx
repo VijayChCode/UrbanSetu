@@ -1339,6 +1339,35 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
+  const getOrFetchShareUrl = async () => {
+    const currentUrl = videos[currentIndex];
+    if (cachedShares[currentUrl] && cachedShares[currentUrl].includes('/v/')) {
+      return cachedShares[currentUrl];
+    }
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/video/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoUrl: currentUrl,
+          listingId: listingId,
+          title: 'Property Video Tour'
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const generatedUrl = `${window.location.origin}/v/${data.token}`;
+        setShareUrl(generatedUrl);
+        setCachedShares(prev => ({ ...prev, [currentUrl]: generatedUrl }));
+        return generatedUrl;
+      }
+    } catch (err) {
+      console.warn('Failed to generate share link:', err);
+    }
+    return null;
+  };
+
   const toggleShare = async (e) => {
     e?.stopPropagation();
     if (videoRef.current && !videoRef.current.paused) {
@@ -1351,14 +1380,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
     const currentUrl = videos[currentIndex];
 
-    // Use cached share link if already generated
-    if (cachedShares[currentUrl]) {
+    // Use cached share link if already generated and valid
+    if (cachedShares[currentUrl] && cachedShares[currentUrl].includes('/v/')) {
       setShareUrl(cachedShares[currentUrl]);
       setShowSharePanel(true);
       return;
     }
 
     // Generate a shareable UrbanSetu link (hides the Cloudinary URL)
+    setShareUrl(null);
     setIsGeneratingShare(true);
     setShowSharePanel(true);
 
@@ -1381,14 +1411,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         setShareUrl(generatedUrl);
         setCachedShares(prev => ({ ...prev, [currentUrl]: generatedUrl }));
       } else {
-        // Fallback to raw URL if share creation fails
-        setShareUrl(currentUrl || '');
-        setCachedShares(prev => ({ ...prev, [currentUrl]: currentUrl || '' }));
+        setShareUrl(null);
+        toast.error("Failed to generate share link. Please check your internet connection.");
       }
     } catch (err) {
-      console.warn('Failed to generate share link, using raw URL:', err);
-      setShareUrl(currentUrl || '');
-      setCachedShares(prev => ({ ...prev, [currentUrl]: currentUrl || '' }));
+      console.warn('Failed to generate share link:', err);
+      setShareUrl(null);
+      toast.error("Failed to generate share link. Please check your internet connection.");
     } finally {
       setIsGeneratingShare(false);
     }
@@ -2297,7 +2326,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
-              onClick={() => copyToClipboard(videos[currentIndex], "Video URL copied!", "videoUrl")}
+              onClick={async () => {
+                const url = await getOrFetchShareUrl();
+                if (url) {
+                  copyToClipboard(url, "Shareable video URL copied!", "videoUrl");
+                } else {
+                  toast.error("Failed to generate share link. Please check your network connection.");
+                  setContextMenu(prev => ({ ...prev, show: false }));
+                }
+              }}
             >
               <FaLink className="text-sm text-white/60 group-hover:text-white" />
               <span className="text-[13px] text-white/90">{copiedKey === 'videoUrl' ? 'Copied!' : 'Copy video URL'}</span>
@@ -2305,9 +2342,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
-              onClick={() => {
+              onClick={async () => {
+                const url = await getOrFetchShareUrl();
                 const time = Math.floor(videoRef.current?.currentTime || 0);
-                copyToClipboard(`${videos[currentIndex]}?t=${time}`, `URL copied at ${time}s!`, "urlAtTime");
+                if (url) {
+                  copyToClipboard(`${url}?t=${time}`, `Shareable URL copied at ${time}s!`, "urlAtTime");
+                } else {
+                  toast.error("Failed to generate share link. Please check your network connection.");
+                  setContextMenu(prev => ({ ...prev, show: false }));
+                }
               }}
             >
               <FaHistory className="text-sm text-white/60 group-hover:text-white" />
@@ -2316,7 +2359,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div
               className="px-4 py-2.5 hover:bg-white/10 flex items-center gap-3 cursor-pointer transition-colors group"
-              onClick={() => copyToClipboard(`<iframe src="${videos[currentIndex]}" allowfullscreen></iframe>`, "Embed code copied!", "embedCode")}
+              onClick={async () => {
+                const url = await getOrFetchShareUrl();
+                if (url) {
+                  copyToClipboard(`<iframe src="${url}" width="640" height="360" allowfullscreen></iframe>`, "Embed code copied!", "embedCode");
+                } else {
+                  toast.error("Failed to generate share link. Please check your network connection.");
+                  setContextMenu(prev => ({ ...prev, show: false }));
+                }
+              }}
             >
               <FaCode className="text-sm text-white/60 group-hover:text-white" />
               <span className="text-[13px] text-white/90">{copiedKey === 'embedCode' ? 'Copied!' : 'Copy embed code'}</span>

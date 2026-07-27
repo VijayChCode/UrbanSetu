@@ -42,6 +42,10 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
   }, [isOpen]);
 
   const copyToClipboard = async () => {
+    if (!url) {
+      toast.error('Share link is unavailable. Please check your network connection.');
+      return;
+    }
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -91,6 +95,10 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
   };
 
   const handleMoreClick = async () => {
+    if (!url) {
+      toast.error('Share link is unavailable. Please check your network connection.');
+      return;
+    }
     if (navigator.share) {
       try {
         await navigator.share({
@@ -272,8 +280,14 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
               {shareOptions.map((opt) => (
                 <button
                   key={opt.name}
-                  onClick={() => window.open(opt.link, '_blank')}
-                  className="flex flex-col items-center gap-2 group shrink-0"
+                  onClick={() => {
+                    if (!url) {
+                      toast.error('Share link is unavailable. Please check your network connection.');
+                      return;
+                    }
+                    window.open(opt.link, '_blank');
+                  }}
+                  className={`flex flex-col items-center gap-2 group shrink-0 ${!url ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className={`w-14 h-14 ${opt.color} rounded-full flex items-center justify-center text-white text-2xl transition-transform duration-200 transform group-hover:scale-110 shadow-md`}>
                     {opt.icon}
@@ -287,7 +301,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
               {/* More Button */}
               <button
                 onClick={handleMoreClick}
-                className="flex flex-col items-center gap-2 group shrink-0"
+                className={`flex flex-col items-center gap-2 group shrink-0 ${!url ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="w-14 h-14 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 text-2xl transition-transform duration-200 transform group-hover:scale-110 shadow-md">
                   <FaEllipsisH />
@@ -317,14 +331,16 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
                   <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
                   <p className="text-sm font-medium text-gray-400 dark:text-gray-500 animate-pulse">Generating share link...</p>
                 </div>
+              ) : !url ? (
+                <p className="text-sm font-medium text-red-500 dark:text-red-400 truncate">Failed to generate share link. Check connection.</p>
               ) : (
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate select-all">{url}</p>
               )}
             </div>
             <button
               onClick={copyToClipboard}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shrink-0 ${isLoading
+              disabled={isLoading || !url}
+              className={`px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 shrink-0 ${isLoading || !url
                 ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
                 : copied
                 ? 'bg-green-600 text-white'
@@ -339,7 +355,7 @@ const SocialSharePanel = ({ isOpen, onClose, url, title = "Join UrbanSetu!", des
             </button>
           </div>
 
-          {url.includes('ref=') && (
+          {url && url.includes('ref=') && (
             <div className="mt-4 text-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30">
               <p className="text-[13px] text-blue-700 dark:text-blue-300 font-medium">
                 Invite friends to <span className="font-bold">UrbanSetu</span> and earn <span className="font-bold">100 SetuCoins</span> when they join! Plus, they get <span className="font-bold">50 coins</span> as a starter bonus.
