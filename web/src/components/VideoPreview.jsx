@@ -510,11 +510,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           break;
         case 'escape':
           e.preventDefault();
-          if (showShortcutsModal) {
-            setShowShortcutsModal(false);
-          } else {
-            handleCloseRequest();
-          }
+          setShowShortcutsModal(false);
+          handleCloseRequest();
           break;
         case '?':
         case 'h':
@@ -1334,6 +1331,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         setIsPlaying(false);
       }
     }
+    setShowShortcutsModal(false);
     setShowCloseConfirm(true);
   };
 
@@ -2938,7 +2936,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   {[
                     { label: 'Share Panel', keys: ['S'] },
                     { label: 'Download Video', keys: ['D'] },
-                    { label: 'Close Player / Dialog', keys: ['Esc'] },
+                    { label: 'Close Video Player', keys: ['Esc'] },
                     { label: 'Context Menu Options', keys: ['Right Click'] },
                     { label: 'Temporary 2x Speed', keys: ['Hold Click / Touch'] },
                     { label: 'Cumulative Seek', keys: ['Double Tap Left/Right'] },
@@ -2961,7 +2959,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             {/* Footer */}
             <div className="pt-3 border-t border-white/10 flex items-center justify-between shrink-0">
               <span className="text-[11px] text-white/40 font-medium">
-                Tip: Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/15 font-mono text-[10px]">Esc</kbd> or <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/15 font-mono text-[10px]">?</kbd> anytime.
+                Tip: Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/15 font-mono text-[10px]">?</kbd> or <kbd className="px-1.5 py-0.5 bg-white/10 rounded border border-white/15 font-mono text-[10px]">H</kbd> anytime to toggle shortcuts.
               </span>
               <button
                 onClick={() => setShowShortcutsModal(false)}
