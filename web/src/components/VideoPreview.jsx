@@ -626,6 +626,23 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     };
   }, [isOpen, isPlaying, isLoading]);
 
+  // Intercept page reload/close while video player is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = 'Are you sure you want to reload/leave? Video playback is in progress.';
+      return 'Are you sure you want to reload/leave? Video playback is in progress.';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isOpen]);
+
   // Feedback Toast Helper
   const showFeedback = (msg) => {
     setZoomMessage(msg);
@@ -2448,7 +2465,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           onMouseEnter={() => setIsBottomControlsHovered(true)}
           onMouseLeave={() => setIsBottomControlsHovered(false)}
         >
-          <div className="w-full space-y-3">
+          <div className="w-full space-y-1.5">
             <div
               className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer relative group/slider"
               onMouseMove={(e) => {
@@ -2627,7 +2644,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
             </div>
 
             {/* ── Action Row — mirrors mobile VideoViewer layout ── */}
-            <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-2 mt-0.5">
+            <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-1.5 mt-0">
               {!isFullscreen && (
                 <>
                   <button
