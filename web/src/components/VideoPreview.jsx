@@ -134,6 +134,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const lastDragRef = useRef({ x: 0, y: 0 });
   const gestureRef = useRef({ type: null, startY: 0, startVal: 0 });
   const gestureTimeoutRef = useRef(null);
+  const autoplayMutedRef = useRef(false);
   const [activeGesture, setActiveGesture] = useState(null);
   const checkIsMobileDevice = () => {
     if (typeof window === 'undefined') return false;
@@ -876,10 +877,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         } catch (e) {
           if (e.name === 'NotAllowedError' && isPlaying && active) {
             // Browser blocked unmuted autoplay — retry muted (always allowed)
+            // Keep volume at 1 so unmuting later restores full audio
             try {
               videoRef.current.muted = true;
               setIsMuted(true);
-              setVolume(0);
+              autoplayMutedRef.current = true;
               await videoRef.current.play();
             } catch (mutedErr) {
               // Even muted play failed — give up, user must click play
@@ -984,6 +986,16 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const togglePlay = (e) => {
     e?.stopPropagation();
+
+    // If browser had auto-muted for autoplay, unmute now (user gesture unlocks audio)
+    if (autoplayMutedRef.current) {
+      autoplayMutedRef.current = false;
+      setIsMuted(false);
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+      }
+    }
+
     if (isEnded) {
       if (videoRef.current) {
         const duration = videoRef.current.duration;
