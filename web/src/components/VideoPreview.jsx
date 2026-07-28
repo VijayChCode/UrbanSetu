@@ -62,6 +62,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [volume, setVolume] = useState(1);
   const [isMiniMode, setIsMiniMode] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const durationPollRef = useRef(null);
 
   const [playbackRate, setPlaybackRate] = useState(1);
   const [brightness, setBrightness] = useState(1);
@@ -240,6 +242,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       setIsLoading(true);
       setIsPlaying(true);
       setDuration(0);
+      setCurrentTime(0);
       setVideoBlobUrl(null);
 
       setProgress(0);
@@ -269,6 +272,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     return () => {
       document.body.style.overflow = '';
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      if (durationPollRef.current) {
+        clearInterval(durationPollRef.current);
+        durationPollRef.current = null;
+      }
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.removeAttribute('src');
@@ -276,6 +283,48 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       }
     };
   }, [isOpen, currentIndex]);
+
+  // Duration Polling Effect - for streaming videos where duration is initially Infinity/NaN
+  // Freshly uploaded Cloudinary videos may not have the moov atom immediately available,
+  // so the browser can't determine duration until enough data is buffered.
+  useEffect(() => {
+    if (durationPollRef.current) {
+      clearInterval(durationPollRef.current);
+      durationPollRef.current = null;
+    }
+
+    if (!isOpen || !videoBlobUrl) return;
+
+    // Only start polling if duration is not yet valid
+    if (duration > 0) return;
+
+    let attempts = 0;
+    const MAX_ATTEMPTS = 60; // 60 * 500ms = 30 seconds max
+
+    durationPollRef.current = setInterval(() => {
+      attempts++;
+      if (videoRef.current) {
+        const d = videoRef.current.duration;
+        if (isFinite(d) && d > 0) {
+          setDuration(d);
+          clearInterval(durationPollRef.current);
+          durationPollRef.current = null;
+          return;
+        }
+      }
+      if (attempts >= MAX_ATTEMPTS) {
+        clearInterval(durationPollRef.current);
+        durationPollRef.current = null;
+      }
+    }, 500);
+
+    return () => {
+      if (durationPollRef.current) {
+        clearInterval(durationPollRef.current);
+        durationPollRef.current = null;
+      }
+    };
+  }, [isOpen, videoBlobUrl, duration]);
 
   // Fetch Blob Effect
   useEffect(() => {
@@ -1022,9 +1071,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const current = videoRef.current.currentTime;
       const total = videoRef.current.duration;
 
-      // Persist position for network recovery
-      if (isFinite(current) && current > 0) {
-        savedTimeRef.current = current;
+      // Always update currentTime state for display
+      if (isFinite(current) && current >= 0) {
+        setCurrentTime(current);
+        // Persist position for network recovery
+        if (current > 0) {
+          savedTimeRef.current = current;
+        }
       }
 
       if (isFinite(total) && total > 0) {
@@ -1871,15 +1924,19 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     if (seconds == null || !isFinite(seconds) || seconds < 0) return "--:--";
 
     if (isRemaining) {
-      const total = duration || videoRef.current?.duration || 0;
-      if (!isFinite(total) || total === 0) return "--:--";
-      const diff = Math.max(0, total - seconds);
-      const mins = Math.floor(diff / 60);
+      if (!duration || !isFinite(duration) || duration === 0) return "--:--";
+      const diff = Math.max(0, duration - seconds);
+      const hrs = Math.floor(diff / 3600);
+      const mins = Math.floor((diff % 3600) / 60);
       const secs = Math.floor(diff % 60);
+      if (hrs > 0) return `-${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
       return `-${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
-    const mins = Math.floor(seconds / 60);
+
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
+    if (hrs > 0 || (duration && duration >= 3600)) return `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
@@ -2686,9 +2743,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   onClick={() => setShowRemainingTime(!showRemainingTime)}
                   title={showRemainingTime ? "Show elapsed time" : "Show remaining time"}
                 >
-                  {formatTime(videoRef.current?.currentTime, showRemainingTime)}
+                  {formatTime(currentTime, showRemainingTime)}
                   <span className="opacity-40">/</span>
-                  {formatTime(duration || videoRef.current?.duration)}
+                  {formatTime(duration)}
                 </span>
               </div>
 
