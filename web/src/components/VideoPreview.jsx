@@ -579,6 +579,27 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Physical Device Orientation Listener (Mobile Auto-Rotate)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOrientationChange = () => {
+      setIsMobile(checkIsMobileDevice());
+    };
+
+    if (window.screen?.orientation) {
+      window.screen.orientation.addEventListener('change', handleOrientationChange);
+    }
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      if (window.screen?.orientation) {
+        window.screen.orientation.removeEventListener('change', handleOrientationChange);
+      }
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, [isOpen]);
+
   // Close floating volume on mobile when clicking elsewhere
   useEffect(() => {
     if (!isMobile || !isVolumeHovered || !isOpen) return;
@@ -1073,16 +1094,30 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
-  const toggleFullscreen = (e) => {
+  const toggleFullscreen = async (e) => {
     e?.stopPropagation();
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
-      setIsFullscreen(true);
-      showFeedback("Fullscreen");
+      try {
+        if (containerRef.current?.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        }
+        setIsFullscreen(true);
+        showFeedback("Fullscreen");
+        if (window.screen?.orientation?.unlock) {
+          window.screen.orientation.unlock().catch(() => {});
+        }
+      } catch (err) {
+        console.warn("Fullscreen request error:", err);
+      }
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(err => console.warn(err));
+      }
       setIsFullscreen(false);
       showFeedback("Exit Fullscreen");
+      if (window.screen?.orientation?.unlock) {
+        window.screen.orientation.unlock().catch(() => {});
+      }
     }
   };
 
