@@ -133,7 +133,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const gestureRef = useRef({ type: null, startY: 0, startVal: 0 });
   const gestureTimeoutRef = useRef(null);
   const [activeGesture, setActiveGesture] = useState(null);
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const checkIsMobileDevice = () => {
+    if (typeof window === 'undefined') return false;
+    const isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+    const isLandscapeMobile = window.innerHeight < 500 && window.innerWidth < 1024;
+    return window.innerWidth < 768 || isLandscapeMobile || isTouch;
+  };
+  const [isMobile, setIsMobile] = useState(checkIsMobileDevice);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isAnimatingSwipe, setIsAnimatingSwipe] = useState(false);
 
@@ -523,7 +529,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     };
 
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(checkIsMobileDevice());
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -1152,7 +1158,21 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleContextMenu = (e) => {
     e.preventDefault();
-    if (isMiniMode || isMobile) return;
+
+    const isTouchInput =
+      e.pointerType === 'touch' ||
+      isTouchRef.current ||
+      (typeof window !== 'undefined' && ('ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)));
+
+    if (
+      isMiniMode ||
+      isMobile ||
+      isTouchInput ||
+      isSpeedingRef.current ||
+      ignoreClickRef.current
+    ) {
+      return;
+    }
 
     // Calculate position taking into account the viewport
     const menuWidth = 240;
@@ -1465,6 +1485,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         isSpeedingRef.current = true;
         setPlaybackRate(2.0);
         showFeedback("2x Speed");
+        ignoreClickRef.current = true;
+        setContextMenu(prev => ({ ...prev, show: false }));
       }, 500);
     }
   };
@@ -1629,6 +1651,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           setPlaybackRate(2.0);
           showFeedback("2x Speed");
           ignoreClickRef.current = true;
+          setContextMenu(prev => ({ ...prev, show: false }));
         }, 500);
       }
     }
