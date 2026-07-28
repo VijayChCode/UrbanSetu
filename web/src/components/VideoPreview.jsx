@@ -1155,6 +1155,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         ? await fetch(url, fetchOptions)
         : await authenticatedFetch(url, fetchOptions);
 
+      if (!response.ok) {
+        throw new Error(`Download failed with status ${response.status}`);
+      }
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1173,17 +1177,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         // Handled via state update in cancellation block above
         return;
       }
-      console.error('Download error:', err);
-      // Fallback
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      console.warn('Download error:', err);
       setDownloadState('idle');
-      showFeedback("Download error. Opening link...");
+      showFeedback("Download failed.");
+      toast.error("Failed to download video. Please check your connection.");
     } finally {
       if (abortControllerRef.current === controller) {
         abortControllerRef.current = null;
