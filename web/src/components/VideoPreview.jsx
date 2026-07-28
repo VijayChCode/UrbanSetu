@@ -2946,7 +2946,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 <h4 className="text-2xl font-black text-white mb-2 tracking-tight">Reported</h4>
                 <p className="text-gray-400 font-medium">Thank you for reporting this issue.</p>
                 <div className="mt-8 px-5 py-2.5 bg-white/5 rounded-xl border border-white/10 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  Confirmed: {reportIssueType}
+                  Issue: {reportIssueType}
                 </div>
               </div>
             )}
