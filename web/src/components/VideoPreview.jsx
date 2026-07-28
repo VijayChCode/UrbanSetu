@@ -137,9 +137,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [activeGesture, setActiveGesture] = useState(null);
   const checkIsMobileDevice = () => {
     if (typeof window === 'undefined') return false;
-    const isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+    const isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints != null && navigator.maxTouchPoints > 0);
     const isLandscapeMobile = window.innerHeight < 500 && window.innerWidth < 1024;
-    return window.innerWidth < 768 || isLandscapeMobile || isTouch;
+    return Boolean(window.innerWidth < 768 || isLandscapeMobile || isTouch);
   };
   const [isMobile, setIsMobile] = useState(checkIsMobileDevice);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -2724,7 +2724,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                         background: `linear-gradient(to right, #3b82f6 ${volume * 100}%, rgba(255,255,255,0.2) ${volume * 100}%)`,
                       }}
                     />
-                    {isMobile && (
+                    {Boolean(isMobile) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
