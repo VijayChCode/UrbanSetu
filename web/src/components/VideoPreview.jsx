@@ -135,6 +135,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const gestureRef = useRef({ type: null, startY: 0, startVal: 0 });
   const gestureTimeoutRef = useRef(null);
   const autoplayMutedRef = useRef(false);
+  const twoFingerTapRef = useRef({ active: false, startTime: 0, moved: false });
   const [activeGesture, setActiveGesture] = useState(null);
   const checkIsMobileDevice = () => {
     if (typeof window === 'undefined') return false;
@@ -1727,6 +1728,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
 
     if (e.touches.length === 2) {
+      // Track 2-finger tap for context menu on mobile
+      twoFingerTapRef.current = { active: true, startTime: Date.now(), moved: false };
+
+      // Cancel any pending long-press speed timeout
+      if (speedTimeoutRef.current) {
+        clearTimeout(speedTimeoutRef.current);
+        speedTimeoutRef.current = null;
+      }
+
       // Pinch Zoom Start
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
@@ -1794,6 +1804,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       if (Math.abs(newScale - pinchStartScaleRef.current) > 0.1) {
         hasMovedRef.current = true; // Consider pinch as movement
         ignoreClickRef.current = true;
+        twoFingerTapRef.current.moved = true; // Not a tap, it's a pinch
       }
     } else if (e.touches.length === 1) {
       const touch = e.touches[0];
@@ -1880,7 +1891,23 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e) => {
+    // Check for 2-finger tap (show context menu on mobile)
+    if (twoFingerTapRef.current.active && !isMiniMode) {
+      const elapsed = Date.now() - twoFingerTapRef.current.startTime;
+      const wasTap = !twoFingerTapRef.current.moved && elapsed < 400;
+      twoFingerTapRef.current = { active: false, startTime: 0, moved: false };
+
+      if (wasTap) {
+        // Show context menu centered on screen
+        const x = Math.round(window.innerWidth / 2 - 120);
+        const y = Math.round(window.innerHeight / 2 - 150);
+        setContextMenu({ show: true, x, y });
+        pinchStartDistRef.current = null;
+        return;
+      }
+    }
+
     // Reset Pinch
     pinchStartDistRef.current = null;
     if (isMiniMode) {
