@@ -3531,6 +3531,98 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   };
 
+  // Helper to extract extension and clean document name for chat documents
+  const getChatDocDetails = (docUrl, documentName, documentMimeType) => {
+    const url = docUrl || '';
+    const cleanUrl = url.split('?')[0];
+    let docName = documentName || '';
+    let ext = '';
+
+    if (docName && docName.includes('.')) {
+      const candidate = docName.split('.').pop().toLowerCase();
+      if (candidate && candidate.length <= 5 && !candidate.includes('/')) {
+        ext = candidate;
+      }
+    }
+
+    if (!ext && cleanUrl.includes('.')) {
+      const lastSlash = cleanUrl.lastIndexOf('/');
+      const filenamePart = lastSlash !== -1 ? cleanUrl.substring(lastSlash + 1) : cleanUrl;
+      if (filenamePart.includes('.')) {
+        const candidate = filenamePart.split('.').pop().toLowerCase();
+        if (candidate && candidate.length <= 5) {
+          ext = candidate;
+        }
+      }
+    }
+
+    if (!ext && documentMimeType) {
+      const mime = documentMimeType.toLowerCase();
+      if (mime.includes('pdf')) ext = 'pdf';
+      else if (mime.includes('word') || mime.includes('officedocument')) ext = 'docx';
+      else if (mime.includes('excel') || mime.includes('spreadsheet')) ext = 'xlsx';
+      else if (mime.includes('text') || mime.includes('markdown')) ext = 'txt';
+      else if (mime.includes('image')) ext = 'jpg';
+    }
+
+    if (!ext) ext = 'pdf';
+
+    if (!docName) {
+      docName = `Document.${ext}`;
+    } else if (!docName.includes('.')) {
+      docName = `${docName}.${ext}`;
+    }
+
+    return { ext, docName };
+  };
+
+  // Helper to trigger document download in actual format
+  const handleDownloadChatDocument = async (docUrl, docNameRaw, mimeType) => {
+    try {
+      if (!docUrl) return;
+
+      const { docName } = getChatDocDetails(docUrl, docNameRaw, mimeType);
+
+      const isCloudinary = docUrl.includes('cloudinary.com');
+      const response = isCloudinary
+        ? await fetch(docUrl, { mode: 'cors' })
+        : await authenticatedFetch(docUrl, { mode: 'cors' });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = docName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
+      toast.success('Document downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      try {
+        const { docName } = getChatDocDetails(docUrl, docNameRaw, mimeType);
+        let fallbackUrl = docUrl;
+        if (docUrl.includes('cloudinary.com') && docUrl.includes('/upload/')) {
+          fallbackUrl = docUrl.replace('/upload/', '/upload/fl_attachment/');
+        }
+        const link = document.createElement('a');
+        link.href = fallbackUrl;
+        link.download = docName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success('Document download started');
+      } catch (fallbackErr) {
+        console.error('Fallback download failed:', fallbackErr);
+        toast.error('Failed to download document');
+      }
+    }
+  };
+
   // Video upload + send
   const sendVideoMessage = async (videoUrl, fileName, caption = '') => {
     const tempId = `temp-${Date.now()}`;
@@ -9790,7 +9882,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                                                         <button
                                                           className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                          onClick={(e) => {
+                                                           onClick={(e) => {
                                                             e.stopPropagation();
                                                             const audioEl = document.querySelector(`[data-audio-id="${c._id}"]`);
                                                             if (audioEl) {
@@ -9826,74 +9918,50 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                             </div>
                                           )}
                                           {/* Document Message */}
-                                          {c.documentUrl && (
-                                            <div className="mb-2 group relative flex items-center bg-gray-50/90 hover:bg-white border hover:border-blue-200 text-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all w-fit max-w-[85%] sm:max-w-[320px]">
-                                              {/* Clickable Area for View */}
-                                              <div
-                                                className="flex-1 flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/30 transition-colors min-w-0"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  // Construct preview URL
-                                                  const cleanUrl = c.documentUrl.split('?')[0];
-                                                  const ext = cleanUrl.split('.').pop().toLowerCase();
-                                                  let type = 'document';
-                                                  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
-                                                  else if (ext === 'pdf') type = 'pdf';
+                                          {c.documentUrl && (() => {
+                                            const { ext, docName } = getChatDocDetails(c.documentUrl, c.documentName, c.documentMimeType);
+                                            return (
+                                              <div className="mb-2 group relative flex items-center bg-gray-50/90 hover:bg-white border hover:border-blue-200 text-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all w-fit max-w-[85%] sm:max-w-[320px]">
+                                                {/* Clickable Area for View */}
+                                                <div
+                                                  className="flex-1 flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50/30 transition-colors min-w-0"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    let type = 'document';
+                                                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) type = 'image';
+                                                    else if (ext === 'pdf') type = 'pdf';
 
-                                                  // Open preview in new tab
-                                                  const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(c.documentName || 'Document')}&type=${type}&participants=${encodeURIComponent((appt.buyerId?._id || '') + ',' + (appt.sellerId?._id || ''))}&appointmentId=${appt._id}&source=my_appointments`;
-                                                  window.open(previewUrl, '_blank');
-                                                }}
-                                                title="Click to view document"
-                                              >
-                                                <div className="bg-blue-100 p-2 rounded-lg text-blue-600 flex-shrink-0">
-                                                  <FaFileAlt size={16} />
+                                                    // Open preview in new tab
+                                                    const previewUrl = `/user/view-chat/preview?url=${encodeURIComponent(c.documentUrl)}&name=${encodeURIComponent(docName)}&type=${type}&participants=${encodeURIComponent((appt.buyerId?._id || '') + ',' + (appt.sellerId?._id || ''))}&appointmentId=${appt._id}&source=my_appointments`;
+                                                    window.open(previewUrl, '_blank');
+                                                  }}
+                                                  title="Click to view document"
+                                                >
+                                                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 flex-shrink-0">
+                                                    <FaFileAlt size={16} />
+                                                  </div>
+                                                  <div className="flex flex-col min-w-0 overflow-hidden">
+                                                    <span className="text-sm font-medium truncate text-gray-900 w-full text-left">{docName}</span>
+                                                  </div>
                                                 </div>
-                                                <div className="flex flex-col min-w-0 overflow-hidden">
-                                                  <span className="text-sm font-medium truncate text-gray-900 w-full text-left">{c.documentName || 'Document'}</span>
-                                                </div>
+
+                                                {/* Separator */}
+                                                <div className="w-[1px] h-8 bg-gray-200 flex-shrink-0" />
+
+                                                {/* Download Button */}
+                                                <button
+                                                  className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0 z-10"
+                                                  title="Download"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDownloadChatDocument(c.documentUrl, c.documentName, c.documentMimeType);
+                                                  }}
+                                                >
+                                                  <FaDownload size={14} />
+                                                </button>
                                               </div>
-
-                                              {/* Separator */}
-                                              <div className="w-[1px] h-8 bg-gray-200 flex-shrink-0" />
-
-                                              {/* Download Button */}
-                                              <button
-                                                className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0 z-10"
-                                                title="Download"
-                                                onClick={async (e) => {
-                                                  e.stopPropagation();
-                                                  try {
-                                                    const response = await authenticatedFetch(c.documentUrl, { mode: 'cors' });
-                                                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                    const blob = await response.blob();
-                                                    const blobUrl = window.URL.createObjectURL(blob);
-                                                    const a = document.createElement('a');
-                                                    a.href = blobUrl;
-                                                    a.download = c.documentName || `document-${c._id || Date.now()}`;
-                                                    document.body.appendChild(a);
-                                                    a.click();
-                                                    a.remove();
-                                                    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                                    toast.success('Document downloaded successfully');
-                                                  } catch (error) {
-                                                    console.error('Download failed:', error);
-                                                    // Fallback to direct link
-                                                    const a = document.createElement('a');
-                                                    a.href = c.documentUrl;
-                                                    a.download = c.documentName || `document-${c._id || Date.now()}`;
-                                                    a.target = '_blank';
-                                                    document.body.appendChild(a);
-                                                    a.click();
-                                                    a.remove();
-                                                    toast.success('Document download started');
-                                                  }
-                                                }}
-                                              >
-                                                <FaDownload size={14} />
-                                              </button>
-                                            </div>
-                                          )}
+                                            );
+                                          })()}
                                           {/* Link Preview in Message */}
                                           {(() => {
                                             // Only show preview if it wasn't dismissed before sending
@@ -13583,9 +13651,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       return (
                         <div className="space-y-2.5">
                           {docMessages.map((msg, idx) => {
-                            const cleanUrl = msg.documentUrl.split('?')[0];
-                            const ext = cleanUrl.split('.').pop().toLowerCase();
-                            const docName = msg.documentName || `Document.${ext}`;
+                            const { ext, docName } = getChatDocDetails(msg.documentUrl, msg.documentName, msg.documentMimeType);
                             return (
                               <div key={msg._id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 bg-gray-50 dark:bg-gray-800/60 hover:bg-blue-50/40 dark:hover:bg-gray-800 border border-gray-200/70 dark:border-gray-700/60 rounded-xl transition-all min-w-0">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -13627,30 +13693,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   <button
                                     className="px-2.5 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 rounded-lg transition-colors flex items-center gap-1.5"
                                     title="Download Document"
-                                    onClick={async (e) => {
+                                    onClick={(e) => {
                                       e.stopPropagation();
-                                      try {
-                                        const response = await authenticatedFetch(msg.documentUrl, { mode: 'cors' });
-                                        if (!response.ok) throw new Error();
-                                        const blob = await response.blob();
-                                        const blobUrl = window.URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = blobUrl;
-                                        a.download = docName;
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        a.remove();
-                                        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                        toast.success('Document downloaded');
-                                      } catch {
-                                        const a = document.createElement('a');
-                                        a.href = msg.documentUrl;
-                                        a.download = docName;
-                                        a.target = '_blank';
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        a.remove();
-                                      }
+                                      handleDownloadChatDocument(msg.documentUrl, msg.documentName, msg.documentMimeType);
                                     }}
                                   >
                                     <FaDownload className="w-3 h-3" />
