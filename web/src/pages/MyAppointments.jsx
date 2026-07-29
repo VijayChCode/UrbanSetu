@@ -20,7 +20,7 @@ import ChatSettingsModal from '../components/ChatSettingsModal';
 import { useChatSettings } from '../hooks/useChatSettings';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import ImagePreview from '../components/ImagePreview';
-import VideoMessageBubble from '../components/VideoMessageBubble.jsx';
+import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble.jsx';
 import LinkPreview from '../components/LinkPreview';
 import UserAvatar from '../components/UserAvatar';
 import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextWithReadMore } from '../utils/linkFormatter.jsx';
@@ -13546,19 +13546,39 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 }));
                               }}
                             >
-                              <video
-                                src={msg.videoUrl}
-                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                preload="metadata"
-                                muted
-                                onError={(e) => {
-                                  const el = e.currentTarget;
-                                  const handleOnline = () => {
-                                    if (el) el.load();
-                                  };
-                                  window.addEventListener('online', handleOnline, { once: true });
-                                }}
-                              />
+                              {getVideoPosterUrl(msg.videoUrl) ? (
+                                <img
+                                  src={getVideoPosterUrl(msg.videoUrl)}
+                                  alt="Video thumbnail"
+                                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                  onError={(e) => {
+                                    const el = e.currentTarget;
+                                    const originalSrc = getVideoPosterUrl(msg.videoUrl);
+                                    const handleOnline = () => {
+                                      if (el && originalSrc) {
+                                        el.src = `${originalSrc}${originalSrc.includes('?') ? '&' : '?'}retry=${Date.now()}`;
+                                      }
+                                    };
+                                    window.addEventListener('online', handleOnline, { once: true });
+                                  }}
+                                />
+                              ) : (
+                                <video
+                                  src={msg.videoUrl}
+                                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                  preload="metadata"
+                                  muted
+                                  onError={(e) => {
+                                    const el = e.currentTarget;
+                                    const handleOnline = () => {
+                                      if (el) {
+                                        el.src = `${msg.videoUrl}${msg.videoUrl.includes('?') ? '&' : '?'}retry=${Date.now()}`;
+                                      }
+                                    };
+                                    window.addEventListener('online', handleOnline, { once: true });
+                                  }}
+                                />
+                              )}
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="bg-black/60 rounded-full p-3 backdrop-blur-md group-hover:scale-110 transition-transform border border-white/20">
                                   <FaPlay className="text-white text-sm ml-0.5" />

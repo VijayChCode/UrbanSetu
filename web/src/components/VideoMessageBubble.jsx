@@ -1,63 +1,89 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaPlay, FaVideo } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
+
+// Helper to construct a static Cloudinary poster image thumbnail URL (first frame, auto-format jpg)
+export const getVideoPosterUrl = (url) => {
+    if (!url || typeof url !== 'string') return '';
+    if (url.includes('cloudinary.com')) {
+        let poster = url;
+        if (poster.includes('/upload/')) {
+            poster = poster.replace('/upload/', '/upload/f_jpg,q_auto,so_0/');
+        }
+        // Replace video extension with .jpg
+        poster = poster.replace(/\.(mp4|mov|webm|avi|mkv|flv|wmv|m4v)(\?.*)?$/i, '.jpg$2');
+        if (!poster.endsWith('.jpg') && !poster.includes('.jpg?')) {
+            const parts = poster.split('?');
+            poster = parts[0] + '.jpg' + (parts[1] ? '?' + parts[1] : '');
+        }
+        return poster;
+    }
+    return '';
+};
 
 const VideoMessageBubble = ({ videoUrl, onClick }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
-    const videoRef = useRef(null);
+    const [retryToken, setRetryToken] = useState(0);
 
-    // Silent reload function when network is restored
-    const reloadPreviewSilently = useCallback(() => {
-        if (videoRef.current && (hasError || !isLoaded)) {
-            // Keep isLoading false so it doesn't show spinner again, but attempt silent load
-            try {
-                videoRef.current.load();
-            } catch (err) {
-                console.error("Error reloading video preview:", err);
-            }
+    const basePosterUrl = useMemo(() => getVideoPosterUrl(videoUrl), [videoUrl]);
+
+    // Derived active URLs with cache-busting token on retry
+    const currentPoster = useMemo(() => {
+        if (!basePosterUrl) return '';
+        if (retryToken === 0) return basePosterUrl;
+        return `${basePosterUrl}${basePosterUrl.includes('?') ? '&' : '?'}retry=${retryToken}`;
+    }, [basePosterUrl, retryToken]);
+
+    const currentVideoSrc = useMemo(() => {
+        if (!videoUrl) return '';
+        if (retryToken === 0) return videoUrl;
+        return `${videoUrl}${videoUrl.includes('?') ? '&' : '?'}retry=${retryToken}`;
+    }, [videoUrl, retryToken]);
+
+    const triggerRetry = useCallback(() => {
+        if (navigator.onLine) {
+            setRetryToken(prev => prev + 1);
         }
-    }, [hasError, isLoaded]);
+    }, []);
 
-    // Handle online status recovery & window focus
+    // Listen for online status, window focus, and periodic check when stuck in error state
     useEffect(() => {
         const handleOnline = () => {
-            if (navigator.onLine) {
-                reloadPreviewSilently();
+            if (navigator.onLine && (!isLoaded || hasError)) {
+                triggerRetry();
             }
         };
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('focus', handleOnline);
 
-        // Silent interval check if stuck in error state while online
-        let intervalId = null;
-        if (hasError && !isLoaded) {
-            intervalId = setInterval(() => {
-                if (navigator.onLine) {
-                    reloadPreviewSilently();
-                }
-            }, 8000);
-        }
+        // Silent interval retry check every 5 seconds if not loaded
+        const intervalId = setInterval(() => {
+            if (navigator.onLine && (!isLoaded || hasError)) {
+                triggerRetry();
+            }
+        }, 5000);
 
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('focus', handleOnline);
-            if (intervalId) clearInterval(intervalId);
+            clearInterval(intervalId);
         };
-    }, [hasError, isLoaded, reloadPreviewSilently]);
+    }, [isLoaded, hasError, triggerRetry]);
 
-    const handleLoadedData = () => {
+    const handleSuccess = () => {
+        setIsLoaded(true);
         setIsLoading(false);
         setHasError(false);
-        setIsLoaded(true);
     };
 
     const handleError = () => {
-        setIsLoading(false);
-        setHasError(true);
-        setIsLoaded(false);
+        if (!isLoaded) {
+            setHasError(true);
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -66,7 +92,7 @@ const VideoMessageBubble = ({ videoUrl, onClick }) => {
                 className="relative rounded-lg overflow-hidden bg-black cursor-pointer shadow-md hover:shadow-lg transition-all min-w-[200px] min-h-[150px] flex items-center justify-center"
                 onClick={onClick}
             >
-                {/* Loading State - only shown on initial load before any error */}
+                {/* Loading State - shown only on initial load before any error */}
                 {isLoading && !hasError && !isLoaded && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 text-gray-400 z-10">
                         <UrbanSetuSpinner size="md" className="mb-2" />
@@ -74,19 +100,32 @@ const VideoMessageBubble = ({ videoUrl, onClick }) => {
                     </div>
                 )}
 
-                {/* Video Element */}
+                {/* Poster Image (Fast Cloudinary Thumbnail Image) */}
+                {currentPoster && (
+                    <img
+                        src={currentPoster}
+                        alt="Video thumbnail preview"
+                        className={`max-w-full max-h-64 object-contain transition-opacity duration-500 ${isLoaded ? 'opacity-90 group-hover:opacity-100' : 'opacity-0 absolute'}`}
+                        onLoad={handleSuccess}
+                        onError={handleError}
+                    />
+                )}
+
+                {/* Video Element (Used if no poster URL or as video frame fallback) */}
                 <video
-                    ref={videoRef}
-                    src={videoUrl}
-                    className={`max-w-full max-h-64 object-contain transition-opacity duration-500 ${(isLoading && !isLoaded) || hasError ? 'opacity-0 absolute' : 'opacity-90 group-hover:opacity-100'}`}
+                    key={currentVideoSrc}
+                    src={currentVideoSrc}
+                    className={`max-w-full max-h-64 object-contain transition-opacity duration-500 ${isLoaded && !currentPoster ? 'opacity-90 group-hover:opacity-100' : 'opacity-0 absolute'}`}
                     preload="metadata"
-                    onLoadedData={handleLoadedData}
-                    onCanPlay={handleLoadedData}
+                    muted
+                    playsInline
+                    onLoadedData={handleSuccess}
+                    onCanPlay={handleSuccess}
                     onError={handleError}
                 />
 
-                {/* Overlays (Only show when video loaded successfully) */}
-                {isLoaded && !hasError && (
+                {/* Overlays (Play Icon & Video Badge - Shown whenever loaded) */}
+                {isLoaded && (
                     <>
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                             <div className="bg-black/60 rounded-full p-3 backdrop-blur-sm transform group-hover:scale-110 transition-transform shadow-xl border border-white/10">
