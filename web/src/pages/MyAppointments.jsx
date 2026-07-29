@@ -13241,9 +13241,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                     ) : null}
                                     {/* Video Message */}
                                     {message.videoUrl && (
-                                      <div className="mb-2 relative group max-w-full inline-block">
+                                      <div className="mb-2">
                                         <div
-                                          className="relative rounded-lg overflow-hidden bg-black cursor-pointer shadow-md hover:shadow-lg transition-all"
+                                          className="relative rounded-lg overflow-hidden cursor-pointer w-full max-w-[280px] bg-black/5"
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             const videoUrls = (comments || []).filter(msg => !!msg.videoUrl && !msg.deleted).map(msg => msg.videoUrl);
@@ -13551,6 +13551,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                 preload="metadata"
                                 muted
+                                onError={(e) => {
+                                  const el = e.currentTarget;
+                                  const handleOnline = () => {
+                                    if (el) el.load();
+                                  };
+                                  window.addEventListener('online', handleOnline, { once: true });
+                                }}
                               />
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="bg-black/60 rounded-full p-3 backdrop-blur-md group-hover:scale-110 transition-transform border border-white/20">

@@ -11221,11 +11221,10 @@ function AdminAppointmentRow({
                                     {/* Show preserved video if exists */}
                                     {message.videoUrl && (
                                       <div className="mb-2">
-                                        <div
-                                          className="relative rounded-lg overflow-hidden bg-black cursor-pointer shadow-md hover:shadow-lg transition-all"
+                                        <VideoMessageBubble
+                                          videoUrl={message.videoUrl}
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            // Handle preserved videos - include them in preview
                                             const videoUrls = (localComments || []).filter(msg => !!msg.videoUrl).map(msg => msg.videoUrl);
                                             const startIndex = Math.max(0, videoUrls.indexOf(message.videoUrl));
                                             window.dispatchEvent(new CustomEvent('open-media-preview', {
@@ -11235,20 +11234,7 @@ function AdminAppointmentRow({
                                               }
                                             }));
                                           }}
-                                        >
-                                          {/* Use video tag as thumbnail, no controls */}
-                                          <video
-                                            src={message.videoUrl}
-                                            className="max-w-full max-h-64 object-contain opacity-90 group-hover:opacity-100 transition-opacity"
-                                            preload="metadata"
-                                          />
-                                          {/* Play Overlay */}
-                                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                                            <div className="bg-black/60 rounded-full p-3 backdrop-blur-sm transform group-hover:scale-110 transition-transform">
-                                              <FaPlay className="text-white text-xl ml-1" />
-                                            </div>
-                                          </div>
-                                        </div>
+                                        />
                                         <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 italic">
                                           Preserved video from deleted message
                                         </div>
@@ -11623,6 +11609,13 @@ function AdminAppointmentRow({
                                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                 preload="metadata"
                                 muted
+                                onError={(e) => {
+                                  const el = e.currentTarget;
+                                  const handleOnline = () => {
+                                    if (el) el.load();
+                                  };
+                                  window.addEventListener('online', handleOnline, { once: true });
+                                }}
                               />
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="bg-black/60 rounded-full p-3 backdrop-blur-md group-hover:scale-110 transition-transform border border-white/20">
