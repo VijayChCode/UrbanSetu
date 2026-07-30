@@ -1160,30 +1160,43 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
+  const safeUnlockOrientation = () => {
+    try {
+      if (window.screen?.orientation?.unlock) {
+        const res = window.screen.orientation.unlock();
+        if (res && typeof res.catch === 'function') {
+          res.catch(() => {});
+        }
+      }
+    } catch (_) {}
+  };
+
   const toggleFullscreen = async (e) => {
     e?.stopPropagation();
-    if (!document.fullscreenElement) {
-      try {
+    try {
+      if (!document.fullscreenElement) {
         if (containerRef.current?.requestFullscreen) {
-          await containerRef.current.requestFullscreen();
+          const res = containerRef.current.requestFullscreen();
+          if (res && typeof res.catch === 'function') {
+            await res.catch(err => console.warn("Fullscreen request error:", err));
+          }
         }
         setIsFullscreen(true);
         showFeedback("Fullscreen");
-        if (window.screen?.orientation?.unlock) {
-          window.screen.orientation.unlock().catch(() => {});
+        safeUnlockOrientation();
+      } else {
+        if (document.exitFullscreen) {
+          const res = document.exitFullscreen();
+          if (res && typeof res.catch === 'function') {
+            await res.catch(err => console.warn("Exit fullscreen error:", err));
+          }
         }
-      } catch (err) {
-        console.warn("Fullscreen request error:", err);
+        setIsFullscreen(false);
+        showFeedback("Exit Fullscreen");
+        safeUnlockOrientation();
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(err => console.warn(err));
-      }
-      setIsFullscreen(false);
-      showFeedback("Exit Fullscreen");
-      if (window.screen?.orientation?.unlock) {
-        window.screen.orientation.unlock().catch(() => {});
-      }
+    } catch (err) {
+      console.warn("Fullscreen toggle error:", err);
     }
   };
 
@@ -1453,9 +1466,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     e?.stopPropagation();
 
     // If in fullscreen, exit fullscreen first
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(err => console.warn(err));
-      // Listener will update state
+    if (document.fullscreenElement && document.exitFullscreen) {
+      try {
+        const res = document.exitFullscreen();
+        if (res && typeof res.catch === 'function') {
+          res.catch(err => console.warn(err));
+        }
+      } catch (err) {
+        console.warn("Exit fullscreen error:", err);
+      }
       return;
     }
 
