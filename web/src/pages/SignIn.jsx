@@ -1228,12 +1228,12 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             {showPolicyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
                     <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl max-w-xl w-full border border-gray-200 dark:border-gray-700 animate-fade-in text-left">
-                        {/* Crimson Header Bar */}
-                        <div className="bg-gradient-to-r from-red-700 to-red-600 px-5 py-3.5 flex justify-between items-center text-white">
+                        {/* UrbanSetu Gradient Header Bar */}
+                        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-5 py-3.5 flex justify-between items-center text-white shadow-md">
                             <h3 className="font-bold text-lg tracking-wide">Please Note:</h3>
                             <button 
                                 onClick={() => setShowPolicyModal(false)}
-                                className="bg-white hover:bg-gray-100 text-red-700 hover:text-red-800 rounded font-bold w-6 h-6 flex items-center justify-center transition-colors focus:outline-none"
+                                className="bg-white/20 hover:bg-white/30 text-white rounded-full font-bold w-6 h-6 flex items-center justify-center transition-all focus:outline-none text-xs backdrop-blur-md cursor-pointer"
                                 aria-label="Close modal"
                             >
                                 &#x2715;
@@ -1267,7 +1267,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                             <div className="border-t border-dashed border-gray-200 dark:border-gray-700 mt-2.5 pt-2.5 flex justify-center">
                                 <button
                                     onClick={() => setShowPolicyModal(false)}
-                                    className="px-8 py-2 bg-purple-600 hover:bg-purple-750 text-white rounded-full font-semibold shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none"
+                                    className="px-10 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none cursor-pointer"
                                 >
                                     OK
                                 </button>
@@ -1280,12 +1280,12 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
             {showOtpPolicyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
                     <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-2xl max-w-xl w-full border border-gray-200 dark:border-gray-700 animate-fade-in text-left">
-                        {/* Crimson Header Bar */}
-                        <div className="bg-gradient-to-r from-red-700 to-red-600 px-5 py-3.5 flex justify-between items-center text-white">
+                        {/* UrbanSetu Gradient Header Bar */}
+                        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-5 py-3.5 flex justify-between items-center text-white shadow-md">
                             <h3 className="font-bold text-lg tracking-wide">Please Note:</h3>
                             <button 
                                 onClick={() => setShowOtpPolicyModal(false)}
-                                className="bg-white hover:bg-gray-100 text-red-700 hover:text-red-800 rounded font-bold w-6 h-6 flex items-center justify-center transition-colors focus:outline-none"
+                                className="bg-white/20 hover:bg-white/30 text-white rounded-full font-bold w-6 h-6 flex items-center justify-center transition-all focus:outline-none text-xs backdrop-blur-md cursor-pointer"
                                 aria-label="Close modal"
                             >
                                 &#x2715;
@@ -1319,7 +1319,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                             <div className="border-t border-dashed border-gray-200 dark:border-gray-700 mt-2.5 pt-2.5 flex justify-center">
                                 <button
                                     onClick={() => setShowOtpPolicyModal(false)}
-                                    className="px-8 py-2 bg-purple-600 hover:bg-purple-750 text-white rounded-full font-semibold shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none"
+                                    className="px-10 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none cursor-pointer"
                                 >
                                     OK
                                 </button>
