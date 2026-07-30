@@ -21,6 +21,7 @@ import { useChatSettings } from '../hooks/useChatSettings';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import ImagePreview from '../components/ImagePreview';
 import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble.jsx';
+import ImageMessageBubble from '../components/ImageMessageBubble';
 import LinkPreview from '../components/LinkPreview';
 import UserAvatar from '../components/UserAvatar';
 import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextWithReadMore } from '../utils/linkFormatter.jsx';
@@ -9489,24 +9490,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                         <>
                                           {/* Image Message */}
                                           {c.imageUrl && (
-                                            <div className="mb-2">
-                                              <img
-                                                src={c.imageUrl}
-                                                alt="Shared image"
-                                                className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                onClick={() => {
+                                            <ImageMessageBubble
+                                              key={c.imageUrl}
+                                              imageUrl={c.imageUrl}
+                                              alt="Shared image"
+                                              onClick={() => {
                                                   const imageUrls = (comments || []).filter(msg => !!msg.imageUrl).map(msg => msg.imageUrl);
                                                   const startIndex = Math.max(0, imageUrls.indexOf(c.imageUrl));
                                                   setPreviewImages(imageUrls);
                                                   setPreviewIndex(startIndex);
                                                   setShowImagePreview(true);
                                                 }}
-                                                onError={(e) => {
-                                                  e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                                  e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
-                                                }}
                                               />
-                                            </div>
                                           )}
                                           {/* Video Message */}
                                           {c.videoUrl && (

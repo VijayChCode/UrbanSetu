@@ -8,6 +8,7 @@ import { focusWithoutKeyboard, focusWithKeyboard } from '../utils/mobileUtils';
 import { getThemeColors, getDarkModeContainerClass, getDarkModeInputClass, getDarkModeTextClass, getDarkModeSecondaryTextClass, getDarkModeBorderClass, getDarkModeHoverClass } from '../utils/chatTheme';
 import ImagePreview from '../components/ImagePreview';
 import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble';
+import ImageMessageBubble from '../components/ImageMessageBubble';
 
 import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
@@ -8298,11 +8299,10 @@ function AdminAppointmentRow({
 
                                         {/* Show preserved image if exists */}
                                         {c && (c.originalImageUrl || c.imageUrl) && (
-                                          <div className="mb-2">
-                                            <img
-                                              src={(c && c.originalImageUrl) || (c && c.imageUrl)}
+                                          <ImageMessageBubble
+                                              key={(c && c.originalImageUrl) || (c && c.imageUrl)}
+                                              imageUrl={(c && c.originalImageUrl) || (c && c.imageUrl)}
                                               alt="Preserved image from deleted message"
-                                              className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                               onClick={() => {
                                                 const chatImages = (localComments || []).filter(msg => !!(msg.originalImageUrl || msg.imageUrl)).map(msg => msg.originalImageUrl || msg.imageUrl);
                                                 const currentUrl = (c && c.originalImageUrl) || (c && c.imageUrl);
@@ -8311,12 +8311,7 @@ function AdminAppointmentRow({
                                                 setPreviewIndex(startIndex);
                                                 setShowImagePreview(true);
                                               }}
-                                              onError={(e) => {
-                                                e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
-                                                e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
-                                              }}
-                                            />
-                                          </div>
+                                          />
                                         )}
 
                                         {/* Show preserved video if exists */}
