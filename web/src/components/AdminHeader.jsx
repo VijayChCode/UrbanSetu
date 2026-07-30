@@ -857,7 +857,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
       } ${animationClass}`;
     }
-    return `transition-all duration-300 font-medium text-xs sm:text-sm lg:text-base flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl cursor-pointer select-none border ${
+    return `transition-all duration-300 font-medium text-xs sm:text-sm flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1 rounded-xl cursor-pointer select-none border ${
       active
         ? 'bg-gradient-to-b from-white/30 via-white/20 to-white/10 text-yellow-300 font-bold backdrop-blur-xl border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_4px_14px_rgba(0,0,0,0.25)] ring-1 ring-yellow-300/30'
         : 'text-white/85 hover:text-white hover:bg-white/10 border-transparent'
@@ -965,7 +965,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
         </li>
       )}
 
-      <li className={`${mobile ? 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium' : 'flex items-center relative md:mr-4 md:ml-2'}`}>
+      <li className={`${mobile ? 'flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium' : 'flex items-center relative'}`}>
         <NotificationBell mobile={mobile} />
       </li>
 
@@ -1028,7 +1028,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
 
       {/* Profile avatar for desktop/tablet */}
       {currentUser && !mobile && (
-        <li className="relative md:pl-2" ref={dropdownRef}>
+        <li className="relative" ref={dropdownRef}>
           <div
             className="cursor-pointer transition-transform duration-300 hover:scale-105 flex items-center"
             onClick={() => setDropdownOpen(!dropdownOpen)}
