@@ -851,10 +851,10 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
   const getAdminNavLinkClass = (path, animationClass = '') => {
     const active = isAdminNavActive(path);
     if (mobile) {
-      return `flex items-center gap-2 p-3 rounded-lg transition-all duration-300 font-medium ${
+      return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium border ${
         active
-          ? 'bg-blue-50 dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold shadow-sm'
-          : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
+          ? 'bg-gradient-to-r from-blue-600/30 via-indigo-600/25 to-purple-600/20 text-yellow-300 dark:text-yellow-300 font-bold backdrop-blur-xl border-blue-400/40 dark:border-blue-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_4px_15px_rgba(37,99,235,0.25)] ring-1 ring-yellow-300/40'
+          : 'text-gray-200 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-white/10 hover:text-white border-transparent'
       } ${animationClass}`;
     }
     return `transition-all duration-300 font-semibold text-xs sm:text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer select-none border ${
