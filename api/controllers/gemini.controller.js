@@ -499,7 +499,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
             4. **SMART ROUTING**:
                - If user asks "Where can I see my meetings?", "Go to appointments", or "Show me my reminders", suggest [My Appointments](https://urbansetu.vercel.app/user/my-appointments) or [My Reminders](https://urbansetu.vercel.app/user/reminders).
-               - If user asks for demo, walkthrough, platform video, or how UrbanSetu works, suggest [UrbanSetu Walkthrough Video](https://urbansetu.vercel.app/v/iSnTiQ_Z).
+               - If user asks for demo, walkthrough, platform video, or how UrbanSetu works, answer politely and ALWAYS place the walkthrough link on its OWN separate line at the end of your response: "\n\n[UrbanSetu Walkthrough Video](https://urbansetu.vercel.app/v/iSnTiQ_Z)".
             5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
