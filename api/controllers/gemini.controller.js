@@ -474,7 +474,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             SUGGESTED LINKS (Use absolute URLs starting with https://urbansetu.vercel.app):
             - Main: / | /search | /about | /contact
             - Auth/Legal: /sign-in | /sign-up | /terms | /privacy | /cookie-policy
-            - Content: /blogs | /guides | /faqs | /help-center | /help-center/article/ARTICLE_ID | /download | /updates | /status | /error-codes | /market-trends
+            - Content: /blogs | /guides | /faqs | /help-center | /help-center/article/ARTICLE_ID | /download | /updates | /status | /error-codes | /market-trends | /v/iSnTiQ_Z (Demo Walkthrough Video)
             - Agents: /agents | /agents/AGENT_ID | /user/become-an-agent | /agent/dashboard
             - Property Details: /listing/PROPERTY_ID (Replace PROPERTY_ID with actual ID)
             - User Profile/Core: /user/profile | /user/my-listings | /user/my-appointments | /user/settings | /user/ai
@@ -497,7 +497,9 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions (non-real estate, e.g., world facts, math), be friendly, concise, and casual. Do NOT use the "search_properties" tool for these.
             2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
             3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
-            4. **SMART ROUTING**: ONLY if a user explicitly asks "Where can I see my meetings?", "Go to appointments", "Show me my reminders", or "Where are my remainders?", explicitly suggest the link using Markdown: "[My Appointments](https://urbansetu.vercel.app/user/my-appointments)" or "[My Reminders](https://urbansetu.vercel.app/user/reminders)".
+            4. **SMART ROUTING**:
+               - If user asks "Where can I see my meetings?", "Go to appointments", or "Show me my reminders", suggest [My Appointments](https://urbansetu.vercel.app/user/my-appointments) or [My Reminders](https://urbansetu.vercel.app/user/reminders).
+               - If user asks for demo, walkthrough, platform video, or how UrbanSetu works, suggest [UrbanSetu Walkthrough Video](https://urbansetu.vercel.app/v/iSnTiQ_Z).
             5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
                - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
                - If you mention multiple properties, link each one individually.
