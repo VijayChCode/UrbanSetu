@@ -857,7 +857,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
       } ${animationClass}`;
     }
-    return `transition-all duration-300 font-medium text-xs sm:text-sm flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1 rounded-xl cursor-pointer select-none border ${
+    return `transition-all duration-300 font-medium text-xs sm:text-sm flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl cursor-pointer select-none border ${
       active
         ? 'bg-gradient-to-b from-white/30 via-white/20 to-white/10 text-yellow-300 font-bold backdrop-blur-xl border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_4px_14px_rgba(0,0,0,0.25)] ring-1 ring-yellow-300/30'
         : 'text-white/85 hover:text-white hover:bg-white/10 border-transparent'
@@ -865,7 +865,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
   };
 
   return (
-    <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center gap-0.5'}`}>
+    <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center gap-1.5'}`}>
       {/* Admin Navigation Links */}
       <Link to="/admin" onClick={onNavigate}>
         <motion.li
