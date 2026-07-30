@@ -855,10 +855,10 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
           : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
       } ${animationClass}`;
     }
-    return `transition-all duration-300 font-medium text-xs sm:text-sm flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl cursor-pointer select-none border ${
+    return `transition-all duration-300 font-semibold text-xs sm:text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer select-none border ${
       active
-        ? 'bg-gradient-to-b from-white/30 via-white/20 to-white/10 text-yellow-300 font-bold backdrop-blur-xl border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_4px_14px_rgba(0,0,0,0.25)] ring-1 ring-yellow-300/30'
-        : 'text-white/85 hover:text-white hover:bg-white/10 border-transparent'
+        ? 'bg-gradient-to-b from-white/40 via-white/25 to-white/15 text-yellow-300 font-extrabold backdrop-blur-2xl border-white/60 shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.8),0_6px_20px_rgba(0,0,0,0.35),0_0_14px_rgba(253,224,71,0.35)] ring-1 ring-yellow-300/50 drop-shadow-md'
+        : 'text-white/85 hover:text-white hover:bg-white/15 border-transparent'
     }`;
   };
 
