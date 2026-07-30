@@ -834,64 +834,129 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
     };
   }, [dropdownOpen]);
 
+  const isAdminNavActive = (path) => {
+    const current = location.pathname;
+    if (path === '/admin') {
+      return current === '/admin';
+    }
+    if (path === '/admin/community') {
+      return current.includes('/admin/community');
+    }
+    if (path === '/admin/explore') {
+      return current === '/admin/explore';
+    }
+    return current === path || (path !== '/admin' && current.startsWith(path));
+  };
+
+  const getAdminNavLinkClass = (path, animationClass = '') => {
+    const active = isAdminNavActive(path);
+    if (mobile) {
+      return `flex items-center gap-2 p-3 rounded-lg transition-all duration-300 font-medium ${
+        active
+          ? 'bg-blue-50 dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold shadow-sm'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
+      } ${animationClass}`;
+    }
+    return `transition-all duration-300 font-medium text-sm lg:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer select-none ${
+      active
+        ? 'bg-white/20 text-yellow-300 font-bold shadow-inner ring-1 ring-white/35 backdrop-blur-md'
+        : 'text-white/90 hover:text-yellow-300 hover:bg-white/10'
+    }`;
+  };
+
   return (
     <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center space-x-1'}`}>
       {/* Admin Navigation Links */}
       <Link to="/admin" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaHome className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getAdminNavLinkClass('/admin', 'animate-mobile-item-in')}
+        >
+          <FaHome className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isAdminNavActive('/admin') ? 'scale-110' : ''}`} />
           <span>Dashboard</span>
-        </li>
+        </motion.li>
       </Link>
 
       <Link to="/admin/create-listing" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaPlus className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getAdminNavLinkClass('/admin/create-listing', 'animate-mobile-item-in-delay-1')}
+        >
+          <FaPlus className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'} ${isAdminNavActive('/admin/create-listing') ? 'scale-110' : ''}`} />
           <span>Add Property</span>
-        </li>
+        </motion.li>
       </Link>
 
       <Link to="/admin/listings" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-2' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaList className={`${mobile ? 'text-lg text-purple-500' : 'text-base text-purple-500'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getAdminNavLinkClass('/admin/listings', 'animate-mobile-item-in-delay-2')}
+        >
+          <FaList className={`${mobile ? 'text-lg text-purple-500' : 'text-base text-purple-500'} ${isAdminNavActive('/admin/listings') ? 'scale-110' : ''}`} />
           <span>All Listings</span>
-        </li>
+        </motion.li>
       </Link>
 
       {/* Movers removed; Services now includes movers section */}
       <Link to="/admin/services" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-3' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaTools className={`${mobile ? 'text-lg text-purple-600' : 'text-base text-purple-600'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getAdminNavLinkClass('/admin/services', 'animate-mobile-item-in-delay-3')}
+        >
+          <FaTools className={`${mobile ? 'text-lg text-purple-600' : 'text-base text-purple-600'} ${isAdminNavActive('/admin/services') ? 'scale-110' : ''}`} />
           <span>Services</span>
-        </li>
+        </motion.li>
       </Link>
 
       {currentUser && currentUser.role === 'rootadmin' && currentUser.adminApprovalStatus === 'approved' && (
         <Link to="/admin/requests" onClick={onNavigate}>
-          <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium relative animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base relative flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-            <FaUserCheck className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'}`} />
+          <motion.li
+            whileHover={{ scale: mobile ? 1 : 1.05 }}
+            whileTap={{ scale: mobile ? 1 : 0.93 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            className={getAdminNavLinkClass('/admin/requests', 'relative animate-mobile-item-in')}
+          >
+            <FaUserCheck className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'} ${isAdminNavActive('/admin/requests') ? 'scale-110' : ''}`} />
             <span>Requests</span>
             {pendingCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                 {pendingCount}
               </span>
             )}
-          </li>
+          </motion.li>
         </Link>
       )}
 
       <Link to="/admin/community" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getAdminNavLinkClass('/admin/community', 'animate-mobile-item-in-delay-1')}
+        >
+          <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'} ${isAdminNavActive('/admin/community') ? 'scale-110' : ''}`} />
           <span>Community</span>
-        </li>
+        </motion.li>
       </Link>
 
       <Link to="/admin/explore" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-2' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaCompass className={`${mobile ? 'text-lg text-teal-500' : 'text-base text-teal-500'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getAdminNavLinkClass('/admin/explore', 'animate-mobile-item-in-delay-2')}
+        >
+          <FaCompass className={`${mobile ? 'text-lg text-teal-500' : 'text-base text-teal-500'} ${isAdminNavActive('/admin/explore') ? 'scale-110' : ''}`} />
           <span>Explore</span>
-        </li>
+        </motion.li>
       </Link>
 
       {!mobile && (

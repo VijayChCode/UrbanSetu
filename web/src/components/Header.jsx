@@ -826,6 +826,42 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
   };
 
 
+  const isNavActive = (path) => {
+    const current = location.pathname;
+    if (path === '/' || path === '/user') {
+      return current === '/' || current === '/user';
+    }
+    if (path === '/blogs' || path === '/user/blogs') {
+      return current.includes('/blog');
+    }
+    if (path === '/faqs' || path === '/user/faqs') {
+      return current.includes('/faqs');
+    }
+    if (path === '/community' || path === '/user/community') {
+      return current.includes('/community');
+    }
+    if (path === '/search' || path === '/user/search') {
+      return current === '/search' || current === '/user/search';
+    }
+    return current === path || (path !== '/' && current.startsWith(path));
+  };
+
+  const getNavLinkClass = (path, animationClass = '') => {
+    const active = isNavActive(path);
+    if (mobile) {
+      return `flex items-center gap-2 p-3 rounded-lg transition-all duration-300 font-medium ${
+        active
+          ? 'bg-blue-50 dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold shadow-sm'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
+      } ${animationClass}`;
+    }
+    return `transition-all duration-300 font-medium text-sm lg:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer select-none ${
+      active
+        ? 'bg-white/20 text-yellow-300 font-bold shadow-inner ring-1 ring-white/35 backdrop-blur-md'
+        : 'text-white/90 hover:text-yellow-300 hover:bg-white/10'
+    }`;
+  };
+
   return (
     <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center space-x-1'}`}>
       {/* Desktop Search */}
@@ -890,91 +926,140 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
       )}
 
       {/* Navigation Links */}
-      <Link to={location.pathname.startsWith('/user') ? '/user' : '/'} onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaHome className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'}`} />
+      <Link to={currentUser ? '/user' : '/'} onClick={onNavigate}>
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getNavLinkClass(currentUser ? '/user' : '/', 'animate-mobile-item-in')}
+        >
+          <FaHome className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isNavActive(currentUser ? '/user' : '/') ? 'scale-110' : ''}`} />
           <span>Home</span>
-        </li>
+        </motion.li>
       </Link>
-
-
 
       {/* Public-only navigation links */}
       {!currentUser && (
         <>
           <Link to="/about" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaInfoCircle className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/about', 'animate-mobile-item-in-delay-1')}
+            >
+              <FaInfoCircle className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'} ${isNavActive('/about') ? 'scale-110' : ''}`} />
               <span>About</span>
-            </li>
+            </motion.li>
           </Link>
           <Link to="/blogs" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaBookOpen className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/blogs', 'animate-mobile-item-in-delay-1')}
+            >
+              <FaBookOpen className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isNavActive('/blogs') ? 'scale-110' : ''}`} />
               <span>Blogs</span>
-            </li>
+            </motion.li>
           </Link>
 
           <Link to="/faqs" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaQuestionCircle className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/faqs', 'animate-mobile-item-in-delay-1')}
+            >
+              <FaQuestionCircle className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'} ${isNavActive('/faqs') ? 'scale-110' : ''}`} />
               <span>FAQs</span>
-            </li>
+            </motion.li>
           </Link>
           <Link to="/community" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/community', 'animate-mobile-item-in-delay-1')}
+            >
+              <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'} ${isNavActive('/community') ? 'scale-110' : ''}`} />
               <span>Community</span>
-            </li>
+            </motion.li>
           </Link>
         </>
       )}
 
       <Link to="/search" onClick={onNavigate}>
-        <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-2' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-          <FaCompass className={`${mobile ? 'text-lg text-purple-500' : 'text-base text-purple-500'}`} />
+        <motion.li
+          whileHover={{ scale: mobile ? 1 : 1.05 }}
+          whileTap={{ scale: mobile ? 1 : 0.93 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={getNavLinkClass('/search', 'animate-mobile-item-in-delay-2')}
+        >
+          <FaCompass className={`${mobile ? 'text-lg text-purple-500' : 'text-base text-purple-500'} ${isNavActive('/search') ? 'scale-110' : ''}`} />
           <span>Explore</span>
-        </li>
+        </motion.li>
       </Link>
-
-
-
-      {/* Movers, Services and Route Planner removed */}
 
       {currentUser && (
         <>
           <Link to="/user/community" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-2' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/user/community', 'animate-mobile-item-in-delay-2')}
+            >
+              <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'} ${isNavActive('/user/community') ? 'scale-110' : ''}`} />
               <span>Community</span>
-            </li>
+            </motion.li>
           </Link>
           <Link to="/user/create-listing" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaPlus className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/user/create-listing', 'animate-mobile-item-in')}
+            >
+              <FaPlus className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'} ${isNavActive('/user/create-listing') ? 'scale-110' : ''}`} />
               <span>Add Property</span>
-            </li>
+            </motion.li>
           </Link>
 
           <Link to="/user/my-listings" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-1' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaList className={`${mobile ? 'text-lg text-indigo-500' : 'text-base text-indigo-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/user/my-listings', 'animate-mobile-item-in-delay-1')}
+            >
+              <FaList className={`${mobile ? 'text-lg text-indigo-500' : 'text-base text-indigo-500'} ${isNavActive('/user/my-listings') ? 'scale-110' : ''}`} />
               <span>My Listings</span>
-            </li>
+            </motion.li>
           </Link>
 
           <Link to="/user/wishlist" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-2' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaHeart className={`${mobile ? 'text-lg text-red-500' : 'text-base text-red-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/user/wishlist', 'animate-mobile-item-in-delay-2')}
+            >
+              <FaHeart className={`${mobile ? 'text-lg text-red-500' : 'text-base text-red-500'} ${isNavActive('/user/wishlist') ? 'scale-110' : ''}`} />
               <span>My Wishlist</span>
-            </li>
+            </motion.li>
           </Link>
 
           <Link to="/user/my-appointments" onClick={onNavigate}>
-            <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in-delay-3' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-              <FaCalendarAlt className={`${mobile ? 'text-lg text-teal-500' : 'text-base text-teal-500'}`} />
+            <motion.li
+              whileHover={{ scale: mobile ? 1 : 1.05 }}
+              whileTap={{ scale: mobile ? 1 : 0.93 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className={getNavLinkClass('/user/my-appointments', 'animate-mobile-item-in-delay-3')}
+            >
+              <FaCalendarAlt className={`${mobile ? 'text-lg text-teal-500' : 'text-base text-teal-500'} ${isNavActive('/user/my-appointments') ? 'scale-110' : ''}`} />
               <span>My Appointments</span>
-            </li>
+            </motion.li>
           </Link>
         </>
       )}
@@ -1184,19 +1269,29 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
         <>
           {location.pathname !== '/sign-up' && (
             <Link to="/sign-up" onClick={onNavigate}>
-              <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-                <UserPlus className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'}`} />
+              <motion.li
+                whileHover={{ scale: mobile ? 1 : 1.05 }}
+                whileTap={{ scale: mobile ? 1 : 0.93 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className={getNavLinkClass('/sign-up', 'animate-mobile-item-in')}
+              >
+                <UserPlus className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'} ${isNavActive('/sign-up') ? 'scale-110' : ''}`} />
                 <span>Get Started</span>
-              </li>
+              </motion.li>
             </Link>
           )}
 
           {location.pathname !== '/sign-in' && (
             <Link to="/sign-in" onClick={onNavigate}>
-              <li className={`${mobile ? 'flex items-center gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 text-gray-700 dark:text-gray-200 font-medium animate-mobile-item-in' : 'text-white hover:text-yellow-300 transition-colors duration-300 font-medium text-base flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10'}`}>
-                <LogIn className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'}`} />
+              <motion.li
+                whileHover={{ scale: mobile ? 1 : 1.05 }}
+                whileTap={{ scale: mobile ? 1 : 0.93 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className={getNavLinkClass('/sign-in', 'animate-mobile-item-in')}
+              >
+                <LogIn className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isNavActive('/sign-in') ? 'scale-110' : ''}`} />
                 <span>Sign In</span>
-              </li>
+              </motion.li>
             </Link>
           )}
         </>
