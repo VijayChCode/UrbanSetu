@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { isMobileDevice } from '../utils/mobileUtils';
-import { FaEdit, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaTrophy, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns, FaAward, FaRegGem, FaDove, FaHandshake, FaFire, FaCopy } from "react-icons/fa";
+import { FaEdit, FaUpload, FaUser, FaEnvelope, FaPhone, FaKey, FaTrash, FaSignOutAlt, FaHome, FaTrophy, FaCalendarAlt, FaHeart, FaEye, FaCrown, FaTimes, FaCheck, FaStar, FaRoute, FaUserFriends, FaCreditCard, FaShieldAlt, FaTools, FaTruck, FaExclamationTriangle, FaCloudUploadAlt, FaClipboardList, FaMobileAlt, FaBookOpen, FaQuestionCircle, FaChartLine, FaInfoCircle, FaCog, FaFileContract, FaGavel, FaMoneyCheckAlt, FaUserTie, FaHeadset, FaMapSigns, FaAward, FaRegGem, FaDove, FaHandshake, FaFire, FaCopy } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import UserAvatar from "../components/UserAvatar";
 import EncryptedText from "../components/ui/EncryptedText";
@@ -1939,7 +1939,7 @@ export default function Profile() {
                           </div>
                         ))}
                         <div className="relative group">
-                          <label className={`w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-400 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50} ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                          <label className={`w-12 h-12 rounded-full border-2 border-blue-300 dark:border-blue-700/60 flex items-center justify-center cursor-pointer bg-blue-50/80 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all duration-300 transform hover:scale-110 hover:shadow-lg hover:border-blue-500 group ${animationClasses.bounceIn} animation-delay-${defaultAvatars.length * 50} ${uploadingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <input
                               type="file"
                               accept="image/*"
@@ -1950,11 +1950,11 @@ export default function Profile() {
                             {uploadingAvatar ? (
                               <UrbanSetuSpinner size="sm" />
                             ) : (
-                              <FaEdit className={`text-gray-500 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
+                              <FaUpload className={`text-blue-600 dark:text-blue-400 group-hover:text-blue-500 transition-colors duration-300 group-hover:${animationClasses.wiggle}`} />
                             )}
                           </label>
                           {/* Tooltip */}
-                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-gray-900/90 dark:bg-gray-700/90 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
+                          <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-white bg-blue-600/95 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-md scale-95 group-hover:scale-100 font-medium">
                             Upload Custom Image
                           </span>
                         </div>
