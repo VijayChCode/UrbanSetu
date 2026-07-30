@@ -8384,6 +8384,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Preserve <br>, <strong>, <em> etc. that we generate, but remove unknown tags
         processedText = processedText.replace(/<(?!\/?(br|strong|em|h[1-6]|li|ul|ol|table|thead|tbody|tr|th|td|div|span|pre|code|svg|path|rect|button|img)\b)[^>]+>/gi, '');
 
+        // Mask markdown links [text](url) to protect URLs from LaTeX math / subscript parsing (e.g. iSnTiQ_Z being converted to iSnTiQ<sub>Z</sub>)
+        const markdownLinks = [];
+        processedText = processedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+            markdownLinks.push({ text, url: url.trim() });
+            return `%%MARKDOWNLINKPLACEHOLDER_${markdownLinks.length - 1}%%`;
+        });
+
         // Mask code blocks and inline code to protect them from other parsing rules (like math delimiters or list items)
         const codeBlocks = [];
         processedText = processedText.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, language, code) => {
@@ -8437,7 +8444,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             .replace(/\\sqrt\{([^\}]+)\}/g, '√$1')
             .replace(/([a-zA-Z0-9])\^([0-9a-zA-Z\+\-]+)/g, '$1<sup>$2</sup>')
             .replace(/([a-zA-Z0-9])\^\{([^\}]+)\}/g, '$1<sup>$2</sup>')
-            .replace(/([a-zA-Z0-9])_([0-9a-zA-Z\+\-]+)/g, '$1<sub>$2</sub>')
+            .replace(/(?<![\/:\.])([a-zA-Z0-9])_([0-9a-zA-Z\+\-]+)(?![a-zA-Z0-9_\/])/g, '$1<sub>$2</sub>')
             .replace(/([a-zA-Z0-9])_\{([^\}]+)\}/g, '$1<sub>$2</sub>');
 
         // Restore and parse masked code blocks and inline code
@@ -8525,8 +8532,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return tableHtml;
         });
 
-
-
         // Parse Setext-style headers (Text underlined with === or ---)
         processedText = processedText
             .replace(/^([^\r\n]+)\r?\n={3,}(?:\s*)$/gim, '<h1 class="text-2xl font-bold mt-4 mb-2">$1</h1>')
@@ -8534,13 +8539,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         // Process other markdown elements
         processedText = processedText
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-                const cleanUrl = url.trim();
-                if (cleanUrl.includes('/v/iSnTiQ_Z') || cleanUrl.includes('iSnTiQ_Z') || cleanUrl.includes('khqk89ggefo1evrroron')) {
-                    return `<button type="button" class="walkthrough-btn inline-flex items-center gap-3 my-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 border border-white/20 transition-all duration-300 transform hover:-translate-y-0.5 group cursor-pointer select-none ring-2 ring-blue-400/20 hover:ring-blue-400/50"><span class="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xs group-hover:scale-110 group-hover:bg-white/30 transition-all shadow-inner"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z"></path></svg></span><span class="flex flex-col text-left"><span class="font-bold tracking-wide leading-tight">${text || 'UrbanSetu Walkthrough Video'}</span><span class="text-[10px] text-blue-200 font-normal flex items-center gap-1 mt-0.5"><span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>Click to watch in Native Player</span></span></button>`;
-                }
-                return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`;
-            })
             .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>') // Bold
             .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>') // Italic
             .replace(/^###### (.*$)/gim, '<h6 class="text-[10px] font-bold mt-2 mb-1 text-gray-400 dark:text-gray-500 uppercase tracking-wider">$1</h6>') // H6
@@ -8552,6 +8550,19 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc">$1</li>') // Bullet points
             .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>') // Numbered lists
             .replace(/\n/g, '<br>'); // Line breaks
+
+        // Restore markdown links
+        for (let i = 0; i < markdownLinks.length; i++) {
+            const { text, url } = markdownLinks[i];
+            const cleanUrl = url.replace(/%3C\/?sub%3E|<sub[^>]*>|<\/sub>/gi, '');
+            let htmlReplacement = '';
+            if (cleanUrl.includes('/v/iSnTiQ') || cleanUrl.includes('iSnTiQ') || cleanUrl.includes('khqk89ggefo1evrroron')) {
+                htmlReplacement = `<button type="button" class="walkthrough-btn inline-flex items-center gap-3 my-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 border border-white/20 transition-all duration-300 transform hover:-translate-y-0.5 group cursor-pointer select-none ring-2 ring-blue-400/20 hover:ring-blue-400/50"><span class="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xs group-hover:scale-110 group-hover:bg-white/30 transition-all shadow-inner"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z"></path></svg></span><span class="flex flex-col text-left"><span class="font-bold tracking-wide leading-tight">${text || 'UrbanSetu Walkthrough Video'}</span><span class="text-[10px] text-blue-200 font-normal flex items-center gap-1 mt-0.5"><span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>Click to watch in Native Player</span></span></button>`;
+            } else {
+                htmlReplacement = `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`;
+            }
+            processedText = processedText.replace(`%%MARKDOWNLINKPLACEHOLDER_${i}%%`, htmlReplacement);
+        }
 
         return processedText;
     };
