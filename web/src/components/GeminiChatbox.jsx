@@ -5332,6 +5332,20 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         return () => document.removeEventListener('click', handleCopyClick);
     }, []);
 
+    // Handle delegated walkthrough button clicks
+    useEffect(() => {
+        const handleWalkthroughClick = (e) => {
+            const btn = e.target.closest('.walkthrough-btn');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                setPreviewVideo("https://res.cloudinary.com/dytsirhbs/video/upload/v1785425264/urbansetu-chat/videos/khqk89ggefo1evrroron.mp4");
+            }
+        };
+        document.addEventListener('click', handleWalkthroughClick);
+        return () => document.removeEventListener('click', handleWalkthroughClick);
+    }, []);
+
     const retryMessage = async (originalMessage, messageIndex, options = {}) => {
         if (!originalMessage || isLoading) return;
 
@@ -8299,6 +8313,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     url = 'https://' + url;
                 }
 
+                if (url.includes('/v/iSnTiQ_Z') || url.includes('iSnTiQ_Z') || url.includes('khqk89ggefo1evrroron')) {
+                    return (
+                        <span key={index} className="inline-block my-2">
+                            <button
+                                type="button"
+                                className="walkthrough-btn inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 border border-white/20 transition-all duration-300 transform hover:-translate-y-0.5 group cursor-pointer select-none ring-2 ring-blue-400/20 hover:ring-blue-400/50"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setPreviewVideo("https://res.cloudinary.com/dytsirhbs/video/upload/v1785425264/urbansetu-chat/videos/khqk89ggefo1evrroron.mp4");
+                                }}
+                            >
+                                <span className="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xs group-hover:scale-110 group-hover:bg-white/30 transition-all shadow-inner">
+                                    <FaPlay className="ml-0.5 text-xs" />
+                                </span>
+                                <span className="flex flex-col text-left">
+                                    <span className="font-bold tracking-wide leading-tight">UrbanSetu Walkthrough Video</span>
+                                    <span className="text-[10px] text-blue-200 font-normal flex items-center gap-1 mt-0.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                        Click to watch in Native Player
+                                    </span>
+                                </span>
+                            </button>
+                        </span>
+                    );
+                }
+
                 // Different styling for sent vs received messages
                 const linkClasses = isSentMessage
                     ? "text-white hover:text-blue-200 underline transition-colors duration-200 cursor-pointer"
@@ -8493,7 +8534,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         // Process other markdown elements
         processedText = processedText
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => `<a href="${url.trim()}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`) // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+                const cleanUrl = url.trim();
+                if (cleanUrl.includes('/v/iSnTiQ_Z') || cleanUrl.includes('iSnTiQ_Z') || cleanUrl.includes('khqk89ggefo1evrroron')) {
+                    return `<button type="button" class="walkthrough-btn inline-flex items-center gap-3 my-2.5 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 border border-white/20 transition-all duration-300 transform hover:-translate-y-0.5 group cursor-pointer select-none ring-2 ring-blue-400/20 hover:ring-blue-400/50"><span class="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xs group-hover:scale-110 group-hover:bg-white/30 transition-all shadow-inner"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M424.4 214.7L72.4 6.6C43.8-10.3 0 6.1 0 47.9V464c0 37.5 40.7 60.1 72.4 41.3l352-208c31.4-18.5 31.5-64.1 0-82.6z"></path></svg></span><span class="flex flex-col text-left"><span class="font-bold tracking-wide leading-tight">${text || 'UrbanSetu Walkthrough Video'}</span><span class="text-[10px] text-blue-200 font-normal flex items-center gap-1 mt-0.5"><span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>Click to watch in Native Player</span></span></button>`;
+                }
+                return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`;
+            })
             .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>') // Bold
             .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>') // Italic
             .replace(/^###### (.*$)/gim, '<h6 class="text-[10px] font-bold mt-2 mb-1 text-gray-400 dark:text-gray-500 uppercase tracking-wider">$1</h6>') // H6
