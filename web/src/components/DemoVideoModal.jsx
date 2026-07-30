@@ -79,41 +79,42 @@ export default function DemoVideoModal({ isOpen, onClose, videoId }) {
           className={`relative bg-gray-900/95 dark:bg-black/95 rounded-3xl shadow-2xl border border-white/10 w-full ${playerMode === 'select' ? 'max-w-3xl' : 'max-w-5xl'} overflow-hidden glass-card transition-all duration-300`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5 backdrop-blur-sm">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
-              <h3 className="text-base sm:text-lg font-bold text-white tracking-wide font-sans">
-                UrbanSetu Complete Walkthrough Guide
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-white/5 backdrop-blur-sm gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+              <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-blue-500 animate-pulse flex-shrink-0" />
+              <h3 className="text-xs sm:text-base md:text-lg font-bold text-white tracking-wide font-sans truncate">
+                UrbanSetu Walkthrough Guide
               </h3>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {playerMode === 'youtube' && (
                 <button
                   onClick={() => setPlayerMode('native')}
-                  className="px-3 py-1.5 text-xs font-semibold text-blue-400 hover:text-white bg-blue-500/10 hover:bg-blue-500/30 border border-blue-500/30 rounded-xl transition-all flex items-center gap-1.5"
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-blue-400 hover:text-white bg-blue-500/10 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg sm:rounded-xl transition-all flex items-center gap-1 sm:gap-1.5"
                   title="Switch to UrbanSetu Native Player"
                 >
-                  <FaVideo className="text-xs" />
-                  <span>Switch to Native Player</span>
+                  <FaVideo className="text-xs flex-shrink-0" />
+                  <span className="hidden sm:inline">Switch to Native Player</span>
+                  <span className="sm:hidden">Native</span>
                 </button>
               )}
               {playerMode === 'youtube' && (
                 <button
                   onClick={() => setPlayerMode('select')}
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center gap-1.5"
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg sm:rounded-xl transition-all flex items-center gap-1 sm:gap-1.5"
                   title="Change Player Option"
                 >
-                  <FaTv className="text-xs" />
-                  <span>Options</span>
+                  <FaTv className="text-xs flex-shrink-0" />
+                  <span className="hidden sm:inline">Options</span>
                 </button>
               )}
               <button
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all duration-200 focus:outline-none hover:rotate-90"
+                className="p-1.5 sm:p-2 text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all duration-200 focus:outline-none hover:rotate-90 flex-shrink-0"
                 aria-label="Close walkthrough"
               >
-                <FaTimes className="text-sm" />
+                <FaTimes className="text-xs sm:text-sm" />
               </button>
             </div>
           </div>
@@ -214,9 +215,9 @@ export default function DemoVideoModal({ isOpen, onClose, videoId }) {
           )}
 
           {/* Footer Info bar */}
-          <div className="px-6 py-4 bg-white/5 text-gray-400 text-xs sm:text-sm flex flex-wrap justify-between items-center gap-3">
-            <span>Learn how to search and book properties, plan routes, lock rent agreements and more!</span>
-            <span className="text-blue-400 font-semibold cursor-pointer hover:underline" onClick={onClose}>
+          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white/5 text-gray-400 text-[11px] sm:text-xs md:text-sm flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 text-center sm:text-left">
+            <span className="leading-snug">Learn how to search and book properties, plan routes, lock rent agreements and more!</span>
+            <span className="text-blue-400 font-semibold cursor-pointer hover:underline flex-shrink-0 whitespace-nowrap" onClick={onClose}>
               Get Started Now &rarr;
             </span>
           </div>
