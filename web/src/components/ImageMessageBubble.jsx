@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { FaImage } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
-const ImageMessageBubble = ({ imageUrl, alt = "Shared image", onClick, className }) => {
+const ImageMessageBubble = ({ imageUrl, alt = "Shared image", onClick }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
