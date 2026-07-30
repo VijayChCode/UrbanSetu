@@ -857,15 +857,15 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200'
       } ${animationClass}`;
     }
-    return `transition-all duration-300 font-medium text-sm lg:text-base flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer select-none ${
+    return `transition-all duration-300 font-medium text-xs sm:text-sm lg:text-base flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl cursor-pointer select-none border ${
       active
-        ? 'bg-white/20 text-yellow-300 font-bold shadow-inner ring-1 ring-white/35 backdrop-blur-md'
-        : 'text-white/90 hover:text-yellow-300 hover:bg-white/10'
+        ? 'bg-gradient-to-b from-white/30 via-white/20 to-white/10 text-yellow-300 font-bold backdrop-blur-xl border-white/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_4px_14px_rgba(0,0,0,0.25)] ring-1 ring-yellow-300/30'
+        : 'text-white/85 hover:text-white hover:bg-white/10 border-transparent'
     }`;
   };
 
   return (
-    <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center space-x-1'}`}>
+    <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center gap-0.5'}`}>
       {/* Admin Navigation Links */}
       <Link to="/admin" onClick={onNavigate}>
         <motion.li
