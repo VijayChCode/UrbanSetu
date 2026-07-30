@@ -8388,7 +8388,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const markdownLinks = [];
         processedText = processedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
             markdownLinks.push({ text, url: url.trim() });
-            return `%%MARKDOWNLINKPLACEHOLDER_${markdownLinks.length - 1}%%`;
+            return `MKDLNKPH${markdownLinks.length - 1}X`;
         });
 
         // Mask code blocks and inline code to protect them from other parsing rules (like math delimiters or list items)
@@ -8561,7 +8561,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             } else {
                 htmlReplacement = `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline transition-colors duration-200 cursor-pointer">${text}</a>`;
             }
-            processedText = processedText.replace(`%%MARKDOWNLINKPLACEHOLDER_${i}%%`, htmlReplacement);
+            processedText = processedText.replace(`MKDLNKPH${i}X`, htmlReplacement);
         }
 
         return processedText;
