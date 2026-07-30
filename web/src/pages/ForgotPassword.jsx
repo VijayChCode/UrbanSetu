@@ -508,7 +508,7 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
       <AuthFormLayout
         leftSlot={(
           <>
-            <SEO title="Reset Password - UrbanSetu" noindex={true} nofollow={true} />
+            <SEO title="Reset Password - UrbanSetu" />
             <style>
               {`
                 @keyframes blob {

@@ -718,8 +718,6 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
                 title="Sign In - Welcome Back | UrbanSetu"
                 description="Sign in to your UrbanSetu account to manage your property listings, track appointments, and access personalized real estate recommendations."
                 keywords="urban setu login, sign in real estate, property management login, real estate dashboard"
-                noindex={true}
-                nofollow={true}
             />
             <AuthFormLayout
                 leftSlot={(

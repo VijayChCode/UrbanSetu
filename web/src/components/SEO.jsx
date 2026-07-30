@@ -12,9 +12,9 @@ const SEO = ({ title, description, keywords, image, url, type = 'website', schem
     const metaKeywords = keywords || "UrbanSetu, real estate platform India, buy verified property, rent verified home, smart real estate searching, rent lock India, Hyderabad property portal, Mumbai real estate, Bangalore apartments";
 
     const robotsValue = [
-        noindex ? 'noindex' : null,
-        nofollow ? 'nofollow' : null
-    ].filter(Boolean).join(', ');
+        noindex ? 'noindex' : 'index',
+        nofollow ? 'nofollow' : 'follow'
+    ].join(', ');
 
     return (
         <Helmet>
@@ -23,7 +23,7 @@ const SEO = ({ title, description, keywords, image, url, type = 'website', schem
             <meta name='description' content={metaDescription} />
             <meta name='keywords' content={metaKeywords} />
 
-            {robotsValue && <meta name="robots" content={robotsValue} />}
+            <meta name="robots" content={robotsValue} />
 
             {/* Open Graph / Facebook tags */}
             <meta property="og:type" content={type} />

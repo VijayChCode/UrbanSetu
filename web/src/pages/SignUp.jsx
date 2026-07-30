@@ -547,8 +547,6 @@ export default function SignUp({ bootstrapped, sessionChecked }) {
         title="Sign Up - Join UrbanSetu Community"
         description="Join UrbanSetu to find your dream home, list your properties, and connect with trusted buyers and sellers in the Indian real estate market."
         keywords="urban setu register, create account real estate, join urbansetu, real estate community India"
-        noindex={true}
-        nofollow={true}
       />
       <AuthFormLayout
         leftSlot={(

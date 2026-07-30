@@ -242,7 +242,16 @@ const PublicFAQs = () => {
   };
 
   if (loading && faqs.length === 0) {
-    return <PublicFAQsSkeleton />;
+    return (
+      <>
+        <SEO
+          title={seoTitle}
+          description={seoDescription}
+          keywords="real estate faqs, property help, UrbanSetu guide, verification help, rent lock info"
+        />
+        <PublicFAQsSkeleton />
+      </>
+    );
   }
 
   return (
