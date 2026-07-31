@@ -9,6 +9,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   const [isSwitching, setIsSwitching] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Initializing Camera...');
   const [facingMode, setFacingMode] = useState('user'); // 'user' (front) or 'environment' (rear)
+  const [isMirrored, setIsMirrored] = useState(true); // Horizontal mirror flip state
   const [videoDevices, setVideoDevices] = useState([]);
   const [currentDeviceId, setCurrentDeviceId] = useState(null);
   const [capturedBlob, setCapturedBlob] = useState(null);
@@ -109,6 +110,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       setCameraError(null);
       setIsSwitching(false);
       setLoadingMessage('Initializing Camera...');
+      setIsMirrored(true);
     }
 
     return () => {
@@ -124,20 +126,23 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
   }, [stream, capturedBlob]);
 
-  // Switch camera handler
+  // Switch camera / mirror flip handler
   const handleSwitchCamera = () => {
-    setIsSwitching(true);
-    setLoadingMessage('Switching Camera...');
     if (videoDevices.length > 1) {
+      setIsSwitching(true);
+      setLoadingMessage('Switching Camera...');
       if (currentDeviceId) {
         const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
         const nextIndex = (currentIndex + 1) % videoDevices.length;
         setCurrentDeviceId(videoDevices[nextIndex].deviceId);
       } else {
-        setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
+        const nextFacing = facingMode === 'user' ? 'environment' : 'user';
+        setFacingMode(nextFacing);
+        setIsMirrored(nextFacing === 'user');
       }
     } else {
-      setFacingMode(prev => (prev === 'user' ? 'environment' : 'user'));
+      // Single camera (Desktop/Laptop): Toggle horizontal mirror effect smoothly without re-querying stream
+      setIsMirrored(prev => !prev);
     }
   };
 
@@ -155,8 +160,8 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
     const ctx = canvas.getContext('2d');
     
-    // If using front camera ('user'), mirror canvas horizontally for natural selfie feel
-    if (facingMode === 'user' && !currentDeviceId) {
+    // Apply horizontal mirror transformation if isMirrored is true
+    if (isMirrored) {
       ctx.translate(width, 0);
       ctx.scale(-1, 1);
     }
@@ -275,8 +280,8 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 autoPlay
                 playsInline
                 muted
-                className={`w-full h-full object-cover transition-opacity duration-300 ${
-                  facingMode === 'user' && !currentDeviceId ? 'scale-x-[-1]' : ''
+                className={`w-full h-full object-cover transition-transform duration-300 ${
+                  isMirrored ? 'scale-x-[-1]' : 'scale-x-1'
                 } ${isLoading ? 'opacity-0' : 'opacity-100'}`}
               />
             </>
@@ -333,14 +338,14 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 </div>
               </button>
 
-              {/* Switch Camera Button */}
+              {/* Switch Camera / Mirror Toggle Button */}
               <button
                 onClick={handleSwitchCamera}
                 disabled={isLoading || !!cameraError}
                 className={`p-3 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white transition-all border border-gray-700 ${
                   isLoading || cameraError ? 'opacity-40 pointer-events-none' : 'active:scale-95'
                 }`}
-                title="Switch Camera"
+                title={videoDevices.length > 1 ? 'Switch Camera' : 'Flip Mirror View'}
               >
                 <FaSync size={15} />
               </button>
