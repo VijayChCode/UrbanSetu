@@ -1,7 +1,26 @@
-import React from 'react';
-import { FaTimes } from 'react-icons/fa';
+import React, { useEffect } from 'react';
 
 const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => {
+  useEffect(() => {
+    if (isOpen) {
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+        try {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(err => console.warn('Exit fullscreen error on permission modal:', err));
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        } catch (err) {
+          console.warn('Failed to exit fullscreen on permission modal:', err);
+        }
+      }
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isAudioOnly = permissionType === 'audio';
@@ -9,17 +28,8 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-[110] p-3 sm:p-4 animate-fadeIn">
       <div className="bg-gray-900 border border-gray-800 text-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1.5 rounded-full hover:bg-gray-800 transition-colors"
-          title="Close"
-        >
-          <FaTimes size={16} />
-        </button>
-
         {/* Title */}
-        <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-wide text-left pr-6">
+        <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-wide text-left">
           {isAudioOnly ? 'Allow microphone' : 'Allow camera and microphone'}
         </h3>
 
@@ -46,7 +56,7 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
         <div className="flex justify-end w-full">
           <button
             onClick={onClose}
-            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold py-2.5 px-6 rounded-full shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all text-center"
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold py-2.5 px-6 rounded-full shadow-lg shadow-indigo-500/30 hover:shadow-purple-500/40 border border-white/20 active:scale-95 transition-all text-center"
           >
             OK, got it
           </button>

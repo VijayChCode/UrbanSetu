@@ -1684,6 +1684,24 @@ export const useCall = () => {
     } catch (error) {
       console.error('Error initiating call:', error);
       setCallState(null);
+
+      // Exit fullscreen if early fullscreen was requested
+      if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+        try {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(err => console.warn('Exit fullscreen error on initiate failure:', err));
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        } catch (fsErr) {
+          console.warn('Failed to exit fullscreen on initiate error:', fsErr);
+        }
+      }
+
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         error.isPermissionDenied = true;
       } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
