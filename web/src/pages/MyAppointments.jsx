@@ -182,10 +182,6 @@ export default function MyAppointments() {
   const themeColors = useMemo(() => getThemeColors(settings.themeColor || 'blue'), [settings.themeColor]);
   const isDarkMode = settings.theme === 'dark';
 
-  // Media permission modal state
-  const [showMediaPermissionModal, setShowMediaPermissionModal] = useState(false);
-  const [mediaPermissionType, setMediaPermissionType] = useState('video');
-
   // Handle initiate call
   const handleInitiateCall = async (appointment, callType, receiverId) => {
     if (!appointment || !appointment._id) {
@@ -3058,6 +3054,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideoPreviewModal, setShowVideoPreviewModal] = useState(false);
   const [showCameraCaptureModal, setShowCameraCaptureModal] = useState(false);
+  const [showMediaPermissionModal, setShowMediaPermissionModal] = useState(false);
+  const [mediaPermissionType, setMediaPermissionType] = useState('video');
   const [isSendingUrlImages, setIsSendingUrlImages] = useState(false);
   const [isSendingUrlVideo, setIsSendingUrlVideo] = useState(false);
   const [showImageUrlModal, setShowImageUrlModal] = useState(false);
@@ -8814,13 +8812,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               ? 'opacity-40 cursor-not-allowed bg-black/10'
                               : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
                           }`}
-                          onClick={() => {
+                          onClick={async () => {
                             if (isChatSendBlocked) return;
                             const receiverId = appt.buyerId._id === currentUser._id
                               ? appt.sellerId._id
                               : appt.buyerId._id;
 
-                            onInitiateCall(appt, 'audio', receiverId);
+                            try {
+                              await onInitiateCall(appt, 'audio', receiverId);
+                            } catch (err) {
+                              if (
+                                err?.name === 'NotAllowedError' ||
+                                err?.name === 'PermissionDeniedError' ||
+                                err?.isPermissionDenied ||
+                                (err?.message && (
+                                  err.message.toLowerCase().includes('permission') ||
+                                  err.message.toLowerCase().includes('forbidden') ||
+                                  err.message.toLowerCase().includes('denied')
+                                ))
+                              ) {
+                                setMediaPermissionType('audio');
+                                setShowMediaPermissionModal(true);
+                              }
+                            }
                           }}
                           title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
                           aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
@@ -8836,13 +8850,29 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               ? 'opacity-40 cursor-not-allowed bg-black/10'
                               : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
                           }`}
-                          onClick={() => {
+                          onClick={async () => {
                             if (isChatSendBlocked) return;
                             const receiverId = appt.buyerId._id === currentUser._id
                               ? appt.sellerId._id
                               : appt.buyerId._id;
 
-                            onInitiateCall(appt, 'video', receiverId);
+                            try {
+                              await onInitiateCall(appt, 'video', receiverId);
+                            } catch (err) {
+                              if (
+                                err?.name === 'NotAllowedError' ||
+                                err?.name === 'PermissionDeniedError' ||
+                                err?.isPermissionDenied ||
+                                (err?.message && (
+                                  err.message.toLowerCase().includes('permission') ||
+                                  err.message.toLowerCase().includes('forbidden') ||
+                                  err.message.toLowerCase().includes('denied')
+                                ))
+                              ) {
+                                setMediaPermissionType('video');
+                                setShowMediaPermissionModal(true);
+                              }
+                            }
                           }}
                           title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
                           aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}

@@ -7,8 +7,8 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
   const isAudioOnly = permissionType === 'audio';
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-fadeIn">
-      <div className="bg-gray-900 border border-gray-800 text-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col p-6 relative">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-[110] p-3 sm:p-4 animate-fadeIn">
+      <div className="bg-gray-900 border border-gray-800 text-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -19,12 +19,12 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
         </button>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-white mb-4 tracking-wide text-left">
+        <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-wide text-left pr-6">
           {isAudioOnly ? 'Allow microphone' : 'Allow camera and microphone'}
         </h3>
 
         {/* Description Text */}
-        <p className="text-sm text-gray-300 leading-relaxed mb-6 text-left">
+        <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-5 sm:mb-6 text-left">
           To make calls, UrbanSetu needs access to your {isAudioOnly ? 'microphone' : 'camera and microphone'}. Click the{' '}
           <span className="inline-flex items-center justify-center bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 mx-0.5 align-middle">
             <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className="text-gray-300">
@@ -43,10 +43,10 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
         </p>
 
         {/* Action Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end w-full">
           <button
             onClick={onClose}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold py-2.5 px-6 rounded-full shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all"
+            className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold py-2.5 px-6 rounded-full shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all text-center"
           >
             OK, got it
           </button>
