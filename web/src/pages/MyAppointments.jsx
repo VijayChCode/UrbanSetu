@@ -11693,16 +11693,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           <p className="text-xs text-gray-500 dark:text-gray-400">Add images from the web (Max 10)</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          setShowImageUrlModal(false);
-                          setImageUrlInput('');
-                          setImageUrlList([]);
-                        }}
-                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
-                      >
-                        <FaTimes size={16} />
-                      </button>
                     </div>
 
                     <div className="space-y-4">
@@ -11858,15 +11848,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           <p className="text-xs text-gray-500 dark:text-gray-400">Add video link from the web</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          setShowVideoUrlModal(false);
-                          setVideoUrlInput('');
-                        }}
-                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
-                      >
-                        <FaTimes size={16} />
-                      </button>
                     </div>
 
                     <div className="space-y-4">
