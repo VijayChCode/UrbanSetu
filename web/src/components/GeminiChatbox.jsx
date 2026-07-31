@@ -1493,17 +1493,66 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     }, [showReminders, currentUser]);
 
-    // Keyboard shortcut to focus input
+    // Keyboard shortcuts listener for chat input and modal triggers
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.key === '/' && e.ctrlKey && isOpen && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            if (!isOpen) return;
+
+            // Ctrl + / -> Focus text input
+            if (e.key === '/' && (e.ctrlKey || e.metaKey) && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
                 e.preventDefault();
                 inputRef.current?.focus();
+            }
+
+            // Ctrl + U -> Upload File
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('File upload is disabled during policy cooldown.');
+                setShowFileUpload(true);
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + A -> Voice Input
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('Voice input is disabled during policy cooldown.');
+                toggleVoiceInput();
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + I -> Image Link
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('Image link is disabled during policy cooldown.');
+                setShowImageLinkModal(true);
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + V -> Video Link
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'v') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('Video link is disabled during policy cooldown.');
+                setShowVideoLinkModal(true);
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + M -> Think longer
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'm') {
+                e.preventDefault();
+                setPrePromptPreference(prev => prev === 'think' ? null : 'think');
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + S -> Search the web
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                setPrePromptPreference(prev => prev === 'search' ? null : 'search');
+                setShowInputOptions(false);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen]);
+    }, [isOpen, isBlockedByPolicy]);
 
     // Auto-resize textarea
     useLayoutEffect(() => {
@@ -14839,6 +14888,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Image Link</span>
                                                     <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + I</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Video Link</span>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + V</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Think longer (deep thinking)</span>
