@@ -1493,66 +1493,17 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     }, [showReminders, currentUser]);
 
-    // Keyboard shortcuts listener for chat input and modal triggers
+    // Keyboard shortcut to focus input
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (!isOpen) return;
-
-            // Ctrl + / -> Focus text input
-            if (e.key === '/' && (e.ctrlKey || e.metaKey) && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+            if (e.key === '/' && e.ctrlKey && isOpen && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
                 e.preventDefault();
                 inputRef.current?.focus();
-            }
-
-            // Ctrl + U -> Upload File
-            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'u') {
-                e.preventDefault();
-                if (isBlockedByPolicy) return toast.warning('File upload is disabled during policy cooldown.');
-                setShowFileUpload(true);
-                setShowInputOptions(false);
-            }
-
-            // Ctrl + Shift + A -> Voice Input
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
-                e.preventDefault();
-                if (isBlockedByPolicy) return toast.warning('Voice input is disabled during policy cooldown.');
-                toggleVoiceInput();
-                setShowInputOptions(false);
-            }
-
-            // Ctrl + Shift + I -> Image Link
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
-                e.preventDefault();
-                if (isBlockedByPolicy) return toast.warning('Image link is disabled during policy cooldown.');
-                setShowImageLinkModal(true);
-                setShowInputOptions(false);
-            }
-
-            // Ctrl + Shift + V -> Video Link
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'v') {
-                e.preventDefault();
-                if (isBlockedByPolicy) return toast.warning('Video link is disabled during policy cooldown.');
-                setShowVideoLinkModal(true);
-                setShowInputOptions(false);
-            }
-
-            // Ctrl + Shift + M -> Think longer
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'm') {
-                e.preventDefault();
-                setPrePromptPreference(prev => prev === 'think' ? null : 'think');
-                setShowInputOptions(false);
-            }
-
-            // Ctrl + Shift + S -> Search the web
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's') {
-                e.preventDefault();
-                setPrePromptPreference(prev => prev === 'search' ? null : 'search');
-                setShowInputOptions(false);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, isBlockedByPolicy]);
+    }, [isOpen]);
 
     // Auto-resize textarea
     useLayoutEffect(() => {
@@ -1850,6 +1801,61 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const timer = setInterval(checkCooldown, 30000); // Check every 30s
         return () => clearInterval(timer);
     }, [cooldownEnd, isBlockedByPolicy, currentUser]);
+
+    // Keyboard shortcuts listener for chat input and modal triggers (placed after all state declarations)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!isOpen) return;
+
+            // Ctrl + U -> Upload File
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('File upload is disabled during policy cooldown.');
+                setShowFileUpload(true);
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + A -> Voice Input
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('Voice input is disabled during policy cooldown.');
+                if (typeof toggleVoiceInput === 'function') toggleVoiceInput();
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + I -> Image Link
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('Image link is disabled during policy cooldown.');
+                setShowImageLinkModal(true);
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + V -> Video Link
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'v') {
+                e.preventDefault();
+                if (isBlockedByPolicy) return toast.warning('Video link is disabled during policy cooldown.');
+                setShowVideoLinkModal(true);
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + M -> Think longer
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'm') {
+                e.preventDefault();
+                setPrePromptPreference(prev => prev === 'think' ? null : 'think');
+                setShowInputOptions(false);
+            }
+
+            // Ctrl + Shift + S -> Search the web
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                setPrePromptPreference(prev => prev === 'search' ? null : 'search');
+                setShowInputOptions(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, isBlockedByPolicy]);
 
     // Track policy violations and trigger block if needed
     const handlePolicyViolation = () => {
