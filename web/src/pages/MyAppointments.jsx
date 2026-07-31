@@ -3039,6 +3039,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Camera modal state - moved to AppointmentRow component
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideoPreviewModal, setShowVideoPreviewModal] = useState(false);
+  const [isSendingUrlImages, setIsSendingUrlImages] = useState(false);
+  const [isSendingUrlVideo, setIsSendingUrlVideo] = useState(false);
   const [showImageUrlModal, setShowImageUrlModal] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [imageUrlList, setImageUrlList] = useState([]);
@@ -3684,6 +3686,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     if (!selectedVideo) return;
     if (typeof selectedVideo === 'string') {
       try {
+        setIsSendingUrlVideo(true);
         const fileName = selectedVideo.split('/').pop()?.split('?')[0] || 'Video';
         await sendVideoMessage(selectedVideo, fileName, videoCaption);
         setSelectedVideo(null);
@@ -3691,6 +3694,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         setVideoCaption('');
       } catch (e) {
         toast.error('Failed to send video link');
+      } finally {
+        setIsSendingUrlVideo(false);
       }
       return;
     }
@@ -3984,6 +3989,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
     if (typeof selectedFiles[0] === 'string') {
       try {
+        setIsSendingUrlImages(true);
         for (let i = 0; i < selectedFiles.length; i++) {
           const url = selectedFiles[i];
           const fileName = url.split('/').pop()?.split('?')[0] || `Image ${i + 1}`;
@@ -3996,6 +4002,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         setShowImagePreviewModal(false);
       } catch (e) {
         toast.error('Failed to send image links');
+      } finally {
+        setIsSendingUrlImages(false);
       }
       return;
     }
@@ -11491,13 +11499,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             )}
                             <button
                               onClick={handleSendImagesWithCaptions}
-                              disabled={isChatSendBlocked}
-                              className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${isChatSendBlocked
-                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                              disabled={isChatSendBlocked || uploadingFile || isSendingUrlImages}
+                              className={`py-2.5 px-5 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 shadow-lg flex items-center justify-center gap-2 backdrop-blur-md border border-white/20 active:scale-95 ${isChatSendBlocked || uploadingFile || isSendingUrlImages
+                                ? 'bg-gray-500/40 text-gray-300 cursor-not-allowed border-gray-600/40 opacity-70'
+                                : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/30 hover:shadow-purple-500/40 hover:-translate-y-0.5'
                                 }`}
                             >
-                              {`Send ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`}
+                              {uploadingFile || isSendingUrlImages ? (
+                                <>
+                                  <UrbanSetuSpinner size="sm" className="w-4 h-4 text-white" />
+                                  <span>Sending...</span>
+                                </>
+                              ) : (
+                                `Send ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`
+                              )}
                             </button>
                           </>
                         )}
@@ -11520,12 +11535,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaTimes className="w-5 h-5" />
                       </button>
                     </div>
-                    <div className="flex-1 mb-4 min-h-0">
-                      <video controls className="w-full h-full max-h-[60vh] rounded-lg border dark:border-gray-600" src={videoObjectURL} />
+                    <div className="flex-1 mb-5 min-h-0 pb-1">
+                      <video controls className="w-full h-full max-h-[58vh] rounded-lg border dark:border-gray-600 object-contain bg-black/40" src={videoObjectURL} />
                     </div>
 
                     {/* Caption for Video */}
-                    <div className="relative mb-4">
+                    <div className="relative mb-5 mt-1">
                       <div className="relative">
                         <textarea
                           ref={videoCaptionRef}
@@ -11582,8 +11597,24 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </>
                         ) : (
                           <>
-                            <button onClick={() => { setSelectedVideo(null); setShowVideoPreviewModal(false); setVideoCaption(''); }} className="px-4 py-2 rounded-lg border dark:border-gray-600 text-gray-700 dark:text-gray-300">Cancel</button>
-                            <button onClick={handleSendSelectedVideo} className="px-4 py-2 rounded-lg bg-blue-600 text-white">Send</button>
+                            <button onClick={() => { setSelectedVideo(null); setShowVideoPreviewModal(false); setVideoCaption(''); }} className="px-4 py-2 rounded-xl border dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                            <button
+                              onClick={handleSendSelectedVideo}
+                              disabled={uploadingFile || isSendingUrlVideo}
+                              className={`py-2.5 px-6 rounded-xl text-sm font-bold tracking-wide transition-all duration-300 shadow-lg flex items-center justify-center gap-2 backdrop-blur-md border border-white/20 active:scale-95 ${uploadingFile || isSendingUrlVideo
+                                ? 'bg-gray-500/40 text-gray-300 cursor-not-allowed border-gray-600/40 opacity-70'
+                                : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/30 hover:shadow-purple-500/40 hover:-translate-y-0.5'
+                                }`}
+                            >
+                              {uploadingFile || isSendingUrlVideo ? (
+                                <>
+                                  <UrbanSetuSpinner size="sm" className="w-4 h-4 text-white" />
+                                  <span>Sending...</span>
+                                </>
+                              ) : (
+                                'Send'
+                              )}
+                            </button>
                           </>
                         )}
                       </div>
