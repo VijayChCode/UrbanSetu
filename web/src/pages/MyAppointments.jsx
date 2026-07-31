@@ -11899,8 +11899,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             </label>
                             <div
                               className="group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-[1.01] bg-purple-50/80 border-purple-200 hover:border-purple-400 shadow-md shadow-purple-500/10 dark:bg-gray-800/90 dark:border-purple-500/50 dark:hover:border-purple-400 dark:shadow-purple-950/40"
-                              onClick={handleAddVideoUrl}
-                              title="Click to preview video player"
                             >
                               <div className="relative w-full h-36 bg-black flex items-center justify-center overflow-hidden">
                                 <video
