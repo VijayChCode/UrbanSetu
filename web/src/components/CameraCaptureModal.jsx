@@ -262,11 +262,18 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                   />
                   <polygon points="25,10 10,32 38,28" fill="#EF4444" />
                 </svg>
-                <div className="bg-red-600/95 text-white text-[11px] sm:text-xs font-bold p-3 rounded-xl shadow-2xl border border-red-400/50 backdrop-blur-md tracking-wide mt-1 max-w-[260px] text-left leading-snug">
-                  <div className="flex items-center gap-1.5 mb-1 font-extrabold text-yellow-300">
-                    <span>↖ View Site Info Icon</span>
+                <div className="bg-red-600/95 text-white text-[11px] sm:text-xs font-bold p-3 rounded-xl shadow-2xl border border-red-400/50 backdrop-blur-md tracking-wide mt-1 max-w-[270px] text-left leading-snug">
+                  <div className="flex items-center gap-1.5 mb-1.5 font-extrabold text-yellow-300">
+                    <svg viewBox="0 0 14 14" width="16" height="16" fill="none" className="inline-block text-yellow-300 flex-shrink-0">
+                      <title>chrome-permissions</title>
+                      <path fill="currentColor" fillRule="evenodd" d="M11.13 7.62a2.76 2.76 0 0 1 2.62 2.75v.15a2.76 2.76 0 0 1-2.76 2.62h-.14a2.76 2.76 0 0 1-2.62-2.62v-.15a2.76 2.76 0 0 1 2.76-2.76zm-.14 1.8a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.93" clipRule="evenodd" />
+                      <path fill="currentColor" d="M7 11.3H.86V9.45H7" />
+                      <path fill="currentColor" fillRule="evenodd" d="M3.15 0.8a2.76 2.76 0 0 1 2.62 2.75v.15a2.76 2.76 0 0 1-2.76 2.62h-.14a2.76 2.76 0 0 1-2.62-2.62V0.95A2.76 2.76 0 0 1 3.01 0.8zm-.14 1.8a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.93" clipRule="evenodd" />
+                      <path fill="currentColor" d="M13.14 4.51H7V2.7h6.14z" />
+                    </svg>
+                    <span>Click Chrome Permissions Icon</span>
                   </div>
-                  Click the <span className="underline decoration-yellow-300 decoration-2 font-black text-white">View site information icon</span> (tune / sliders icon next to the URL in top-left) to enable <span className="font-extrabold text-yellow-300">Camera permission</span>.
+                  Click the <span className="inline-flex items-center gap-1 bg-black/40 px-1.5 py-0.5 rounded border border-yellow-400/40 text-yellow-200 font-black"><svg viewBox="0 0 14 14" width="13" height="13" fill="none" className="text-yellow-300"><path fill="currentColor" fillRule="evenodd" d="M11.13 7.62a2.76 2.76 0 0 1 2.62 2.75v.15a2.76 2.76 0 0 1-2.76 2.62h-.14a2.76 2.76 0 0 1-2.62-2.62v-.15a2.76 2.76 0 0 1 2.76-2.76zm-.14 1.8a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.93" clipRule="evenodd" /><path fill="currentColor" d="M7 11.3H.86V9.45H7" /><path fill="currentColor" fillRule="evenodd" d="M3.15 0.8a2.76 2.76 0 0 1 2.62 2.75v.15a2.76 2.76 0 0 1-2.76 2.62h-.14a2.76 2.76 0 0 1-2.62-2.62V0.95A2.76 2.76 0 0 1 3.01 0.8zm-.14 1.8a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.93" clipRule="evenodd" /><path fill="currentColor" d="M13.14 4.51H7V2.7h6.14z" /></svg> Site info icon</span> next to the address bar and toggle <span className="font-black text-yellow-300">Camera</span> on.
                 </div>
               </div>
 
