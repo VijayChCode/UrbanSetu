@@ -193,19 +193,7 @@ export default function MyAppointments() {
       await initiateCall(appointment._id, receiverId, callType);
     } catch (error) {
       console.error('Error initiating call:', error);
-      if (
-        error?.name === 'NotAllowedError' ||
-        error?.name === 'PermissionDeniedError' ||
-        error?.isPermissionDenied ||
-        (error?.message && (
-          error.message.toLowerCase().includes('permission') ||
-          error.message.toLowerCase().includes('forbidden') ||
-          error.message.toLowerCase().includes('denied')
-        ))
-      ) {
-        setMediaPermissionType(callType === 'video' ? 'video' : 'audio');
-        setShowMediaPermissionModal(true);
-      }
+      throw error;
     }
   };
 
