@@ -27,20 +27,20 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
     if (permissionType === 'camera') {
       return {
         title: 'Allow camera',
-        accessText: "computer's camera",
+        accessText: "device's camera",
         toggleText: 'Camera'
       };
     }
     if (permissionType === 'microphone' || permissionType === 'audio') {
       return {
         title: 'Allow microphone',
-        accessText: "computer's microphone",
+        accessText: "device's microphone",
         toggleText: 'Microphone'
       };
     }
     return {
       title: 'Allow camera and microphone',
-      accessText: "computer's camera and microphone",
+      accessText: "device's camera and microphone",
       toggleText: 'Camera and Microphone'
     };
   };
