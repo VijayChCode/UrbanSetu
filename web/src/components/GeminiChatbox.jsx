@@ -11524,7 +11524,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                             <div
                                                                                 className={`w-full h-full relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden bg-black ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
                                                                                 onClick={() => {
-                                                                                    setPreviewVideos([{ url: img.url, title: img.name || 'Video Preview' }]);
+                                                                                    setPreviewVideos([img.url]);
                                                                                     setIsVideoPreviewOpen(true);
                                                                                 }}
                                                                             >
@@ -16091,7 +16091,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 )}
 
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    Tip: You can add up to 5 images per message. Type a URL and click "+" to add it.
+                                    Tip: You can add up to 5 images per message. Paste a URL and click "+" to add it.
                                 </p>
                             </div>
 
@@ -16170,7 +16170,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
 
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    Tip: You can add 1 video URL per message. Type a URL and click "Add".
+                                    Tip: You can add 1 video URL per message. Paste a URL and click "Add".
                                 </p>
 
                                 {/* Interactive Video Preview Box */}
@@ -16181,7 +16181,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         </label>
                                         <div
                                             onClick={() => {
-                                                setPreviewVideos([{ url: videoLinkInput.trim(), title: 'Video Link Preview' }]);
+                                                setPreviewVideos([videoLinkInput.trim()]);
                                                 setIsVideoPreviewOpen(true);
                                             }}
                                             className={`group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${

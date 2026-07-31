@@ -175,8 +175,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const isRecoveringRef = useRef(false);
 
   // Helper to optimize Cloudinary URLs
-  const optimizeVideoUrl = (url) => {
-    if (!url) return '';
+  const optimizeVideoUrl = (rawItem) => {
+    if (!rawItem) return '';
+    const url = typeof rawItem === 'string' ? rawItem : (rawItem?.url || rawItem?.videoUrl || rawItem?.src || '');
+    if (!url || typeof url !== 'string') return '';
     // Check if it's a Cloudinary URL
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
       let newUrl = url;
@@ -190,8 +192,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     return url;
   };
   // NEW: Helper to get image thumbnail at specific time for Cloudinary
-  const getThumbnailUrl = (url, time) => {
-    if (!url || !url.includes('cloudinary.com')) return null;
+  const getThumbnailUrl = (rawItem, time) => {
+    if (!rawItem) return null;
+    const url = typeof rawItem === 'string' ? rawItem : (rawItem?.url || rawItem?.videoUrl || rawItem?.src || '');
+    if (!url || typeof url !== 'string' || !url.includes('cloudinary.com')) return null;
 
     // Replace extension with .jpg and add start offset (so_) transformation
     // We use w_320 to keep it very light
