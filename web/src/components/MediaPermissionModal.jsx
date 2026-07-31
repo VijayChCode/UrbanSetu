@@ -23,19 +23,41 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
 
   if (!isOpen) return null;
 
-  const isAudioOnly = permissionType === 'audio';
+  const getPermissionDetails = () => {
+    if (permissionType === 'camera') {
+      return {
+        title: 'Allow camera',
+        accessText: "computer's camera",
+        toggleText: 'Camera'
+      };
+    }
+    if (permissionType === 'microphone' || permissionType === 'audio') {
+      return {
+        title: 'Allow microphone',
+        accessText: "computer's microphone",
+        toggleText: 'Microphone'
+      };
+    }
+    return {
+      title: 'Allow camera and microphone',
+      accessText: "computer's camera and microphone",
+      toggleText: 'Camera and Microphone'
+    };
+  };
+
+  const { title, accessText, toggleText } = getPermissionDetails();
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-[110] p-3 sm:p-4 animate-fadeIn">
       <div className="bg-gray-900 border border-gray-800 text-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
         {/* Title */}
         <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-wide text-left">
-          {isAudioOnly ? 'Allow microphone' : 'Allow camera and microphone'}
+          {title}
         </h3>
 
         {/* Description Text */}
         <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-5 sm:mb-6 text-left">
-          To make calls, UrbanSetu needs access to your {isAudioOnly ? 'microphone' : 'camera and microphone'}. Click the{' '}
+          To make calls, UrbanSetu needs access to your {accessText}. Click the{' '}
           <span className="inline-flex items-center justify-center bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 mx-0.5 align-middle">
             <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className="text-gray-300">
               <title>chrome-permissions</title>
@@ -47,7 +69,7 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
           </span>{' '}
           icon next to the address bar and toggle{' '}
           <strong className="text-white font-bold">
-            {isAudioOnly ? 'Microphone' : 'Camera and Microphone'}
+            {toggleText}
           </strong>{' '}
           on. If you've already updated your permission settings, reload the page for the change to take effect.
         </p>

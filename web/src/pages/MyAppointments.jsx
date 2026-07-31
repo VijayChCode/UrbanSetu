@@ -8819,7 +8819,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   err.message.toLowerCase().includes('denied')
                                 ))
                               ) {
-                                setMediaPermissionType('audio');
+                                setMediaPermissionType('microphone');
                                 setShowMediaPermissionModal(true);
                               }
                             }
@@ -8857,7 +8857,47 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   err.message.toLowerCase().includes('denied')
                                 ))
                               ) {
-                                setMediaPermissionType('video');
+                                // Smart permission detection for video calls
+                                let detectedType = 'both';
+                                try {
+                                  let micDenied = false;
+                                  let camDenied = false;
+                                  if (navigator.permissions && navigator.permissions.query) {
+                                    const micRes = await navigator.permissions.query({ name: 'microphone' }).catch(() => null);
+                                    const camRes = await navigator.permissions.query({ name: 'camera' }).catch(() => null);
+                                    if (micRes?.state === 'denied') micDenied = true;
+                                    if (camRes?.state === 'denied') camDenied = true;
+                                  }
+
+                                  if (micDenied && !camDenied) {
+                                    detectedType = 'microphone';
+                                  } else if (camDenied && !micDenied) {
+                                    detectedType = 'camera';
+                                  } else if (micDenied && camDenied) {
+                                    detectedType = 'both';
+                                  } else {
+                                    // Fallback individual getUserMedia check
+                                    let micOk = true;
+                                    let camOk = true;
+                                    try {
+                                      const mStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                      mStream.getTracks().forEach(t => t.stop());
+                                    } catch (e) { micOk = false; }
+
+                                    try {
+                                      const cStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                                      cStream.getTracks().forEach(t => t.stop());
+                                    } catch (e) { camOk = false; }
+
+                                    if (!micOk && camOk) detectedType = 'microphone';
+                                    else if (!camOk && micOk) detectedType = 'camera';
+                                    else detectedType = 'both';
+                                  }
+                                } catch (e) {
+                                  console.warn('Media permission detection fallback:', e);
+                                }
+
+                                setMediaPermissionType(detectedType);
                                 setShowMediaPermissionModal(true);
                               }
                             }
