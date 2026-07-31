@@ -7473,19 +7473,35 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
         toast.info('Processing video link...');
 
-        // Trigger audio extraction & transcription flow
+        // Trigger audio extraction & transcription flow (identical to uploaded video processing)
         (async () => {
+            let objectUrl = null;
             try {
                 setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+                toast.info('🎬 Extracting audio from video link...', { autoClose: 2000, toastId: `video-extract-${tempId}` });
 
-                const video = document.createElement('video');
-                video.crossOrigin = 'anonymous';
-                video.preload = 'auto';
-                video.src = url;
+                // Try fetching video blob to bypass browser CORS on MediaRecorder
+                try {
+                    const videoRes = await fetch(url);
+                    if (videoRes.ok) {
+                        const videoBlob = await videoRes.blob();
+                        objectUrl = URL.createObjectURL(videoBlob);
+                    }
+                } catch (fetchErr) {
+                    console.warn('Direct fetch for video blob failed, falling back to direct URL:', fetchErr);
+                }
+
+                const videoSource = objectUrl || url;
 
                 const videoAudioBlob = await new Promise((resolve, reject) => {
-                    video.onloadeddata = () => {
-                        const maxDuration = Math.min(video.duration || 60, 60);
+                    const video = document.createElement('video');
+                    if (!objectUrl) video.crossOrigin = 'anonymous';
+                    video.preload = 'auto';
+                    video.muted = true;
+                    video.src = videoSource;
+
+                    video.onloadedmetadata = () => {
+                        const maxDuration = Math.min(video.duration || 60, 300);
                         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                         if (!AudioContextClass) {
                             reject(new Error('AudioContext not supported'));
@@ -7497,7 +7513,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         source.connect(destination);
 
                         const mediaRecorder = new MediaRecorder(destination.stream, {
-                            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : ''
+                            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
                         });
 
                         const chunks = [];
@@ -7563,6 +7579,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 console.warn('Video audio extraction skipped/failed for URL video:', videoErr);
                 toast.info('Video link attached. (Audio transcription unavailable for this link source)');
             } finally {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
                 setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
             }
         })();
