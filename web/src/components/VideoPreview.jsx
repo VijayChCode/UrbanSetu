@@ -94,6 +94,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [zoomMessage, setZoomMessage] = useState(null);
   const zoomTimeoutRef = useRef(null);
   const [seekFeedback, setSeekFeedback] = useState(null); // 'forward' | 'rewind' | null
@@ -246,6 +247,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
       // Reset playback states
       setIsLoading(true);
+      setHasError(false);
       setIsPlaying(true);
       setDuration(0);
       setCurrentTime(0);
@@ -338,10 +340,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     let objectUrl = null;
 
     const loadVideo = async () => {
-      if (!currentVideoUrl || !isOpen) return;
+      if (!isOpen) return;
+
+      if (!currentVideoUrl || typeof currentVideoUrl !== 'string' || !currentVideoUrl.trim()) {
+        if (active) {
+          setHasError(true);
+          setIsLoading(false);
+          setIsPlaying(false);
+        }
+        return;
+      }
 
       // If already a blob (local preview) OR a Cloudinary URL, use it directly to enable browser streaming
-      // (Fetching 86MB+ as a blob into memory causes timeouts and crashes)
       if (currentVideoUrl.startsWith('blob:') || currentVideoUrl.includes('cloudinary.com')) {
         setVideoBlobUrl(currentVideoUrl);
         return;
@@ -365,7 +375,13 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       } catch (err) {
         console.error("Failed to load video blob:", err);
         if (active) {
-          setVideoBlobUrl(currentVideoUrl);
+          if (currentVideoUrl.startsWith('http://') || currentVideoUrl.startsWith('https://')) {
+            setVideoBlobUrl(currentVideoUrl);
+          } else {
+            setHasError(true);
+            setIsLoading(false);
+            setIsPlaying(false);
+          }
         }
       }
     };
@@ -784,6 +800,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const handleVideoAreaClick = (e) => {
+    if (hasError) return;
     // Check if we should ignore click (due to long press speed interaction)
     if (ignoreClickRef.current) {
       ignoreClickRef.current = false;
@@ -974,8 +991,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     console.error("Video playback error");
 
     // Check if we can fallback to the original URL
-    const originalUrl = videos[currentIndex];
-    if (videoBlobUrl !== originalUrl) {
+    const originalUrl = typeof videos[currentIndex] === 'string' ? videos[currentIndex] : (videos[currentIndex]?.url || '');
+    if (videoBlobUrl !== originalUrl && originalUrl) {
       console.log("Retrying with original source fallback...");
       setVideoBlobUrl(originalUrl);
       setIsLoading(true);
@@ -984,13 +1001,15 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       return;
     }
 
-    toast.error("Unable to play video.");
+    setHasError(true);
     setIsPlaying(false);
     setIsLoading(false);
+    toast.error("Unable to play video. Invalid or unsupported video source.");
   };
 
   const togglePlay = (e) => {
     e?.stopPropagation();
+    if (hasError || isLoading) return;
 
     // If browser had auto-muted for autoplay, unmute now (user gesture unlocks audio)
     if (autoplayMutedRef.current) {
@@ -1023,6 +1042,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const handleSeek = (amount) => {
+    if (hasError || isLoading || !duration) return;
     if (videoRef.current) {
       const isForward = amount > 0;
       const side = isForward ? 'right' : 'left';
@@ -1177,6 +1197,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const toggleFullscreen = async (e) => {
     e?.stopPropagation();
+    if (hasError) return;
     try {
       if (!document.fullscreenElement) {
         if (containerRef.current?.requestFullscreen) {
@@ -1205,7 +1226,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const handleDownload = async (e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
+    if (hasError || isLoading) return;
 
     // Cancellation logic
     if (downloadState === 'downloading') {
@@ -1273,6 +1295,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleContextMenu = (e) => {
     e.preventDefault();
+    if (hasError) return;
 
     const isTouchInput =
       e.pointerType === 'touch' ||
@@ -1396,6 +1419,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleRotate = (e) => {
     e?.stopPropagation();
+    if (hasError || isLoading) return;
     setRotation(r => {
       const newR = r + 90;
       showFeedback(`${newR}°`);
@@ -1405,6 +1429,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const handleReset = (e) => {
     e?.stopPropagation();
+    if (hasError || isLoading) return;
     setScale(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
@@ -1413,6 +1438,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const speedUp = () => {
+    if (hasError || isLoading) return;
     const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
     setPlaybackRate(prev => {
       const nextIdx = (speeds.indexOf(prev) + 1) % speeds.length;
@@ -1423,6 +1449,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const speedDown = () => {
+    if (hasError || isLoading) return;
     const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
     setPlaybackRate(prev => {
       const currIdx = speeds.indexOf(prev);
@@ -1435,6 +1462,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const toggleSpeed = (e) => {
     e?.stopPropagation();
+    if (hasError || isLoading) return;
     setShowSpeedMenu(prev => !prev);
   };
 
@@ -1538,6 +1566,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
   const toggleShare = async (e) => {
     e?.stopPropagation();
+    if (hasError || isLoading) return;
     if (videoRef.current && !videoRef.current.paused) {
       wasPlayingRef.current = true;
       videoRef.current.pause();
@@ -2220,8 +2249,41 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           </div>
         )}
 
+        {/* Error State Overlay */}
+        {hasError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-[65] bg-black/95 text-white p-6 text-center animate-fadeIn select-none">
+            <div className="p-4 rounded-full bg-red-500/20 text-red-500 mb-4 border border-red-500/30 animate-pulse">
+              <FaExclamationTriangle size={44} />
+            </div>
+            <h3 className="text-xl font-bold mb-1.5 text-white tracking-wide">Video Unavailable</h3>
+            <p className="text-xs sm:text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
+              The video source is invalid, corrupted, or cannot be streamed by your browser.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHasError(false);
+                  setIsLoading(true);
+                  setRetryId(r => r + 1);
+                  if (videoRef.current) videoRef.current.load();
+                }}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-blue-600/30 active:scale-95 flex items-center gap-2"
+              >
+                <FaRedo size={12} /> Retry Loading
+              </button>
+              <button
+                onClick={handleCloseRequest}
+                className="px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold uppercase tracking-wider transition-all active:scale-95"
+              >
+                Close Player
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Big Center Overlay */}
-        {!isPlaying && !isLoading && (!isMiniMode || isEnded) && (
+        {!isPlaying && !isLoading && !hasError && (!isMiniMode || isEnded) && (
           <div className="absolute inset-x-0 inset-y-0 flex items-center justify-center z-10 pointer-events-none transition-all duration-500">
             <div className="drop-shadow-[0_0_15px_rgba(0,0,0,0.6)] animate-scaleIn">
               {isEnded ? (
@@ -2639,10 +2701,11 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           onMouseEnter={() => setIsBottomControlsHovered(true)}
           onMouseLeave={() => setIsBottomControlsHovered(false)}
         >
-          <div className="w-full space-y-1">
+          <div className={`w-full space-y-1 ${hasError ? 'opacity-40 pointer-events-none' : ''}`}>
             <div
-              className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer relative group/slider"
+              className={`w-full h-1.5 bg-white/30 rounded-full relative group/slider ${hasError || isLoading || !duration ? 'pointer-events-none opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
               onMouseMove={(e) => {
+                if (hasError || isLoading || !duration) return;
                 setShowControls(true);
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
@@ -2657,6 +2720,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               }}
               onMouseLeave={() => setShowPreview(false)}
               onClick={(e) => {
+                if (hasError || isLoading || !duration) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 const pos = (rect.width > 0) ? (e.clientX - rect.left) / rect.width : 0;
                 if (videoRef.current && isFinite(videoRef.current.duration)) {
@@ -2666,7 +2730,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               }}
             >
               {/* Preview Thumbnail Overlay */}
-              {showPreview && (
+              {showPreview && !hasError && (
                 <div
                   className="absolute bottom-8 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-[100] animate-fadeIn"
                   style={{ left: `${previewPos}%` }}
@@ -2721,23 +2785,38 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-4">
-                <button onClick={() => handleSeek(-5)} className="hover:text-blue-400 transition-transform active:scale-95" title="Rewind 5s">
+                <button
+                  onClick={() => handleSeek(-5)}
+                  disabled={hasError || isLoading || !duration}
+                  className={`hover:text-blue-400 transition-transform active:scale-95 ${hasError || isLoading || !duration ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+                  title="Rewind 5s"
+                >
                   <FaAngleDoubleLeft size={20} />
                 </button>
-                <button onClick={togglePlay} className="hover:text-blue-400 transition-transform active:scale-95">
+                <button
+                  onClick={togglePlay}
+                  disabled={hasError || isLoading}
+                  className={`hover:text-blue-400 transition-transform active:scale-95 ${hasError || isLoading ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+                >
                   {isPlaying && !isLoading ? <FaPause size={22} /> : <FaPlay size={22} className="ml-1" />}
                 </button>
-                <button onClick={() => handleSeek(5)} className="hover:text-blue-400 transition-transform active:scale-95" title="Forward 5s">
+                <button
+                  onClick={() => handleSeek(5)}
+                  disabled={hasError || isLoading || !duration}
+                  className={`hover:text-blue-400 transition-transform active:scale-95 ${hasError || isLoading || !duration ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+                  title="Forward 5s"
+                >
                   <FaAngleDoubleRight size={20} />
                 </button>
                 <div
-                  className={`flex items-center group/volume-container ${isMobile ? 'relative' : ''}`}
-                  onMouseEnter={() => !isMobile && setIsVolumeHovered(true)}
-                  onMouseLeave={() => !isMobile && setIsVolumeHovered(false)}
+                  className={`flex items-center group/volume-container ${isMobile ? 'relative' : ''} ${hasError ? 'opacity-40 pointer-events-none' : ''}`}
+                  onMouseEnter={() => !isMobile && !hasError && setIsVolumeHovered(true)}
+                  onMouseLeave={() => !isMobile && !hasError && setIsVolumeHovered(false)}
                 >
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (hasError) return;
                       if (isMobile) {
                         setIsVolumeHovered(!isVolumeHovered);
                         // Auto-hide slider after 4 seconds of inactivity
@@ -2746,6 +2825,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                       }
                       toggleMute(e);
                     }}
+                    disabled={hasError}
                     className="hover:text-blue-400 p-2"
                   >
                     {isMuted || volume === 0 ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
@@ -2753,8 +2833,8 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   <div 
                     className={`transition-all duration-300 flex items-center gap-2 ${isMobile
                       ? 'absolute bottom-full left-0 mb-4 bg-black/90 backdrop-blur-xl p-3 pr-2 rounded-2xl border border-white/20 shadow-2xl z-50 w-48 justify-between'
-                      : `overflow-hidden ml-2 ${isVolumeHovered ? 'w-32 opacity-100' : 'w-0 opacity-0'}`
-                      } ${isMobile && isVolumeHovered ? 'opacity-100 scale-100 translate-y-0' : isMobile ? 'opacity-0 scale-95 translate-y-2 pointer-events-none' : ''}`}
+                      : `overflow-hidden ml-2 ${isVolumeHovered && !hasError ? 'w-32 opacity-100' : 'w-0 opacity-0'}`
+                      } ${isMobile && isVolumeHovered && !hasError ? 'opacity-100 scale-100 translate-y-0' : isMobile ? 'opacity-0 scale-95 translate-y-2 pointer-events-none' : ''}`}
                     onTouchStart={(e) => e.stopPropagation()}
                     onTouchMove={(e) => e.stopPropagation()}
                     onTouchEnd={(e) => e.stopPropagation()}
@@ -2765,8 +2845,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                       max="1"
                       step="0.01"
                       value={volume}
+                      disabled={hasError}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => {
+                        if (hasError) return;
                         const newVal = parseFloat(e.target.value);
                         setVolume(newVal);
                         setActiveGesture('volume');
@@ -2802,27 +2884,33 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 </div>
                 <span
                   className="text-[10px] sm:text-xs font-mono opacity-80 select-none cursor-pointer hover:opacity-100 transition-opacity flex items-center gap-1"
-                  onClick={() => setShowRemainingTime(!showRemainingTime)}
+                  onClick={() => !hasError && setShowRemainingTime(!showRemainingTime)}
                   title={showRemainingTime ? "Show elapsed time" : "Show remaining time"}
                 >
-                  {formatTime(currentTime, showRemainingTime)}
+                  {hasError ? "--:--" : formatTime(currentTime, showRemainingTime)}
                   <span className="opacity-40">/</span>
-                  {formatTime(duration)}
+                  {hasError ? "--:--" : formatTime(duration)}
                 </span>
               </div>
 
               {/* Only Fullscreen stays in the main row */}
-              <button onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} className="hover:text-blue-400">
+              <button
+                onClick={toggleFullscreen}
+                disabled={hasError}
+                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                className={`hover:text-blue-400 ${hasError ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+              >
                 {isFullscreen ? <FaCompress size={20} /> : <FaExpand size={20} />}
               </button>
             </div>
 
             {/* ── Action Row — mirrors mobile VideoViewer layout ── */}
-            <div className="flex items-center justify-center gap-2 border-t border-white/10 pt-1 mt-0">
+            <div className={`flex items-center justify-center gap-2 border-t border-white/10 pt-1 mt-0 ${hasError || isLoading ? 'opacity-40 pointer-events-none' : ''}`}>
               {!isFullscreen && (
                 <>
                   <button
                     onClick={toggleMiniMode}
+                    disabled={hasError || isLoading}
                     title="Picture in Picture"
                     className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
                   >
@@ -2834,6 +2922,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               )}
               <button
                 onClick={handleRotate}
+                disabled={hasError || isLoading}
                 title="Rotate"
                 className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
               >
@@ -2844,6 +2933,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               <div className="relative" ref={speedMenuRef}>
                 <button
                   onClick={toggleSpeed}
+                  disabled={hasError || isLoading}
                   title="Playback Speed"
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all active:scale-95 text-xs font-semibold min-w-[52px] ${showSpeedMenu ? 'bg-white/20 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
                 >
@@ -2852,7 +2942,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 </button>
 
                 {/* Speed Menu Overlay */}
-                {showSpeedMenu && (
+                {showSpeedMenu && !hasError && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[110]">
                     <div className="bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 w-32 animate-slideUp overflow-hidden">
                       <div className="px-3 py-1.5 mb-1 border-b border-white/5">
@@ -2884,6 +2974,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 <>
                   <button
                     onClick={toggleShare}
+                    disabled={hasError || isLoading}
                     title="Share"
                     className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all active:scale-95 text-xs font-semibold"
                   >
@@ -2898,7 +2989,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 title={downloadState === 'downloading' ? "Cancel Download" : "Download"}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all active:scale-95 text-xs font-semibold ${downloadState === 'downloading' ? 'text-red-400 bg-red-400/10 hover:bg-red-400/20 shadow-lg animate-pulse' : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
-                disabled={downloadState === 'completed'}
+                disabled={downloadState === 'completed' || hasError || isLoading}
               >
                 {downloadState === 'downloading' ? <FaTimes size={13} /> : <FaDownload size={13} className={downloadState === 'downloading' ? 'animate-bounce' : ''} />}
                 <span className="hidden sm:inline">
