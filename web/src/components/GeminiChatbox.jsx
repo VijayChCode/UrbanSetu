@@ -1547,6 +1547,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showImageLinkModal, setShowImageLinkModal] = useState(false);
     const [imageLinkInput, setImageLinkInput] = useState('');
     const [imageLinkUrls, setImageLinkUrls] = useState([]);
+    const [showVideoLinkModal, setShowVideoLinkModal] = useState(false);
+    const [videoLinkInput, setVideoLinkInput] = useState('');
     const [renameInput, setRenameInput] = useState('');
     const [refreshingBookmarks, setRefreshingBookmarks] = useState(false);
     const [initialSettingsSnapshot, setInitialSettingsSnapshot] = useState(null);
@@ -7426,8 +7428,145 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
+    const handleVideoLinkSubmit = async (e) => {
+        if (e) e.preventDefault();
 
+        if (!currentUser) {
+            toast.info('Please login to use video link');
+            return;
+        }
 
+        const url = videoLinkInput.trim();
+        if (!url) {
+            toast.error('Please enter a valid video URL');
+            return;
+        }
+
+        try {
+            new URL(url);
+        } catch (_) {
+            toast.error('Invalid URL format');
+            return;
+        }
+
+        // Check if a video is already attached
+        const existingVideo = pendingImages.find(p => p.type === 'video');
+        if (existingVideo) {
+            toast.error('Only 1 video per message is supported. Please remove the current video first.');
+            return;
+        }
+
+        setVideoLinkInput('');
+        setShowVideoLinkModal(false);
+
+        const tempId = Date.now() + Math.random();
+
+        // Add to pendingImages immediately as a video attachment
+        setPendingImages(prev => [...prev, {
+            id: tempId,
+            name: 'External Video',
+            type: 'video',
+            url: url,
+            uploading: false,
+            isExternal: true
+        }]);
+
+        toast.info('Processing video link...');
+
+        // Trigger audio extraction & transcription flow
+        (async () => {
+            try {
+                setIsOcrExtracting(prev => ({ ...prev, [tempId]: true }));
+
+                const video = document.createElement('video');
+                video.crossOrigin = 'anonymous';
+                video.preload = 'auto';
+                video.src = url;
+
+                const videoAudioBlob = await new Promise((resolve, reject) => {
+                    video.onloadeddata = () => {
+                        const maxDuration = Math.min(video.duration || 60, 60);
+                        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContextClass) {
+                            reject(new Error('AudioContext not supported'));
+                            return;
+                        }
+                        const audioContext = new AudioContextClass();
+                        const source = audioContext.createMediaElementSource(video);
+                        const destination = audioContext.createMediaStreamDestination();
+                        source.connect(destination);
+
+                        const mediaRecorder = new MediaRecorder(destination.stream, {
+                            mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : ''
+                        });
+
+                        const chunks = [];
+                        mediaRecorder.ondataavailable = (e) => {
+                            if (e.data.size > 0) chunks.push(e.data);
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            audioContext.close();
+                            const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                            resolve(blob);
+                        };
+
+                        mediaRecorder.onerror = (err) => {
+                            audioContext.close();
+                            reject(err);
+                        };
+
+                        video.onended = () => mediaRecorder.stop();
+                        setTimeout(() => {
+                            if (mediaRecorder.state === 'recording') {
+                                mediaRecorder.stop();
+                                video.pause();
+                            }
+                        }, maxDuration * 1000 + 500);
+
+                        mediaRecorder.start();
+                        video.play().catch(reject);
+                    };
+
+                    video.onerror = reject;
+                });
+
+                if (videoAudioBlob && videoAudioBlob.size > 1000) {
+                    const audioFormData = new FormData();
+                    audioFormData.append('audio', videoAudioBlob, 'video-audio.webm');
+
+                    const audioUploadRes = await authenticatedFetch(`${API_BASE_URL}/api/upload/audio`, {
+                        method: 'POST',
+                        body: audioFormData
+                    });
+
+                    if (audioUploadRes.ok) {
+                        const audioUploadData = await audioUploadRes.json();
+                        const audioFileUrl = audioUploadData.audioUrl;
+
+                        const transcribeResponse = await authenticatedFetch(`${API_BASE_URL}/api/speech-to-text/transcribe`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ audioUrl: audioFileUrl })
+                        });
+
+                        if (transcribeResponse.ok) {
+                            const transcribeData = await transcribeResponse.json();
+                            if (transcribeData.success && transcribeData.transcription) {
+                                setOcrResults(prev => ({ ...prev, [tempId]: transcribeData.transcription.trim() }));
+                                toast.success('🎬 Video speech transcribed!', { autoClose: 2000, toastId: `video-transcribe-done-${tempId}` });
+                            }
+                        }
+                    }
+                }
+            } catch (videoErr) {
+                console.warn('Video audio extraction skipped/failed for URL video:', videoErr);
+                toast.info('Video link attached. (Audio transcription unavailable for this link source)');
+            } finally {
+                setIsOcrExtracting(prev => ({ ...prev, [tempId]: false }));
+            }
+        })();
+    };
 
     // Helper functions for new settings
     const updateFontSize = (size) => {
@@ -11128,6 +11267,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
                                                                 isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
                                                             }`}>Ctrl+Shift+I</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (isBlockedByPolicy) {
+                                                                    toast.warning('Video analysis is disabled during your policy cooldown.');
+                                                                    return;
+                                                                }
+                                                                if (!currentUser) {
+                                                                    toast.info('Please login to use video link');
+                                                                    return;
+                                                                }
+                                                                setShowVideoLinkModal(true);
+                                                                setShowInputOptions(false);
+                                                            }}
+                                                            disabled={isBlockedByPolicy}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
+                                                                    <FaPlay size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Video Link</span>
+                                                            </div>
+                                                            <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
+                                                                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                            }`}>Ctrl+Shift+V</span>
                                                         </button>
 
                                                         <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
@@ -15854,6 +16020,85 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     type="submit"
                                     disabled={imageLinkUrls.length === 0 && !imageLinkInput.trim()}
                                     className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 ${(imageLinkUrls.length > 0 || imageLinkInput.trim())
+                                        ? `bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 active:scale-[0.98]`
+                                        : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
+                                        }`}
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Video Link Modal */}
+            {showVideoLinkModal && (
+                <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => { setShowVideoLinkModal(false); setVideoLinkInput(''); }}>
+                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl overflow-hidden border-2 transform transition-all scale-100 ${isDarkMode ? 'bg-gray-900 border-purple-900/50 text-white' : 'bg-white border-purple-100 text-gray-900'}`} onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'}`}>
+                                    <FaPlay size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Video URL</h3>
+                                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Add videos from the web</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleVideoLinkSubmit} className="space-y-4">
+                            <div>
+                                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    Add Video Address
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                    <div className="relative flex-1 group">
+                                        <input
+                                            type="text"
+                                            value={videoLinkInput}
+                                            onChange={(e) => setVideoLinkInput(e.target.value)}
+                                            placeholder="https://example.com/video.mp4"
+                                            className={`w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 ${isDarkMode
+                                                ? 'bg-gray-800 border-gray-700 text-white focus:border-purple-500/50 placeholder-gray-500'
+                                                : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-purple-400/50 placeholder-gray-400'
+                                                }`}
+                                            autoFocus
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                                            <FaPlay size={16} className={isDarkMode ? 'text-purple-400' : 'text-purple-500'} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    Tip: You can add 1 video URL per message. Type a URL and click "Add".
+                                </p>
+                            </div>
+
+                            <div className={`p-4 rounded-xl border border-dashed flex items-center gap-3 ${isDarkMode ? 'bg-purple-900/10 border-purple-800/50' : 'bg-purple-50/50 border-purple-200'}`}>
+                                <div className="p-2 bg-purple-500 rounded-lg text-white animate-pulse">
+                                    <FaShieldAlt size={16} />
+                                </div>
+                                <div className="flex-1">
+                                    <div className={`text-[11px] font-bold uppercase ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>Sentinel AI Protection</div>
+                                    <div className={`text-[10px] ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>External videos are processed by AI and transcribed on the server.</div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowVideoLinkModal(false); setVideoLinkInput(''); }}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!videoLinkInput.trim()}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-500/25 ${videoLinkInput.trim()
                                         ? `bg-gradient-to-r ${themeColors.primary} text-white hover:opacity-90 active:scale-[0.98]`
                                         : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
                                         }`}
