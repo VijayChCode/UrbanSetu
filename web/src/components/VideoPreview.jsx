@@ -2270,7 +2270,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                 }}
                 className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-blue-600/30 active:scale-95 flex items-center gap-2"
               >
-                <FaRedo size={12} /> Retry Loading
+                <FaRedo size={12} /> Retry
               </button>
               <button
                 onClick={handleCloseRequest}
