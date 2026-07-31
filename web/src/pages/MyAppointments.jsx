@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt, FaPlus, FaShieldAlt } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -11650,155 +11650,310 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 </div>
               )}
 
-              {/* Image URL Modal */}
+              {/* Image URL Modal - Premium Glassmorphism Design matching GeminiChatbox */}
               {showImageUrlModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fadeIn">
-                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-2xl max-w-lg w-full">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <span>🖼️</span> Add Image Link (Max 10)
-                      </h3>
+                <div
+                  className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn"
+                  onClick={() => {
+                    setShowImageUrlModal(false);
+                    setImageUrlInput('');
+                    setImageUrlList([]);
+                  }}
+                >
+                  <div
+                    className="w-full max-w-md p-6 rounded-2xl shadow-2xl overflow-hidden border-2 transform transition-all scale-100 dark:bg-gray-900/95 dark:border-indigo-900/50 dark:text-white bg-white/95 border-indigo-100 text-gray-900 backdrop-blur-xl"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-500 dark:text-indigo-400">
+                          <FaLink size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold">Image URL</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Add images from the web (Max 10)</p>
+                        </div>
+                      </div>
                       <button
                         onClick={() => {
                           setShowImageUrlModal(false);
                           setImageUrlInput('');
                           setImageUrlList([]);
                         }}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full p-1.5 transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
                       >
-                        <FaTimes className="w-5 h-5" />
+                        <FaTimes size={16} />
                       </button>
                     </div>
 
-                    <div className="space-y-3 mb-4">
-                      <div className="flex gap-2">
-                        <input
-                          type="url"
-                          placeholder="Paste image URL..."
-                          value={imageUrlInput}
-                          onChange={(e) => setImageUrlInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddImageUrl();
-                            }
-                          }}
-                          className="flex-1 px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                        />
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
+                          Add Image Address
+                        </label>
+                        <div className="flex gap-2 items-center">
+                          <div className="relative flex-1 group">
+                            <input
+                              type="url"
+                              value={imageUrlInput}
+                              onChange={(e) => setImageUrlInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddImageUrl();
+                                }
+                              }}
+                              placeholder="https://example.com/image.jpg"
+                              className="w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-400/50 placeholder-gray-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:border-indigo-500/50 dark:placeholder-gray-500"
+                              autoFocus
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                              <FaImage size={18} className="text-indigo-500 dark:text-indigo-400" />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleAddImageUrl}
+                            disabled={!imageUrlInput.trim() || imageUrlList.length >= 10}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-md ${imageUrlInput.trim() && imageUrlList.length < 10
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 active:scale-95 shadow-indigo-500/20'
+                              : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-300 dark:border-gray-700'
+                              }`}
+                            title="Add URL to list"
+                          >
+                            <FaPlus size={16} />
+                          </button>
+                        </div>
+
+                        {/* URL Image Preview List (3 column grid) */}
+                        {imageUrlList.length > 0 && (
+                          <div className="mt-4 animate-fadeIn max-h-48 overflow-y-auto pr-1">
+                            <div className="p-2.5 rounded-xl border-2 transition-all duration-300 bg-gray-50 border-indigo-100 dark:bg-gray-800/50 dark:border-gray-700">
+                              <div className="grid grid-cols-3 gap-2">
+                                {imageUrlList.map((url, idx) => (
+                                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group/preview bg-black/5 border border-gray-200 dark:border-gray-700">
+                                    <img
+                                      src={url}
+                                      alt={`Preview ${idx + 1}`}
+                                      className="w-full h-full object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                                      onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                                      }}
+                                      onLoad={(e) => {
+                                        e.target.style.display = 'block';
+                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'none';
+                                      }}
+                                    />
+                                    <div className="hidden absolute inset-0 flex-col items-center justify-center text-gray-400 text-center p-1">
+                                      <FaImage size={16} className="opacity-20 mb-0.5" />
+                                      <span className="text-[8px] font-medium opacity-50 leading-none">Error</span>
+                                    </div>
+                                    
+                                    {/* Delete Overlay */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setImageUrlList(prev => prev.filter((_, i) => i !== idx));
+                                      }}
+                                      className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-700 transition-colors"
+                                      title="Remove image"
+                                    >
+                                      <FaTimes size={10} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <p className="mt-2 text-[10px] leading-relaxed italic text-gray-400 dark:text-gray-500">
+                          Tip: You can add up to 10 image URLs per batch. Paste a URL and click "+" to add it.
+                        </p>
+                      </div>
+
+                      {/* Protection Info Box */}
+                      <div className="p-4 rounded-xl border border-dashed flex items-center gap-3 bg-indigo-50/50 border-indigo-200 dark:bg-indigo-900/10 dark:border-indigo-800/50">
+                        <div className="p-2 bg-indigo-500 rounded-lg text-white animate-pulse">
+                          <FaShieldAlt size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-[11px] font-bold uppercase text-indigo-600 dark:text-indigo-300">Sentinel Protection</div>
+                          <div className="text-[10px] text-gray-500 dark:text-gray-400">External images are validated and safely embedded in the chat.</div>
+                        </div>
+                      </div>
+
+                      {/* Actions Footer */}
+                      <div className="flex gap-3 pt-2">
                         <button
                           type="button"
-                          onClick={handleAddImageUrl}
-                          disabled={!imageUrlInput.trim() || imageUrlList.length >= 10}
-                          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95"
+                          onClick={() => {
+                            setShowImageUrlModal(false);
+                            setImageUrlInput('');
+                            setImageUrlList([]);
+                          }}
+                          className="flex-1 py-3 rounded-xl font-bold text-sm transition-all bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300"
                         >
-                          Add
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDoneImageUrls}
+                          disabled={imageUrlList.length === 0 && !imageUrlInput.trim()}
+                          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 ${imageUrlList.length > 0 || imageUrlInput.trim()
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 active:scale-[0.98]'
+                            : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
+                            }`}
+                        >
+                          Preview ({imageUrlList.length + (imageUrlInput.trim() ? 1 : 0)})
                         </button>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Tip: Paste a URL and click "+" to add it to your batch (up to 10 image links).
-                      </p>
-
-                      {/* Added URLs List */}
-                      {imageUrlList.length > 0 && (
-                        <div className="max-h-40 overflow-y-auto space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                          {imageUrlList.map((url, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg text-xs">
-                              <span className="truncate flex-1 mr-2 text-gray-700 dark:text-gray-300 font-mono">{url}</span>
-                              <button
-                                type="button"
-                                onClick={() => setImageUrlList(prev => prev.filter((_, i) => i !== idx))}
-                                className="text-red-500 hover:text-red-700 p-1 transition-colors"
-                              >
-                                <FaTimes size={12} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowImageUrlModal(false);
-                          setImageUrlInput('');
-                          setImageUrlList([]);
-                        }}
-                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDoneImageUrls}
-                        disabled={imageUrlList.length === 0 && !imageUrlInput.trim()}
-                        className="px-5 py-2 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 transition-all shadow-md active:scale-95"
-                      >
-                        Preview ({imageUrlList.length + (imageUrlInput.trim() ? 1 : 0)})
-                      </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Video URL Modal */}
+              {/* Video URL Modal - Premium Glassmorphism Design matching GeminiChatbox */}
               {showVideoUrlModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fadeIn">
-                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-2xl max-w-lg w-full">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                        <span>🎥</span> Add Video Link
-                      </h3>
+                <div
+                  className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn"
+                  onClick={() => {
+                    setShowVideoUrlModal(false);
+                    setVideoUrlInput('');
+                  }}
+                >
+                  <div
+                    className="w-full max-w-md p-6 rounded-2xl shadow-2xl overflow-hidden border-2 transform transition-all scale-100 dark:bg-gray-900/95 dark:border-purple-900/50 dark:text-white bg-white/95 border-purple-100 text-gray-900 backdrop-blur-xl"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-500 dark:text-purple-400">
+                          <FaPlay size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold">Video URL</h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Add video link from the web</p>
+                        </div>
+                      </div>
                       <button
                         onClick={() => {
                           setShowVideoUrlModal(false);
                           setVideoUrlInput('');
                         }}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full p-1.5 transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full transition-colors"
                       >
-                        <FaTimes className="w-5 h-5" />
+                        <FaTimes size={16} />
                       </button>
                     </div>
 
-                    <div className="space-y-3 mb-4">
-                      <input
-                        type="url"
-                        placeholder="Paste video URL..."
-                        value={videoUrlInput}
-                        onChange={(e) => setVideoUrlInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddVideoUrl();
-                          }
-                        }}
-                        className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                      />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Tip: Paste a URL and click "Add" to preview and caption your video link.
-                      </p>
-                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
+                          Add Video Address
+                        </label>
+                        <div className="flex gap-2 items-center">
+                          <div className="relative flex-1 group">
+                            <input
+                              type="url"
+                              value={videoUrlInput}
+                              onChange={(e) => setVideoUrlInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddVideoUrl();
+                                }
+                              }}
+                              placeholder="https://example.com/video.mp4"
+                              className="w-full pl-4 pr-12 py-3 rounded-xl border-2 focus:outline-none transition-all duration-300 bg-gray-50 border-gray-200 text-gray-900 focus:border-purple-400/50 placeholder-gray-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:focus:border-purple-500/50 dark:placeholder-gray-500"
+                              autoFocus
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                              <FaPlay size={16} className="text-purple-500 dark:text-purple-400" />
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowVideoUrlModal(false);
-                          setVideoUrlInput('');
-                        }}
-                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddVideoUrl}
-                        disabled={!videoUrlInput.trim()}
-                        className="px-5 py-2 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 transition-all shadow-md active:scale-95"
-                      >
-                        Add & Preview
-                      </button>
+                        <p className="mt-2 text-[10px] leading-relaxed italic text-gray-400 dark:text-gray-500">
+                          Tip: You can add 1 video URL per message. Paste a URL and click "Add & Preview".
+                        </p>
+
+                        {/* Interactive Video Preview Box */}
+                        {videoUrlInput.trim() && (
+                          <div className="mt-3 animate-fadeIn">
+                            <label className="block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-purple-600 dark:text-purple-400">
+                              Video Preview
+                            </label>
+                            <div
+                              className="group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-[1.01] bg-purple-50/80 border-purple-200 hover:border-purple-400 shadow-md shadow-purple-500/10 dark:bg-gray-800/90 dark:border-purple-500/50 dark:hover:border-purple-400 dark:shadow-purple-950/40"
+                            >
+                              <div className="relative w-full h-36 bg-black flex items-center justify-center overflow-hidden">
+                                <video
+                                  src={videoUrlInput.trim()}
+                                  className="w-full h-full object-cover opacity-75 group-hover:opacity-95 transition-opacity duration-300"
+                                  preload="metadata"
+                                  muted
+                                  playsInline
+                                />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/25 transition-all">
+                                  <div className="w-11 h-11 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-purple-500 transition-all">
+                                    <FaPlay size={16} className="ml-0.5" />
+                                  </div>
+                                  <span className="text-[11px] font-bold text-white mt-1.5 drop-shadow-md">
+                                    Video Ready
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="p-2 flex items-center justify-between gap-2">
+                                <span className="text-xs font-mono truncate flex-1 text-gray-700 dark:text-gray-300">
+                                  {videoUrlInput.trim()}
+                                </span>
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 uppercase tracking-wider flex-shrink-0">
+                                  Direct Link
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Protection Info Box */}
+                      <div className="p-4 rounded-xl border border-dashed flex items-center gap-3 bg-purple-50/50 border-purple-200 dark:bg-purple-900/10 dark:border-purple-800/50">
+                        <div className="p-2 bg-purple-500 rounded-lg text-white animate-pulse">
+                          <FaShieldAlt size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-[11px] font-bold uppercase text-purple-600 dark:text-purple-300">Sentinel Protection</div>
+                          <div className="text-[10px] text-gray-500 dark:text-gray-400">External videos are validated and processed smoothly in chat.</div>
+                        </div>
+                      </div>
+
+                      {/* Actions Footer */}
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowVideoUrlModal(false);
+                            setVideoUrlInput('');
+                          }}
+                          className="flex-1 py-3 rounded-xl font-bold text-sm transition-all bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleAddVideoUrl}
+                          disabled={!videoUrlInput.trim()}
+                          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-500/25 ${videoUrlInput.trim()
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90 active:scale-[0.98]'
+                            : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
+                            }`}
+                        >
+                          Add & Preview
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
