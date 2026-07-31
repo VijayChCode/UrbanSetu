@@ -11741,7 +11741,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             <div className="p-2.5 rounded-xl border-2 transition-all duration-300 bg-gray-50 border-indigo-100 dark:bg-gray-800/50 dark:border-gray-700">
                               <div className="grid grid-cols-3 gap-2">
                                 {imageUrlList.map((url, idx) => (
-                                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group/preview bg-black/5 border border-gray-200 dark:border-gray-700">
+                                  <div
+                                    key={idx}
+                                    className="relative aspect-square rounded-lg overflow-hidden group/preview bg-black/5 border border-gray-200 dark:border-gray-700 cursor-pointer"
+                                    onClick={() => {
+                                      setPreviewImages(imageUrlList);
+                                      setPreviewIndex(idx);
+                                      setShowImagePreview(true);
+                                    }}
+                                    title="Click to view full image"
+                                  >
                                     <img
                                       src={url}
                                       alt={`Preview ${idx + 1}`}
@@ -11890,6 +11899,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             </label>
                             <div
                               className="group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-[1.01] bg-purple-50/80 border-purple-200 hover:border-purple-400 shadow-md shadow-purple-500/10 dark:bg-gray-800/90 dark:border-purple-500/50 dark:hover:border-purple-400 dark:shadow-purple-950/40"
+                              onClick={handleAddVideoUrl}
+                              title="Click to preview video player"
                             >
                               <div className="relative w-full h-36 bg-black flex items-center justify-center overflow-hidden">
                                 <video
