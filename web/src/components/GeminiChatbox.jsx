@@ -4511,6 +4511,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 return;
             }
 
+            // Check if audio, video or document transcription/text extraction is still in progress
+            const stillExtracting = pendingImages.find(img => isOcrExtracting[img.id] === true);
+            if (stillExtracting) {
+                const label = stillExtracting.type === 'video' ? 'video transcription' : stillExtracting.type === 'audio' ? 'audio transcription' : 'text extraction';
+                toast.warning(`⏳ Please wait — ${label} is in progress. Almost done!`, { autoClose: 4000, toastId: 'ocr-extract-wait' });
+                return;
+            }
+
             // Block images that Sentinel has rejected (e.g. nudity, violence)
             const rejectedImage = pendingImages.find(img => {
                 const audit = auditResults[`chat_${img.id}`];
