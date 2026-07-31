@@ -20,6 +20,7 @@ import ChatSettingsModal from '../components/ChatSettingsModal';
 import { useChatSettings } from '../hooks/useChatSettings';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import ImagePreview from '../components/ImagePreview';
+import CameraCaptureModal from '../components/CameraCaptureModal';
 import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble.jsx';
 import ImageMessageBubble from '../components/ImageMessageBubble';
 import LinkPreview from '../components/LinkPreview';
@@ -3039,6 +3040,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Camera modal state - moved to AppointmentRow component
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideoPreviewModal, setShowVideoPreviewModal] = useState(false);
+  const [showCameraCaptureModal, setShowCameraCaptureModal] = useState(false);
   const [isSendingUrlImages, setIsSendingUrlImages] = useState(false);
   const [isSendingUrlVideo, setIsSendingUrlVideo] = useState(false);
   const [showImageUrlModal, setShowImageUrlModal] = useState(false);
@@ -11085,26 +11087,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </svg>
                           Image URL
                         </button>
-                        {/* Camera - Simple file input approach */}
-                        <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                        {/* Camera - Opens custom live camera capture modal */}
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                          onClick={() => {
+                            setShowCameraCaptureModal(true);
+                            setShowAttachmentPanel(false);
+                          }}
+                        >
                           <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h2l1-2h6l1 2h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
                           </svg>
                           Camera
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                handleFileUpload([e.target.files[0]]);
-                              }
-                              e.target.value = '';
-                              setShowAttachmentPanel(false);
-                            }}
-                          />
-                        </label>
+                        </button>
                         <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                           <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -11521,6 +11517,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   </div>
                 </div>
               )}
+
+              {/* Live Camera Capture Modal */}
+              <CameraCaptureModal
+                isOpen={showCameraCaptureModal}
+                onClose={() => setShowCameraCaptureModal(false)}
+                onCapture={(photoFile) => {
+                  handleImageFiles([photoFile]);
+                }}
+              />
 
               {/* Video Preview Modal */}
               {showVideoPreviewModal && selectedVideo && (
