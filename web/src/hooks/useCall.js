@@ -1685,7 +1685,7 @@ export const useCall = () => {
       console.error('Error initiating call:', error);
       setCallState(null);
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        toast.error('Microphone/camera permission denied. Please allow access in your browser settings.');
+        error.isPermissionDenied = true;
       } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
         toast.error('No microphone/camera found. Please connect a device.');
       } else {

@@ -21,6 +21,7 @@ import { useChatSettings } from '../hooks/useChatSettings';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import ImagePreview from '../components/ImagePreview';
 import CameraCaptureModal from '../components/CameraCaptureModal';
+import MediaPermissionModal from '../components/MediaPermissionModal';
 import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble.jsx';
 import ImageMessageBubble from '../components/ImageMessageBubble';
 import LinkPreview from '../components/LinkPreview';
@@ -181,6 +182,10 @@ export default function MyAppointments() {
   const themeColors = useMemo(() => getThemeColors(settings.themeColor || 'blue'), [settings.themeColor]);
   const isDarkMode = settings.theme === 'dark';
 
+  // Media permission modal state
+  const [showMediaPermissionModal, setShowMediaPermissionModal] = useState(false);
+  const [mediaPermissionType, setMediaPermissionType] = useState('video');
+
   // Handle initiate call
   const handleInitiateCall = async (appointment, callType, receiverId) => {
     if (!appointment || !appointment._id) {
@@ -192,7 +197,19 @@ export default function MyAppointments() {
       await initiateCall(appointment._id, receiverId, callType);
     } catch (error) {
       console.error('Error initiating call:', error);
-      // Error is already handled in useCall hook
+      if (
+        error?.name === 'NotAllowedError' ||
+        error?.name === 'PermissionDeniedError' ||
+        error?.isPermissionDenied ||
+        (error?.message && (
+          error.message.toLowerCase().includes('permission') ||
+          error.message.toLowerCase().includes('forbidden') ||
+          error.message.toLowerCase().includes('denied')
+        ))
+      ) {
+        setMediaPermissionType(callType === 'video' ? 'video' : 'audio');
+        setShowMediaPermissionModal(true);
+      }
     }
   };
 
@@ -11525,6 +11542,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 onCapture={(photoFile) => {
                   handleImageFiles([photoFile]);
                 }}
+              />
+
+              {/* WhatsApp Web-style Call Media Permission Dialog Modal */}
+              <MediaPermissionModal
+                isOpen={showMediaPermissionModal}
+                onClose={() => setShowMediaPermissionModal(false)}
+                permissionType={mediaPermissionType}
               />
 
               {/* Video Preview Modal */}
