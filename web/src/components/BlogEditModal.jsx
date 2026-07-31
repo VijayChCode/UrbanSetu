@@ -750,12 +750,16 @@ const BlogEditModal = ({
             type="submit"
             form="blog-form"
             disabled={submitting}
-            className="flex-1 sm:flex-none px-12 py-4 bg-blue-600 dark:bg-blue-500 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/30 active:scale-95 tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className={`flex-1 sm:flex-none px-10 py-4 ${
+              formData.published
+                ? 'bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 shadow-blue-500/30'
+                : 'bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-600 shadow-emerald-500/30'
+            } text-white rounded-2xl font-black transition-all shadow-xl active:scale-95 tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
           >
             {submitting && <UrbanSetuSpinner size="sm" isBright={true} />}
-            {submitting 
-              ? (isEdit ? 'Updating...' : 'Launching...') 
-              : (isEdit ? 'Update Details' : `Launch ${contentLabel}`)}
+            {submitting
+              ? (formData.published ? (isEdit ? 'Updating & Launching...' : 'Launching...') : (isEdit ? 'Saving...' : 'Saving...'))
+              : (formData.published ? (isEdit ? `Update & Launch ${contentLabel}` : `Launch ${contentLabel}`) : `Save ${contentLabel}`)}
           </button>
         </div>
 
