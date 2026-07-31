@@ -3039,6 +3039,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Camera modal state - moved to AppointmentRow component
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideoPreviewModal, setShowVideoPreviewModal] = useState(false);
+  const [showImageUrlModal, setShowImageUrlModal] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [imageUrlList, setImageUrlList] = useState([]);
+  const [showVideoUrlModal, setShowVideoUrlModal] = useState(false);
+  const [videoUrlInput, setVideoUrlInput] = useState('');
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [showDocumentPreviewModal, setShowDocumentPreviewModal] = useState(false);
   const [videoCaption, setVideoCaption] = useState('');
@@ -3118,12 +3123,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Manage video object URL to prevent reloading on each keystroke
   useEffect(() => {
     if (selectedVideo) {
-      const url = URL.createObjectURL(selectedVideo);
-      setVideoObjectURL(url);
-      return () => {
-        URL.revokeObjectURL(url);
-        setVideoObjectURL(null);
-      };
+      if (typeof selectedVideo === 'string') {
+        setVideoObjectURL(selectedVideo);
+      } else {
+        const url = URL.createObjectURL(selectedVideo);
+        setVideoObjectURL(url);
+        return () => {
+          URL.revokeObjectURL(url);
+          setVideoObjectURL(null);
+        };
+      }
     } else {
       setVideoObjectURL(null);
     }
@@ -3673,6 +3682,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const handleSendSelectedVideo = async () => {
     if (!selectedVideo) return;
+    if (typeof selectedVideo === 'string') {
+      try {
+        const fileName = selectedVideo.split('/').pop()?.split('?')[0] || 'Video';
+        await sendVideoMessage(selectedVideo, fileName, videoCaption);
+        setSelectedVideo(null);
+        setShowVideoPreviewModal(false);
+        setVideoCaption('');
+      } catch (e) {
+        toast.error('Failed to send video link');
+      }
+      return;
+    }
     try {
       setUploadingFile(true);
       const form = new FormData();
@@ -3891,12 +3912,72 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     toast.success(`${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added successfully!`);
   };
 
+  const handleAddImageUrl = () => {
+    const url = imageUrlInput.trim();
+    if (!url) return;
+    if (imageUrlList.length >= 10) {
+      toast.error('Maximum 10 image URLs allowed.');
+      return;
+    }
+    setImageUrlList(prev => [...prev, url]);
+    setImageUrlInput('');
+  };
+
+  const handleDoneImageUrls = () => {
+    let finalUrls = [...imageUrlList];
+    if (imageUrlInput.trim()) {
+      if (finalUrls.length < 10) {
+        finalUrls.push(imageUrlInput.trim());
+      }
+    }
+    if (finalUrls.length === 0) return;
+
+    setSelectedFiles(finalUrls);
+    const captions = {};
+    finalUrls.forEach((url, i) => {
+      const name = url.split('/').pop()?.split('?')[0] || `Image ${i + 1}`;
+      captions[name] = '';
+    });
+    setImageCaptions(captions);
+    setShowImageUrlModal(false);
+    setImageUrlInput('');
+    setImageUrlList([]);
+    setShowImagePreviewModal(true);
+  };
+
+  const handleAddVideoUrl = () => {
+    const url = videoUrlInput.trim();
+    if (!url) return;
+    setSelectedVideo(url);
+    setShowVideoUrlModal(false);
+    setVideoUrlInput('');
+    setShowVideoPreviewModal(true);
+  };
+
   const handleSendImagesWithCaptions = async () => {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
     // Check if chat sending is blocked for this appointment status
     if (isChatSendBlocked) {
       toast.info('Image sending disabled for this appointment status. You can view chat history.');
+      return;
+    }
+
+    if (typeof selectedFiles[0] === 'string') {
+      try {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const url = selectedFiles[i];
+          const fileName = url.split('/').pop()?.split('?')[0] || `Image ${i + 1}`;
+          const caption = imageCaptions[fileName] || imageCaptions[url] || '';
+          await sendImageMessage(url, fileName, caption);
+        }
+        setSelectedFiles([]);
+        setImageCaptions({});
+        setPreviewIndex(0);
+        setShowImagePreviewModal(false);
+      } catch (e) {
+        toast.error('Failed to send image links');
+      }
       return;
     }
 
@@ -10963,6 +11044,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             }}
                           />
                         </label>
+                        {/* Image URL */}
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                          onClick={() => {
+                            setShowImageUrlModal(true);
+                            setShowAttachmentPanel(false);
+                          }}
+                        >
+                          <svg className="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          Image URL
+                        </button>
                         {/* Camera - Simple file input approach */}
                         <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                           <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11008,6 +11103,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             }}
                           />
                         </label>
+                        {/* Video URL */}
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                          onClick={() => {
+                            setShowVideoUrlModal(true);
+                            setShowAttachmentPanel(false);
+                          }}
+                        >
+                          <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          Video URL
+                        </button>
                         <label className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                           <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -11171,7 +11280,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       {/* Current Image */}
                       <div className="mb-3">
                         <img
-                          src={URL.createObjectURL(selectedFiles[previewIndex])}
+                          src={typeof selectedFiles[previewIndex] === 'string' ? selectedFiles[previewIndex] : URL.createObjectURL(selectedFiles[previewIndex])}
                           alt={`Preview ${previewIndex + 1}`}
                           className="w-full h-64 object-contain rounded-lg border"
                         />
@@ -11184,7 +11293,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                       {/* Image Thumbnails */}
                       <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2 min-w-0 max-w-full" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db #f3f4f6' }}>
-                        {selectedFiles.map((file, index) => (
+                        {selectedFiles.map((file, index) => {
+                          const fileKey = typeof file === 'string' ? (file.split('/').pop()?.split('?')[0] || `Image ${index + 1}`) : file.name;
+                          return (
                           <div key={index} className="relative">
                             <button
                               onClick={() => setPreviewIndex(index)}
@@ -11194,7 +11305,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 }`}
                             >
                               <img
-                                src={URL.createObjectURL(file)}
+                                src={typeof file === 'string' ? file : URL.createObjectURL(file)}
                                 alt={`Thumbnail ${index + 1}`}
                                 className="w-full h-full object-cover rounded-lg"
                               />
@@ -11207,7 +11318,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   const newFiles = selectedFiles.filter((_, fileIndex) => fileIndex !== index);
                                   const newCaptions = { ...imageCaptions };
                                   // Remove caption for deleted image
-                                  delete newCaptions[file.name];
+                                  delete newCaptions[fileKey];
 
                                   if (newFiles.length === 0) {
                                     // If no images left, close modal
@@ -11235,7 +11346,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               </button>
                             )}
                           </div>
-                        ))}
+                        );})}
 
                         {/* Add More Images Button - Only show when less than 10 images */}
                         {selectedFiles.length < 10 && (
@@ -11278,42 +11389,46 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     </div>
 
                     {/* Caption for Current Image */}
-                    <div className="relative mb-4">
-                      <textarea
-                        placeholder={`Add a caption for ${selectedFiles[previewIndex]?.name}...`}
-                        value={imageCaptions[selectedFiles[previewIndex]?.name] || ''}
-                        onChange={(e) => setImageCaptions(prev => ({
-                          ...prev,
-                          [selectedFiles[previewIndex]?.name]: e.target.value
-                        }))}
-                        className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                        rows={3}
-                        maxLength={500}
-                      />
-                      {/* Emoji Picker for Caption */}
-                      <div className="absolute right-2 top-2">
-                        <EmojiButton
-                          onEmojiClick={(emoji) => {
-                            // Check if chat sending is blocked for this appointment status
-                            if (isChatSendBlocked) {
-                              toast.info('Emoji sending disabled for this appointment status. You can view chat history.');
-                              return;
-                            }
-
-                            const currentCaption = imageCaptions[selectedFiles[previewIndex]?.name] || '';
-                            setImageCaptions(prev => ({
-                              ...prev,
-                              [selectedFiles[previewIndex]?.name]: currentCaption + emoji
-                            }));
-                          }}
-                          className="w-6 h-6"
-                          disabled={isChatSendBlocked}
+                    {(() => {
+                      const curKey = typeof selectedFiles[previewIndex] === 'string' ? (selectedFiles[previewIndex].split('/').pop()?.split('?')[0] || `Image ${previewIndex + 1}`) : selectedFiles[previewIndex]?.name;
+                      return (
+                      <div className="relative mb-4">
+                        <textarea
+                          placeholder={`Add a caption for ${curKey}...`}
+                          value={imageCaptions[curKey] || ''}
+                          onChange={(e) => setImageCaptions(prev => ({
+                            ...prev,
+                            [curKey]: e.target.value
+                          }))}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                          rows={3}
+                          maxLength={500}
                         />
+                        {/* Emoji Picker for Caption */}
+                        <div className="absolute right-2 top-2">
+                          <EmojiButton
+                            onEmojiClick={(emoji) => {
+                              // Check if chat sending is blocked for this appointment status
+                              if (isChatSendBlocked) {
+                                toast.info('Emoji sending disabled for this appointment status. You can view chat history.');
+                                return;
+                              }
+
+                              const currentCaption = imageCaptions[curKey] || '';
+                              setImageCaptions(prev => ({
+                                ...prev,
+                                [curKey]: currentCaption + emoji
+                              }));
+                            }}
+                            className="w-6 h-6"
+                            disabled={isChatSendBlocked}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 text-right">
+                          {(imageCaptions[curKey] || '').length}/500
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1 text-right">
-                        {(imageCaptions[selectedFiles[previewIndex]?.name] || '').length}/500
-                      </div>
-                    </div>
+                    );})()}
 
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -11395,7 +11510,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       <div className="relative">
                         <textarea
                           ref={videoCaptionRef}
-                          placeholder={`Add a caption for ${selectedVideo.name}...`}
+                          placeholder={`Add a caption for ${typeof selectedVideo === 'string' ? (selectedVideo.split('/').pop()?.split('?')[0] || 'Video') : selectedVideo.name}...`}
                           value={videoCaption}
                           onChange={(e) => setVideoCaption(e.target.value)}
                           className="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
@@ -11427,7 +11542,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-600 dark:text-gray-300 truncate flex-1 mr-4">{selectedVideo.name}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300 truncate flex-1 mr-4">
+                        {typeof selectedVideo === 'string' ? (selectedVideo.split('/').pop()?.split('?')[0] || 'Video') : selectedVideo.name}
+                      </div>
                       <div className="flex gap-2 flex-shrink-0">
                         {uploadingFile ? (
                           <>
@@ -11529,6 +11646,160 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">{uploadProgress}%</div>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* Image URL Modal */}
+              {showImageUrlModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fadeIn">
+                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-2xl max-w-lg w-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <span>🖼️</span> Add Image Link (Max 10)
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setShowImageUrlModal(false);
+                          setImageUrlInput('');
+                          setImageUrlList([]);
+                        }}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full p-1.5 transition-colors"
+                      >
+                        <FaTimes className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          placeholder="Paste image URL..."
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddImageUrl();
+                            }
+                          }}
+                          className="flex-1 px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddImageUrl}
+                          disabled={!imageUrlInput.trim() || imageUrlList.length >= 10}
+                          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95"
+                        >
+                          Add
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Tip: Paste a URL and click "+" to add it to your batch (up to 10 image links).
+                      </p>
+
+                      {/* Added URLs List */}
+                      {imageUrlList.length > 0 && (
+                        <div className="max-h-40 overflow-y-auto space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          {imageUrlList.map((url, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg text-xs">
+                              <span className="truncate flex-1 mr-2 text-gray-700 dark:text-gray-300 font-mono">{url}</span>
+                              <button
+                                type="button"
+                                onClick={() => setImageUrlList(prev => prev.filter((_, i) => i !== idx))}
+                                className="text-red-500 hover:text-red-700 p-1 transition-colors"
+                              >
+                                <FaTimes size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowImageUrlModal(false);
+                          setImageUrlInput('');
+                          setImageUrlList([]);
+                        }}
+                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDoneImageUrls}
+                        disabled={imageUrlList.length === 0 && !imageUrlInput.trim()}
+                        className="px-5 py-2 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 transition-all shadow-md active:scale-95"
+                      >
+                        Preview ({imageUrlList.length + (imageUrlInput.trim() ? 1 : 0)})
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Video URL Modal */}
+              {showVideoUrlModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fadeIn">
+                  <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-5 shadow-2xl max-w-lg w-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <span>🎥</span> Add Video Link
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setShowVideoUrlModal(false);
+                          setVideoUrlInput('');
+                        }}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full p-1.5 transition-colors"
+                      >
+                        <FaTimes className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                      <input
+                        type="url"
+                        placeholder="Paste video URL..."
+                        value={videoUrlInput}
+                        onChange={(e) => setVideoUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddVideoUrl();
+                          }
+                        }}
+                        className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Tip: Paste a URL and click "Add" to preview and caption your video link.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowVideoUrlModal(false);
+                          setVideoUrlInput('');
+                        }}
+                        className="px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddVideoUrl}
+                        disabled={!videoUrlInput.trim()}
+                        className="px-5 py-2 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 transition-all shadow-md active:scale-95"
+                      >
+                        Add & Preview
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
