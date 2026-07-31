@@ -62,7 +62,6 @@ const ImageMessageBubble = ({ imageUrl, alt = "Shared image", onClick }) => {
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 text-gray-400 p-4 text-center">
                         <FaImage className="text-2xl mb-1 text-gray-500 opacity-60" />
                         <span className="text-[11px] text-gray-400/80 font-medium">Image Preview Unavailable</span>
-                        <span className="text-[9px] text-gray-500 mt-0.5">Will load when online</span>
                     </div>
                 )}
 

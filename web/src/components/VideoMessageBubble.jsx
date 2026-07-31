@@ -100,6 +100,14 @@ const VideoMessageBubble = ({ videoUrl, onClick }) => {
                     </div>
                 )}
 
+                {/* Error State */}
+                {hasError && !isLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 text-gray-400 p-4 text-center z-10">
+                        <FaVideo className="text-2xl mb-1 text-gray-500 opacity-60" />
+                        <span className="text-[11px] text-gray-400/80 font-medium">Video Preview Unavailable</span>
+                    </div>
+                )}
+
                 {/* Poster Image (Fast Cloudinary Thumbnail Image) */}
                 {currentPoster && (
                     <img
