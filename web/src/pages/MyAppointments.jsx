@@ -3909,8 +3909,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     // Show image preview modal
     setShowImagePreviewModal(true);
 
-    toast.success(`${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''} added successfully!`);
   };
+  const imageUrlInputRef = useRef(null);
+  const videoUrlInputRef = useRef(null);
+
+  useEffect(() => {
+    if (showImageUrlModal) {
+      const timer = setTimeout(() => {
+        imageUrlInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showImageUrlModal]);
+
+  useEffect(() => {
+    if (showVideoUrlModal) {
+      const timer = setTimeout(() => {
+        videoUrlInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showVideoUrlModal]);
 
   const handleAddImageUrl = () => {
     const url = imageUrlInput.trim();
@@ -11694,6 +11713,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <div className="flex gap-2 items-center">
                           <div className="relative flex-1 group">
                             <input
+                              ref={imageUrlInputRef}
                               type="url"
                               value={imageUrlInput}
                               onChange={(e) => setImageUrlInput(e.target.value)}
@@ -11857,6 +11877,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <div className="flex gap-2 items-center">
                           <div className="relative flex-1 group">
                             <input
+                              ref={videoUrlInputRef}
                               type="url"
                               value={videoUrlInput}
                               onChange={(e) => setVideoUrlInput(e.target.value)}
