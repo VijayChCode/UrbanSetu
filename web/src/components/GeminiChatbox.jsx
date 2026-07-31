@@ -1549,6 +1549,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [imageLinkUrls, setImageLinkUrls] = useState([]);
     const [showVideoLinkModal, setShowVideoLinkModal] = useState(false);
     const [videoLinkInput, setVideoLinkInput] = useState('');
+    const [isVideoPreviewOpen, setIsVideoPreviewOpen] = useState(false);
+    const [previewVideos, setPreviewVideos] = useState([]);
     const [renameInput, setRenameInput] = useState('');
     const [refreshingBookmarks, setRefreshingBookmarks] = useState(false);
     const [initialSettingsSnapshot, setInitialSettingsSnapshot] = useState(null);
@@ -11521,7 +11523,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         ) : img.type === 'video' ? (
                                                                             <div
                                                                                 className={`w-full h-full relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden bg-black ${(isAuditing[`chat_${img.id}`] || isOcrExtracting[img.id]) ? 'blur-[1px]' : ''}`}
-                                                                                onClick={() => setPreviewVideo(img.url)}
+                                                                                onClick={() => {
+                                                                                    setPreviewVideos([{ url: img.url, title: img.name || 'Video Preview' }]);
+                                                                                    setIsVideoPreviewOpen(true);
+                                                                                }}
                                                                             >
                                                                                 <video
                                                                                     src={img.url}
@@ -15970,6 +15975,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }}
             />
 
+            {/* Durandhar Video Player Modal */}
+            <VideoPreview
+                isOpen={isVideoPreviewOpen}
+                onClose={() => setIsVideoPreviewOpen(false)}
+                videos={previewVideos}
+                initialIndex={0}
+            />
+
             {/* Image Link Modal */}
             {showImageLinkModal && (
                 <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => { setShowImageLinkModal(false); setImageLinkUrls([]); }}>
@@ -16159,6 +16172,53 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 <p className={`mt-2 text-[10px] leading-relaxed italic ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                     Tip: You can add 1 video URL per message. Type a URL and click "Add".
                                 </p>
+
+                                {/* Interactive Video Preview Box */}
+                                {videoLinkInput.trim() && (
+                                    <div className="mt-3 animate-fadeIn">
+                                        <label className={`block text-[10px] font-bold uppercase tracking-wider mb-1.5 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                                            Video Preview
+                                        </label>
+                                        <div
+                                            onClick={() => {
+                                                setPreviewVideos([{ url: videoLinkInput.trim(), title: 'Video Link Preview' }]);
+                                                setIsVideoPreviewOpen(true);
+                                            }}
+                                            className={`group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-[1.01] ${
+                                                isDarkMode
+                                                    ? 'bg-gray-800/90 border-purple-500/50 hover:border-purple-400 shadow-lg shadow-purple-950/40'
+                                                    : 'bg-purple-50/80 border-purple-200 hover:border-purple-400 shadow-md shadow-purple-500/10'
+                                            }`}
+                                            title="Click to launch Durandhar Video Player"
+                                        >
+                                            <div className="relative w-full h-36 bg-black flex items-center justify-center overflow-hidden">
+                                                <video
+                                                    src={videoLinkInput.trim()}
+                                                    className="w-full h-full object-cover opacity-75 group-hover:opacity-95 transition-opacity duration-300"
+                                                    preload="metadata"
+                                                    muted
+                                                    playsInline
+                                                />
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 group-hover:bg-black/25 transition-all">
+                                                    <div className="w-11 h-11 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-purple-500 transition-all">
+                                                        <FaPlay size={16} className="ml-0.5" />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-white mt-1.5 drop-shadow-md">
+                                                        Launch Player
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="p-2 flex items-center justify-between gap-2">
+                                                <span className={`text-xs font-mono truncate flex-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                    {videoLinkInput.trim()}
+                                                </span>
+                                                <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 uppercase tracking-wider flex-shrink-0">
+                                                    Click to Play
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className={`p-4 rounded-xl border border-dashed flex items-center gap-3 ${isDarkMode ? 'bg-purple-900/10 border-purple-800/50' : 'bg-purple-50/50 border-purple-200'}`}>
