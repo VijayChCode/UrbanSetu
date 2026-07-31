@@ -151,7 +151,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleDetectFaces = async () => {
-    if (isDetectingFaces || !currentImageUrl) return;
+    if (isDetectingFaces || imageError || imageLoading || !currentImageUrl) return;
     setIsDetectingFaces(true);
     showFeedback("Detecting faces...");
     try {
@@ -253,9 +253,19 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     }
   }, [imagesArray.length, safeIndex, currentIndex]);
 
+  // Validate currentImageUrl
+  useEffect(() => {
+    if (isOpen) {
+      if (!currentImageUrl || typeof currentImageUrl !== 'string' || !currentImageUrl.trim()) {
+        setImageError(true);
+        setImageLoading(false);
+      }
+    }
+  }, [currentImageUrl, isOpen]);
+
   // Handle favorite toggle
   const handleToggleFavorite = async () => {
-    if (!currentImageUrl) return;
+    if (!currentImageUrl || imageError || imageLoading) return;
 
     const baseTitle = metadata.listingName || metadata.blogTitle || metadata.title || 'Image';
     const generatedName = `${baseTitle} - Image ${currentIndex + 1}`;
@@ -390,20 +400,24 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         return;
       }
 
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showFavoritesGallery) {
+          setShowFavoritesGallery(false);
+        } else if (document.fullscreenElement || isFullscreen) {
+          toggleFullscreen();
+        } else {
+          onClose();
+        }
+        return;
+      }
+
+      if (imageError) return;
+
       // Show controls on any interaction
       if (!showControls) setShowControls(true);
 
       switch (e.key) {
-        case 'Escape':
-          e.preventDefault();
-          if (showFavoritesGallery) {
-            setShowFavoritesGallery(false);
-          } else if (document.fullscreenElement || isFullscreen) {
-            toggleFullscreen();
-          } else {
-            onClose();
-          }
-          break;
         case 'ArrowLeft':
           setCurrentIndex(prev => {
             if (prev > 0) return prev - 1;
@@ -450,7 +464,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     };
 
     const handleWheel = (e) => {
-      if (!isOpen || showFavoritesGallery) return;
+      if (!isOpen || imageError || imageLoading || showFavoritesGallery) return;
       e.preventDefault();
 
       if (!showControls) setShowControls(true);
@@ -552,6 +566,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   }, [rotation, currentIndex, imageLoading]); // Recalculate on rotation, image change, or load completion
 
   const handleZoomIn = () => {
+    if (imageError || imageLoading) return;
     setScale(prev => {
       const newScale = Math.min(prev * 1.2, 8);
       showFeedback(`${Math.round(newScale * 100)}%`);
@@ -560,6 +575,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleZoomOut = () => {
+    if (imageError || imageLoading) return;
     setScale(prev => {
       let newScale = Math.max(prev / 1.2, 1);
       if (newScale < 1.1) newScale = 1; // Snap to 1
@@ -570,6 +586,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleReset = () => {
+    if (imageError || imageLoading) return;
     setScale(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
@@ -577,6 +594,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleRotate = () => {
+    if (imageError || imageLoading) return;
     setRotation(prev => {
       const newRot = prev + 90;
       showFeedback(`${newRot}°`);
@@ -585,6 +603,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleMouseDown = (e) => {
+    if (imageError || imageLoading) return;
     hasMovedRef.current = false;
     ignoreClickRef.current = false;
     if (scale > 1) {
@@ -603,6 +622,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleTouchStart = (e) => {
+    if (imageError || imageLoading) return;
     hasMovedRef.current = false;
     ignoreClickRef.current = false;
     // Single touch pan
@@ -776,7 +796,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleDownload = async () => {
-    if (isDownloading) return;
+    if (isDownloading || imageError || imageLoading) return;
 
     setIsDownloading(true);
     const imageUrl = imagesArray[safeIndex] || imagesArray[0];
@@ -837,6 +857,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const toggleFullscreen = () => {
+    if (imageError) return;
     const el = viewerRef.current || document.documentElement;
     if (document.fullscreenElement || isFullscreen) {
       if (document.fullscreenElement) {
@@ -863,6 +884,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const toggleSlideshow = () => {
+    if (imageError || imageLoading) return;
     setIsSlideshow(prev => {
       const newState = !prev;
       showFeedback(newState ? "Slideshow Started" : "Slideshow Stopped");
@@ -871,6 +893,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleShare = async () => {
+    if (imageError || imageLoading) return;
     const currentUrl = imagesArray[safeIndex] || imagesArray[0];
     if (!currentUrl) return;
 
@@ -1042,6 +1065,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleImageClick = (e) => {
+    if (imageError || imageLoading) return;
     // Check if we should ignore click (due to drag/pinch)
     if (ignoreClickRef.current) {
       ignoreClickRef.current = false;
@@ -1150,9 +1174,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         <>
           {currentIndex > 0 && (
             <button
-              onClick={() => setCurrentIndex(prev => prev > 0 ? prev - 1 : prev)}
+              onClick={() => !imageError && !imageLoading && setCurrentIndex(prev => prev > 0 ? prev - 1 : prev)}
+              disabled={imageError || imageLoading}
               className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-300 z-10 bg-black bg-opacity-70 rounded-full p-4 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 hidden md:block ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
-                }`}
+                } ${imageError || imageLoading ? 'opacity-40 pointer-events-none' : ''}`}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1161,9 +1186,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           )}
           {currentIndex < imagesArray.length - 1 && (
             <button
-              onClick={() => setCurrentIndex(prev => prev < imagesArray.length - 1 ? prev + 1 : prev)}
+              onClick={() => !imageError && !imageLoading && setCurrentIndex(prev => prev < imagesArray.length - 1 ? prev + 1 : prev)}
+              disabled={imageError || imageLoading}
               className={`absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-300 z-10 bg-black bg-opacity-70 rounded-full p-4 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 hidden md:block ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
-                }`}
+                } ${imageError || imageLoading ? 'opacity-40 pointer-events-none' : ''}`}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1182,10 +1208,31 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         )}
 
         {imageError && (
-          <div className="absolute inset-0 flex items-center justify-center p-6">
-            <div className="text-center p-10 bg-black/60 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl transition-all duration-500 scale-100 hover:scale-105">
-              <div className="text-6xl sm:text-7xl mb-6 opacity-60 grayscale-[0.2] animate-pulse">🖼️</div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-gray-300 opacity-90 px-4 py-2 border border-white/20 rounded-xl bg-white/5 whitespace-nowrap">Failed to load Image</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-[65] bg-black/95 text-white p-6 text-center animate-fadeIn select-none">
+            <div className="p-4 rounded-full bg-red-500/20 text-red-500 mb-4 border border-red-500/30 animate-pulse">
+              <FaExclamationTriangle size={44} />
+            </div>
+            <h3 className="text-xl font-bold mb-1.5 text-white tracking-wide">Image Unavailable</h3>
+            <p className="text-xs sm:text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
+              The image source is invalid, corrupted, or cannot be loaded by your browser.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImageError(false);
+                  setImageLoading(true);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-blue-600/30 active:scale-95 flex items-center gap-2"
+              >
+                <FaUndo size={12} /> Retry Loading
+              </button>
+              <button
+                onClick={handleCloseClick}
+                className="px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold uppercase tracking-wider transition-all active:scale-95"
+              >
+                Close Viewer
+              </button>
             </div>
           </div>
         )}
@@ -1194,7 +1241,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           ref={imageRef}
           src={currentImageUrl}
           alt={`Property image ${currentIndex + 1}`}
-          className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+          className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${imageLoading || imageError ? 'opacity-0' : 'opacity-100'
             }`}
           style={{
             transform: `scale(${scale * autoScale}) rotate(${rotation}deg) translate(${position.x + swipeOffset}px, ${position.y}px)`,
@@ -1214,9 +1261,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       {/* Enhanced Controls - Desktop */}
       <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 hidden md:flex items-center gap-2 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-3 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}>
+        } ${imageError || imageLoading ? 'opacity-40 pointer-events-none' : ''}`}>
         <button
           onClick={handleZoomIn}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Zoom In (Ctrl + +)"
         >
@@ -1224,6 +1272,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleZoomOut}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Zoom Out (Ctrl + -)"
         >
@@ -1231,6 +1280,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleRotate}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Rotate"
         >
@@ -1238,6 +1288,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleReset}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Reset (0)"
         >
@@ -1246,6 +1297,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         <div className="w-px h-6 bg-white bg-opacity-30"></div>
         <button
           onClick={toggleFullscreen}
+          disabled={imageError}
           className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Toggle Fullscreen (F)"
         >
@@ -1253,6 +1305,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={toggleSlideshow}
+          disabled={imageError || imageLoading}
           className={`p-2 rounded-lg transition-all duration-200 ${isSlideshow
             ? 'text-red-400 hover:text-red-300 bg-red-400 bg-opacity-20'
             : 'text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
@@ -1263,6 +1316,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleToggleFavorite}
+          disabled={imageError || imageLoading}
           className={`p-2 rounded-lg transition-all duration-200 ${isCurrentImageFavorited
             ? 'text-red-400 hover:text-red-300'
             : 'text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20'
@@ -1283,8 +1337,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleDownload}
-          disabled={isDownloading}
-          className={`text-white p-2 rounded-lg transition-all duration-200 ${isDownloading
+          disabled={isDownloading || imageError || imageLoading}
+          className={`text-white p-2 rounded-lg transition-all duration-200 ${isDownloading || imageError || imageLoading
             ? 'opacity-50 cursor-not-allowed'
             : 'hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
             }`}
@@ -1299,6 +1353,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleShare}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Share"
         >
@@ -1306,7 +1361,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleDetectFaces}
-          disabled={isDetectingFaces}
+          disabled={isDetectingFaces || imageError || imageLoading}
           className={`p-2 rounded-lg transition-all duration-200 ${
             isDetectingFaces
               ? 'text-purple-400 bg-purple-400 bg-opacity-20 animate-pulse'
@@ -1340,9 +1395,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       {/* Mobile Controls - Compact */}
       <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 md:hidden flex items-center gap-1 bg-black bg-opacity-80 backdrop-blur-sm rounded-xl p-2 transition-all duration-300 ${showControls && !showFavoritesGallery ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}>
+        } ${imageError || imageLoading ? 'opacity-40 pointer-events-none' : ''}`}>
         <button
           onClick={handleZoomIn}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Zoom In"
         >
@@ -1350,6 +1406,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleZoomOut}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Zoom Out"
         >
@@ -1357,6 +1414,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleReset}
+          disabled={imageError || imageLoading}
           className="text-white hover:text-blue-300 p-1.5 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200"
           title="Reset"
         >
@@ -1365,6 +1423,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         <div className="w-px h-4 bg-white bg-opacity-30"></div>
         <button
           onClick={toggleSlideshow}
+          disabled={imageError || imageLoading}
           className={`p-1.5 rounded-lg transition-all duration-200 ${isSlideshow
             ? 'text-red-400 hover:text-red-300 bg-red-400 bg-opacity-20'
             : 'text-white hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
@@ -1375,6 +1434,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleToggleFavorite}
+          disabled={imageError || imageLoading}
           className={`p-1.5 rounded-lg transition-all duration-200 ${isCurrentImageFavorited
             ? 'text-red-400 hover:text-red-300'
             : 'text-white hover:text-red-300 hover:bg-white hover:bg-opacity-20'
@@ -1395,8 +1455,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleDownload}
-          disabled={isDownloading}
-          className={`text-white p-1.5 rounded-lg transition-all duration-200 ${isDownloading
+          disabled={isDownloading || imageError || imageLoading}
+          className={`text-white p-1.5 rounded-lg transition-all duration-200 ${isDownloading || imageError || imageLoading
             ? 'opacity-50 cursor-not-allowed'
             : 'hover:text-blue-300 hover:bg-white hover:bg-opacity-20'
             }`}
@@ -1411,7 +1471,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         </button>
         <button
           onClick={handleDetectFaces}
-          disabled={isDetectingFaces}
+          disabled={isDetectingFaces || imageError || imageLoading}
           className={`p-1.5 rounded-lg transition-all duration-200 ${
             isDetectingFaces
               ? 'text-purple-400 bg-purple-400 bg-opacity-20 animate-pulse'
