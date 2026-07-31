@@ -248,9 +248,29 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               className="w-full h-full object-contain bg-black"
             />
           ) : cameraError ? (
-            /* Error State */
-            <div className="flex flex-col items-center justify-center p-6 text-center text-gray-300">
-              <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-4 border border-red-500/30 animate-pulse">
+            /* Error State with Top-Left Browser Permission Arrow */
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300 overflow-hidden">
+              {/* Top-Left Directional Pointer to Browser Address Bar Site Info Icon */}
+              <div className="absolute top-2 left-4 sm:left-6 z-30 flex flex-col items-start pointer-events-none animate-pulse">
+                <svg className="w-20 h-20 sm:w-24 sm:h-24 filter drop-shadow-[0_0_14px_rgba(239,68,68,0.9)]" viewBox="0 0 120 120" fill="none">
+                  <path
+                    d="M 95 95 C 20 110 -10 40 40 35 C 75 30 75 75 45 75 C 20 75 15 35 25 15"
+                    stroke="#EF4444"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  <polygon points="25,10 10,32 38,28" fill="#EF4444" />
+                </svg>
+                <div className="bg-red-600/95 text-white text-[11px] sm:text-xs font-bold p-3 rounded-xl shadow-2xl border border-red-400/50 backdrop-blur-md tracking-wide mt-1 max-w-[260px] text-left leading-snug">
+                  <div className="flex items-center gap-1.5 mb-1 font-extrabold text-yellow-300">
+                    <span>↖ View Site Info Icon</span>
+                  </div>
+                  Click the <span className="underline decoration-yellow-300 decoration-2 font-black text-white">View site information icon</span> (tune / sliders icon next to the URL in top-left) to enable <span className="font-extrabold text-yellow-300">Camera permission</span>.
+                </div>
+              </div>
+
+              <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-4 border border-red-500/30 animate-pulse mt-14 sm:mt-0">
                 <FaExclamationTriangle size={28} />
               </div>
               <h4 className="text-lg font-bold text-white mb-2">Camera Access Error</h4>
@@ -259,7 +279,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               </p>
               <button
                 onClick={() => startCameraStream('Initializing Camera...')}
-                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-600/30 active:scale-95 flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-purple-600/30 active:scale-95 flex items-center gap-2 z-10"
               >
                 <FaUndo size={12} /> Retry Camera
               </button>
