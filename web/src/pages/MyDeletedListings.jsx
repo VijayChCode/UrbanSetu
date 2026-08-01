@@ -245,8 +245,8 @@ export default function MyDeletedListings() {
                                                         {formatDate(item.deletedAt)}
                                                     </span>
                                                     {item.deletionReason && (
-                                                        <div className="text-xs bg-gray-100 dark:bg-gray-700 p-1 rounded mt-1 text-gray-600 dark:text-gray-300 max-w-[200px] truncate" title={item.deletionReason}>
-                                                            Reason: {item.deletionReason}
+                                                        <div className="text-xs bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 p-1.5 rounded-lg mt-1 text-red-800 dark:text-red-300 font-medium max-w-[220px]" title={item.deletionReason}>
+                                                            <span className="font-bold text-red-600 dark:text-red-400">Reason:</span> {item.deletionReason}
                                                         </div>
                                                     )}
                                                 </div>

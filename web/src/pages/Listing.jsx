@@ -40,6 +40,7 @@ import { trackInteraction, getLiveRecommendations } from "../utils/sentinelLiveE
 import AdvancedImage from "../components/AdvancedImage";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import VerifiedBadge from '../components/VerifiedBadge';
+import PropertyDeleteModal from "../components/PropertyDeleteModal";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UNAVAILABLE_STATUSES = ['reserved', 'under_contract', 'rented', 'sold', 'suspended'];
@@ -646,18 +647,15 @@ export default function Listing() {
     return 0;
   };
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const handleDelete = () => {
-    setDeleteReason("");
-    setDeleteError("");
-    setShowReasonModal(true);
+    setShowDeleteModal(true);
   };
 
-  // Owner delete: open password confirm directly (same as MyListings behavior)
+  // Owner delete: open PropertyDeleteModal
   const handleOwnerDeleteClick = () => {
-    setDeleteReason("");
-    setDeleteError("");
-    setDeletePassword("");
-    setShowPasswordModal(true);
+    setShowDeleteModal(true);
   };
 
   const handleReasonSubmit = (e) => {
@@ -5671,6 +5669,20 @@ export default function Listing() {
           "https://p62.f3.n0.cdn.getcloudapp.com/items/2Nuv8x1O/360-Interior-Living-Room.jpg?v=784e2098696d7c7c4c1d63683a3f5f6c"
         ]}
         propertyName={listing.name}
+      />
+
+      <PropertyDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        listing={listing}
+        onSuccess={() => {
+          setShowDeleteModal(false);
+          if (isAdmin) {
+            navigate('/admin/listings');
+          } else {
+            navigate('/user/my-listings');
+          }
+        }}
       />
     </>
   );

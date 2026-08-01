@@ -18098,7 +18098,57 @@ export const sendBlogReportAcknowledgement = async (email, username, blogTitle, 
   }
 };
 
+// Send OTP email for Property Deletion
+export const sendPropertyDeletionOTPEmail = async (email, otp, propertyName = 'Property') => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `Security OTP: Confirm Property Deletion - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <h1 style="color: #dc2626; margin: 0; font-size: 26px; font-weight: 800;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 6px 0 0 0; font-size: 14px;">High-Risk Action Verification</p>
+          </div>
+          
+          <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+            <h2 style="color: #991b1b; margin: 0 0 12px 0; font-size: 18px;">Verification Code for Property Deletion</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6; font-size: 14px;">
+              A request has been made to delete your property listing: <strong style="color: #111827;">"${propertyName}"</strong>.
+            </p>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6; font-size: 14px;">
+              Please use the 6-digit verification code below to authorize this action:
+            </p>
+            
+            <div style="background-color: #dc2626; color: white; padding: 16px; border-radius: 8px; text-align: center; margin: 20px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px;">${otp}</span>
+            </div>
+            
+            <p style="color: #991b1b; margin: 0 0 10px 0; font-size: 13px; font-weight: 600;">
+              ⚠️ Security Notice: Deleting a property hides listing details, reviews, and appointments.
+            </p>
+            <p style="color: #6b7280; margin: 0; font-size: 13px;">
+              This code expires in 10 minutes. If you did not initiate this deletion request, please secure your account immediately.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
 
-
-
-
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'property_deletion_otp') :
+      createErrorResponse(new Error(result.error), 'property_deletion_otp');
+  } catch (error) {
+    return createErrorResponse(error, 'property_deletion_otp');
+  }
+};

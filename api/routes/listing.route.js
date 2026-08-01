@@ -1,5 +1,5 @@
 import express from 'express'
-import { createListing, deleteListing, updateListing, getListing, getListings, getUserListings, reassignPropertyOwner, deassignPropertyOwner, republishListing, rootAdminBypassVerification, getAIRecommendations, getDeletedListings, restoreDeletedListing, getAgentListings, rootUnpublishListing } from '../controllers/listing.controller.js'
+import { createListing, deleteListing, updateListing, getListing, getListings, getUserListings, reassignPropertyOwner, deassignPropertyOwner, republishListing, rootAdminBypassVerification, getAIRecommendations, getDeletedListings, restoreDeletedListing, getAgentListings, rootUnpublishListing, sendPropertyDeleteOTP, verifyPropertyDeleteOTP } from '../controllers/listing.controller.js'
 import { verifyToken, optionalAuth } from '../utils/verify.js'
 import User from '../models/user.model.js'
 import Listing from '../models/listing.model.js'
@@ -33,6 +33,8 @@ router.get("/user/:userId", verifyToken, async (req, res, next) => {
     next(error);
   }
 });
+router.post("/send-delete-otp", verifyToken, sendPropertyDeleteOTP)
+router.post("/verify-delete-otp", verifyToken, verifyPropertyDeleteOTP)
 router.delete("/delete/:id", verifyToken, deleteListing)
 router.get("/get-deleted", verifyToken, getDeletedListings)
 router.post("/restore-deleted/:id", verifyToken, restoreDeletedListing)

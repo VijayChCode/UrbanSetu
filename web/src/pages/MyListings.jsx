@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { useDispatch } from "react-redux";
 import { signoutUserStart, signoutUserSuccess, signoutUserFailure } from "../redux/user/userSlice";
 import MyListingsSkeleton from '../components/skeletons/MyListingsSkeleton';
+import PropertyDeleteModal from '../components/PropertyDeleteModal';
 import { authenticatedFetch } from '../utils/auth';
 
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -23,11 +24,8 @@ export default function MyListings() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedListingForDelete, setSelectedListingForDelete] = useState(null);
   const [visibleCount, setVisibleCount] = useState(12);
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -71,11 +69,9 @@ export default function MyListings() {
     fetchUserListings();
   }, [currentUser?._id]);
 
-  const handleDelete = (id) => {
-    setPendingDeleteId(id);
-    setShowPasswordModal(true);
-    setDeletePassword("");
-    setDeleteError("");
+  const handleDelete = (listing) => {
+    setSelectedListingForDelete(listing);
+    setShowDeleteModal(true);
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -468,7 +464,7 @@ export default function MyListings() {
                         <button
                           onClick={() => {
                             if (listing.availabilityStatus === 'sold' || listing.availabilityStatus === 'under_contract') return;
-                            if (!listing.isRentLocked) handleDelete(listing._id);
+                            if (!listing.isRentLocked) handleDelete(listing);
                           }}
                           disabled={listing.isRentLocked || listing.availabilityStatus === 'sold' || listing.availabilityStatus === 'under_contract'}
                           title={
@@ -506,27 +502,18 @@ export default function MyListings() {
           )}
         </div>
       </div>
-      {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
-          <form onSubmit={handlePasswordSubmit} className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-xs flex flex-col gap-4 border border-blue-100 dark:border-gray-800 transition-all">
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-500 flex items-center gap-2 transition-colors"><FaLock /> Confirm Password</h3>
-            <input
-              type="password"
-              className="border dark:border-gray-700 rounded-lg p-3 w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
-              autoFocus
-            />
-            {deleteError && <div className="text-red-600 dark:text-red-400 text-sm font-medium transition-colors">{deleteError}</div>}
-            <div className="flex gap-3 justify-end mt-2">
-              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md active:scale-95 transition-all disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
-            </div>
-          </form>
-        </div>
-      )}
+      <PropertyDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedListingForDelete(null);
+        }}
+        listing={selectedListingForDelete}
+        onSuccess={(deletedId) => {
+          setListings((prev) => prev.filter((item) => item._id !== deletedId));
+        }}
+      />
       <ContactSupportWrapper />
     </div>
   );
-} 
+}

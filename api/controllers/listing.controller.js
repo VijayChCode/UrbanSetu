@@ -313,7 +313,7 @@ export const deleteListing = async (req, res, next) => {
         existingDeletedRecord.listingData = listing.toObject();
         existingDeletedRecord.deletedBy = req.user.id;
         existingDeletedRecord.deletionType = isAdminDeletingOthersProperty ? 'admin' : 'owner';
-        existingDeletedRecord.deletionReason = isAdminDeletingOthersProperty ? req.body.reason : null;
+        existingDeletedRecord.deletionReason = req.body.reason || (isAdminDeletingOthersProperty ? 'Admin deleted listing' : 'Owner deleted listing');
         existingDeletedRecord.restorationToken = restorationToken;
         existingDeletedRecord.tokenExpiry = tokenExpiry;
         existingDeletedRecord.isRestored = false;
@@ -335,7 +335,7 @@ export const deleteListing = async (req, res, next) => {
           userRef: listing.userRef,
           deletedBy: req.user.id,
           deletionType: isAdminDeletingOthersProperty ? 'admin' : 'owner',
-          deletionReason: isAdminDeletingOthersProperty ? req.body.reason : null,
+          deletionReason: req.body.reason || (isAdminDeletingOthersProperty ? 'Admin deleted listing' : 'Owner deleted listing'),
           restorationToken: restorationToken,
           tokenExpiry: tokenExpiry
         });
@@ -1539,3 +1539,86 @@ export const rootUnpublishListing = async (req, res, next) => {
     next(errorHandler(500, "Failed to unpublish listing"));
   }
 };
+
+const deleteOtpStore = new Map();
+
+// Send OTP for property deletion
+export const sendPropertyDeleteOTP = async (req, res, next) => {
+  try {
+    const { listingId } = req.body;
+    if (!listingId) {
+      return next(errorHandler(400, "Property ID is required"));
+    }
+
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return next(errorHandler(404, "Listing not found"));
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !user.email) {
+      return next(errorHandler(400, "User email not found"));
+    }
+
+    const { generateOTP, sendPropertyDeletionOTPEmail } = await import('../utils/emailService.js');
+    const otp = generateOTP();
+    const emailLower = user.email.toLowerCase();
+    const expirationTime = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    deleteOtpStore.set(`${user._id}-${listingId}`, {
+      otp,
+      expirationTime,
+      attempts: 0
+    });
+
+    const emailResult = await sendPropertyDeletionOTPEmail(emailLower, otp, listing.name);
+    if (!emailResult.success) {
+      return res.status(500).json({ success: false, message: "Failed to send verification email. Please try again." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `OTP sent successfully to ${user.email}`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Verify OTP for property deletion
+export const verifyPropertyDeleteOTP = async (req, res, next) => {
+  try {
+    const { listingId, otp } = req.body;
+    if (!listingId || !otp) {
+      return next(errorHandler(400, "Listing ID and OTP are required"));
+    }
+
+    const key = `${req.user.id}-${listingId}`;
+    const storedData = deleteOtpStore.get(key);
+
+    if (!storedData) {
+      return next(errorHandler(400, "OTP has expired or was not requested. Please request a new code."));
+    }
+
+    if (Date.now() > storedData.expirationTime) {
+      deleteOtpStore.delete(key);
+      return next(errorHandler(400, "OTP has expired. Please request a new code."));
+    }
+
+    if (storedData.otp !== otp.trim()) {
+      storedData.attempts = (storedData.attempts || 0) + 1;
+      if (storedData.attempts >= 5) {
+        deleteOtpStore.delete(key);
+        return next(errorHandler(400, "Too many invalid attempts. Please request a new OTP."));
+      }
+      return next(errorHandler(400, `Invalid OTP code. ${5 - storedData.attempts} attempts remaining.`));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "OTP verified successfully"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
