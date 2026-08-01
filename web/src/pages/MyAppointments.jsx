@@ -12,7 +12,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
 import { exportEnhancedChatToPDF } from '../utils/pdfExport';
 import ExportChatModal from '../components/ExportChatModal';
-import { authenticatedFetch } from '../utils/csrf';
+import { authenticatedFetch, uploadWithProgress } from '../utils/csrf';
 import PaymentModal from '../components/PaymentModal';
 import { useCallContext } from '../contexts/CallContext';
 import CallHistoryModal from '../components/CallHistoryModal';
@@ -3672,26 +3672,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
     try {
       setUploadingFile(true);
+      setUploadProgress(0);
       const form = new FormData();
       form.append('video', selectedVideo);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/video`, {
-        method: 'POST',
-        body: form
+      const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/video`, form, {
+        onProgress: (percent) => setUploadProgress(percent)
       });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw { response: { status: res.status, data: errorData } };
-      }
-      const data = await res.json();
       await sendVideoMessage(data.videoUrl, selectedVideo.name, videoCaption);
       setSelectedVideo(null);
       setShowVideoPreviewModal(false);
       setVideoCaption('');
-      setUploadProgress(0);
     } catch (e) {
       toast.error(e.response?.data?.message || 'Video upload failed');
     } finally {
       setUploadingFile(false);
+      setUploadProgress(0);
     }
   };
 
@@ -3750,26 +3745,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     if (!selectedAudio) return;
     try {
       setUploadingFile(true);
+      setUploadProgress(0);
       const form = new FormData();
       form.append('audio', selectedAudio);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/audio`, {
-        method: 'POST',
-        body: form
+      const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/audio`, form, {
+        onProgress: (percent) => setUploadProgress(percent)
       });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw { response: { status: res.status, data: errorData } };
-      }
-      const data = await res.json();
       await sendAudioMessage(data.audioUrl, selectedAudio, audioCaption);
       setSelectedAudio(null);
       setShowAudioPreviewModal(false);
       setAudioCaption('');
-      setUploadProgress(0);
     } catch (e) {
       toast.error(e.response?.data?.message || 'Audio upload failed');
     } finally {
       setUploadingFile(false);
+      setUploadProgress(0);
     }
   };
 
@@ -3828,26 +3818,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     if (!selectedDocument) return;
     try {
       setUploadingFile(true);
+      setUploadProgress(0);
       const form = new FormData();
       form.append('document', selectedDocument);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/document`, {
-        method: 'POST',
-        body: form
+      const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/document`, form, {
+        onProgress: (percent) => setUploadProgress(percent)
       });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw { response: { status: res.status, data: errorData } };
-      }
-      const data = await res.json();
       await sendDocumentMessage(data.documentUrl, selectedDocument, documentCaption);
       setSelectedDocument(null);
       setShowDocumentPreviewModal(false);
       setDocumentCaption('');
-      setUploadProgress(0);
     } catch (e) {
       toast.error(e.response?.data?.message || 'Document upload failed');
     } finally {
       setUploadingFile(false);
+      setUploadProgress(0);
     }
   };
 
@@ -4020,19 +4005,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           currentUploadControllerRef.current = controller;
 
           try {
-            const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/image`, {
-              method: 'POST',
-              body: uploadFormData,
-              signal: controller.signal
+            const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/image`, uploadFormData, {
+              signal: controller.signal,
+              onProgress: (percent) => {
+                setCurrentFileProgress(percent);
+                // Overall progress: completed files + current file fraction
+                const overallPercent = Math.round(((i + percent / 100) / fileImages.length) * 100);
+                setUploadProgress(overallPercent);
+              }
             });
-            if (!res.ok) {
-              const errorData = await res.json().catch(() => ({}));
-              throw { response: { status: res.status, data: errorData } };
-            }
-            const data = await res.json();
 
             await sendImageMessage(data.imageUrl, file.name, imageCaptions[file.name] || '');
             setUploadProgress(Math.round(((i + 1) / fileImages.length) * 100));
+            setCurrentFileProgress(100);
           } catch (err) {
             if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED' || err.name === 'AbortError') {
               cancelledByUser = true;

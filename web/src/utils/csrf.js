@@ -242,3 +242,94 @@ export const authenticatedFetch = async (url, options = {}) => {
     throw error;
   }
 };
+
+/**
+ * Upload a file with real-time progress tracking using XMLHttpRequest.
+ * The native fetch API does NOT support upload progress events, so we use XHR.
+ * 
+ * @param {string} url - API endpoint URL
+ * @param {FormData} formData - FormData with the file to upload
+ * @param {Object} options - Options
+ * @param {AbortSignal} [options.signal] - AbortController signal for cancellation
+ * @param {function(number): void} [options.onProgress] - Progress callback receiving 0-100
+ * @returns {Promise<Object>} Parsed JSON response from the server
+ */
+export const uploadWithProgress = (url, formData, { signal, onProgress } = {}) => {
+  return new Promise(async (resolve, reject) => {
+    let aborted = false;
+
+    try {
+      // Get auth headers (same logic as authenticatedFetch)
+      const authToken = localStorage.getItem('accessToken');
+      let csrfToken = null;
+      try {
+        csrfToken = await getCSRFToken();
+      } catch (_) { /* proceed without CSRF if fetch fails */ }
+
+      const xhr = new XMLHttpRequest();
+
+      // Handle abort signal
+      if (signal) {
+        if (signal.aborted) {
+          const err = new Error('Upload aborted');
+          err.name = 'AbortError';
+          reject(err);
+          return;
+        }
+        const onAbort = () => {
+          aborted = true;
+          xhr.abort();
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+        // Cleanup listener when XHR finishes
+        xhr.addEventListener('loadend', () => signal.removeEventListener('abort', onAbort), { once: true });
+      }
+
+      // Track upload progress
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(data);
+          } else {
+            const error = new Error(data.message || `Upload failed with status ${xhr.status}`);
+            error.response = { status: xhr.status, data };
+            reject(error);
+          }
+        } catch (e) {
+          reject(new Error('Failed to parse upload response'));
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Upload network error'));
+      };
+
+      xhr.onabort = () => {
+        const err = new Error('Upload aborted');
+        err.name = 'AbortError';
+        reject(err);
+      };
+
+      xhr.open('POST', url);
+
+      // Set headers (don't set Content-Type — browser auto-sets multipart boundary for FormData)
+      if (csrfToken) xhr.setRequestHeader('X-CSRF-Token', csrfToken);
+      if (authToken) xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+      const sessionId = localStorage.getItem('sessionId');
+      if (sessionId) xhr.setRequestHeader('X-Session-Id', sessionId);
+      xhr.withCredentials = true;
+
+      xhr.send(formData);
+    } catch (error) {
+      if (!aborted) reject(error);
+    }
+  });
+};
