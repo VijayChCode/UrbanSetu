@@ -3727,12 +3727,21 @@ export default function Listing() {
                       </div>
                     )}
                   </div>
-                ) : ownerError ? (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-red-500 font-medium text-xs sm:text-sm">{ownerError}</p>
+                ) : (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/60 dark:border-amber-800/40 rounded-2xl">
+                    <div>
+                      <p className="text-amber-800 dark:text-amber-300 font-bold text-xs sm:text-sm flex items-center gap-2">
+                        <FaExclamationTriangle className="text-amber-500" />
+                        {ownerError || "No active owner assigned to this property."}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        Property is currently unassigned. Assign an owner to grant management permissions.
+                      </p>
+                    </div>
                     {isAdmin && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                         <button
+                          type="button"
                           onClick={() => {
                             setOwnershipMode('assign');
                             setShowOwnershipModal(true);
@@ -3750,8 +3759,6 @@ export default function Listing() {
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p className="text-gray-500">No owner details found.</p>
                 )}
               </div>
             </>
