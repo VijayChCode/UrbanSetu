@@ -172,9 +172,14 @@ export default function PropertyDeleteModal({
 
             localStorage.removeItem('deleteListingPwAttempts');
 
-            // Password valid -> Send OTP
-            await triggerSendOtp();
-            setStep(3);
+            if (isAdmin) {
+                // Admin / RootAdmin bypasses OTP step
+                setStep(4);
+            } else {
+                // Regular users require Email OTP verification
+                await triggerSendOtp();
+                setStep(3);
+            }
         } catch (err) {
             setPasswordError('Error verifying password. Please try again.');
         } finally {
@@ -323,16 +328,24 @@ export default function PropertyDeleteModal({
                 {/* Step Progress Bar */}
                 {!isCompleted && (
                     <div className="px-6 pt-4 pb-2 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                        <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
-                            <span className={step >= 1 ? 'text-red-600 dark:text-red-400' : ''}>1. Reason</span>
-                            <span className={step >= 2 ? 'text-red-600 dark:text-red-400' : ''}>2. Password</span>
-                            <span className={step >= 3 ? 'text-red-600 dark:text-red-400' : ''}>3. OTP</span>
-                            <span className={step >= 4 ? 'text-red-600 dark:text-red-400' : ''}>4. Confirm</span>
-                        </div>
+                        {isAdmin ? (
+                            <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                                <span className={step >= 1 ? 'text-red-600 dark:text-red-400' : ''}>1. Reason</span>
+                                <span className={step >= 2 ? 'text-red-600 dark:text-red-400' : ''}>2. Password</span>
+                                <span className={step >= 4 ? 'text-red-600 dark:text-red-400' : ''}>3. Confirm</span>
+                            </div>
+                        ) : (
+                            <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                                <span className={step >= 1 ? 'text-red-600 dark:text-red-400' : ''}>1. Reason</span>
+                                <span className={step >= 2 ? 'text-red-600 dark:text-red-400' : ''}>2. Password</span>
+                                <span className={step >= 3 ? 'text-red-600 dark:text-red-400' : ''}>3. OTP</span>
+                                <span className={step >= 4 ? 'text-red-600 dark:text-red-400' : ''}>4. Confirm</span>
+                            </div>
+                        )}
                         <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
                             <div
                                 className="bg-red-600 h-full transition-all duration-300 rounded-full"
-                                style={{ width: `${(step / 4) * 100}%` }}
+                                style={{ width: `${isAdmin ? (step === 1 ? 33 : step === 2 ? 66 : 100) : (step / 4) * 100}%` }}
                             ></div>
                         </div>
                     </div>
@@ -455,7 +468,13 @@ export default function PropertyDeleteModal({
                                     disabled={!password || verifyingPassword}
                                     className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 dark:shadow-none"
                                 >
-                                    {verifyingPassword ? <UrbanSetuSpinner size="sm" isBright={true} /> : <>Verify & Send OTP <FaKey className="text-xs" /></>}
+                                    {verifyingPassword ? (
+                                        <UrbanSetuSpinner size="sm" isBright={true} />
+                                    ) : isAdmin ? (
+                                        <>Verify Password <FaArrowRight className="text-xs" /></>
+                                    ) : (
+                                        <>Verify & Send OTP <FaKey className="text-xs" /></>
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -577,11 +596,18 @@ export default function PropertyDeleteModal({
                                 </ul>
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex gap-2.5 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(isAdmin ? 2 : 3)}
+                                    className="px-4 py-3.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-1.5"
+                                >
+                                    <FaArrowLeft className="text-xs" /> Back
+                                </button>
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 py-3.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                                    className="px-4 py-3.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                                 >
                                     Cancel
                                 </button>
