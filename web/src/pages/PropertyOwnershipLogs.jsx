@@ -159,7 +159,7 @@ export default function PropertyOwnershipLogs() {
                     </div>
 
                     <Link
-                        to="/admin/dashboard"
+                        to="/admin"
                         className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2"
                     >
                         <FaArrowLeft /> Back to Dashboard
@@ -217,9 +217,9 @@ export default function PropertyOwnershipLogs() {
 
                 {/* Audit Logs Content */}
                 {loading ? (
-                    <div className="text-center py-12 sm:py-16 bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-md">
+                    <div className="py-12 sm:py-16 bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center gap-3">
                         <UrbanSetuSpinner />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-medium">Fetching permanent ownership logs...</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Fetching permanent ownership logs...</p>
                     </div>
                 ) : error ? (
                     <div className="p-4 sm:p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-2xl sm:rounded-3xl text-center text-red-600 dark:text-red-400 text-xs sm:text-sm">
