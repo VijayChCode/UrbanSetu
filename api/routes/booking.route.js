@@ -1017,6 +1017,61 @@ router.patch('/:id/sale/complete', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH: Reopen Deal / Cancel Sale (Restores property to Public 'available' status)
+router.patch('/:id/sale/reopen', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const bookingToUpdate = await booking.findById(id);
+    if (!bookingToUpdate) {
+      return res.status(404).json({ message: 'Appointment not found.' });
+    }
+
+    const user = await User.findById(userId);
+    const isAdmin = (user && user.role === 'admin' && user.adminApprovalStatus === 'approved') || (user && user.role === 'rootadmin');
+    const isSeller = bookingToUpdate.sellerId.toString() === userId;
+    const isBuyer = bookingToUpdate.buyerId.toString() === userId;
+
+    if (!isSeller && !isAdmin && !isBuyer) {
+      return res.status(403).json({ message: 'Only the property owner, buyer, or admin can cancel the deal.' });
+    }
+
+    // Reset Booking saleStatus to negotiation and status to accepted if completed
+    const updatePayload = {
+      saleStatus: 'negotiation'
+    };
+    if (bookingToUpdate.status === 'completed') {
+      updatePayload.status = 'accepted';
+    }
+
+    const updatedBooking = await booking.findByIdAndUpdate(
+      id,
+      updatePayload,
+      { new: true }
+    );
+
+    // Update Listing - Release lock & set availabilityStatus to 'available'
+    await releaseListingLock({
+      listingId: bookingToUpdate.listingId,
+      bookingId: id,
+      releaseReason: 'sale_deal_reopened_restored_public',
+      force: true
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updatedBooking });
+      io.to('admin_*').emit('appointmentUpdate', { appointmentId: id, updatedAppointment: updatedBooking });
+    }
+
+    res.status(200).json({ message: 'Deal reopened and property restored to public (Available).', booking: updatedBooking });
+  } catch (err) {
+    console.error('Error reopening sale/restoring property to public:', err);
+    res.status(500).json({ message: 'Failed to reopen deal.' });
+  }
+});
+
 // POST: Report a dispute for a sold property
 router.post('/:id/sale/dispute', verifyToken, async (req, res) => {
   try {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt, FaPlus, FaShieldAlt, FaCamera } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt, FaPlus, FaShieldAlt, FaCamera, FaLockOpen } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -911,6 +911,45 @@ export default function MyAppointments() {
     }
     setActionLoading("");
     // setApptIdForAction(null);
+  };
+
+  const handleReopenSale = async (id) => {
+    if (!id) return;
+    if (!window.confirm("Are you sure you want to cancel this deal and make the property public & available again?")) {
+      return;
+    }
+
+    setActionLoading(id + 'reopen');
+    try {
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${id}/sale/reopen`, {
+        method: 'PATCH',
+        body: JSON.stringify({})
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          toast.error("Session expired or unauthorized. Please sign in again.");
+          navigate("/sign-in");
+          return;
+        }
+        const errorData = await res.json().catch(() => ({}));
+        throw { response: { status: res.status, data: errorData } };
+      }
+      const data = await res.json();
+
+      setAllAppointments((prev) =>
+        prev.map((appt) => (appt._id === id ? { ...appt, saleStatus: 'negotiation', status: appt.status === 'completed' ? 'accepted' : appt.status } : appt))
+      );
+      toast.success("Deal cancelled. Property is now restored to Public & Available status!", {
+        autoClose: 5000,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to cancel deal.");
+    }
+    setActionLoading("");
   };
 
   // Register callbacks for the external store to bypass scope issues
@@ -7353,7 +7392,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           <PaymentStatusCell appointment={appt} isBuyer={isBuyer} />
         </td>
         <td className="border p-2 text-center dark:border-gray-700">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 items-center justify-center">
             {/* For archived appointments, show unarchive button */}
             {isArchived ? (
               <button
@@ -7365,8 +7404,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               </button>
             ) : (
               <>
-                {/* For outdated appointments, show delete button and archive button */}
-                {!isUpcoming ? (
+                {/* Outdated check ONLY for unaccepted / non-active deal appointments */}
+                {!isUpcoming && appt.status !== 'accepted' && appt.status !== 'completed' && appt.saleStatus !== 'token_paid' && appt.saleStatus !== 'sold' ? (
                   <div className="flex flex-col gap-2">
                     <button
                       className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xl"
@@ -7387,8 +7426,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   </div>
                 ) : (
                   <>
-                    {/* Seller approve/deny buttons for pending, upcoming appointments */}
-                    {isSeller && appt.status === "pending" && (
+                    {/* Seller approve/deny buttons for pending appointments */}
+                    {isSeller && appt.status === "pending" && isUpcoming && (
                       <>
                         {/* Accept only if buyer paid; otherwise show Accept and Reject */}
                         <button
@@ -7421,11 +7460,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaBan />
                       </button>
                     )}
-                    {/* Sale Actions for Seller */}
-                    {isSeller && appt.purpose === 'buy' && appt.status === 'accepted' && (
+                    {/* Sale Actions for Seller / Admin (Available for upcoming & outdated accepted/completed appointments) */}
+                    {(isSeller || isAdmin) && appt.purpose === 'buy' && (appt.status === 'accepted' || appt.status === 'completed' || appt.saleStatus === 'token_paid' || appt.saleStatus === 'sold') && (
                       <>
                         {/* Mark Token Paid */}
-                        {appt.saleStatus === 'negotiation' && (
+                        {(appt.saleStatus === 'negotiation' || !appt.saleStatus) && (
                           <button
                             className="text-blue-500 hover:text-blue-700 text-xl"
                             onClick={() => handleTokenPaid(appt._id)}
@@ -7437,7 +7476,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         )}
 
                         {/* Mark Sold */}
-                        {(appt.saleStatus === 'negotiation' || appt.saleStatus === 'token_paid') && (
+                        {(appt.saleStatus === 'negotiation' || appt.saleStatus === 'token_paid' || !appt.saleStatus) && (
                           <button
                             className="text-emerald-500 hover:text-emerald-700 text-xl"
                             onClick={() => handleSaleComplete(appt._id)}
@@ -7445,6 +7484,18 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             title="Mark as Sold"
                           >
                             {actionLoading === appt._id + 'sold' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaHandshake />}
+                          </button>
+                        )}
+
+                        {/* Reopen Deal / Cancel Deal / Restore Property to Public */}
+                        {(appt.saleStatus === 'token_paid' || appt.saleStatus === 'sold') && (
+                          <button
+                            className="text-amber-500 hover:text-amber-700 text-xl"
+                            onClick={() => handleReopenSale(appt._id)}
+                            disabled={actionLoading === appt._id + 'reopen'}
+                            title="Cancel Deal & Restore Property to Public (Available)"
+                          >
+                            {actionLoading === appt._id + 'reopen' ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaLockOpen />}
                           </button>
                         )}
                       </>
@@ -7500,7 +7551,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaUserShield />
                       </button>
                     )}
-                    {/* Archive button: show for non-admin users on their own appointments and outdated appointments */}
+                    {/* Delete button for outdated accepted appointments */}
+                    {!isUpcoming && (
+                      <button
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xl"
+                        onClick={handlePermanentDelete}
+                        title="Delete outdated appointment from table"
+                      >
+                        <FaTrash size={18} />
+                      </button>
+                    )}
+                    {/* Archive button: show for non-admin users on their own appointments */}
                     {!isAdmin && (
                       <button
                         className="text-gray-600 hover:text-gray-800 text-xl"
