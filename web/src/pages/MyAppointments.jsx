@@ -7460,11 +7460,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaBan />
                       </button>
                     )}
-                    {/* Sale Actions for Seller / Admin (Available for upcoming & outdated accepted/completed appointments) */}
+                    {/* Sale Actions for Seller / Admin (Sequential flow: Negotiation -> Token Paid -> Sold) */}
                     {(isSeller || isAdmin) && appt.purpose === 'buy' && (appt.status === 'accepted' || appt.status === 'completed' || appt.saleStatus === 'token_paid' || appt.saleStatus === 'sold') && (
                       <>
-                        {/* Mark Token Paid */}
-                        {(appt.saleStatus === 'negotiation' || !appt.saleStatus) && (
+                        {/* Step 1: Mark Token Paid (Shown during negotiation stage) */}
+                        {(!appt.saleStatus || appt.saleStatus === 'negotiation') && (
                           <button
                             className="text-blue-500 hover:text-blue-700 text-xl"
                             onClick={() => handleTokenPaid(appt._id)}
@@ -7475,8 +7475,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </button>
                         )}
 
-                        {/* Mark Sold */}
-                        {(appt.saleStatus === 'negotiation' || appt.saleStatus === 'token_paid' || !appt.saleStatus) && (
+                        {/* Step 2: Mark Sold (Shown after Token Received) */}
+                        {appt.saleStatus === 'token_paid' && (
                           <button
                             className="text-emerald-500 hover:text-emerald-700 text-xl"
                             onClick={() => handleSaleComplete(appt._id)}
@@ -7487,8 +7487,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </button>
                         )}
 
-                        {/* Reopen Deal / Cancel Deal / Restore Property to Public */}
-                        {(appt.saleStatus === 'token_paid' || appt.saleStatus === 'sold') && (
+                        {/* Cancel Deal / Restore Property to Public (Shown during token_paid stage until marked as sold) */}
+                        {appt.saleStatus === 'token_paid' && (
                           <button
                             className="text-amber-500 hover:text-amber-700 text-xl"
                             onClick={() => handleReopenSale(appt._id)}
