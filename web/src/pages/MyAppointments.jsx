@@ -3074,6 +3074,97 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const recordingCancelledRef = useRef(false);
   const pausedTimeRef = useRef(0); // Total time spent paused
 
+  // Unified robust media download function
+  // Uses plain fetch() (no credentials) to avoid CORS conflict with Cloudinary's
+  // Access-Control-Allow-Origin: * header. Falls back to Cloudinary fl_attachment
+  // transform. NEVER opens raw Cloudinary URL in a new tab.
+  const downloadMediaFile = async (fileUrl, defaultFilename = 'download', mediaType = 'File') => {
+    if (!fileUrl) {
+      toast.error('File URL not found');
+      return;
+    }
+
+    toast.info(`Downloading ${mediaType.toLowerCase()}...`);
+
+    // Helper to generate Cloudinary fl_attachment URL that forces Content-Disposition: attachment
+    const getCloudinaryAttachmentUrl = (url, name) => {
+      try {
+        if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+          const safeName = (name || 'download').replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_.-]/g, '_').substring(0, 60);
+          return url.replace('/upload/', `/upload/fl_attachment:${safeName}/`);
+        }
+      } catch (e) {
+        console.warn('Cloudinary attachment URL transform failed:', e);
+      }
+      return null;
+    };
+
+    // Method 1: Plain fetch without credentials (Cloudinary allows CORS with * for anonymous requests)
+    try {
+      const response = await fetch(fileUrl, { mode: 'cors' });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob && blob.size > 0) {
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = blobUrl;
+          a.download = defaultFilename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+          toast.success(`${mediaType} downloaded successfully`);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn(`${mediaType} direct fetch failed, trying attachment URL:`, err.message);
+    }
+
+    // Method 2: Cloudinary fl_attachment transform URL
+    const attachmentUrl = getCloudinaryAttachmentUrl(fileUrl, defaultFilename);
+    if (attachmentUrl) {
+      try {
+        const response = await fetch(attachmentUrl, { mode: 'cors' });
+        if (response.ok) {
+          const blob = await response.blob();
+          if (blob && blob.size > 0) {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = defaultFilename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+            toast.success(`${mediaType} downloaded successfully`);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn(`${mediaType} attachment fetch failed:`, err.message);
+      }
+    }
+
+    // Method 3: Anchor click with attachment URL (no _blank, no exposing raw URL)
+    try {
+      const downloadUrl = attachmentUrl || fileUrl;
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = downloadUrl;
+      a.download = defaultFilename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success(`${mediaType} download started`);
+    } catch (err) {
+      console.error(`${mediaType} download completely failed:`, err);
+      toast.error(`Failed to download ${mediaType.toLowerCase()}`);
+    }
+  };
+
   // Ensure timer ticks reliably while recording (redundant guard)
   useEffect(() => {
     if (isRecording && !isPaused) {
@@ -3417,135 +3508,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       toast.error('Error: Invalid image URL. Cannot download image.');
       return;
     }
-
-    try {
-      // Extract filename from URL or generate one
-      const urlParts = imageUrl.split('/');
-      const originalFilename = urlParts[urlParts.length - 1];
-      let filename = originalFilename;
-
-      // If filename doesn't have an extension or is just a hash, generate a proper name
-      if (!filename.includes('.') || filename.length < 5) {
-        // Try to determine file extension from URL or default to jpg
-        const extension = imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i)?.[1] || 'jpg';
-        filename = `chat-image-${messageId || Date.now()}.${extension}`;
-      }
-
-      // Try to fetch the image to handle CORS and get proper blob
-      try {
-        const response = await authenticatedFetch(imageUrl, {
-          mode: 'cors',
-          cache: 'no-cache'
-        });
-
-        if (response.ok) {
-          try {
-            const blob = await response.blob();
-
-            // Validate blob
-            if (!blob || blob.size === 0) {
-              throw new Error('Downloaded image is empty or corrupted');
-            }
-
-            const blobUrl = window.URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            // Clean up blob URL
-            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-
-            // Show success feedback
-            toast.success(`Image "${filename}" downloaded successfully!`);
-            return; // Exit early on success
-
-          } catch (blobError) {
-            console.error('Blob processing error:', blobError);
-            throw new Error(`Failed to process image data: ${blobError.message}`);
-          }
-        } else {
-          // Handle specific HTTP error codes
-          let errorMessage = `Server error (${response.status}): `;
-          switch (response.status) {
-            case 404:
-              errorMessage += 'Image not found on server';
-              break;
-            case 403:
-              errorMessage += 'Access denied to image';
-              break;
-            case 500:
-              errorMessage += 'Server internal error';
-              break;
-            default:
-              errorMessage += 'Unable to fetch image';
-          }
-          throw new Error(errorMessage);
-        }
-      } catch (fetchError) {
-        console.warn('Fetch failed, trying direct download:', fetchError);
-
-        // Show specific error for fetch failure
-        if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
-          toast.warn('Network error: Trying alternative download method...');
-        } else if (fetchError.message.includes('CORS')) {
-          toast.warn('CORS error: Trying alternative download method...');
-        } else {
-          toast.warn(`Fetch error: ${fetchError.message}. Trying alternative download method...`);
-        }
-
-        // Fallback to direct link download for CORS issues
-        try {
-          const link = document.createElement('a');
-          link.href = imageUrl;
-          link.download = filename;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Show info message for direct download attempt
-          toast.info('Alternative download initiated. If it doesn\'t start automatically, please try right-clicking the image and selecting "Save image as..."');
-          return; // Exit early on fallback attempt
-
-        } catch (directDownloadError) {
-          console.error('Direct download failed:', directDownloadError);
-          throw new Error(`Direct download failed: ${directDownloadError.message}`);
-        }
-      }
-    } catch (error) {
-      console.error('Download process failed:', error);
-
-      // Show error notification for the main download process failure
-      toast.error(`Download failed: ${error.message}. Attempting to open image in new tab...`);
-
-      // Final fallback - open image in new tab
-      try {
-        const newWindow = window.open(imageUrl, '_blank', 'noopener,noreferrer');
-
-        if (newWindow) {
-          toast.info('Image opened in new tab. You can right-click to save it manually.');
-        } else {
-          // Pop-up blocked
-          throw new Error('Pop-up blocked by browser');
-        }
-      } catch (openError) {
-        console.error('Failed to open image in new tab:', openError);
-
-        // Final error - all methods failed
-        if (openError.message.includes('Pop-up blocked')) {
-          toast.error('Error: Pop-up blocked. Please allow pop-ups for this site or right-click the image and select "Save image as..."');
-        } else {
-          toast.error(`All download methods failed: ${openError.message}. Please right-click the image and select "Save image as..." or check your internet connection.`);
-        }
-      }
-    }
+    const extension = imageUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i)?.[1] || 'jpg';
+    const filename = `chat-image-${messageId || Date.now()}.${extension}`;
+    await downloadMediaFile(imageUrl, filename, 'Image');
   };
 
   // Helper to extract extension and clean document name for chat documents
@@ -8414,32 +8379,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   {selectedMessageForHeaderOptions.videoUrl && (
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                                      onClick={async () => {
-                                        try {
-                                          const response = await authenticatedFetch(selectedMessageForHeaderOptions.videoUrl, { mode: 'cors' });
-                                          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                          const blob = await response.blob();
-                                          const blobUrl = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
-                                          a.href = blobUrl;
-                                          a.download = `video-${selectedMessageForHeaderOptions._id || Date.now()}.mp4`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                          toast.success('Video downloaded successfully');
-                                        } catch (error) {
-                                          console.error('Video download failed:', error);
-                                          // Fallback to direct link
-                                          const a = document.createElement('a');
-                                          a.href = selectedMessageForHeaderOptions.videoUrl;
-                                          a.download = `video-${selectedMessageForHeaderOptions._id || Date.now()}.mp4`;
-                                          a.target = '_blank';
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          toast.success('Video download started');
-                                        }
+                                      onClick={() => {
+                                        downloadMediaFile(
+                                          selectedMessageForHeaderOptions.videoUrl,
+                                          `video-${selectedMessageForHeaderOptions._id || Date.now()}.mp4`,
+                                          'Video'
+                                        );
                                         setShowHeaderMoreMenu(false);
                                         setHeaderOptionsMessageId(null);
                                       }}
@@ -8452,30 +8397,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   {selectedMessageForHeaderOptions.audioUrl && (
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                                      onClick={async () => {
-                                        try {
-                                          const response = await authenticatedFetch(selectedMessageForHeaderOptions.audioUrl, { mode: 'cors' });
-                                          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                          const blob = await response.blob();
-                                          const blobUrl = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
-                                          a.href = blobUrl;
-                                          a.download = selectedMessageForHeaderOptions.audioName || `audio-${selectedMessageForHeaderOptions._id || Date.now()}`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                          toast.success('Audio downloaded successfully');
-                                        } catch (error) {
-                                          const a = document.createElement('a');
-                                          a.href = selectedMessageForHeaderOptions.audioUrl;
-                                          a.download = selectedMessageForHeaderOptions.audioName || `audio-${selectedMessageForHeaderOptions._id || Date.now()}`;
-                                          a.target = '_blank';
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          toast.success('Audio download started');
-                                        }
+                                      onClick={() => {
+                                        downloadMediaFile(
+                                          selectedMessageForHeaderOptions.audioUrl,
+                                          selectedMessageForHeaderOptions.audioName || `audio-${selectedMessageForHeaderOptions._id || Date.now()}.mp3`,
+                                          'Audio'
+                                        );
                                         setShowHeaderMoreMenu(false);
                                         setHeaderOptionsMessageId(null);
                                       }}
@@ -8556,30 +8483,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   {selectedMessageForHeaderOptions.videoUrl && (
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                                      onClick={async () => {
-                                        try {
-                                          const response = await authenticatedFetch(selectedMessageForHeaderOptions.videoUrl, { mode: 'cors' });
-                                          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                          const blob = await response.blob();
-                                          const blobUrl = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
-                                          a.href = blobUrl;
-                                          a.download = `video-${selectedMessageForHeaderOptions._id || Date.now()}.mp4`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                        } catch (error) {
-                                          console.error('Video download failed:', error);
-                                          // Fallback to direct link
-                                          const a = document.createElement('a');
-                                          a.href = selectedMessageForHeaderOptions.videoUrl;
-                                          a.download = `video-${selectedMessageForHeaderOptions._id || Date.now()}.mp4`;
-                                          a.target = '_blank';
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                        }
+                                      onClick={() => {
+                                        downloadMediaFile(
+                                          selectedMessageForHeaderOptions.videoUrl,
+                                          `video-${selectedMessageForHeaderOptions._id || Date.now()}.mp4`,
+                                          'Video'
+                                        );
                                         setShowHeaderMoreMenu(false);
                                         setHeaderOptionsMessageId(null);
                                       }}
@@ -8592,30 +8501,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   {selectedMessageForHeaderOptions.audioUrl && (
                                     <button
                                       className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                                      onClick={async () => {
-                                        try {
-                                          const response = await authenticatedFetch(selectedMessageForHeaderOptions.audioUrl, { mode: 'cors' });
-                                          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                          const blob = await response.blob();
-                                          const blobUrl = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
-                                          a.href = blobUrl;
-                                          a.download = selectedMessageForHeaderOptions.audioName || `audio-${selectedMessageForHeaderOptions._id || Date.now()}`;
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                          toast.success('Audio downloaded successfully');
-                                        } catch (error) {
-                                          const a = document.createElement('a');
-                                          a.href = selectedMessageForHeaderOptions.audioUrl;
-                                          a.download = selectedMessageForHeaderOptions.audioName || `audio-${selectedMessageForHeaderOptions._id || Date.now()}`;
-                                          a.target = '_blank';
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          a.remove();
-                                          toast.success('Audio download started');
-                                        }
+                                      onClick={() => {
+                                        downloadMediaFile(
+                                          selectedMessageForHeaderOptions.audioUrl,
+                                          selectedMessageForHeaderOptions.audioName || `audio-${selectedMessageForHeaderOptions._id || Date.now()}.mp3`,
+                                          'Audio'
+                                        );
                                         setShowHeaderMoreMenu(false);
                                         setHeaderOptionsMessageId(null);
                                       }}
@@ -9804,31 +9695,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                   <div className="flex items-center gap-2">
                                                     <button
                                                       className={`px-3 py-1.5 text-xs rounded-full shadow-sm border transition-colors ${isMe ? 'bg-white text-blue-600 hover:bg-blue-50 border-blue-200' : 'bg-blue-600 text-white hover:bg-blue-700 border-transparent'}`}
-                                                      onClick={async (e) => {
+                                                      onClick={(e) => {
                                                         e.stopPropagation();
-                                                        try {
-                                                          const response = await authenticatedFetch(c.audioUrl, { mode: 'cors' });
-                                                          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                          const blob = await response.blob();
-                                                          const blobUrl = window.URL.createObjectURL(blob);
-                                                          const a = document.createElement('a');
-                                                          a.href = blobUrl;
-                                                          a.download = c.audioName || `audio-${c._id || Date.now()}`;
-                                                          document.body.appendChild(a);
-                                                          a.click();
-                                                          a.remove();
-                                                          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                                          toast.success('Audio downloaded successfully');
-                                                        } catch (error) {
-                                                          const a = document.createElement('a');
-                                                          a.href = c.audioUrl;
-                                                          a.download = c.audioName || `audio-${c._id || Date.now()}`;
-                                                          a.target = '_blank';
-                                                          document.body.appendChild(a);
-                                                          a.click();
-                                                          a.remove();
-                                                          toast.success('Audio download started');
-                                                        }
+                                                        downloadMediaFile(c.audioUrl, c.audioName || `audio-${c._id || Date.now()}.mp3`, 'Audio');
                                                       }}
                                                       title="Download audio"
                                                     >
@@ -13744,32 +13613,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                               ? 'bg-white/20 hover:bg-white/30 text-white border-white/30'
                                               : 'bg-blue-600 text-white hover:bg-blue-700 border-transparent'
                                               }`}
-                                            onClick={async (e) => {
+                                            onClick={(e) => {
                                               e.stopPropagation();
                                               const targetUrl = message.audioUrl || message.audio || message.mediaUrl || message.fileUrl || message.url;
-                                              try {
-                                                const response = await authenticatedFetch(targetUrl, { mode: 'cors' });
-                                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                const blob = await response.blob();
-                                                const blobUrl = window.URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = blobUrl;
-                                                a.download = message.audioName || `audio-${message._id || Date.now()}`;
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                a.remove();
-                                                setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                                toast.success('Audio downloaded successfully');
-                                              } catch (error) {
-                                                const a = document.createElement('a');
-                                                a.href = targetUrl;
-                                                a.download = message.audioName || `audio-${message._id || Date.now()}`;
-                                                a.target = '_blank';
-                                                document.body.appendChild(a);
-                                                a.click();
-                                                a.remove();
-                                                toast.success('Audio download started');
-                                              }
+                                              downloadMediaFile(targetUrl, message.audioName || `audio-${message._id || Date.now()}.mp3`, 'Audio');
                                             }}
                                             title="Download audio"
                                           >
@@ -14182,30 +14029,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               <button
                                 className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 rounded-lg transition-colors shrink-0 self-end sm:self-center flex items-center gap-1.5 text-xs font-medium"
                                 title="Download Audio"
-                                onClick={async (e) => {
+                                onClick={(e) => {
                                   e.stopPropagation();
-                                  try {
-                                    const response = await authenticatedFetch(msg.audioUrl, { mode: 'cors' });
-                                    if (!response.ok) throw new Error();
-                                    const blob = await response.blob();
-                                    const blobUrl = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = blobUrl;
-                                    a.download = msg.audioName || `audio-${msg._id || Date.now()}`;
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    a.remove();
-                                    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 200);
-                                    toast.success('Audio downloaded');
-                                  } catch {
-                                    const a = document.createElement('a');
-                                    a.href = msg.audioUrl;
-                                    a.download = msg.audioName || `audio-${msg._id || Date.now()}`;
-                                    a.target = '_blank';
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    a.remove();
-                                  }
+                                  downloadMediaFile(msg.audioUrl, msg.audioName || `audio-${msg._id || Date.now()}.mp3`, 'Audio');
                                 }}
                               >
                                 <FaDownload className="w-3.5 h-3.5" />
@@ -14523,8 +14349,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                         for (const msg of messageToPin) {
                           try {
-
-
                             const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/pin`, {
                               method: 'PATCH',
                               body: JSON.stringify({
