@@ -27,6 +27,7 @@ import {
   FaArrowRight
 } from "react-icons/fa";
 import GeminiAIWrapper from "../components/GeminiAIWrapper";
+import PropertyDeleteModal from "../components/PropertyDeleteModal";
 import { toast } from 'react-toastify';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
 import axios from 'axios';
@@ -195,13 +196,8 @@ export default function AdminDashboard() {
     dailyStats: []
   });
 
-  const [showReasonModal, setShowReasonModal] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [pendingDelete, setPendingDelete] = useState({ id: null, ownerId: null });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedListingForDelete, setSelectedListingForDelete] = useState(null);
   const [fraudStats, setFraudStats] = useState({ suspiciousListings: 0, suspectedFakeReviews: 0, lastScan: null });
   const [securityStats, setSecurityStats] = useState({ activeOtpLockouts: 0, passwordLockouts: 0, totalOtpRequests: 0, totalFailedAttempts: 0 });
 
@@ -209,10 +205,9 @@ export default function AdminDashboard() {
   const rentLockedTotal = (rentLockStats.reserved || 0) + (rentLockStats.under_contract || 0);
   const activeRentalCount = rentLockStats.rented || 0;
 
-  // Lock body scroll when deletion modals are open on dashboard
+  // Lock body scroll when deletion modal is open on dashboard
   useEffect(() => {
-    const shouldLock = showReasonModal || showPasswordModal;
-    if (shouldLock) {
+    if (showDeleteModal) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
@@ -220,7 +215,7 @@ export default function AdminDashboard() {
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [showReasonModal, showPasswordModal]);
+  }, [showDeleteModal]);
 
   const navigate = useNavigate();
 
@@ -892,66 +887,9 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteListing = (listingId, listingOwnerId) => {
-    setPendingDelete({ id: listingId, ownerId: listingOwnerId });
-    setDeleteReason("");
-    setDeleteError("");
-    setShowReasonModal(true);
-  };
-
-  const handleReasonSubmit = (e) => {
-    e.preventDefault();
-    if (!deleteReason.trim()) {
-      setDeleteError("Reason is required");
-      return;
-    }
-    setShowReasonModal(false);
-    setDeleteError("");
-    setShowPasswordModal(true);
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!deletePassword) {
-      setDeleteError("Password is required");
-      return;
-    }
-    setDeleteLoading(true);
-    setDeleteError("");
-    try {
-      // Verify password
-      try {
-        const verifyRes = await authenticatedFetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: deletePassword })
-        });
-        if (!verifyRes.ok) throw new Error('Password incorrect');
-      } catch (verifyError) {
-        setDeleteError("Incorrect password. Property not deleted.");
-        setDeleteLoading(false);
-        return;
-      }
-
-      // Proceed to delete
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/delete/${pendingDelete.id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: deleteReason })
-      });
-      const data = await res.json();
-
-      setOfferListings((prev) => prev.filter((l) => l._id !== pendingDelete.id));
-      setRentListings((prev) => prev.filter((l) => l._id !== pendingDelete.id));
-      setSaleListings((prev) => prev.filter((l) => l._id !== pendingDelete.id));
-      setShowPasswordModal(false);
-      toast.success(data.message || 'Listing deleted successfully.');
-      fetchAnalytics();
-    } catch (err) {
-      setDeleteError(err.message || 'An error occurred. Please try again.');
-    } finally {
-      setDeleteLoading(false);
-    }
+  const handleDeleteListing = (listing) => {
+    setSelectedListingForDelete(listing);
+    setShowDeleteModal(true);
   };
 
   if (loading) {
@@ -2238,7 +2176,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {offerListings.map((listing) => (
                   <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
-                    <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing._id, listing.userRef)} />
+                    <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing)} />
                   </div>
                 ))}
               </div>
@@ -2255,7 +2193,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {rentListings.map((listing) => (
                   <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
-                    <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing._id, listing.userRef)} />
+                    <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing)} />
                   </div>
                 ))}
               </div>
@@ -2272,7 +2210,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {saleListings.map((listing) => (
                   <div className="transition-transform duration-300 hover:scale-105 hover:shadow-xl" key={listing._id}>
-                    <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing._id, listing.userRef)} />
+                    <ListingItem listing={listing} onDelete={() => handleDeleteListing(listing)} />
                   </div>
                 ))}
               </div>
@@ -2283,48 +2221,20 @@ export default function AdminDashboard() {
         <ContactSupportWrapper />
       </div>
 
-      {/* Reason Modal */}
-      {showReasonModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <form onSubmit={handleReasonSubmit} className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-md flex flex-col gap-6 border border-white/20 dark:border-gray-700 transform animate-scale-in">
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2"><FaTrash /> Reason for Deletion</h3>
-            <textarea
-              className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl p-4 w-full text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              placeholder="Enter reason for deleting this property"
-              value={deleteReason}
-              onChange={e => setDeleteReason(e.target.value)}
-              rows={3}
-              autoFocus
-            />
-            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowReasonModal(false)} className="px-6 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-lg hover:shadow-red-500/30 transition-all">Next</button>
-            </div>
-          </form>
-        </div>
-      )}
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <form onSubmit={handlePasswordSubmit} className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 sm:p-8 w-full max-w-md flex flex-col gap-6 border border-white/20 dark:border-gray-700 transform animate-scale-in">
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2"><FaLock /> Confirm Password</h3>
-            <input
-              type="password"
-              className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-xl p-4 w-full text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
-              autoFocus
-            />
-            {deleteError && <div className="text-red-600 text-sm">{deleteError}</div>}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-6 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
-              <button type="submit" className="px-6 py-2.5 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 shadow-lg hover:shadow-blue-500/30 transition-all" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
-            </div>
-          </form>
-        </div>
-      )}
+      <PropertyDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedListingForDelete(null);
+        }}
+        listing={selectedListingForDelete}
+        onSuccess={(deletedId) => {
+          setOfferListings((prev) => prev.filter((l) => l._id !== deletedId));
+          setRentListings((prev) => prev.filter((l) => l._id !== deletedId));
+          setSaleListings((prev) => prev.filter((l) => l._id !== deletedId));
+          fetchAnalytics();
+        }}
+      />
       <ThemeDetailModal
         theme={theme}
         themes={allThemes}

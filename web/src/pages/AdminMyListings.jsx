@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 
 import { usePageTitle } from '../hooks/usePageTitle';
 import AdminMyListingsSkeleton from "../components/skeletons/AdminMyListingsSkeleton";
+import PropertyDeleteModal from "../components/PropertyDeleteModal";
 import { authenticatedFetch } from '../utils/auth';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -21,11 +22,8 @@ export default function AdminMyListings() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [listings, setListings] = useState([]);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedListingForDelete, setSelectedListingForDelete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [visibleCount, setVisibleCount] = useState(12);
@@ -75,82 +73,9 @@ export default function AdminMyListings() {
     fetchMyListings();
   }, [currentUser?._id]);
 
-  const handleDelete = (id) => {
-    setPendingDeleteId(id);
-    setShowPasswordModal(true);
-    setDeletePassword("");
-    setDeleteError("");
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    setDeleteLoading(true);
-    setDeleteError("");
-    try {
-      // Verify password
-      const verifyRes = await authenticatedFetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: deletePassword }),
-      });
-
-      if (!verifyRes.ok) {
-        // Track wrong attempts locally (allow up to 3 attempts before logout)
-        const key = 'adminMyListingPwAttempts';
-        const prev = parseInt(localStorage.getItem(key) || '0');
-        const next = prev + 1;
-        localStorage.setItem(key, String(next));
-
-        if (next >= 3) {
-          // Sign out and redirect on third wrong attempt
-          toast.error("Too many incorrect attempts. You've been signed out for security.");
-          dispatch(signoutUserStart());
-          try {
-            const signoutRes = await authenticatedFetch(`${API_BASE_URL}/api/auth/signout`);
-            const signoutData = await signoutRes.json();
-            if (signoutData.success === false) {
-              dispatch(signoutUserFailure(signoutData.message));
-            } else {
-              dispatch(signoutUserSuccess(signoutData));
-            }
-          } catch (err) {
-            dispatch(signoutUserFailure(err.message));
-          }
-          localStorage.removeItem(key); // Clear attempts on logout
-          setShowPasswordModal(false);
-          setTimeout(() => {
-            navigate('/sign-in');
-          }, 800);
-          return;
-        }
-
-        const remaining = 3 - next;
-        setDeleteError(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} left before logout.`);
-        setDeleteLoading(false);
-        return;
-      }
-
-      // Success - Clear attempts
-      localStorage.removeItem('adminMyListingPwAttempts');
-
-      const res = await authenticatedFetch(`/api/listing/delete/${pendingDeleteId}`, {
-        method: "DELETE"
-      });
-
-      if (res.ok) {
-        setListings((prev) => prev.filter((listing) => listing._id !== pendingDeleteId));
-        toast.success("Listing deleted successfully!");
-        setShowPasswordModal(false);
-        setPendingDeleteId(null);
-      } else {
-        const data = await res.json();
-        setDeleteError(data.message || "Failed to delete listing.");
-      }
-    } catch (err) {
-      setDeleteError("An error occurred. Please try again.");
-    } finally {
-      setDeleteLoading(false);
-    }
+  const handleDelete = (listing) => {
+    setSelectedListingForDelete(listing);
+    setShowDeleteModal(true);
   };
 
   const formatPrice = (price) => {
@@ -432,7 +357,7 @@ export default function AdminMyListings() {
                             <FaEdit /> Edit
                           </Link>
                           <button
-                            onClick={() => handleDelete(listing._id)}
+                            onClick={() => handleDelete(listing)}
                             className="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm font-medium hover:bg-red-600 transition flex items-center justify-center gap-1"
                           >
                             <FaTrash /> Delete
@@ -457,26 +382,17 @@ export default function AdminMyListings() {
           </div>
         </div>
       </div>
-      {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
-          <form onSubmit={handlePasswordSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2"><FaLock /> Confirm Password</h3>
-            <input
-              type="password"
-              className="border dark:border-gray-700 rounded p-2 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
-              autoFocus
-            />
-            {deleteError && <div className="text-red-600 dark:text-red-400 text-sm">{deleteError}</div>}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-red-600 text-white font-semibold" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
-            </div>
-          </form>
-        </div>
-      )}
+      <PropertyDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedListingForDelete(null);
+        }}
+        listing={selectedListingForDelete}
+        onSuccess={(deletedId) => {
+          setListings((prev) => prev.filter((item) => item._id !== deletedId));
+        }}
+      />
       <ContactSupportWrapper />
     </>
   );

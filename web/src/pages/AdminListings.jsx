@@ -12,6 +12,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { isMobileDevice } from '../utils/mobileUtils';
 import AdminListingsSkeleton from "../components/skeletons/AdminListingsSkeleton";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
+import PropertyDeleteModal from "../components/PropertyDeleteModal";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminListings() {
@@ -27,16 +28,16 @@ export default function AdminListings() {
   const [showMoreListing, setShowMoreListing] = useState(false);
   const [fetching, setFetching] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
-  const [showReasonModal, setShowReasonModal] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedListingForDelete, setSelectedListingForDelete] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const reasonInputRef = useRef(null);
   const passwordInputRef = useRef(null);
+
+  const handleDelete = (listing) => {
+    setSelectedListingForDelete(listing);
+    setShowDeleteModal(true);
+  };
 
   // Property Reports state
   const [showPropertyReportsModal, setShowPropertyReportsModal] = useState(false);
@@ -60,9 +61,9 @@ export default function AdminListings() {
   const [statsOwnerFilter, setStatsOwnerFilter] = useState('all'); // 'all', 'sale', 'rent', 'offer'
   const [statsSearch, setStatsSearch] = useState('');
 
-  // Lock body scroll when deletion modals are open on Admin Listings
+  // Lock body scroll when modals are open on Admin Listings
   useEffect(() => {
-    const shouldLock = showReasonModal || showPasswordModal || showPropertyReportsModal || showStatsModal;
+    const shouldLock = showDeleteModal || showPropertyReportsModal || showStatsModal;
     if (shouldLock) {
       document.body.classList.add('modal-open');
     } else {
@@ -71,7 +72,7 @@ export default function AdminListings() {
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [showReasonModal, showPasswordModal, showPropertyReportsModal]);
+  }, [showDeleteModal, showPropertyReportsModal, showStatsModal]);
 
   // Handle mobile state updates
   useEffect(() => {
@@ -81,26 +82,6 @@ export default function AdminListings() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Autofocus reason input when modal opens (desktop only)
-  useEffect(() => {
-    if (showReasonModal && !isMobile && reasonInputRef.current) {
-      const timer = setTimeout(() => {
-        reasonInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [showReasonModal, isMobile]);
-
-  // Autofocus password input when modal opens (desktop only)
-  useEffect(() => {
-    if (showPasswordModal && !isMobile && passwordInputRef.current) {
-      const timer = setTimeout(() => {
-        passwordInputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [showPasswordModal, isMobile]);
 
   const [filters, setFilters] = useState({
     searchTerm: '',
@@ -177,99 +158,7 @@ export default function AdminListings() {
     } catch (_) { }
   };
 
-  const handleDelete = (id) => {
-    setPendingDeleteId(id);
-    setDeleteReason("");
-    setDeleteError("");
-    setShowReasonModal(true);
-  };
 
-  const handleReasonSubmit = (e) => {
-    e.preventDefault();
-    if (!deleteReason.trim()) {
-      setDeleteError("Reason is required");
-      return;
-    }
-    setShowReasonModal(false);
-    setDeleteError("");
-    setShowPasswordModal(true);
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!deletePassword) {
-      setDeleteError("Password is required");
-      return;
-    }
-    setDeleteLoading(true);
-    setDeleteError("");
-    try {
-      // Verify password
-      const verifyRes = await authenticatedFetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: deletePassword }),
-      });
-      if (!verifyRes.ok) {
-        // Track wrong attempts locally (allow up to 3 attempts before logout)
-        const key = 'deleteAdminListingPwAttempts';
-        const prev = parseInt(localStorage.getItem(key) || '0');
-        const next = prev + 1;
-        localStorage.setItem(key, String(next));
-
-        if (next >= 3) {
-          // Sign out and redirect on third wrong attempt
-          toast.error("Too many incorrect attempts. You've been signed out for security.");
-          dispatch(signoutUserStart());
-          try {
-            const signoutRes = await authenticatedFetch(`${API_BASE_URL}/api/auth/signout`);
-            const signoutData = await signoutRes.json();
-            if (signoutData.success === false) {
-              dispatch(signoutUserFailure(signoutData.message));
-            } else {
-              dispatch(signoutUserSuccess(signoutData));
-            }
-          } catch (err) {
-            dispatch(signoutUserFailure(err.message));
-          }
-          localStorage.removeItem(key); // Clear attempts on logout
-          setShowPasswordModal(false);
-          setTimeout(() => {
-            navigate('/sign-in');
-          }, 800);
-          return;
-        }
-
-        const remaining = 3 - next;
-        setDeleteError(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} left before logout.`);
-        setDeleteLoading(false);
-        return;
-      }
-
-      // Success - Clear attempts
-      localStorage.removeItem('deleteAdminListingPwAttempts');
-
-      // Proceed to delete
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/delete/${pendingDeleteId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: deleteReason }),
-      });
-      if (res.ok) {
-        setListings((prev) => prev.filter((listing) => listing._id !== pendingDeleteId));
-        setShowPasswordModal(false);
-        const data = await res.json();
-        toast.success(data.message || "Listing deleted successfully!");
-      } else {
-        const data = await res.json();
-        setDeleteError(data.message || "Failed to delete listing.");
-      }
-    } catch (err) {
-      setDeleteError("An error occurred. Please try again.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
@@ -764,7 +653,7 @@ export default function AdminListings() {
                             <FaEdit /> Edit
                           </Link>
                           <button
-                            onClick={() => handleDelete(listing._id)}
+                            onClick={() => handleDelete(listing)}
                             className="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm font-medium hover:bg-red-600 transition flex items-center justify-center gap-1"
                           >
                             <FaTrash /> Delete
@@ -793,48 +682,17 @@ export default function AdminListings() {
         </div>
       </div>
       <ContactSupportWrapper />
-      {/* Reason Modal */}
-      {showReasonModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
-          <form onSubmit={handleReasonSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2"><FaTrash /> Reason for Deletion</h3>
-            <textarea
-              ref={reasonInputRef}
-              className="border dark:border-gray-700 rounded p-2 w-full bg-white dark:bg-gray-700 dark:text-white"
-              placeholder="Enter reason for deleting this property"
-              value={deleteReason}
-              onChange={e => setDeleteReason(e.target.value)}
-              rows={3}
-            />
-            {deleteError && <div className="text-red-600 dark:text-red-400 text-sm">{deleteError}</div>}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowReasonModal(false)} className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-red-600 text-white font-semibold">Next</button>
-            </div>
-          </form>
-        </div>
-      )}
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
-          <form onSubmit={handlePasswordSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2"><FaLock /> Confirm Password</h3>
-            <input
-              ref={passwordInputRef}
-              type="password"
-              className="border dark:border-gray-700 rounded p-2 w-full bg-white dark:bg-gray-700 dark:text-white"
-              placeholder="Enter your password"
-              value={deletePassword}
-              onChange={e => setDeletePassword(e.target.value)}
-            />
-            {deleteError && <div className="text-red-600 dark:text-red-400 text-sm">{deleteError}</div>}
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-blue-700 text-white font-semibold" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Confirm & Delete'}</button>
-            </div>
-          </form>
-        </div>
-      )}
+      <PropertyDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedListingForDelete(null);
+        }}
+        listing={selectedListingForDelete}
+        onSuccess={(deletedId) => {
+          setListings((prev) => prev.filter((item) => item._id !== deletedId));
+        }}
+      />
 
       {/* Property Reports Modal */}
       {showPropertyReportsModal && (

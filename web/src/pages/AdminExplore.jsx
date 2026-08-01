@@ -13,6 +13,7 @@ import { Search as SearchIcon, IndianRupee, MapPin, Grid, List, RefreshCw, XCirc
 
 import { authenticatedFetch } from "../utils/auth";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
+import PropertyDeleteModal from "../components/PropertyDeleteModal";
 import duckImg from "../assets/duck-go-final.gif";
 import duckDarkImg from "../assets/duck-go.gif";
 
@@ -50,13 +51,8 @@ export default function AdminExplore() {
   const [smartQuery, setSmartQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [showReasonModal, setShowReasonModal] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedListingForDelete, setSelectedListingForDelete] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [locationFilter, setLocationFilter] = useState({ state: "", district: "", city: "" });
   const [isAiMode, setIsAiMode] = useState(false); // Track if we are showing AI results
@@ -166,62 +162,12 @@ export default function AdminExplore() {
   };
 
   // Admin delete flow
-  const handleDelete = (id) => {
-    setPendingDeleteId(id);
-    setDeleteReason("");
-    setDeleteError("");
-    setShowReasonModal(true);
+  const handleDelete = (listing) => {
+    setSelectedListingForDelete(listing);
+    setShowDeleteModal(true);
   };
 
-  const handleReasonSubmit = (e) => {
-    e.preventDefault();
-    if (!deleteReason.trim()) {
-      setDeleteError("Reason is required");
-      return;
-    }
-    setShowReasonModal(false);
-    setDeleteError("");
-    setShowPasswordModal(true);
-  };
 
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!deletePassword) {
-      setDeleteError("Password is required");
-      return;
-    }
-    setDeleteLoading(true);
-    setDeleteError("");
-    try {
-      const verifyRes = await authenticatedFetch(`${API_BASE_URL}/api/user/verify-password/${currentUser._id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: deletePassword }),
-      });
-      if (!verifyRes.ok) {
-        setDeleteError("Incorrect password. Property not deleted.");
-        setDeleteLoading(false);
-        return;
-      }
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/listing/delete/${pendingDeleteId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: deleteReason }),
-      });
-      if (res.ok) {
-        setListings((prev) => prev.filter((l) => l._id !== pendingDeleteId));
-        setShowPasswordModal(false);
-        toast.success("Listing deleted successfully!");
-      } else {
-        const data = await res.json();
-        setDeleteError(data.message || "Failed to delete listing.");
-      }
-    } catch (err) {
-      setDeleteError("An error occurred. Please try again.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
 
   const applySmartQuery = async (e, directQuery = null) => {
     if (e) e.preventDefault();
@@ -608,7 +554,7 @@ export default function AdminExplore() {
                   <ListingItem
                     key={listing._id}
                     listing={listing}
-                    onDelete={() => handleDelete(listing._id)}
+                    onDelete={() => handleDelete(listing)}
                   />
                 ))
               )}
@@ -629,85 +575,17 @@ export default function AdminExplore() {
         </div>
       </main>
 
-      {/* Delete Reason Modal */}
-      {showReasonModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-8 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-[40px] shadow-2xl w-full max-w-md border border-white/20 overflow-hidden transform animate-scale-in">
-            <div className="p-8 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-red-600 rounded-2xl shadow-lg shadow-red-600/30">
-                  <FaTrash className="text-white text-xl" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Authorization Required</h3>
-                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mt-1">Deletion Protocol Engaged</p>
-                </div>
-              </div>
-            </div>
-            <form onSubmit={handleReasonSubmit} className="p-8 space-y-6">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Reason for Eradicating Asset</label>
-                <textarea
-                  value={deleteReason}
-                  onChange={(e) => setDeleteReason(e.target.value)}
-                  className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus:border-red-500 focus:bg-white dark:focus:bg-gray-800 transition-all font-bold text-gray-800 dark:text-white min-h-[120px] resize-none"
-                  placeholder="Categorize the violation or reason..."
-                />
-              </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowReasonModal(false)} className="flex-1 py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-gray-600">Abort</button>
-                <button type="submit" className="flex-2 px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black uppercase text-[10px] tracking-widest">Next Step</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-[40px] shadow-2xl w-full max-w-md border border-white/20 overflow-hidden transform animate-scale-in">
-            <div className="p-8 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-amber-500 rounded-2xl shadow-lg shadow-amber-500/30">
-                  <FaLock className="text-white text-xl" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Final Verification</h3>
-                  <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mt-1">Confirm Identity to Proceed</p>
-                </div>
-              </div>
-            </div>
-            <form onSubmit={handlePasswordSubmit} className="p-8 space-y-6">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Admin Passkey</label>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-700 rounded-2xl focus:border-red-500 focus:bg-white dark:focus:bg-gray-800 transition-all font-bold text-gray-800 dark:text-white"
-                  placeholder="••••••••"
-                />
-              </div>
-              {deleteError && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-widest animate-shake">
-                  {deleteError}
-                </div>
-              )}
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 py-4 font-black uppercase text-[10px] tracking-widest text-gray-400 hover:text-gray-600">Abort</button>
-                <button
-                  type="submit"
-                  disabled={deleteLoading}
-                  className="flex-2 px-8 py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-red-600/30 flex items-center justify-center gap-2"
-                >
-                  {deleteLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : 'Eradicate Asset'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PropertyDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedListingForDelete(null);
+        }}
+        listing={selectedListingForDelete}
+        onSuccess={(deletedId) => {
+          setListings((prev) => prev.filter((item) => item._id !== deletedId));
+        }}
+      />
     </div>
   );
 }
