@@ -2218,6 +2218,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [savingComment, setSavingComment] = useState(null);
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
+  const [imageErrorMap, setImageErrorMap] = useState({});
 
   useEffect(() => {
     if (showChatModal) {
@@ -11290,39 +11291,56 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                     {/* Image Slideshow */}
                     <div className="relative mb-4">
-                      {/* Navigation Arrows */}
-                      {selectedFiles.length > 1 && (
-                        <>
-                          <button
-                            onClick={() => setPreviewIndex(prev => prev > 0 ? prev - 1 : selectedFiles.length - 1)}
-                            className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-all duration-200"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => setPreviewIndex(prev => prev < selectedFiles.length - 1 ? prev + 1 : 0)}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-all duration-200"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        </>
-                      )}
+                      {/* Main Image Preview Box with Vertically Centered Navigation Arrows */}
+                      <div className="relative mb-3 flex items-center justify-center min-h-[260px] h-64 bg-gray-900/70 dark:bg-gray-900/90 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group">
+                        {/* Navigation Arrows (Vertically centered inside main image box) */}
+                        {selectedFiles.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewIndex(prev => prev > 0 ? prev - 1 : selectedFiles.length - 1)}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2.5 shadow-lg transition-all duration-200 backdrop-blur-xs flex items-center justify-center border border-white/20 hover:scale-105"
+                              title="Previous Image"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewIndex(prev => prev < selectedFiles.length - 1 ? prev + 1 : 0)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-black/60 hover:bg-black/80 text-white rounded-full p-2.5 shadow-lg transition-all duration-200 backdrop-blur-xs flex items-center justify-center border border-white/20 hover:scale-105"
+                              title="Next Image"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
 
-                      {/* Current Image */}
-                      <div className="mb-3">
-                        <img
-                          src={typeof selectedFiles[previewIndex] === 'string' ? selectedFiles[previewIndex] : URL.createObjectURL(selectedFiles[previewIndex])}
-                          alt={`Preview ${previewIndex + 1}`}
-                          className="w-full h-64 object-contain rounded-lg border"
-                        />
+                        {/* Current Image OR Image Preview Unavailable Fallback */}
+                        {imageErrorMap[previewIndex] ? (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900/90 text-gray-400 p-4 text-center">
+                            <FaImage className="text-4xl mb-2 text-gray-500 opacity-60" />
+                            <span className="text-sm font-semibold text-gray-300">Image Preview Unavailable</span>
+                            <span className="text-xs text-gray-500 mt-1">The image file could not be loaded or is corrupted</span>
+                          </div>
+                        ) : (
+                          <img
+                            key={`preview-${previewIndex}-${typeof selectedFiles[previewIndex] === 'string' ? selectedFiles[previewIndex] : selectedFiles[previewIndex]?.name}`}
+                            src={typeof selectedFiles[previewIndex] === 'string' ? selectedFiles[previewIndex] : URL.createObjectURL(selectedFiles[previewIndex])}
+                            alt={`Preview ${previewIndex + 1}`}
+                            className="w-full h-full object-contain rounded-lg"
+                            onError={() => {
+                              setImageErrorMap(prev => ({ ...prev, [previewIndex]: true }));
+                            }}
+                          />
+                        )}
                       </div>
 
                       {/* Image Counter */}
-                      <div className="text-center text-sm text-gray-600 dark:text-gray-300 mb-3">
+                      <div className="text-center text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">
                         {previewIndex + 1} of {selectedFiles.length}
                       </div>
 
@@ -11330,24 +11348,36 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-2 min-w-0 max-w-full" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db #f3f4f6' }}>
                         {selectedFiles.map((file, index) => {
                           const fileKey = typeof file === 'string' ? (file.split('/').pop()?.split('?')[0] || `Image ${index + 1}`) : file.name;
+                          const isErr = imageErrorMap[index];
                           return (
                           <div key={index} className="relative">
                             <button
+                              type="button"
                               onClick={() => setPreviewIndex(index)}
-                              className={`flex-shrink-0 w-12 h-12 rounded-lg border-2 transition-all duration-200 ${index === previewIndex
-                                ? 'border-blue-500 shadow-lg'
+                              className={`flex-shrink-0 w-12 h-12 rounded-lg border-2 overflow-hidden transition-all duration-200 flex items-center justify-center bg-gray-800 ${index === previewIndex
+                                ? 'border-blue-500 shadow-lg ring-2 ring-blue-400/30'
                                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                                 }`}
                             >
-                              <img
-                                src={typeof file === 'string' ? file : URL.createObjectURL(file)}
-                                alt={`Thumbnail ${index + 1}`}
-                                className="w-full h-full object-cover rounded-lg"
-                              />
+                              {isErr ? (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-400" title="Image preview unavailable">
+                                  <FaImage className="w-4 h-4 text-gray-500 opacity-60" />
+                                </div>
+                              ) : (
+                                <img
+                                  src={typeof file === 'string' ? file : URL.createObjectURL(file)}
+                                  alt={`Thumbnail ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                  onError={() => {
+                                    setImageErrorMap(prev => ({ ...prev, [index]: true }));
+                                  }}
+                                />
+                              )}
                             </button>
                             {/* Delete Icon on Thumbnail - Only show when multiple images are selected */}
                             {selectedFiles.length > 1 && (
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation(); // Prevent triggering the thumbnail selection
                                   const newFiles = selectedFiles.filter((_, fileIndex) => fileIndex !== index);
@@ -11359,6 +11389,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                     // If no images left, close modal
                                     setSelectedFiles([]);
                                     setImageCaptions({});
+                                    setImageErrorMap({});
                                     setShowImagePreviewModal(false);
                                   } else {
                                     // Update files and adjust preview index
