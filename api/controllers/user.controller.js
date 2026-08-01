@@ -395,12 +395,30 @@ export const getAllUsersForAutocomplete = async (req, res, next) => {
             return next(errorHandler(403, "Only admins can access user list"));
         }
 
-        // Get only regular users (exclude admins and rootadmins)
-        const users = await User.find({
-            _id: { $ne: req.user.id },
-            status: { $ne: 'suspended' }, // Exclude suspended users
-            role: 'user' // Only return regular users, exclude admins and rootadmins
-        }).select('email username _id mobileNumber role').sort({ email: 1 });
+        const { query, search, includeSuspended } = req.query;
+        const searchTerm = (query || search || '').trim();
+
+        const dbQuery = {
+            _id: { $ne: req.user.id }
+        };
+
+        // Exclude suspended users by default unless explicitly requested
+        if (includeSuspended !== 'true') {
+            dbQuery.status = { $ne: 'suspended' };
+        }
+
+        if (searchTerm) {
+            dbQuery.$or = [
+                { username: { $regex: searchTerm, $options: 'i' } },
+                { name: { $regex: searchTerm, $options: 'i' } },
+                { email: { $regex: searchTerm, $options: 'i' } },
+                { mobileNumber: { $regex: searchTerm, $options: 'i' } }
+            ];
+        }
+
+        const users = await User.find(dbQuery)
+            .select('email username name avatar mobileNumber status isVerified role _id')
+            .sort({ email: 1 });
 
         res.status(200).json(users);
     } catch (error) {

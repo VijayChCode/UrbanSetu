@@ -274,16 +274,33 @@ export default function PropertyOwnershipModal({
 
                             {/* User Selection List */}
                             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                                {searchingUsers ? (
-                                    <div className="text-center py-6 text-xs text-gray-400">
-                                        Searching users...
-                                    </div>
-                                ) : availableUsers.length === 0 ? (
-                                    <div className="text-center py-6 text-xs text-gray-400">
-                                        No users found matching search criteria.
-                                    </div>
-                                ) : (
-                                    availableUsers.map((u) => {
+                                {(() => {
+                                    const term = searchTerm.toLowerCase().trim();
+                                    const filteredUsers = availableUsers.filter((u) => {
+                                        if (!term) return true;
+                                        const name = (u.username || u.name || '').toLowerCase();
+                                        const email = (u.email || '').toLowerCase();
+                                        const mobile = (u.mobileNumber || '').toLowerCase();
+                                        return name.includes(term) || email.includes(term) || mobile.includes(term);
+                                    });
+
+                                    if (searchingUsers) {
+                                        return (
+                                            <div className="text-center py-6 text-xs text-gray-400">
+                                                Searching users...
+                                            </div>
+                                        );
+                                    }
+
+                                    if (filteredUsers.length === 0) {
+                                        return (
+                                            <div className="text-center py-6 text-xs text-gray-400">
+                                                No users found matching search criteria.
+                                            </div>
+                                        );
+                                    }
+
+                                    return filteredUsers.map((u) => {
                                         const isSuspended = u.status === 'suspended' || u.status === 'banned';
                                         const isUnverified = u.isVerified === false;
                                         const isDisabled = isSuspended || isUnverified;
@@ -342,8 +359,8 @@ export default function PropertyOwnershipModal({
                                                 </div>
                                             </div>
                                         );
-                                    })
-                                )}
+                                     });
+                                })()}
                             </div>
                         </div>
                     )}
