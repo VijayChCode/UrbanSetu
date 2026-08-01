@@ -13,7 +13,8 @@ import {
     getBlogCategories,
     getBlogTags,
     getBlogAnalytics,
-    getLikedBlogs
+    getLikedBlogs,
+    reportBlog
 } from '../controllers/blog.controller.js';
 import { verifyToken, optionalAuth } from '../utils/verify.js';
 
@@ -32,6 +33,7 @@ router.post('/:id/like', verifyToken, likeBlog); // POST /api/blogs/:id/like
 router.post('/:id/comment', verifyToken, addComment); // POST /api/blogs/:id/comment
 router.delete('/:id/comment/:commentId', verifyToken, deleteComment); // DELETE /api/blogs/:id/comment/:commentId
 router.put('/:id/comment/:commentId', verifyToken, updateComment); // PUT /api/blogs/:id/comment/:commentId
+router.post('/:id/report', verifyToken, reportBlog); // POST /api/blogs/:id/report
 
 // Admin routes (protected)
 router.get('/stats/analytics', verifyToken, getBlogAnalytics); // GET /api/blogs/stats/analytics

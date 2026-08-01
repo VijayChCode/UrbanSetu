@@ -528,7 +528,7 @@ export default function NotificationBell({ mobile = false }) {
     const categories = [
       { id: 'All', icon: FaBell, label: 'All Alerts' },
       { id: 'Properties', icon: FaHome, label: 'Real Estate', types: ['property_edited', 'property_deleted', 'property_reported', 'watchlist_price_drop', 'watchlist_property_sold', 'watchlist_price_update', 'watchlist_property_removed', 'watchlist_property_trending', 'watchlist_status_update', 'watchlist_update', 'property_assigned', 'property_deassigned'] },
-      { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report'] },
+      { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report', 'blog_reported'] },
       { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
       { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
       { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report', 'platform_update', 'welcome'] }

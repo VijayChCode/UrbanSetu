@@ -9,7 +9,7 @@ import { Navigation } from 'swiper/modules';
 import { toast } from 'react-toastify';
 import {
   Calendar, User, Eye, Heart, Tag, ArrowLeft, Share2, MessageSquare,
-  Home, Maximize2, X, ThumbsUp, Send, Clock, Play, Image as ImageIcon, Trash, Edit, Check, Star, AlertTriangle
+  Home, Maximize2, X, ThumbsUp, Send, Clock, Play, Image as ImageIcon, Trash, Edit, Check, Star, AlertTriangle, Flag
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import ImagePreview from '../components/ImagePreview';
@@ -17,6 +17,7 @@ import VideoPreview from '../components/VideoPreview';
 import BlogDetailSkeleton from '../components/skeletons/BlogDetailSkeleton';
 import ConfirmationModal from '../components/ConfirmationModal';
 import SocialSharePanel from '../components/SocialSharePanel';
+import ReportModal from '../components/ReportModal';
 
 import SEO from '../components/SEO';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -328,6 +329,48 @@ const PublicBlogDetail = () => {
     });
   };
 
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+
+  const handleReportClick = () => {
+    if (!currentUser) {
+      toast.info('Please log in to report this article');
+      return;
+    }
+    setShowReportModal(true);
+  };
+
+  const handleReportSubmit = async (formattedReason, category, details) => {
+    if (!currentUser) {
+      toast.error('Please log in to report');
+      return;
+    }
+
+    try {
+      setReportLoading(true);
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/blogs/${blog._id}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: category || 'Inappropriate Content',
+          details: details || formattedReason
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Thank you for reporting. Our team will review this article.');
+      } else {
+        toast.error(data.message || 'Failed to submit report.');
+      }
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast.error('Error submitting report. Please try again.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -626,6 +669,15 @@ const PublicBlogDetail = () => {
                     <Share2 className="w-5 h-5" />
                     <span>Share</span>
                   </button>
+
+                  <button
+                    onClick={handleReportClick}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all border border-transparent dark:border-gray-700"
+                    title={currentUser ? `Report this ${blog.type === 'guide' ? 'guide' : 'blog'}` : "Log in to report"}
+                  >
+                    <Flag className="w-5 h-5" />
+                    <span>Report</span>
+                  </button>
                 </div>
 
                 <button
@@ -867,6 +919,20 @@ const PublicBlogDetail = () => {
         url={shareModal.url}
         title={shareModal.title}
         description={shareModal.description}
+      />
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onReport={handleReportSubmit}
+        title={`Report ${blog?.type === 'guide' ? 'Guide' : 'Blog Post'}`}
+        categoriesList={[
+          'Inappropriate Content',
+          'Spam or Advertising',
+          'False / Misleading Information',
+          'Copyright Violation',
+          'Hate Speech / Harassment',
+          'Other'
+        ]}
       />
     </div>
   );

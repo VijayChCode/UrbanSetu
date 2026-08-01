@@ -1150,3 +1150,94 @@ export const getLikedBlogs = async (req, res, next) => {
         next(error);
     }
 };
+
+// Report a blog/guide post
+export const reportBlog = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { category, details } = req.body;
+
+        if (!category || !category.trim()) {
+            return res.status(400).json({ success: false, message: 'Category is required.' });
+        }
+
+        const blog = await Blog.findById(id);
+        if (!blog) {
+            return res.status(404).json({ success: false, message: 'Article not found.' });
+        }
+
+        const reporter = await User.findById(req.user.id);
+        if (!reporter) {
+            return res.status(401).json({ success: false, message: 'User not authorized.' });
+        }
+
+        // Find all admins and root admins
+        const admins = await User.find({ role: { $in: ['admin', 'rootadmin'] } });
+
+        const blogTypeLabel = blog.type === 'guide' ? 'Guide' : 'Blog';
+        const categoryText = category.trim();
+        const detailsText = details && details.trim() ? ` - ${details.trim()}` : '';
+        const notificationTitle = `${blogTypeLabel} Reported`;
+        const notificationMessage = `${blogTypeLabel} "${blog.title}" was reported by ${reporter.username || 'a user'} for: ${categoryText}${detailsText}`;
+
+        const Notification = (await import('../models/notification.model.js')).default;
+        const now = new Date();
+
+        const notifications = await Promise.all(admins.map(async (admin) => {
+            return Notification.create({
+                userId: admin._id,
+                type: 'blog_reported',
+                title: notificationTitle,
+                message: notificationMessage,
+                adminId: req.user.id,
+                createdAt: now,
+                meta: {
+                    blogId: blog._id,
+                    blogTitle: blog.title,
+                    blogType: blog.type || 'blog',
+                    blogSlug: blog.slug,
+                    reporterId: reporter._id,
+                    reporterEmail: reporter.email || null,
+                    reporterUsername: reporter.username,
+                    reporterPhone: reporter.mobileNumber || null,
+                    reporterRole: reporter.role || null,
+                    category: categoryText,
+                    details: details ? details.trim() : ''
+                }
+            });
+        }));
+
+        // Emit Socket.io event for real-time admin alert
+        const io = req.app.get('io');
+        if (io) {
+            notifications.forEach(notification => {
+                io.emit('notificationCreated', notification);
+            });
+        }
+
+        // Send acknowledgement email to reporting user
+        if (reporter.email) {
+            try {
+                const { sendBlogReportAcknowledgement } = await import('../utils/emailService.js');
+                sendBlogReportAcknowledgement(
+                    reporter.email,
+                    reporter.username,
+                    blog.title,
+                    blog.type || 'blog',
+                    categoryText,
+                    details ? details.trim() : ''
+                ).catch(err => console.error('Failed to send blog report acknowledgement email:', err));
+            } catch (emailError) {
+                console.error('Error importing sendBlogReportAcknowledgement:', emailError);
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Report submitted successfully. Thank you for keeping our community safe.'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+

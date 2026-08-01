@@ -18046,6 +18046,59 @@ export const sendRoutePlannerShareEmail = async (email, routeName, stops, distan
   }
 };
 
+// Send acknowledgement email for reporting a blog/guide
+export const sendBlogReportAcknowledgement = async (email, username, blogTitle, blogType = 'blog', category, details) => {
+  const isGuide = blogType === 'guide';
+  const typeLabel = isGuide ? 'Guide' : 'Blog Post';
+  const subject = `Report Received: ${typeLabel} "${blogTitle || 'Article'}" - UrbanSetu`;
+
+  const html = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
+      <div style="background-color: #ffffff; padding: 32px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <h1 style="color: #2563eb; margin: 0; font-size: 26px; font-weight: 800;">UrbanSetu</h1>
+          <p style="color: #64748b; margin: 6px 0 0 0; font-size: 14px; font-weight: 500;">Content Moderation & Trust Team</p>
+        </div>
+        
+        <div style="background-color: #eff6ff; padding: 24px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #2563eb;">
+          <h2 style="color: #1e293b; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">We've Received Your Report</h2>
+          <p style="color: #334155; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+            Hello <strong>${username || 'Valued User'}</strong>, thank you for bringing this to our attention. Help from community members like you keeps UrbanSetu safe and accurate for everyone.
+          </p>
+          
+          <div style="background-color: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 16px;">
+            <p style="color: #475569; font-size: 13px; margin: 0 0 8px 0;"><strong>Reported Item:</strong> ${typeLabel} - <em>"${blogTitle}"</em></p>
+            <p style="color: #475569; font-size: 13px; margin: 0 0 8px 0;"><strong>Category:</strong> ${category}</p>
+            ${details ? `<p style="color: #475569; font-size: 13px; margin: 0;"><strong>Details:</strong> ${details}</p>` : ''}
+          </div>
+
+          <p style="color: #475569; font-size: 13px; line-height: 1.6; margin: 0;">
+            Our moderation team is reviewing the reported content against our Community Guidelines. If any violation is found, appropriate action will be taken promptly.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+          <p style="color: #94a3b8; margin: 0; font-size: 12px;">
+            © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    return await sendEmailWithRetry({
+      to: email,
+      subject: subject,
+      html: html
+    });
+  } catch (error) {
+    console.error('Error sending blog report acknowledgement email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+
 
 
 

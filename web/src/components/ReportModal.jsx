@@ -1,33 +1,35 @@
 import React, { useState } from 'react';
 import { FaTimes, FaFlag, FaExclamationTriangle } from 'react-icons/fa';
 
-export default function ReportModal({ isOpen, onClose, onReport, title = "Report Discussion" }) {
+export default function ReportModal({ isOpen, onClose, onReport, title = "Report Discussion", categoriesList }) {
+    const defaultCategories = [
+        "Inappropriate Content",
+        "Spam",
+        "Harassment",
+        "False Information",
+        "Copyright Violation",
+        "Hate Speech",
+        "Other"
+    ];
+    const categories = categoriesList && categoriesList.length > 0 ? categoriesList : defaultCategories;
+
     const [reason, setReason] = useState('');
-    const [category, setCategory] = useState('Inappropriate Content');
+    const [category, setCategory] = useState(categories[0]);
 
     if (!isOpen) return null;
 
     const handleClose = () => {
         setReason('');
-        setCategory('Inappropriate Content');
+        setCategory(categories[0]);
         onClose();
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!reason.trim()) return;
-        onReport(`${category}: ${reason}`);
+        onReport(`${category}: ${reason}`, category, reason);
         handleClose();
     };
-
-    const categories = [
-        "Inappropriate Content",
-        "Spam",
-        "Harassment",
-        "False Information",
-        "Hate Speech",
-        "Other"
-    ];
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 animate-in fade-in duration-200">
