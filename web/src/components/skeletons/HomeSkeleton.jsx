@@ -145,21 +145,21 @@ export default function HomeSkeleton() {
   const [stageIndex, setStageIndex] = useState(0);
   const progressRef = useRef(null);
 
-  // Simulate dashboard loading progress
+  // Simulate dashboard loading progress with steady stage pacing
   useEffect(() => {
-    const totalDuration = 10000; // 10s simulated loading time
-    const intervalMs = 70;
+    const totalDuration = 14000; // 14s total duration for smooth stage pacing
+    const intervalMs = 60;
     let elapsed = 0;
 
     progressRef.current = setInterval(() => {
       elapsed += intervalMs;
       const linear = Math.min(elapsed / totalDuration, 1);
-      const eased = 1 - Math.pow(1 - linear, 3);
-      const pct = Math.min(Math.round(eased * 97), 97); // Holds at 97% until fully loaded
+      // Smooth progress curve holding at 97% until data load finishes
+      const pct = Math.min(Math.round(linear * 97), 97);
       setProgress(pct);
 
       const newStage = Math.min(
-        Math.floor((pct / 100) * LOADING_STAGES.length),
+        Math.floor(linear * LOADING_STAGES.length),
         LOADING_STAGES.length - 1
       );
       setStageIndex(newStage);
