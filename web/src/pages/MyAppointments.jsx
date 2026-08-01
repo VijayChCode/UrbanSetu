@@ -913,11 +913,13 @@ export default function MyAppointments() {
     // setApptIdForAction(null);
   };
 
-  const handleReopenSale = async (id) => {
+  const handleReopenSale = useCallback((id) => {
+    saleModalStore.openReopenModal(id);
+  }, []);
+
+  const confirmReopenSale = async (id) => {
     if (!id) return;
-    if (!window.confirm("Are you sure you want to cancel this deal and make the property public & available again?")) {
-      return;
-    }
+    saleModalStore.close();
 
     setActionLoading(id + 'reopen');
     try {
@@ -957,7 +959,8 @@ export default function MyAppointments() {
     saleModalStore.registerCallbacks({
       onToken: confirmTokenPaid,
       onSale: confirmSaleComplete,
-      onDispute: confirmDispute
+      onDispute: confirmDispute,
+      onReopen: confirmReopenSale
     });
   }); // Omitted deps to ensure always fresh closures, store handles updates efficiently
 
@@ -7491,7 +7494,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         {appt.saleStatus === 'token_paid' && (
                           <button
                             className="text-amber-500 hover:text-amber-700 text-xl"
-                            onClick={() => handleReopenSale(appt._id)}
+                            onClick={() => saleModalStore.openReopenModal(appt._id)}
                             disabled={actionLoading === appt._id + 'reopen'}
                             title="Cancel Deal & Restore Property to Public (Available)"
                           >

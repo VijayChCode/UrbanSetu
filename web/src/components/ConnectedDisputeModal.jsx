@@ -44,13 +44,13 @@ const ConnectedDisputeModal = () => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 transform transition-all scale-100">
-                <div className="flex items-center gap-3 mb-4 text-red-600">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg p-6 transform transition-all scale-100 border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
                     <FaExclamationTriangle className="text-2xl" />
-                    <h3 className="text-2xl font-bold text-gray-800">Report a Dispute</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Report a Dispute</h3>
                 </div>
 
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm leading-relaxed">
                     If you have an issue with this completed transaction (e.g., payment discrepancy, property condition), please describe it below. Our support team will investigate.
                 </p>
 
@@ -58,20 +58,20 @@ const ConnectedDisputeModal = () => {
                     value={state.reason}
                     onChange={handleReasonChange}
                     placeholder="Describe the issue in detail..."
-                    className="w-full h-32 p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                    className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none outline-none"
                 ></textarea>
 
                 <div className="flex gap-4">
                     <button
                         onClick={handleClose}
-                        className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={isSubmitting || !state.reason.trim()}
-                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-md transition-all font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 shadow-md transition-all font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? <UrbanSetuSpinner size="sm" isBright={true} /> : <FaPaperPlane />}
                         Submit Report

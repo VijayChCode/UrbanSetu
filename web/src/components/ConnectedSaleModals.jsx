@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { saleModalStore } from '../utils/saleModalStore';
 import TokenPaidModal from './TokenPaidModal';
 import SaleCompleteModal from './SaleCompleteModal';
+import ReopenDealModal from './ReopenDealModal';
 
 /**
  * Connected component that listens to the external saleModalStore.
@@ -33,6 +34,12 @@ const ConnectedSaleModals = () => {
         }
     };
 
+    const handleConfirmReopen = () => {
+        if (state.id) {
+            saleModalStore.executeReopenSale(state.id);
+        }
+    };
+
     return (
         <>
             <TokenPaidModal
@@ -44,6 +51,11 @@ const ConnectedSaleModals = () => {
                 isOpen={state.type === 'complete'}
                 onClose={handleClose}
                 onConfirm={handleConfirmSale}
+            />
+            <ReopenDealModal
+                isOpen={state.type === 'reopen'}
+                onClose={handleClose}
+                onConfirm={handleConfirmReopen}
             />
         </>
     );

@@ -33,6 +33,11 @@ export const saleModalStore = {
         listeners.forEach(l => l(currentState));
     },
 
+    openReopenModal: (id) => {
+        currentState = { type: 'reopen', id, reason: '' };
+        listeners.forEach(l => l(currentState));
+    },
+
     setDisputeReason: (reason) => {
         if (currentState.type === 'dispute') {
             currentState = { ...currentState, reason };
@@ -46,8 +51,8 @@ export const saleModalStore = {
     },
 
     // Teleportation Logic: Register callbacks from Parent to be used by Child
-    registerCallbacks: ({ onToken, onSale, onDispute }) => {
-        callbacks = { onToken, onSale, onDispute };
+    registerCallbacks: ({ onToken, onSale, onDispute, onReopen }) => {
+        callbacks = { onToken, onSale, onDispute, onReopen };
     },
 
     executeTokenPaid: (id) => {
@@ -60,5 +65,9 @@ export const saleModalStore = {
 
     executeDisputeSubmit: (id, reason) => {
         if (callbacks.onDispute) return callbacks.onDispute(id, reason);
+    },
+
+    executeReopenSale: (id) => {
+        if (callbacks.onReopen) return callbacks.onReopen(id);
     }
 };
