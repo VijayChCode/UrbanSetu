@@ -8722,6 +8722,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 ))
                               ) {
                                 setMediaPermissionType('microphone');
+                                setMediaPermissionActionText('make calls');
                                 setShowMediaPermissionModal(true);
                               }
                             }
