@@ -201,7 +201,7 @@ export default function HomeSkeleton() {
             <div className="flex-1 min-w-0 text-center sm:text-left">
               <div className="flex items-center gap-2 justify-center sm:justify-start mb-1.5">
                 <span className="text-lg font-black bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
-                  Loading Your Dashboard
+                  Preparing Your Dashboard
                 </span>
                 <span className="text-xs font-bold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-100/50 dark:border-rose-900/10">
                   {progress}% Sync
