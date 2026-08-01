@@ -189,6 +189,8 @@ export default function Home() {
   const [totalUnreadMessages, setTotalUnreadMessages] = useState(0);
   const [recentlyViewedListings, setRecentlyViewedListings] = useState([]);
   const [detectedCity, setDetectedCity] = useState(null);
+  const [isRealtimeGPS, setIsRealtimeGPS] = useState(false);
+  const [userCoordinates, setUserCoordinates] = useState(null);
   const [nearbyCities, setNearbyCities] = useState([]);
   const [nearbyListings, setNearbyListings] = useState([]);
   const [nearbyListingsLoading, setNearbyListingsLoading] = useState(false);
@@ -420,9 +422,13 @@ export default function Home() {
           ])
         ]);
 
-        const offerData = await offerRes.json();
-        const rentData = await rentRes.json();
-        const saleData = await saleRes.json();
+        const offerData = offerRes.ok ? await offerRes.json() : [];
+        const rentData = rentRes.ok ? await rentRes.json() : [];
+        const saleData = saleRes.ok ? await saleRes.json() : [];
+
+        const offers = Array.isArray(offerData) ? offerData : [];
+        const rents = Array.isArray(rentData) ? rentData : [];
+        const sales = Array.isArray(saleData) ? saleData : [];
 
         // Handle Trending Data safely
         let trendingData = [];
@@ -433,24 +439,138 @@ export default function Home() {
 
         // Handle Stats Data
         const [propsRes, usersRes] = statsRes;
-        const propsData = await propsRes.json();
-        const uData = await usersRes.json();
-        // const transData = await transRes.json();
+        const propsData = propsRes.ok ? await propsRes.json() : {};
+        const uData = usersRes.ok ? await usersRes.json() : {};
 
-        setOfferListings(Array.isArray(offerData) ? offerData : []);
-        setRentListings(Array.isArray(rentData) ? rentData : []);
-        setSaleListings(Array.isArray(saleData) ? saleData : []);
+        setOfferListings(offers);
+        setRentListings(rents);
+        setSaleListings(sales);
         setTrendingListings(trendingData);
 
         setStats({
           properties: Number(propsData.count) || 1250,
           users: Number(uData.count) || 5000,
-          transactions: 2500, // Number(transData.count) || 2500,
+          transactions: 2500,
           satisfaction: 98
         });
 
+        // 📍 Fetch Location, User Lists & AI Recommendations while Skeleton is active
+        if (currentUser?._id && currentUser.role !== 'admin' && currentUser.role !== 'rootadmin') {
+          try {
+            const [aiRecsRes, userProfileRes, wishRes, watchRes] = await Promise.allSettled([
+              authenticatedFetch(`${API_BASE_URL}/api/ai/recommendations?userId=${currentUser._id}&limit=12`),
+              authenticatedFetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`),
+              authenticatedFetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`),
+              authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`)
+            ]);
+
+            if (aiRecsRes.status === 'fulfilled' && aiRecsRes.value?.ok) {
+              const aiData = await aiRecsRes.value.json();
+              setRecommendedListings(Array.isArray(aiData) ? aiData : (aiData?.listings || []));
+            }
+
+            let fetchedCity = null;
+            let isIpResolved = false;
+
+            // 🌐 Real-Time IP Address Location Detection
+            try {
+              const ipRes = await fetch('https://ipapi.co/json/').catch(() => null);
+              if (ipRes && ipRes.ok) {
+                const ipData = await ipRes.json();
+                if (ipData && ipData.city) {
+                  fetchedCity = ipData.city;
+                  isIpResolved = true;
+                  setIsRealtimeGPS(true); // Tag as real-time live location
+                  setDetectedCity(fetchedCity);
+                }
+              }
+            } catch (ipErr) {
+              console.warn('Real-time IP location lookup error:', ipErr);
+            }
+
+            // Fallback to Profile / Last Login Location if IP lookup fails
+            if (!isIpResolved && userProfileRes.status === 'fulfilled' && userProfileRes.value?.ok) {
+              const userData = await userProfileRes.value.json();
+              if (userData.lastLoginLocation && userData.lastLoginLocation !== 'Unknown' && userData.lastLoginLocation !== 'Local Development' && userData.lastLoginLocation !== 'Private Network') {
+                const parts = userData.lastLoginLocation.split(',').map(s => s.trim());
+                if (parts[0]) {
+                  fetchedCity = parts[0];
+                  setIsRealtimeGPS(false);
+                  setDetectedCity(fetchedCity);
+                }
+              }
+
+              if (userData.activeSessions?.length > 0) {
+                const sessionCities = [];
+                const seen = new Set();
+                userData.activeSessions.forEach(session => {
+                  if (session.location && session.location !== 'Unknown' && session.location !== 'Local Development' && session.location !== 'Private Network') {
+                    const c = session.location.split(',')[0]?.trim();
+                    if (c && !seen.has(c.toLowerCase())) {
+                      sessionCities.push({ city: c, type: 'session' });
+                      seen.add(c.toLowerCase());
+                    }
+                  }
+                });
+                if (sessionCities.length > 0) setNearbyCities(sessionCities);
+              }
+            }
+
+            let userWishlist = [];
+            let userWatchlist = [];
+
+            if (wishRes.status === 'fulfilled' && wishRes.value?.ok) {
+              const wData = await wishRes.value.json();
+              userWishlist = Array.isArray(wData) ? wData.filter(x => x.listingId).map(x => x.listingId) : [];
+              setWishlistItems(userWishlist);
+            }
+
+            if (watchRes.status === 'fulfilled' && watchRes.value?.ok) {
+              const wtData = await watchRes.value.json();
+              userWatchlist = Array.isArray(wtData) ? wtData.filter(x => x.listingId).map(x => x.listingId) : [];
+              setWatchlistItems(userWatchlist);
+            }
+
+            // Fetch Nearby Properties if city was detected
+            if (fetchedCity) {
+              try {
+                const nearbyRes = await authenticatedFetch(
+                  `${API_BASE_URL}/api/listing/get?city=${encodeURIComponent(fetchedCity)}&visibility=public&limit=16`
+                );
+                if (nearbyRes.ok) {
+                  const nData = await nearbyRes.json();
+                  const filteredNearby = (Array.isArray(nData) ? nData : []).filter(
+                    (l) => l.userRef !== currentUser._id && l.sellerId !== currentUser._id
+                  );
+                  setNearbyListings(filteredNearby.slice(0, 8));
+                }
+              } catch (e) {
+                console.error('Error fetching nearby listings during init:', e);
+              }
+            }
+
+            // Calculate Sentinel AI Live Recommendations
+            const candidates = [...offers, ...rents, ...sales];
+            let uniqueCandidates = Array.from(new Map(candidates.filter(c => c && c._id).map(item => [item._id, item])).values());
+            uniqueCandidates = uniqueCandidates.filter(c => c.userRef !== currentUser._id && c.sellerId !== currentUser._id);
+
+            const taggedWishlist = userWishlist.map(item => ({ ...item, _sentinelType: 'wishlist' }));
+            const taggedWatchlist = userWatchlist.map(item => ({ ...item, _sentinelType: 'watchlist' }));
+            const userPreferences = Array.from(new Map([...taggedWishlist, ...taggedWatchlist].filter(p => p && p._id).map(item => [item._id, item])).values());
+
+            setSentinelCandidates(uniqueCandidates);
+            setSentinelPreferences(userPreferences);
+
+            const recs = await getLiveRecommendations(uniqueCandidates, 8, userPreferences, currentUser._id);
+            setLiveRecommendations(recs);
+            setHasMoreRecs(recs.length >= 8);
+            setVisibleRecsCount(4);
+          } catch (recErr) {
+            console.error('Error initializing recommendations:', recErr);
+          }
+        }
+
         // Fetch Community, Blogs & Guides data in parallel (non-blocking)
-        // Fetch featured blogs/guides (compulsory) and a larger set of latest blogs/guides to select from randomly
         Promise.allSettled([
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&featured=true&limit=3`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/blogs?published=true&type=blog&limit=30`).then(r => r.ok ? r.json() : null),
@@ -460,16 +580,13 @@ export default function Home() {
           authenticatedFetch(`${API_BASE_URL}/api/blogs?scheduled=true&type=blog&limit=1`).then(r => r.ok ? r.json() : null),
           authenticatedFetch(`${API_BASE_URL}/api/blogs?scheduled=true&type=guide&limit=1`).then(r => r.ok ? r.json() : null),
         ]).then(([featBlogsR, allBlogsR, featGuidesR, allGuidesR, postsResult, upcomingBlogR, upcomingGuideR]) => {
-          // Helper: merge featured first + fill remaining slots with randomized (shuffled) non-featured items, deduplicated, max 3
           const mergeAndFill = (featuredResult, allResult) => {
             const featured = featuredResult.status === 'fulfilled' && featuredResult.value?.data ? featuredResult.value.data : [];
             const all = allResult.status === 'fulfilled' && allResult.value?.data ? allResult.value.data : [];
             
             const ids = new Set(featured.map(f => f._id));
-            // Filter out already included featured items to get non-featured ones
             const nonFeatured = all.filter(item => !ids.has(item._id));
             
-            // Fisher-Yates Shuffle to randomize non-featured items on each load
             const shuffledNonFeatured = [...nonFeatured];
             for (let i = shuffledNonFeatured.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
@@ -505,7 +622,6 @@ export default function Home() {
             setUpcomingGuide(uGuide);
           }
 
-          // Fallback initial tab if community is empty
           if (!hasCommunity) {
             if (fBlogs.length > 0 || uBlog) {
               setInsightsTab('blogs');
@@ -513,7 +629,7 @@ export default function Home() {
               setInsightsTab('guides');
             }
           }
-        }).catch(() => { /* silent – insights section is enhancement only */ });
+        }).catch(() => { /* silent */ });
 
       } catch (error) {
         console.error("Error fetching home data:", error);
@@ -523,60 +639,9 @@ export default function Home() {
     };
 
     fetchAllData();
-  }, []);
-
-  // Fetch recommended listings for logged-in users
-  useEffect(() => {
-    const fetchRecommended = async () => {
-      // ONLY show for regular logged-in users (not guests, not admins)
-      if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-        setRecommendedListings([]);
-        return;
-      }
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/ai/recommendations?userId=${currentUser._id}&limit=12`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setRecommendedListings(Array.isArray(data) ? data : (data?.listings || []));
-      } catch (error) {
-        console.error("Error fetching recommended listings", error);
-        setRecommendedListings([]);
-      }
-    };
-    fetchRecommended();
   }, [currentUser?._id, currentUser?.role]);
 
-  // Fetch Wishlist and Watchlist for enhanced recommendations
-  useEffect(() => {
-    const fetchUserLists = async () => {
-      // ONLY fetch for regular logged-in users
-      if (!currentUser?._id || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-        setWishlistItems([]);
-        setWatchlistItems([]);
-        return;
-      }
-      try {
-        const [wishRes, watchRes] = await Promise.all([
-          authenticatedFetch(`${API_BASE_URL}/api/wishlist/user/${currentUser._id}`),
-          authenticatedFetch(`${API_BASE_URL}/api/watchlist/user/${currentUser._id}`)
-        ]);
 
-        if (wishRes.ok) {
-          const data = await wishRes.json();
-          // Extract listing objects safely
-          setWishlistItems(Array.isArray(data) ? data.filter(x => x.listingId).map(x => x.listingId) : []);
-        }
-
-        if (watchRes.ok) {
-          const data = await watchRes.json();
-          setWatchlistItems(Array.isArray(data) ? data.filter(x => x.listingId).map(x => x.listingId) : []);
-        }
-      } catch (error) {
-        console.error("Error fetching user lists for recommendations", error);
-      }
-    };
-    fetchUserLists();
-  }, [currentUser?._id, currentUser?.role]);
 
   // Dashboard: Fetch recently viewed, user's listings count, appointments, price drops, unread messages
   useEffect(() => {
@@ -602,38 +667,7 @@ export default function Home() {
       .map(([city]) => city);
     setQuickSearchCities(topCities);
 
-    // Fetch user's login location from DB (tracked on every login)
-    const fetchLocation = async () => {
-      try {
-        const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${currentUser._id}`);
-        if (res.ok) {
-          const userData = await res.json();
 
-          // Parse city from lastLoginLocation (format: "Warangal, TG, IN")
-          if (userData.lastLoginLocation && userData.lastLoginLocation !== 'Unknown' && userData.lastLoginLocation !== 'Local Development' && userData.lastLoginLocation !== 'Private Network') {
-            const parts = userData.lastLoginLocation.split(',').map(s => s.trim());
-            if (parts[0]) setDetectedCity(parts[0]);
-          }
-
-          // Extract unique cities from all active session locations
-          const sessionCities = [];
-          const seen = new Set();
-          if (userData.activeSessions?.length > 0) {
-            userData.activeSessions.forEach(session => {
-              if (session.location && session.location !== 'Unknown' && session.location !== 'Local Development' && session.location !== 'Private Network') {
-                const city = session.location.split(',')[0]?.trim();
-                if (city && !seen.has(city.toLowerCase())) {
-                  sessionCities.push({ city, type: 'session' });
-                  seen.add(city.toLowerCase());
-                }
-              }
-            });
-          }
-          if (sessionCities.length > 0) setNearbyCities(sessionCities);
-        }
-      } catch (e) { /* silent - location is enhancement only */ }
-    };
-    fetchLocation();
 
     // Fetch user's own listings count
     const fetchMyListings = async () => {
@@ -801,49 +835,7 @@ export default function Home() {
     restoreFromServer(currentUser._id).catch(() => { /* silent */ });
   }, [currentUser?._id, currentUser?.role]);
 
-  // STN-LIVE: Process local session recommendations + Wishlist/Watchlist
-  useEffect(() => {
-    const processLiveRecs = async () => {
-      if (loading) return;
 
-      // ONLY process for logged-in regular users (not guests, not admins)
-      if (!currentUser || currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-        setLiveRecommendations([]);
-        return;
-      }
-
-      // Combine all current data as candidates
-      const candidates = [...offerListings, ...rentListings, ...saleListings];
-      // Dedup candidates and filter valid objects
-      let uniqueCandidates = Array.from(new Map(candidates.filter(c => c && c._id).map(item => [item._id, item])).values());
-
-      // Filter out own properties (User should not get recommended their own listings)
-      if (currentUser) {
-        uniqueCandidates = uniqueCandidates.filter(c =>
-          c.userRef !== currentUser._id &&
-          c.sellerId !== currentUser._id
-        );
-      }
-
-      // Tag wishlist and watchlist items with their source for weighted scoring
-      const taggedWishlist = wishlistItems.map(item => ({ ...item, _sentinelType: 'wishlist' }));
-      const taggedWatchlist = watchlistItems.map(item => ({ ...item, _sentinelType: 'watchlist' }));
-      const userPreferences = [...taggedWishlist, ...taggedWatchlist];
-      const uniquePreferences = Array.from(new Map(userPreferences.filter(p => p && p._id).map(item => [item._id, item])).values());
-
-      // Store candidates and preferences for batch loading
-      setSentinelCandidates(uniqueCandidates);
-      setSentinelPreferences(uniquePreferences);
-
-      // Initial fetch: only 8 items for fast first paint
-      const recs = await getLiveRecommendations(uniqueCandidates, 8, uniquePreferences, currentUser._id);
-      setLiveRecommendations(recs);
-      setHasMoreRecs(recs.length >= 8);
-      setVisibleRecsCount(4);
-    };
-
-    processLiveRecs();
-  }, [loading, offerListings, rentListings, saleListings, wishlistItems, watchlistItems, currentUser?._id, currentUser?.role]);
 
   // Handler for loading more Sentinel recommendations in batches
   const handleLoadMoreRecs = async () => {
