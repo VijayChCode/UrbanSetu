@@ -21,6 +21,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { authenticatedFetch } from "../utils/auth";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
+import PropertyOwnershipLogsSkeleton from "../components/skeletons/PropertyOwnershipLogsSkeleton";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -139,6 +140,10 @@ export default function PropertyOwnershipLogs() {
         }
     };
 
+    if (loading) {
+        return <PropertyOwnershipLogsSkeleton />;
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 py-4 sm:py-8 px-3 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -217,12 +222,7 @@ export default function PropertyOwnershipLogs() {
                 </div>
 
                 {/* Audit Logs Content */}
-                {loading ? (
-                    <div className="py-12 sm:py-16 bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center gap-3">
-                        <UrbanSetuSpinner />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Fetching permanent ownership logs...</p>
-                    </div>
-                ) : error ? (
+                {error ? (
                     <div className="p-4 sm:p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-2xl sm:rounded-3xl text-center text-red-600 dark:text-red-400 text-xs sm:text-sm">
                         {error}
                     </div>
