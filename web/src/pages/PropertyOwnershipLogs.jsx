@@ -14,7 +14,8 @@ import {
     FaBuilding,
     FaCalendarAlt,
     FaGlobe,
-    FaUndo
+    FaUndo,
+    FaTrash
 } from "react-icons/fa";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { authenticatedFetch } from "../utils/auth";
@@ -159,10 +160,10 @@ export default function PropertyOwnershipLogs() {
                     </div>
 
                     <Link
-                        to="/admin"
+                        to="/admin/deleted-listings"
                         className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2"
                     >
-                        <FaArrowLeft /> Back to Dashboard
+                        <FaTrash className="text-red-500" /> Go to Deleted Properties
                     </Link>
                 </div>
 
