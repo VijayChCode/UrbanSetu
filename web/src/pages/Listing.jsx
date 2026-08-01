@@ -3717,6 +3717,12 @@ export default function Listing() {
                           >
                             <FaUserMinus /> Remove Owner
                           </button>
+                          <Link
+                            to={`/admin/property-ownership-logs?listingId=${listing._id}`}
+                            className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm flex items-center gap-2"
+                          >
+                            <FaHistory className="text-purple-600 dark:text-purple-400" /> Ownership Logs
+                          </Link>
                         </div>
                       </div>
                     )}
@@ -3725,15 +3731,23 @@ export default function Listing() {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <p className="text-red-500 font-medium text-xs sm:text-sm">{ownerError}</p>
                     {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setOwnershipMode('assign');
-                          setShowOwnershipModal(true);
-                        }}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-bold shadow-md shadow-blue-500/20 text-xs sm:text-sm flex items-center gap-2"
-                      >
-                        <FaUserCheck /> Assign New Owner
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setOwnershipMode('assign');
+                            setShowOwnershipModal(true);
+                          }}
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-bold shadow-md shadow-blue-500/20 text-xs sm:text-sm flex items-center gap-2"
+                        >
+                          <FaUserCheck /> Assign New Owner
+                        </button>
+                        <Link
+                          to={`/admin/property-ownership-logs?listingId=${listing._id}`}
+                          className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm flex items-center gap-2"
+                        >
+                          <FaHistory className="text-purple-600 dark:text-purple-400" /> Ownership Logs
+                        </Link>
+                      </div>
                     )}
                   </div>
                 ) : (

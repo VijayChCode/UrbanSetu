@@ -1,5 +1,5 @@
 import express from 'express'
-import { createListing, deleteListing, updateListing, getListing, getListings, getUserListings, reassignPropertyOwner, deassignPropertyOwner, transferPropertyOwner, republishListing, rootAdminBypassVerification, getAIRecommendations, getDeletedListings, restoreDeletedListing, getAgentListings, rootUnpublishListing, sendPropertyDeleteOTP, verifyPropertyDeleteOTP } from '../controllers/listing.controller.js'
+import { createListing, deleteListing, updateListing, getListing, getListings, getUserListings, reassignPropertyOwner, deassignPropertyOwner, transferPropertyOwner, getOwnershipAuditLogs, republishListing, rootAdminBypassVerification, getAIRecommendations, getDeletedListings, restoreDeletedListing, getAgentListings, rootUnpublishListing, sendPropertyDeleteOTP, verifyPropertyDeleteOTP } from '../controllers/listing.controller.js'
 import { verifyToken, optionalAuth } from '../utils/verify.js'
 import User from '../models/user.model.js'
 import Listing from '../models/listing.model.js'
@@ -11,6 +11,7 @@ const router = express.Router()
 router.post("/reassign-owner/:listingId", verifyToken, reassignPropertyOwner)
 router.post("/deassign-owner/:listingId", verifyToken, deassignPropertyOwner)
 router.post("/transfer-owner/:listingId", verifyToken, transferPropertyOwner)
+router.get("/ownership-audit-logs/:listingId?", verifyToken, getOwnershipAuditLogs)
 
 router.post("/root-verify/:id", verifyToken, rootAdminBypassVerification)
 router.post("/root-unpublish/:id", verifyToken, rootUnpublishListing)

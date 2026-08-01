@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaTrash, FaUndo, FaSearch, FaFilter, FaUser, FaUserShield, FaCalendarAlt, FaExclamationTriangle, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaTrash, FaUndo, FaSearch, FaFilter, FaUser, FaUserShield, FaCalendarAlt, FaExclamationTriangle, FaArrowLeft, FaArrowRight, FaShieldAlt } from "react-icons/fa";
 import { toast } from "react-toastify"; // Using toast directly if ToastContainer is at App level
 import ContactSupportWrapper from "../components/ContactSupportWrapper";
 import AdminDeletedListingsSkeleton from "../components/skeletons/AdminDeletedListingsSkeleton";
@@ -140,12 +140,20 @@ export default function AdminDeletedListings() {
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage and restore deleted properties</p>
                     </div>
-                    <Link
-                        to="/admin/listings"
-                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium"
-                    >
-                        ← Back to All Listings
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                            to="/admin/property-ownership-logs"
+                            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition font-medium shadow-md shadow-purple-500/20 text-xs sm:text-sm flex items-center gap-1.5"
+                        >
+                            <FaShieldAlt className="text-xs" /> Property Ownership Logs
+                        </Link>
+                        <Link
+                            to="/admin/listings"
+                            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium text-xs sm:text-sm"
+                        >
+                            ← Back to All Listings
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Filters */}

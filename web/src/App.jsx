@@ -112,6 +112,7 @@ const AdminSecurityModeration = lazy(() => import('./pages/AdminSecurityModerati
 const MyPayments = lazy(() => import('./pages/MyPayments'));
 const DeviceManagement = lazy(() => import('./pages/DeviceManagement'));
 const AdminDeletedListings = lazy(() => import("./pages/AdminDeletedListings"));
+const PropertyOwnershipLogs = lazy(() => import("./pages/PropertyOwnershipLogs"));
 const MyDeletedListings = lazy(() => import("./pages/MyDeletedListings"));
 const SessionManagement = lazy(() => import('./pages/SessionManagement'));
 const SessionAuditLogs = lazy(() => import('./pages/SessionAuditLogs'));
@@ -1489,6 +1490,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/create-listing" element={<AdminCreateListing />} />
               <Route path="/admin/listings" element={<AdminListings />} />
               <Route path="/admin/deleted-listings" element={<AdminDeletedListings />} />
+              <Route path="/admin/ownership-logs" element={<PropertyOwnershipLogs />} />
+              <Route path="/admin/property-ownership-logs" element={<PropertyOwnershipLogs />} />
               <Route path="/admin/my-listings" element={<AdminMyListings />} />
               <Route path="/admin/update-listing/:listingId" element={<AdminEditListing />} />
               {/* Admin wishlist removed */}

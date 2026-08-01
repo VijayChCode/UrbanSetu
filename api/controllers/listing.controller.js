@@ -10,6 +10,7 @@ import { escapeRegex } from "../utils/regex.js"
 import { sendPropertyListingPublishedEmail, sendPropertyEditNotificationEmail, sendPropertyDeletionConfirmationEmail, sendOwnerDeassignedEmail, sendOwnerAssignedEmail, sendPropertyCreatedPendingVerificationEmail, sendPropertyVerificationReminderEmail, sendPropertyPublishedAfterVerificationEmail, sendListingUnpublishedEmail } from "../utils/emailService.js"
 import bcryptjs from 'bcryptjs'
 import OwnershipAuditLog from "../models/ownershipAuditLog.model.js"
+import AdminLog from "../models/adminLog.model.js"
 import DeletedListing from "../models/deletedListing.model.js"
 import crypto from 'crypto'
 import PropertyVerification from "../models/propertyVerification.model.js";
@@ -1414,7 +1415,7 @@ export const deassignPropertyOwner = async (req, res, next) => {
     listing.userRef = null;
     await listing.save();
 
-    // 📝 Save Permanent Ownership Audit Log
+    // 📝 Save Permanent Ownership Audit Log & Global AdminLog
     try {
       const auditLog = new OwnershipAuditLog({
         propertyId: listing._id,
@@ -1429,6 +1430,16 @@ export const deassignPropertyOwner = async (req, res, next) => {
         userAgent: req.headers['user-agent'] || 'Unknown'
       });
       await auditLog.save();
+
+      await AdminLog.create({
+        adminId: req.user.id,
+        action: 'OWNERSHIP_REMOVE',
+        targetId: listing._id,
+        targetModel: 'Listing',
+        details: `Removed owner of property "${listing.name}". Reason: ${reason.trim()}`,
+        ip: req.ip || 'Unknown',
+        metadata: { propertyId: listing._id, propertyName: listing.name, reason: reason.trim() }
+      });
     } catch (auditError) {
       console.error('Failed to save ownership audit log:', auditError);
     }
@@ -1796,5 +1807,32 @@ export const verifyPropertyDeleteOTP = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// Get Ownership Audit Logs for a specific property or system-wide (Admin Only)
+export const getOwnershipAuditLogs = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(403, 'Forbidden - Admin access required'));
+    }
+
+    const { listingId } = req.params;
+    const query = listingId ? { propertyId: listingId } : {};
+
+    const logs = await OwnershipAuditLog.find(query)
+      .sort({ createdAt: -1 })
+      .populate('adminId', 'username email avatar role')
+      .populate('previousOwnerId', 'username email avatar')
+      .populate('newOwnerId', 'username email avatar');
+
+    res.status(200).json({
+      success: true,
+      data: logs,
+      count: logs.length
+    });
+  } catch (error) {
+    console.error('Error fetching ownership audit logs:', error);
+    next(errorHandler(500, 'Failed to fetch ownership audit logs'));
   }
 };

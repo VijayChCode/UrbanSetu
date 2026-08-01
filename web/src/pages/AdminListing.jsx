@@ -4,7 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart, FaExpand, FaRocket, FaCheckCircle, FaEye, FaLock, FaExchangeAlt, FaUserMinus, FaUserCheck } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart, FaExpand, FaRocket, FaCheckCircle, FaEye, FaLock, FaExchangeAlt, FaUserMinus, FaUserCheck, FaHistory } from "react-icons/fa";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
 import { useWishlist } from '../WishlistContext';
@@ -560,17 +560,33 @@ export default function AdminListing() {
                     >
                       <FaUserMinus className="text-[10px]" /> Remove
                     </button>
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <Link
+                      to={`/admin/property-ownership-logs?listingId=${listing._id}`}
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
+                    >
+                      <FaHistory className="text-[10px]" /> Logs
+                    </Link>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => {
-                      setOwnershipMode('assign');
-                      setShowOwnershipModal(true);
-                    }}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
-                  >
-                    <FaUserCheck className="text-[10px]" /> Assign Owner
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setOwnershipMode('assign');
+                        setShowOwnershipModal(true);
+                      }}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
+                    >
+                      <FaUserCheck className="text-[10px]" /> Assign Owner
+                    </button>
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <Link
+                      to={`/admin/property-ownership-logs?listingId=${listing._id}`}
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
+                    >
+                      <FaHistory className="text-[10px]" /> Logs
+                    </Link>
+                  </div>
                 )}
               </div>
               <p className="font-mono text-xs break-all text-gray-800 dark:text-gray-200 bg-white/50 dark:bg-gray-800/50 p-1 rounded select-all">
