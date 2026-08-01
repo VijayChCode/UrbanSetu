@@ -3047,6 +3047,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [isSendingUrlImages, setIsSendingUrlImages] = useState(false);
   const [isSendingUrlVideo, setIsSendingUrlVideo] = useState(false);
   const [showImageUrlModal, setShowImageUrlModal] = useState(false);
+  const [showAddImageChooser, setShowAddImageChooser] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [imageUrlList, setImageUrlList] = useState([]);
   const [showVideoUrlModal, setShowVideoUrlModal] = useState(false);
@@ -3909,8 +3910,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const handleAddImageUrl = () => {
     const url = imageUrlInput.trim();
     if (!url) return;
-    if (imageUrlList.length >= 10) {
-      toast.error('Maximum 10 image URLs allowed.');
+    const maxUrlSlots = showImagePreviewModal ? (10 - selectedFiles.length) : 10;
+    if (imageUrlList.length >= maxUrlSlots) {
+      toast.error(`Maximum ${maxUrlSlots} image URLs allowed.`);
       return;
     }
     setImageUrlList(prev => [...prev, url]);
@@ -3920,22 +3922,33 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const handleDoneImageUrls = () => {
     let finalUrls = [...imageUrlList];
     if (imageUrlInput.trim()) {
-      if (finalUrls.length < 10) {
+      const maxAllowed = showImagePreviewModal ? (10 - selectedFiles.length) : 10;
+      if (finalUrls.length < maxAllowed) {
         finalUrls.push(imageUrlInput.trim());
       }
     }
     if (finalUrls.length === 0) return;
 
-    setSelectedFiles(finalUrls);
-    const captions = {};
+    // Build captions for new URLs
+    const newCaptions = {};
     finalUrls.forEach((url, i) => {
       const name = url.split('/').pop()?.split('?')[0] || `Image ${i + 1}`;
-      captions[name] = '';
+      newCaptions[name] = '';
     });
-    setImageCaptions(captions);
+
+    if (showImagePreviewModal && selectedFiles.length > 0) {
+      // APPEND mode: add URLs to existing selection (mixed support)
+      setSelectedFiles(prev => [...prev, ...finalUrls]);
+      setImageCaptions(prev => ({ ...prev, ...newCaptions }));
+    } else {
+      // REPLACE mode: fresh selection from Image URL attachment
+      setSelectedFiles(finalUrls);
+      setImageCaptions(newCaptions);
+    }
     setShowImageUrlModal(false);
     setImageUrlInput('');
     setImageUrlList([]);
+    setShowAddImageChooser(false);
     setShowImagePreviewModal(true);
   };
 
@@ -3957,103 +3970,112 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       return;
     }
 
-    if (typeof selectedFiles[0] === 'string') {
+    // Separate URL-based and File-based images for mixed support
+    const urlImages = [];
+    const fileImages = [];
+    selectedFiles.forEach((item, idx) => {
+      if (typeof item === 'string') {
+        const fileName = item.split('/').pop()?.split('?')[0] || `Image ${idx + 1}`;
+        urlImages.push({ url: item, fileName, caption: imageCaptions[fileName] || imageCaptions[item] || '' });
+      } else {
+        fileImages.push({ file: item, index: idx });
+      }
+    });
+
+    // --- Phase 1: Send URL-based images (no upload needed) ---
+    if (urlImages.length > 0) {
       try {
         setIsSendingUrlImages(true);
-        for (let i = 0; i < selectedFiles.length; i++) {
-          const url = selectedFiles[i];
-          const fileName = url.split('/').pop()?.split('?')[0] || `Image ${i + 1}`;
-          const caption = imageCaptions[fileName] || imageCaptions[url] || '';
+        for (const { url, fileName, caption } of urlImages) {
           await sendImageMessage(url, fileName, caption);
         }
-        setSelectedFiles([]);
-        setImageCaptions({});
-        setPreviewIndex(0);
-        setShowImagePreviewModal(false);
       } catch (e) {
-        toast.error('Failed to send image links');
+        toast.error('Failed to send some image links');
       } finally {
         setIsSendingUrlImages(false);
       }
-      return;
     }
 
-    setUploadingFile(true);
-    setUploadProgress(0);
-    setCurrentFileIndex(-1);
-    setCurrentFileProgress(0);
-    setFailedFiles([]);
-    setIsCancellingUpload(false);
-
-    try {
-      // Upload images sequentially so we can show progress
-      let cancelledByUser = false;
-      const failedLocal = [];
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        setCurrentFileIndex(i);
-        setCurrentFileProgress(0);
-
-        const uploadFormData = new FormData();
-        uploadFormData.append('image', file);
-
-        // Abort controller per file
-        const controller = new AbortController();
-        currentUploadControllerRef.current = controller;
-
-        try {
-          const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/image`, {
-            method: 'POST',
-            body: uploadFormData,
-            signal: controller.signal
-          });
-          if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            throw { response: { status: res.status, data: errorData } };
-          }
-          const data = await res.json();
-
-          await sendImageMessage(data.imageUrl, file.name, imageCaptions[file.name] || '');
-          setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
-        } catch (err) {
-          if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-            // Upload cancelled
-            cancelledByUser = true;
-            setIsCancellingUpload(true);
-            break;
-          } else {
-            // Mark this file as failed and continue with next
-            failedLocal.push(file);
-          }
-        } finally {
-          if (currentUploadControllerRef.current === controller) {
-            currentUploadControllerRef.current = null;
-          }
-        }
-      }
-
-      // Persist failed files to state
-      if (failedLocal.length) setFailedFiles(failedLocal);
-
-      // Clear state only if fully successful and not cancelled
-      if (!cancelledByUser && failedLocal.length === 0) {
-        setSelectedFiles([]);
-        setImageCaptions({});
-        setPreviewIndex(0);
-        setShowImagePreviewModal(false);
-      }
-    } catch (error) {
-      console.error('File upload error:', error);
-      setFileUploadError(error.response?.data?.message || 'Upload failed. Please try again.');
-      toast.error(error.response?.data?.message || 'Upload failed. Please try again.');
-      // Auto-hide error message after 3 seconds
-      setTimeout(() => setFileUploadError(''), 3000);
-    } finally {
-      setUploadingFile(false);
+    // --- Phase 2: Upload and send File-based images ---
+    if (fileImages.length > 0) {
+      setUploadingFile(true);
       setUploadProgress(0);
       setCurrentFileIndex(-1);
       setCurrentFileProgress(0);
+      setFailedFiles([]);
+      setIsCancellingUpload(false);
+
+      try {
+        let cancelledByUser = false;
+        const failedLocal = [];
+        for (let i = 0; i < fileImages.length; i++) {
+          const { file } = fileImages[i];
+          setCurrentFileIndex(i);
+          setCurrentFileProgress(0);
+
+          const uploadFormData = new FormData();
+          uploadFormData.append('image', file);
+
+          const controller = new AbortController();
+          currentUploadControllerRef.current = controller;
+
+          try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/image`, {
+              method: 'POST',
+              body: uploadFormData,
+              signal: controller.signal
+            });
+            if (!res.ok) {
+              const errorData = await res.json().catch(() => ({}));
+              throw { response: { status: res.status, data: errorData } };
+            }
+            const data = await res.json();
+
+            await sendImageMessage(data.imageUrl, file.name, imageCaptions[file.name] || '');
+            setUploadProgress(Math.round(((i + 1) / fileImages.length) * 100));
+          } catch (err) {
+            if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED' || err.name === 'AbortError') {
+              cancelledByUser = true;
+              setIsCancellingUpload(true);
+              break;
+            } else {
+              failedLocal.push(file);
+            }
+          } finally {
+            if (currentUploadControllerRef.current === controller) {
+              currentUploadControllerRef.current = null;
+            }
+          }
+        }
+
+        if (failedLocal.length) setFailedFiles(failedLocal);
+
+        if (cancelledByUser || failedLocal.length > 0) {
+          // Keep only failed files in selection for retry
+          if (failedLocal.length > 0) {
+            setSelectedFiles(failedLocal);
+          }
+          return; // Don't close modal
+        }
+      } catch (error) {
+        console.error('File upload error:', error);
+        setFileUploadError(error.response?.data?.message || 'Upload failed. Please try again.');
+        toast.error(error.response?.data?.message || 'Upload failed. Please try again.');
+        setTimeout(() => setFileUploadError(''), 3000);
+        return; // Don't close modal on error
+      } finally {
+        setUploadingFile(false);
+        setUploadProgress(0);
+        setCurrentFileIndex(-1);
+        setCurrentFileProgress(0);
+      }
     }
+
+    // All sent successfully — close modal
+    setSelectedFiles([]);
+    setImageCaptions({});
+    setPreviewIndex(0);
+    setShowImagePreviewModal(false);
   };
 
   // Cancel in-flight upload
@@ -11213,6 +11235,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           setImageCaptions({});
                           setPreviewIndex(0);
                           setShowImagePreviewModal(false);
+                          setShowAddImageChooser(false);
                         }}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                       >
@@ -11315,41 +11338,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </div>
                         );})}
 
-                        {/* Add More Images Button - Only show when less than 10 images */}
+                        {/* Add More Images Button - Opens chooser modal */}
                         {selectedFiles.length < 10 && (
                           <div className="relative">
-                            <label className="flex-shrink-0 w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-200 cursor-pointer flex items-center justify-center group">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="hidden"
-                                onChange={(e) => {
-                                  const files = e.target.files;
-                                  if (files && files.length > 0) {
-                                    // Calculate how many more images can be added
-                                    const remainingSlots = 10 - selectedFiles.length;
-                                    const filesToAdd = Array.from(files).slice(0, remainingSlots);
-
-                                    if (filesToAdd.length > 0) {
-                                      // Add new files to existing selection
-                                      const newFiles = [...selectedFiles, ...filesToAdd];
-                                      setSelectedFiles(newFiles);
-
-                                      // Show notification if some files were skipped
-                                      if (filesToAdd.length < files.length) {
-                                        toast.info(`Added ${filesToAdd.length} images. Maximum limit of 10 images reached.`);
-                                      }
-                                    }
-                                    // Reset the input
-                                    e.target.value = '';
-                                  }
-                                }}
-                              />
+                            <button
+                              type="button"
+                              onClick={() => setShowAddImageChooser(true)}
+                              className="flex-shrink-0 w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-200 cursor-pointer flex items-center justify-center group"
+                              title="Add more images"
+                            >
                               <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                               </svg>
-                            </label>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -11457,6 +11458,102 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Add Image Chooser Modal - Glassmorphism UI */}
+              {showAddImageChooser && (
+                <div
+                  className="fixed inset-0 z-[170] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                  onClick={() => setShowAddImageChooser(false)}
+                >
+                  <div
+                    className="w-full max-w-xs rounded-2xl shadow-2xl border overflow-hidden transform transition-all duration-300 scale-100 backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-white/30 dark:border-gray-700/50"
+                    onClick={e => e.stopPropagation()}
+                    style={{ animation: 'fadeIn 0.2s ease-out' }}
+                  >
+                    {/* Header */}
+                    <div className="px-5 pt-5 pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-base font-bold text-gray-800 dark:text-white">Add Images</h3>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                            {10 - selectedFiles.length} slot{10 - selectedFiles.length !== 1 ? 's' : ''} remaining
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowAddImageChooser(false)}
+                          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                          <FaTimes className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Options */}
+                    <div className="px-4 pb-5 space-y-2.5">
+                      {/* Upload Image Option */}
+                      <label
+                        className="flex items-center gap-3.5 px-4 py-3.5 rounded-xl cursor-pointer transition-all duration-200 border-2 hover:shadow-md active:scale-[0.98] bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border-blue-200/60 dark:border-blue-800/40 hover:border-blue-300 dark:hover:border-blue-700 group"
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = e.target.files;
+                            if (files && files.length > 0) {
+                              const remainingSlots = 10 - selectedFiles.length;
+                              const filesToAdd = Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, remainingSlots);
+                              if (filesToAdd.length > 0) {
+                                setSelectedFiles(prev => [...prev, ...filesToAdd]);
+                                const newCaptions = {};
+                                filesToAdd.forEach(f => { newCaptions[f.name] = ''; });
+                                setImageCaptions(prev => ({ ...prev, ...newCaptions }));
+                                if (filesToAdd.length < files.length) {
+                                  toast.info(`Added ${filesToAdd.length} images. Maximum limit of 10 images reached.`);
+                                }
+                              }
+                              e.target.value = '';
+                            }
+                            setShowAddImageChooser(false);
+                          }}
+                        />
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-shadow">
+                          <FaImage className="w-4.5 h-4.5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-800 dark:text-white">Upload Image</div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">Select from your device</div>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </label>
+
+                      {/* Image URL Option */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddImageChooser(false);
+                          setShowImageUrlModal(true);
+                        }}
+                        className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200 border-2 hover:shadow-md active:scale-[0.98] bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/40 dark:to-pink-950/40 border-purple-200/60 dark:border-purple-800/40 hover:border-purple-300 dark:hover:border-purple-700 group text-left"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:shadow-purple-500/40 transition-shadow">
+                          <FaLink className="w-4.5 h-4.5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-800 dark:text-white">Image URL</div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">Paste a web image link</div>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -11677,7 +11774,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         </div>
                         <div>
                           <h3 className="text-xl font-bold">Image URL</h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Add images from the web (Max 10)</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Add images from the web (Max {showImagePreviewModal ? (10 - selectedFiles.length) : 10})</p>
                         </div>
                       </div>
                     </div>
@@ -11711,8 +11808,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           <button
                             type="button"
                             onClick={handleAddImageUrl}
-                            disabled={!imageUrlInput.trim() || imageUrlList.length >= 10}
-                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-md ${imageUrlInput.trim() && imageUrlList.length < 10
+                            disabled={!imageUrlInput.trim() || imageUrlList.length >= (showImagePreviewModal ? (10 - selectedFiles.length) : 10)}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 shadow-md ${imageUrlInput.trim() && imageUrlList.length < (showImagePreviewModal ? (10 - selectedFiles.length) : 10)
                               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 active:scale-95 shadow-indigo-500/20'
                               : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border border-gray-300 dark:border-gray-700'
                               }`}
@@ -11776,7 +11873,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         )}
 
                         <p className="mt-2 text-[10px] leading-relaxed italic text-gray-400 dark:text-gray-500">
-                          Tip: You can add up to 10 image URLs per batch. Paste a URL and click "+" to add it.
+                          Tip: You can add up to {showImagePreviewModal ? (10 - selectedFiles.length) : 10} image URLs. Paste a URL and click "+" to add it.
                         </p>
                       </div>
 
