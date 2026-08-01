@@ -3309,7 +3309,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setMediaPermissionType('microphone');
       setMediaPermissionActionText('record audio');
       setShowMediaPermissionModal(true);
-      setShowRecordAudioModal(false);
     }
   };
 
