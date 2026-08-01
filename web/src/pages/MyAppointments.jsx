@@ -3044,6 +3044,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [showCameraCaptureModal, setShowCameraCaptureModal] = useState(false);
   const [showMediaPermissionModal, setShowMediaPermissionModal] = useState(false);
   const [mediaPermissionType, setMediaPermissionType] = useState('video');
+  const [mediaPermissionActionText, setMediaPermissionActionText] = useState('make calls');
   const [isSendingUrlImages, setIsSendingUrlImages] = useState(false);
   const [isSendingUrlVideo, setIsSendingUrlVideo] = useState(false);
   const [showImageUrlModal, setShowImageUrlModal] = useState(false);
@@ -3305,7 +3306,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       }, 500);
     } catch (err) {
       console.error('Recording error:', err);
-      toast.error('Microphone permission denied or unavailable');
+      setMediaPermissionType('microphone');
+      setMediaPermissionActionText('record audio');
+      setShowMediaPermissionModal(true);
+      setShowRecordAudioModal(false);
     }
   };
 
@@ -8796,6 +8800,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 }
 
                                 setMediaPermissionType(detectedType);
+                                setMediaPermissionActionText('make calls');
                                 setShowMediaPermissionModal(true);
                               }
                             }
@@ -11579,6 +11584,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 isOpen={showMediaPermissionModal}
                 onClose={() => setShowMediaPermissionModal(false)}
                 permissionType={mediaPermissionType}
+                actionText={mediaPermissionActionText}
               />
 
               {/* Video Preview Modal */}

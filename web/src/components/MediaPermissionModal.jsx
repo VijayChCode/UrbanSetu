@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => {
+const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video', actionText }) => {
   useEffect(() => {
     if (isOpen) {
       if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
@@ -31,7 +31,7 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
         toggleText: 'Camera'
       };
     }
-    if (permissionType === 'microphone' || permissionType === 'audio') {
+    if (permissionType === 'microphone' || permissionType === 'audio' || permissionType === 'record-audio') {
       return {
         title: 'Allow microphone',
         accessText: "device's microphone",
@@ -43,6 +43,13 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
       accessText: "device's camera and microphone",
       toggleText: 'Camera and Microphone'
     };
+  };
+
+  const getActionPhrase = () => {
+    if (actionText) return actionText;
+    if (permissionType === 'record-audio') return 'record audio';
+    if (permissionType === 'camera') return 'take photos';
+    return 'make calls';
   };
 
   const { title, accessText, toggleText } = getPermissionDetails();
@@ -57,7 +64,7 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video' }) => 
 
         {/* Description Text */}
         <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-5 sm:mb-6 text-left">
-          To make calls, UrbanSetu needs access to your {accessText}. Click the{' '}
+          To {getActionPhrase()}, UrbanSetu needs access to your {accessText}. Click the{' '}
           <span className="inline-flex items-center justify-center bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 mx-0.5 align-middle">
             <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className="text-gray-300">
               <title>chrome-permissions</title>
