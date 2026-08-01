@@ -3882,6 +3882,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   };
 
+  const getItemKey = (item, index) => {
+    if (!item) return `img-${index}`;
+    if (typeof item === 'string') {
+      return `url-img-${index}-${item}`;
+    }
+    return `file-img-${index}-${item.name}-${item.size || 0}-${item.lastModified || 0}`;
+  };
+
+  const getDisplayLabel = (item, index) => {
+    if (!item) return `Image ${index + 1}`;
+    if (typeof item === 'string') {
+      const rawName = item.split('/').pop()?.split('?')[0];
+      if (rawName && rawName.length > 2 && rawName.toLowerCase() !== 'images' && rawName.toLowerCase() !== 'image') {
+        return rawName;
+      }
+      return `Image URL ${index + 1}`;
+    }
+    return item.name || `Image ${index + 1}`;
+  };
+
   const handleImageFiles = (files) => {
     // Check if chat sending is blocked for this appointment status
     if (isChatSendBlocked) {
@@ -3905,13 +3925,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
     // Add new files to existing selection
     setSelectedFiles(prev => [...(prev || []), ...imageFiles]);
-
-    // Initialize captions for new files
-    const newCaptions = {};
-    imageFiles.forEach(file => {
-      newCaptions[file.name] = '';
-    });
-    setImageCaptions(prev => ({ ...prev, ...newCaptions }));
 
     // Show image preview modal
     setShowImagePreviewModal(true);
@@ -3960,21 +3973,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
     if (finalUrls.length === 0) return;
 
-    // Build captions for new URLs
-    const newCaptions = {};
-    finalUrls.forEach((url, i) => {
-      const name = url.split('/').pop()?.split('?')[0] || `Image ${i + 1}`;
-      newCaptions[name] = '';
-    });
-
     if (showImagePreviewModal && selectedFiles.length > 0) {
       // APPEND mode: add URLs to existing selection (mixed support)
       setSelectedFiles(prev => [...prev, ...finalUrls]);
-      setImageCaptions(prev => ({ ...prev, ...newCaptions }));
     } else {
       // REPLACE mode: fresh selection from Image URL attachment
       setSelectedFiles(finalUrls);
-      setImageCaptions(newCaptions);
+      setImageCaptions({});
     }
     setShowImageUrlModal(false);
     setImageUrlInput('');
@@ -4005,11 +4010,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     const urlImages = [];
     const fileImages = [];
     selectedFiles.forEach((item, idx) => {
+      const itemKey = getItemKey(item, idx);
+      const caption = imageCaptions[itemKey] || '';
       if (typeof item === 'string') {
-        const fileName = item.split('/').pop()?.split('?')[0] || `Image ${idx + 1}`;
-        urlImages.push({ url: item, fileName, caption: imageCaptions[fileName] || imageCaptions[item] || '' });
+        const fileName = getDisplayLabel(item, idx);
+        urlImages.push({ url: item, fileName, caption });
       } else {
-        fileImages.push({ file: item, index: idx });
+        fileImages.push({ file: item, index: idx, caption });
       }
     });
 
@@ -4040,7 +4047,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         let cancelledByUser = false;
         const failedLocal = [];
         for (let i = 0; i < fileImages.length; i++) {
-          const { file } = fileImages[i];
+          const { file, caption } = fileImages[i];
           setCurrentFileIndex(i);
           setCurrentFileProgress(0);
 
@@ -4061,7 +4068,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               }
             });
 
-            await sendImageMessage(data.imageUrl, file.name, imageCaptions[file.name] || '');
+            await sendImageMessage(data.imageUrl, file.name, caption);
             setUploadProgress(Math.round(((i + 1) / fileImages.length) * 100));
             setCurrentFileProgress(100);
           } catch (err) {
@@ -11380,10 +11387,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation(); // Prevent triggering the thumbnail selection
-                                  const newFiles = selectedFiles.filter((_, fileIndex) => fileIndex !== index);
-                                  const newCaptions = { ...imageCaptions };
-                                  // Remove caption for deleted image
-                                  delete newCaptions[fileKey];
+                                  const deletedIndex = index;
+                                  const newFiles = selectedFiles.filter((_, fileIndex) => fileIndex !== deletedIndex);
 
                                   if (newFiles.length === 0) {
                                     // If no images left, close modal
@@ -11392,14 +11397,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                     setImageErrorMap({});
                                     setShowImagePreviewModal(false);
                                   } else {
-                                    // Update files and adjust preview index
+                                    // Re-map captions for remaining files to match their new indices
+                                    const newCaptions = {};
+                                    newFiles.forEach((item, newIdx) => {
+                                      const oldIdx = newIdx >= deletedIndex ? newIdx + 1 : newIdx;
+                                      const oldKey = getItemKey(item, oldIdx);
+                                      const newKey = getItemKey(item, newIdx);
+                                      if (imageCaptions[oldKey] !== undefined) {
+                                        newCaptions[newKey] = imageCaptions[oldKey];
+                                      }
+                                    });
                                     setSelectedFiles(newFiles);
                                     setImageCaptions(newCaptions);
-                                    // Adjust preview index if needed
                                     if (previewIndex >= newFiles.length) {
                                       setPreviewIndex(newFiles.length - 1);
-                                    } else if (previewIndex > index) {
-                                      // If we deleted an image before the current preview, adjust index
+                                    } else if (previewIndex > deletedIndex) {
                                       setPreviewIndex(previewIndex - 1);
                                     }
                                   }
@@ -11434,45 +11446,46 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                     {/* Caption for Current Image */}
                     {(() => {
-                      const curKey = typeof selectedFiles[previewIndex] === 'string' ? (selectedFiles[previewIndex].split('/').pop()?.split('?')[0] || `Image ${previewIndex + 1}`) : selectedFiles[previewIndex]?.name;
+                      const currentFile = selectedFiles[previewIndex];
+                      const itemKey = getItemKey(currentFile, previewIndex);
+                      const displayLabel = getDisplayLabel(currentFile, previewIndex);
+                      const currentCaption = imageCaptions[itemKey] || '';
                       return (
-                      <div className="relative mb-4">
-                        <textarea
-                          placeholder={`Add a caption for ${curKey}...`}
-                          value={imageCaptions[curKey] || ''}
-                          onChange={(e) => setImageCaptions(prev => ({
-                            ...prev,
-                            [curKey]: e.target.value
-                          }))}
-                          className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                          rows={3}
-                          maxLength={500}
-                        />
-                        {/* Emoji Picker for Caption */}
-                        <div className="absolute right-2 top-2">
-                          <EmojiButton
-                            onEmojiClick={(emoji) => {
-                              // Check if chat sending is blocked for this appointment status
-                              if (isChatSendBlocked) {
-                                toast.info('Emoji sending disabled for this appointment status. You can view chat history.');
-                                return;
-                              }
-
-                              const currentCaption = imageCaptions[curKey] || '';
-                              setImageCaptions(prev => ({
-                                ...prev,
-                                [curKey]: currentCaption + emoji
-                              }));
-                            }}
-                            className="w-6 h-6"
-                            disabled={isChatSendBlocked}
+                        <div className="relative mb-4">
+                          <textarea
+                            placeholder={`Add a caption for ${displayLabel}...`}
+                            value={currentCaption}
+                            onChange={(e) => setImageCaptions(prev => ({
+                              ...prev,
+                              [itemKey]: e.target.value
+                            }))}
+                            className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                            rows={3}
+                            maxLength={500}
                           />
+                          {/* Emoji Picker for Caption */}
+                          <div className="absolute right-2 top-2">
+                            <EmojiButton
+                              onEmojiClick={(emoji) => {
+                                if (isChatSendBlocked) {
+                                  toast.info('Emoji sending disabled for this appointment status. You can view chat history.');
+                                  return;
+                                }
+                                setImageCaptions(prev => ({
+                                  ...prev,
+                                  [itemKey]: (prev[itemKey] || '') + emoji
+                                }));
+                              }}
+                              className="w-6 h-6"
+                              disabled={isChatSendBlocked}
+                            />
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 text-right">
+                            {currentCaption.length}/500
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1 text-right">
-                          {(imageCaptions[curKey] || '').length}/500
-                        </div>
-                      </div>
-                    );})()}
+                      );
+                    })()}
 
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-600 dark:text-gray-300">
