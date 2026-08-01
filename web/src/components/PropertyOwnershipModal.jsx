@@ -156,7 +156,7 @@ export default function PropertyOwnershipModal({
             }
 
             toast.success(data.message || 'Property ownership updated successfully');
-            if (onSuccess) onSuccess();
+            if (onSuccess) onSuccess(data.listing);
             onClose();
         } catch (err) {
             console.error('Ownership Operation Error:', err);

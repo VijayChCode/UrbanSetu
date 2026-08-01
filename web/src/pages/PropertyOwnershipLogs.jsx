@@ -424,6 +424,34 @@ export default function PropertyOwnershipLogs() {
                                     <span className="font-bold text-gray-900 dark:text-white block">{selectedLog.propertyName}</span>
                                     <span className="text-[10px] text-gray-400 block font-mono">ID: {selectedLog.propertyId}</span>
                                 </div>
+                                <div className="p-3 bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/40 rounded-xl space-y-1.5">
+                                    <span className="font-bold text-gray-500 text-[11px] block uppercase tracking-wider">Ownership Flow:</span>
+                                    {selectedLog.action === "TRANSFER" && (
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-purple-200/50 dark:border-purple-800/30">
+                                            <div className="space-y-0.5">
+                                                <span className="text-[10px] text-gray-400 font-bold block uppercase">Previous Owner</span>
+                                                <span className="font-bold text-red-600 dark:text-red-400 text-xs block truncate max-w-[200px]">{selectedLog.previousOwnerEmail || "Unassigned"}</span>
+                                            </div>
+                                            <FaArrowRight className="text-purple-500 hidden sm:block text-xs flex-shrink-0" />
+                                            <div className="space-y-0.5 text-left sm:text-right">
+                                                <span className="text-[10px] text-gray-400 font-bold block uppercase">New Owner</span>
+                                                <span className="font-bold text-green-600 dark:text-green-400 text-xs block truncate max-w-[200px]">{selectedLog.newOwnerEmail || "Unassigned"}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedLog.action === "REMOVE" && (
+                                        <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-red-200/50 dark:border-red-800/30">
+                                            <span className="text-[10px] text-gray-400 font-bold block uppercase">Removed Owner</span>
+                                            <span className="font-bold text-red-600 dark:text-red-400 text-xs block truncate">{selectedLog.previousOwnerEmail || "Unassigned"}</span>
+                                        </div>
+                                    )}
+                                    {selectedLog.action === "ASSIGN" && (
+                                        <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-green-200/50 dark:border-green-800/30">
+                                            <span className="text-[10px] text-gray-400 font-bold block uppercase">Assigned New Owner</span>
+                                            <span className="font-bold text-green-600 dark:text-green-400 text-xs block truncate">{selectedLog.newOwnerEmail || "Unassigned"}</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl space-y-1">
                                     <span className="font-bold text-gray-500 block">Admin Authorized:</span>
                                     <span className="font-bold text-gray-900 dark:text-white">{selectedLog.adminName}</span>

@@ -5728,9 +5728,35 @@ export default function Listing() {
         mode={ownershipMode}
         listing={listing}
         currentOwner={ownerDetails}
-        onSuccess={() => {
-          // Refresh listing & owner details
-          window.location.reload();
+        onSuccess={async (updatedListing) => {
+          setShowOwnershipModal(false);
+          const newOwnerRef = updatedListing?.userRef || (updatedListing ? updatedListing.userRef : null);
+          setListing((prev) => (prev ? { ...prev, userRef: newOwnerRef } : updatedListing));
+
+          const targetOwnerId = (newOwnerRef && typeof newOwnerRef === 'object') ? newOwnerRef._id : newOwnerRef;
+          if (targetOwnerId) {
+            try {
+              const res = await authenticatedFetch(`${API_BASE_URL}/api/user/id/${targetOwnerId}`, { autoRedirect: false });
+              if (res.ok) {
+                const ownerData = await res.json();
+                setOwnerDetails(ownerData);
+                setOwnerStatus({ isActive: true, owner: ownerData });
+                setOwnerError('');
+              } else {
+                setOwnerDetails(null);
+                setOwnerStatus({ isActive: false, owner: null });
+                setOwnerError('Owner account is inactive or unverified');
+              }
+            } catch (e) {
+              setOwnerDetails(null);
+              setOwnerStatus({ isActive: false, owner: null });
+              setOwnerError('No owner assigned yet');
+            }
+          } else {
+            setOwnerDetails(null);
+            setOwnerStatus({ isActive: false, owner: null });
+            setOwnerError('');
+          }
         }}
       />
     </>

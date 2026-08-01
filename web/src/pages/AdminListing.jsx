@@ -748,8 +748,11 @@ export default function AdminListing() {
         mode={ownershipMode}
         listing={listing}
         currentOwner={typeof listing?.userRef === 'object' ? listing.userRef : null}
-        onSuccess={() => {
-          window.location.reload();
+        onSuccess={(updatedListing) => {
+          setShowOwnershipModal(false);
+          if (updatedListing) {
+            setListing(updatedListing);
+          }
         }}
       />
     </div>
