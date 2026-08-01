@@ -470,33 +470,41 @@ export default function Home() {
             }
 
             let fetchedCity = null;
-            let isIpResolved = false;
 
-            // 🌐 Real-Time IP Address Location Detection
+            // 🌐 Tier 1: Real-Time IP Address Location Detection
             try {
               const ipRes = await fetch('https://ipapi.co/json/').catch(() => null);
               if (ipRes && ipRes.ok) {
                 const ipData = await ipRes.json();
                 if (ipData && ipData.city) {
                   fetchedCity = ipData.city;
-                  isIpResolved = true;
                   setIsRealtimeGPS(true); // Tag as real-time live location
-                  setDetectedCity(fetchedCity);
                 }
               }
             } catch (ipErr) {
               console.warn('Real-time IP location lookup error:', ipErr);
             }
 
-            // Fallback to Profile / Last Login Location if IP lookup fails
-            if (!isIpResolved && userProfileRes.status === 'fulfilled' && userProfileRes.value?.ok) {
+            // 🌐 Tier 2: Profile / Last Login Location Fallback
+            if (!fetchedCity && userProfileRes.status === 'fulfilled' && userProfileRes.value?.ok) {
               const userData = await userProfileRes.value.json();
               if (userData.lastLoginLocation && userData.lastLoginLocation !== 'Unknown' && userData.lastLoginLocation !== 'Local Development' && userData.lastLoginLocation !== 'Private Network') {
                 const parts = userData.lastLoginLocation.split(',').map(s => s.trim());
                 if (parts[0]) {
                   fetchedCity = parts[0];
                   setIsRealtimeGPS(false);
-                  setDetectedCity(fetchedCity);
+                }
+              }
+
+              if (!fetchedCity && userData.activeSessions?.length > 0) {
+                for (const session of userData.activeSessions) {
+                  if (session.location && session.location !== 'Unknown' && session.location !== 'Local Development' && session.location !== 'Private Network') {
+                    const c = session.location.split(',')[0]?.trim();
+                    if (c) {
+                      fetchedCity = c;
+                      break;
+                    }
+                  }
                 }
               }
 
@@ -516,6 +524,20 @@ export default function Home() {
               }
             }
 
+            // 🌐 Tier 3: Database Property Location Fallback (Any available location in DB)
+            const candidates = [...offers, ...rents, ...sales];
+            if (!fetchedCity) {
+              const listingWithCity = candidates.find(l => l && l.city && String(l.city).trim());
+              if (listingWithCity) {
+                fetchedCity = String(listingWithCity.city).trim();
+              } else {
+                fetchedCity = 'Hyderabad';
+              }
+              setIsRealtimeGPS(false);
+            }
+
+            setDetectedCity(fetchedCity);
+
             let userWishlist = [];
             let userWatchlist = [];
 
@@ -531,7 +553,8 @@ export default function Home() {
               setWatchlistItems(userWatchlist);
             }
 
-            // Fetch Nearby Properties if city was detected
+            // Fetch Nearby Properties for detected / fallback city
+            let nearbyResults = [];
             if (fetchedCity) {
               try {
                 const nearbyRes = await authenticatedFetch(
@@ -539,18 +562,43 @@ export default function Home() {
                 );
                 if (nearbyRes.ok) {
                   const nData = await nearbyRes.json();
-                  const filteredNearby = (Array.isArray(nData) ? nData : []).filter(
+                  nearbyResults = (Array.isArray(nData) ? nData : []).filter(
                     (l) => l.userRef !== currentUser._id && l.sellerId !== currentUser._id
                   );
-                  setNearbyListings(filteredNearby.slice(0, 8));
                 }
               } catch (e) {
                 console.error('Error fetching nearby listings during init:', e);
               }
             }
 
+            // If detected city yielded 0 results, fall back to any available city in DB
+            if (nearbyResults.length === 0 && candidates.length > 0) {
+              const fallbackListing = candidates.find(l => l && l.city && String(l.city).trim());
+              const fallbackCity = fallbackListing?.city || 'Hyderabad';
+              if (fallbackCity && fallbackCity !== fetchedCity) {
+                setDetectedCity(fallbackCity);
+                try {
+                  const fallbackRes = await authenticatedFetch(
+                    `${API_BASE_URL}/api/listing/get?city=${encodeURIComponent(fallbackCity)}&visibility=public&limit=16`
+                  );
+                  if (fallbackRes.ok) {
+                    const fbData = await fallbackRes.json();
+                    nearbyResults = (Array.isArray(fbData) ? fbData : []).filter(
+                      (l) => l.userRef !== currentUser._id && l.sellerId !== currentUser._id
+                    );
+                  }
+                } catch (e) {}
+              }
+            }
+
+            // Ultimate Fallback: if still 0 results, use general candidates
+            if (nearbyResults.length === 0 && candidates.length > 0) {
+              nearbyResults = candidates.filter(l => l.userRef !== currentUser._id && l.sellerId !== currentUser._id);
+            }
+
+            setNearbyListings(nearbyResults.slice(0, 8));
+
             // Calculate Sentinel AI Live Recommendations
-            const candidates = [...offers, ...rents, ...sales];
             let uniqueCandidates = Array.from(new Map(candidates.filter(c => c && c._id).map(item => [item._id, item])).values());
             uniqueCandidates = uniqueCandidates.filter(c => c.userRef !== currentUser._id && c.sellerId !== currentUser._id);
 
