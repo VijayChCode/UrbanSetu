@@ -7544,16 +7544,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaTrash />
                       </button>
                     )}
-                    {/* Admin cancel button */}
-                    {isAdmin && (
-                      <button
-                        className="text-red-500 hover:text-red-700 text-xl"
-                        onClick={handleAdminCancel}
-                        title="Cancel Appointment (Admin)"
-                      >
-                        <FaUserShield />
-                      </button>
-                    )}
+
                     {/* Delete button for outdated accepted appointments */}
                     {!isUpcoming && (
                       <button
@@ -13084,73 +13075,32 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               <div className="flex gap-3 justify-end">
                 <button
                   type="button"
+                  disabled={cancelLoading}
                   onClick={() => {
                     setShowCancelModal(false);
                     setCancelReason('');
                   }}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
+                  disabled={cancelLoading}
                   onClick={confirmUserCancel}
-                  className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded bg-orange-600 text-white font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FaBan size={12} />
-                  Cancel Appointment
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      }
-
-      {/* Admin Cancel Appointment Modal */}
-      {
-        showAdminCancelModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                <FaBan className="text-red-500" />
-                Admin Cancel Appointment
-              </h3>
-
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Are you sure you want to cancel this appointment as admin?
-              </p>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Reason for admin cancellation (required):
-                </label>
-                <textarea
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  rows="3"
-                  placeholder="Please provide a reason for admin cancellation..."
-                />
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAdminCancelModal(false);
-                    setCancelReason('');
-                  }}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmAdminCancel}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
-                >
-                  <FaBan size={12} />
-                  Cancel as Admin
+                  {cancelLoading ? (
+                    <>
+                      <UrbanSetuSpinner size="sm" isBright={true} />
+                      <span>Cancelling...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaBan size={12} />
+                      <span>Cancel Appointment</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
