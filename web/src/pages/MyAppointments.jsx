@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt, FaPlus, FaShieldAlt } from 'react-icons/fa';
+import { FaArchive, FaBan, FaCalendar, FaCalendarAlt, FaCheck, FaCheckDouble, FaCheckSquare, FaCircle, FaCheckCircle, FaClock, FaCog, FaCommentDots, FaCopy, FaCreditCard, FaDownload, FaEllipsisV, FaEnvelope, FaExclamationTriangle, FaFileContract, FaFileAlt, FaFlag, FaHandshake, FaHistory, FaInfoCircle, FaLightbulb, FaMicrophone, FaMoneyBillWave, FaPaperPlane, FaPen, FaPhone, FaPhotoVideo, FaRegStar, FaSearch, FaStar, FaSync, FaThumbtack, FaTimes, FaTrash, FaUndo, FaUserShield, FaVideo, FaWallet, FaPlay, FaLink, FaFile, FaImage, FaVolumeUp, FaExternalLinkAlt, FaPlus, FaShieldAlt, FaCamera } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { EmojiButton } from '../components/EmojiPicker';
 import CustomEmojiPicker from '../components/EmojiPicker';
@@ -11551,6 +11551,27 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           <div className="text-[11px] text-gray-500 dark:text-gray-400">Paste a web image link</div>
                         </div>
                         <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+
+                      {/* Camera Option */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddImageChooser(false);
+                          setShowCameraCaptureModal(true);
+                        }}
+                        className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-200 border-2 hover:shadow-md active:scale-[0.98] bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border-emerald-200/60 dark:border-emerald-800/40 hover:border-emerald-300 dark:hover:border-emerald-700 group text-left"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:shadow-emerald-500/40 transition-shadow">
+                          <FaCamera className="w-4.5 h-4.5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-800 dark:text-white">Camera</div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">Take a photo using camera</div>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
