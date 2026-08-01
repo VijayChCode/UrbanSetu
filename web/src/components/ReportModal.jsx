@@ -41,6 +41,14 @@ export default function ReportModal({ isOpen, onClose, onReport, title = "Report
                         </div>
                         <h3 className="text-xl font-bold">{title}</h3>
                     </div>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-lg"
+                        title="Close"
+                    >
+                        <FaTimes className="text-lg" />
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
