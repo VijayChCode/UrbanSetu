@@ -3952,7 +3952,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const handleDoneImageUrls = () => {
     let finalUrls = [...imageUrlList];
-    if (imageUrlInput.trim()) {
+    if (finalUrls.length === 0 && imageUrlInput.trim()) {
       const maxAllowed = showImagePreviewModal ? (10 - selectedFiles.length) : 10;
       if (finalUrls.length < maxAllowed) {
         finalUrls.push(imageUrlInput.trim());
@@ -12008,7 +12008,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                             : 'bg-gray-300 dark:bg-gray-700 text-white cursor-not-allowed'
                             }`}
                         >
-                          Preview ({imageUrlList.length + (imageUrlInput.trim() ? 1 : 0)})
+                          Preview ({imageUrlList.length > 0 ? imageUrlList.length : (imageUrlInput.trim() ? 1 : 0)})
                         </button>
                       </div>
                     </div>
