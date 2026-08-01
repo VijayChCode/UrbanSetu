@@ -301,18 +301,18 @@ export default function PropertyDeleteModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl w-full max-w-lg shadow-2xl border border-red-500/20 dark:border-red-900/30 overflow-hidden flex flex-col transition-all duration-300 transform zoom-in-95">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl w-full max-w-lg shadow-2xl border border-red-500/20 dark:border-red-900/30 overflow-hidden flex flex-col max-h-[94vh] sm:max-h-[90vh] transition-all duration-300 transform zoom-in-95">
 
                 {/* Header */}
-                <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white p-6 relative flex items-center justify-between shadow-md">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
-                            <FaTrash className="text-xl text-white" />
+                <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white p-4 sm:p-6 relative flex items-center justify-between shadow-md flex-shrink-0">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="bg-white/20 p-2 sm:p-2.5 rounded-2xl backdrop-blur-md flex-shrink-0">
+                            <FaTrash className="text-lg sm:text-xl text-white" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold tracking-tight">Delete Property</h3>
-                            <p className="text-xs text-red-100 font-medium">30-Day Trash & Soft-Delete Security Flow</p>
+                            <h3 className="text-lg sm:text-xl font-bold tracking-tight">Delete Property</h3>
+                            <p className="text-[10px] sm:text-xs text-red-100 font-medium">30-Day Trash & Soft-Delete Security Flow</p>
                         </div>
                     </div>
                     {!isCompleted && (
@@ -327,15 +327,15 @@ export default function PropertyDeleteModal({
 
                 {/* Step Progress Bar */}
                 {!isCompleted && (
-                    <div className="px-6 pt-4 pb-2 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                    <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-2 bg-gray-50/80 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
                         {isAdmin ? (
-                            <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            <div className="flex justify-between text-[11px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2">
                                 <span className={step >= 1 ? 'text-red-600 dark:text-red-400' : ''}>1. Reason</span>
                                 <span className={step >= 2 ? 'text-red-600 dark:text-red-400' : ''}>2. Password</span>
                                 <span className={step >= 4 ? 'text-red-600 dark:text-red-400' : ''}>3. Confirm</span>
                             </div>
                         ) : (
-                            <div className="flex justify-between text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            <div className="flex justify-between text-[11px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2">
                                 <span className={step >= 1 ? 'text-red-600 dark:text-red-400' : ''}>1. Reason</span>
                                 <span className={step >= 2 ? 'text-red-600 dark:text-red-400' : ''}>2. Password</span>
                                 <span className={step >= 3 ? 'text-red-600 dark:text-red-400' : ''}>3. OTP</span>
@@ -352,7 +352,7 @@ export default function PropertyDeleteModal({
                 )}
 
                 {/* Modal Body */}
-                <div className="p-6 overflow-y-auto max-h-[75vh] space-y-6">
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1">
 
                     {/* STEP 1: Reason Selection */}
                     {step === 1 && (
@@ -404,18 +404,18 @@ export default function PropertyDeleteModal({
                                 )}
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex gap-2 sm:gap-3 pt-2">
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                                    className="flex-1 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs sm:text-sm"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={!selectedReasonOption || (selectedReasonOption === 'Other' && !customReasonText.trim())}
-                                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 dark:shadow-none"
+                                    className="flex-1 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-200 dark:shadow-none text-xs sm:text-sm"
                                 >
                                     Next: Verify Identity <FaArrowRight className="text-xs" />
                                 </button>
@@ -455,18 +455,18 @@ export default function PropertyDeleteModal({
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex gap-2 sm:gap-3 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setStep(1)}
-                                    className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                                    className="flex-1 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-1.5 text-xs sm:text-sm"
                                 >
                                     <FaArrowLeft className="text-xs" /> Back
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={!password || verifyingPassword}
-                                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 dark:shadow-none"
+                                    className="flex-1 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-200 dark:shadow-none text-xs sm:text-sm"
                                 >
                                     {verifyingPassword ? (
                                         <UrbanSetuSpinner size="sm" isBright={true} />
@@ -503,7 +503,7 @@ export default function PropertyDeleteModal({
                                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 text-center mb-3">
                                     Enter 6-Digit OTP Code
                                 </label>
-                                <div className="flex justify-center gap-2">
+                                <div className="flex justify-center gap-1.5 sm:gap-2">
                                     {otp.map((digit, idx) => (
                                         <input
                                             key={idx}
@@ -514,7 +514,7 @@ export default function PropertyDeleteModal({
                                             value={digit}
                                             onChange={(e) => handleOtpChange(idx, e.target.value)}
                                             onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                                            className="w-11 h-12 text-center text-xl font-bold bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-gray-900 dark:text-white shadow-sm"
+                                            className="w-9 sm:w-11 h-11 sm:h-12 text-center text-lg sm:text-xl font-bold bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-gray-900 dark:text-white shadow-sm"
                                         />
                                     ))}
                                 </div>
@@ -531,18 +531,18 @@ export default function PropertyDeleteModal({
                                 </button>
                             </div>
 
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex gap-2 sm:gap-3 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setStep(2)}
-                                    className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
+                                    className="flex-1 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-1.5 text-xs sm:text-sm"
                                 >
                                     <FaArrowLeft className="text-xs" /> Back
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={otp.join('').length < 6 || verifyingOtp}
-                                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-200 dark:shadow-none"
+                                    className="flex-1 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-lg shadow-red-200 dark:shadow-none text-xs sm:text-sm"
                                 >
                                     {verifyingOtp ? <UrbanSetuSpinner size="sm" isBright={true} /> : <>Verify OTP <FaArrowRight className="text-xs" /></>}
                                 </button>
@@ -596,18 +596,18 @@ export default function PropertyDeleteModal({
                                 </ul>
                             </div>
 
-                            <div className="flex gap-2.5 pt-2">
+                            <div className="flex gap-2 sm:gap-2.5 pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setStep(isAdmin ? 2 : 3)}
-                                    className="px-4 py-3.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-1.5"
+                                    className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
                                 >
                                     <FaArrowLeft className="text-xs" /> Back
                                 </button>
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="px-4 py-3.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                                    className="px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700 transition text-xs sm:text-sm"
                                 >
                                     Cancel
                                 </button>
@@ -615,9 +615,9 @@ export default function PropertyDeleteModal({
                                     type="button"
                                     onClick={handleFinalDeleteConfirm}
                                     disabled={deleting}
-                                    className="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-xl shadow-red-300 dark:shadow-none"
+                                    className="flex-1 py-2.5 sm:py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-xl shadow-red-300 dark:shadow-none text-xs sm:text-sm"
                                 >
-                                    {deleting ? <UrbanSetuSpinner size="sm" isBright={true} /> : <>Confirm & Move to Trash</>}
+                                    {deleting ? <UrbanSetuSpinner size="sm" isBright={true} /> : <>Confirm & Delete</>}
                                 </button>
                             </div>
                         </div>
@@ -651,7 +651,7 @@ export default function PropertyDeleteModal({
                                         onClose();
                                         navigate(isAdmin ? '/admin/deleted-listings' : '/user/deleted-listings');
                                     }}
-                                    className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition shadow-lg shadow-blue-200 dark:shadow-none flex items-center justify-center gap-2"
+                                    className="flex-1 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-2xl transition shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
                                 >
                                     <FaHistory /> Go to Deleted Properties
                                 </button>
