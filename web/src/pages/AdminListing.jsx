@@ -4,13 +4,14 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
-import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart, FaExpand, FaRocket, FaCheckCircle, FaEye, FaLock } from "react-icons/fa";
+import { FaBath, FaBed, FaChair, FaMapMarkerAlt, FaParking, FaShare, FaEdit, FaTrash, FaArrowLeft, FaHeart, FaExpand, FaRocket, FaCheckCircle, FaEye, FaLock, FaExchangeAlt, FaUserMinus, FaUserCheck } from "react-icons/fa";
 import { maskAddress, shouldShowLocationLink, getLocationLinkText } from "../utils/addressMasking";
 import { toast } from 'react-toastify';
 import { useWishlist } from '../WishlistContext';
 import { useSelector } from 'react-redux';
 import ImagePreview from "../components/ImagePreview.jsx";
 import SmartPriceInsights from "../components/SmartPriceInsights.jsx";
+import PropertyOwnershipModal from "../components/PropertyOwnershipModal.jsx";
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner.jsx";
@@ -36,6 +37,8 @@ export default function AdminListing() {
   const [deassignLoading, setDeassignLoading] = useState(false);
   const [deassignError, setDeassignError] = useState('');
   const [showSmartPriceInsights, setShowSmartPriceInsights] = useState(false);
+  const [showOwnershipModal, setShowOwnershipModal] = useState(false);
+  const [ownershipMode, setOwnershipMode] = useState('transfer');
 
   const formatINR = (amount) => {
     return `₹${Number(amount).toLocaleString("en-IN")}`;
@@ -536,18 +539,42 @@ export default function AdminListing() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm text-gray-500 dark:text-gray-400">Owner ID / userRef</p>
-                {listing.userRef && (
+                {listing.userRef ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setOwnershipMode('transfer');
+                        setShowOwnershipModal(true);
+                      }}
+                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-bold flex items-center gap-1"
+                    >
+                      <FaExchangeAlt className="text-[10px]" /> Transfer
+                    </button>
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <button
+                      onClick={() => {
+                        setOwnershipMode('remove');
+                        setShowOwnershipModal(true);
+                      }}
+                      className="text-xs text-red-600 dark:text-red-400 hover:underline font-bold flex items-center gap-1"
+                    >
+                      <FaUserMinus className="text-[10px]" /> Remove
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={handleDeassignOwner}
-                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 underline font-medium"
-                    title="Deassign owner from this property"
+                    onClick={() => {
+                      setOwnershipMode('assign');
+                      setShowOwnershipModal(true);
+                    }}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
                   >
-                    Deassign
+                    <FaUserCheck className="text-[10px]" /> Assign Owner
                   </button>
                 )}
               </div>
               <p className="font-mono text-xs break-all text-gray-800 dark:text-gray-200 bg-white/50 dark:bg-gray-800/50 p-1 rounded select-all">
-                {typeof listing.userRef === 'object' ? listing.userRef._id : listing.userRef || 'Unknown'}
+                {typeof listing.userRef === 'object' ? listing.userRef._id : listing.userRef || 'Unassigned'}
               </p>
             </div>
             <div>
@@ -697,6 +724,18 @@ export default function AdminListing() {
           </form>
         </div>
       )}
+
+      {/* Enterprise Property Ownership Modal */}
+      <PropertyOwnershipModal
+        isOpen={showOwnershipModal}
+        onClose={() => setShowOwnershipModal(false)}
+        mode={ownershipMode}
+        listing={listing}
+        currentOwner={typeof listing?.userRef === 'object' ? listing.userRef : null}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

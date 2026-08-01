@@ -8,6 +8,8 @@ import Notification from "../models/notification.model.js"
 import { errorHandler } from "../utils/error.js"
 import { escapeRegex } from "../utils/regex.js"
 import { sendPropertyListingPublishedEmail, sendPropertyEditNotificationEmail, sendPropertyDeletionConfirmationEmail, sendOwnerDeassignedEmail, sendOwnerAssignedEmail, sendPropertyCreatedPendingVerificationEmail, sendPropertyVerificationReminderEmail, sendPropertyPublishedAfterVerificationEmail, sendListingUnpublishedEmail } from "../utils/emailService.js"
+import bcryptjs from 'bcryptjs'
+import OwnershipAuditLog from "../models/ownershipAuditLog.model.js"
 import DeletedListing from "../models/deletedListing.model.js"
 import crypto from 'crypto'
 import PropertyVerification from "../models/propertyVerification.model.js";
@@ -1113,14 +1115,174 @@ export const getAIRecommendations = async (req, res, next) => {
 };
 
 
+// Transfer Property Ownership Directly (Old Owner -> New Owner)
+export const transferPropertyOwner = async (req, res, next) => {
+  try {
+    const { listingId } = req.params;
+    const { newOwnerId, reason, password } = req.body;
+
+    if (req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
+      return next(errorHandler(401, 'Only admins can transfer property ownership'));
+    }
+
+    if (!reason || !reason.trim()) {
+      return next(errorHandler(400, 'Reason is required to transfer ownership'));
+    }
+
+    if (!password) {
+      return next(errorHandler(400, 'Admin password is required to confirm transfer'));
+    }
+
+    // Verify Admin Password
+    const adminUser = await User.findById(req.user.id);
+    if (!adminUser || !bcryptjs.compareSync(password, adminUser.password)) {
+      return next(errorHandler(400, 'Invalid admin password. Ownership transfer unauthorized.'));
+    }
+
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return next(errorHandler(404, 'Listing not found'));
+    }
+
+    // Validate target new owner
+    const newOwner = await User.findById(newOwnerId);
+    if (!newOwner) {
+      return next(errorHandler(404, 'Selected new owner not found'));
+    }
+
+    if (newOwner.status === 'suspended' || newOwner.status === 'banned') {
+      return next(errorHandler(400, 'Cannot transfer property to a suspended or banned user'));
+    }
+
+    if (newOwner.isVerified === false) {
+      return next(errorHandler(400, 'Cannot transfer property to an unverified user account'));
+    }
+
+    // Capture Previous Owner
+    const previousOwnerId = listing.userRef;
+    let previousOwner = null;
+    if (previousOwnerId) {
+      try {
+        previousOwner = await User.findById(previousOwnerId);
+      } catch (err) {
+        console.error('Failed to fetch previous owner:', err);
+      }
+    }
+
+    // Transfer ownership
+    listing.userRef = newOwnerId;
+    await listing.save();
+
+    // 📝 Save Permanent Ownership Audit Log
+    try {
+      const auditLog = new OwnershipAuditLog({
+        propertyId: listing._id,
+        propertyName: listing.name,
+        adminId: req.user.id,
+        adminName: req.user.username || req.user.email || 'Admin',
+        action: 'TRANSFER',
+        previousOwnerId: previousOwner?._id || null,
+        previousOwnerEmail: previousOwner?.email || null,
+        newOwnerId: newOwner._id,
+        newOwnerEmail: newOwner.email,
+        reason: reason.trim(),
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown'
+      });
+      await auditLog.save();
+    } catch (auditError) {
+      console.error('Failed to save ownership audit log:', auditError);
+    }
+
+    // 🔔 Notify Previous Owner
+    if (previousOwner) {
+      try {
+        const prevNotif = new Notification({
+          userId: previousOwner._id,
+          type: 'property_deassigned',
+          title: 'Property Ownership Transferred',
+          message: `Your ownership of "${listing.name}" has been transferred to another user by Admin. Reason: ${reason}`,
+          listingId: listing._id,
+          adminId: req.user.id,
+        });
+        await prevNotif.save();
+      } catch (err) {
+        console.error('Failed to notify previous owner:', err);
+      }
+
+      if (previousOwner.email) {
+        try {
+          await sendOwnerDeassignedEmail(previousOwner.email, {
+            propertyName: listing.name,
+            propertyId: listing._id,
+            reason: reason.trim(),
+            adminName: req.user.username || req.user.email || 'Admin',
+            ownerName: previousOwner.username || previousOwner.name || previousOwner.email
+          });
+        } catch (emailErr) {
+          console.error('Failed to send email to previous owner:', emailErr);
+        }
+      }
+    }
+
+    // 🔔 Notify New Owner
+    try {
+      const newNotif = new Notification({
+        userId: newOwner._id,
+        type: 'property_assigned',
+        title: 'Property Ownership Transferred to You',
+        message: `You are now the official owner of property "${listing.name}"`,
+        listingId: listing._id,
+        adminId: req.user.id,
+      });
+      await newNotif.save();
+    } catch (err) {
+      console.error('Failed to notify new owner:', err);
+    }
+
+    if (newOwner.email) {
+      try {
+        await sendOwnerAssignedEmail(newOwner.email, {
+          propertyName: listing.name,
+          propertyId: listing._id,
+          adminName: req.user.username || req.user.email || 'Admin',
+          ownerName: newOwner.username || newOwner.name || newOwner.email
+        });
+      } catch (emailErr) {
+        console.error('Failed to send email to new owner:', emailErr);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Property ownership successfully transferred to ${newOwner.username || newOwner.email}`,
+      listing
+    });
+
+  } catch (error) {
+    console.error('Error transferring property ownership:', error);
+    return next(errorHandler(500, 'Failed to transfer property ownership'));
+  }
+};
+
 export const reassignPropertyOwner = async (req, res, next) => {
   try {
     const { listingId } = req.params;
-    const { newOwnerId } = req.body;
+    const { newOwnerId, reason, password } = req.body;
 
     // Check if user is admin or rootadmin
     if (req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
-      return next(errorHandler(401, 'Only admins can reassign property ownership'));
+      return next(errorHandler(401, 'Only admins can assign property ownership'));
+    }
+
+    if (!password) {
+      return next(errorHandler(400, 'Admin password is required to confirm assignment'));
+    }
+
+    // Verify Admin Password
+    const adminUser = await User.findById(req.user.id);
+    if (!adminUser || !bcryptjs.compareSync(password, adminUser.password)) {
+      return next(errorHandler(400, 'Invalid admin password. Action unauthorized.'));
     }
 
     // Validate listing exists
@@ -1129,29 +1291,18 @@ export const reassignPropertyOwner = async (req, res, next) => {
       return next(errorHandler(404, 'Listing not found'));
     }
 
-    // Check if current owner exists and is active
-    if (listing.userRef) {
-      try {
-        const currentOwner = await User.findById(listing.userRef);
-        if (currentOwner && currentOwner.status !== 'suspended') {
-          return next(errorHandler(400, 'Owner already exists and is active. Cannot reassign property ownership.'));
-        }
-      } catch (error) {
-        // If we can't fetch the current owner, it means the account is deleted/inactive
-        // This is the case where we want to allow reassignment
-        console.log('Current owner account appears to be deleted/inactive, allowing reassignment');
-      }
-    }
-
     // Validate new owner exists
     const newOwner = await User.findById(newOwnerId);
     if (!newOwner) {
       return next(errorHandler(404, 'New owner not found'));
     }
 
-    // Check if new owner is not suspended
-    if (newOwner.status === 'suspended') {
-      return next(errorHandler(400, 'Cannot assign property to a suspended user'));
+    if (newOwner.status === 'suspended' || newOwner.status === 'banned') {
+      return next(errorHandler(400, 'Cannot assign property to a suspended or banned user'));
+    }
+
+    if (newOwner.isVerified === false) {
+      return next(errorHandler(400, 'Cannot assign property to an unverified user account'));
     }
 
     // Update the listing with new owner
@@ -1160,6 +1311,25 @@ export const reassignPropertyOwner = async (req, res, next) => {
       { userRef: newOwnerId },
       { new: true }
     );
+
+    // 📝 Save Permanent Ownership Audit Log
+    try {
+      const auditLog = new OwnershipAuditLog({
+        propertyId: listing._id,
+        propertyName: listing.name,
+        adminId: req.user.id,
+        adminName: req.user.username || req.user.email || 'Admin',
+        action: 'ASSIGN',
+        newOwnerId: newOwner._id,
+        newOwnerEmail: newOwner.email,
+        reason: reason ? reason.trim() : 'Assigned owner by admin',
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown'
+      });
+      await auditLog.save();
+    } catch (auditError) {
+      console.error('Failed to save ownership audit log:', auditError);
+    }
 
     // Create notification for the new owner
     try {
@@ -1171,20 +1341,8 @@ export const reassignPropertyOwner = async (req, res, next) => {
         listingId: listing._id,
         adminId: req.user.id,
       });
-
       await notification.save();
-
-      const { sendPushNotification } = await import('../utils/pushNotification.js');
-      sendPushNotification(newOwnerId.toString(), '🔑 Property Assigned', `You have been assigned as the owner of property "${listing.name}"`, {
-        imageUrl: listing.imageUrls ? listing.imageUrls[0] : null,
-        category: 'property_assigned',
-        data: { listingId: listing._id },
-        actions: [
-          { title: '🏠 View Property', identifier: 'view_listing' }
-        ]
-      });
     } catch (notificationError) {
-      // Log notification error but don't fail the ownership update
       console.error('Failed to create notification:', notificationError);
     }
 
@@ -1203,7 +1361,7 @@ export const reassignPropertyOwner = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: `Property ownership successfully reassigned to ${newOwner.username}`,
+      message: `Property ownership successfully assigned to ${newOwner.username || newOwner.email}`,
       listing: updatedListing
     });
 
@@ -1216,7 +1374,7 @@ export const reassignPropertyOwner = async (req, res, next) => {
 export const deassignPropertyOwner = async (req, res, next) => {
   try {
     const { listingId } = req.params;
-    const { reason } = req.body;
+    const { reason, password } = req.body;
 
     if (req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
       return next(errorHandler(401, 'Only admins can deassign property ownership'));
@@ -1224,6 +1382,16 @@ export const deassignPropertyOwner = async (req, res, next) => {
 
     if (!reason || !reason.trim()) {
       return next(errorHandler(400, 'Reason is required to deassign owner'));
+    }
+
+    if (!password) {
+      return next(errorHandler(400, 'Admin password is required to confirm owner removal'));
+    }
+
+    // Verify Admin Password
+    const adminUser = await User.findById(req.user.id);
+    if (!adminUser || !bcryptjs.compareSync(password, adminUser.password)) {
+      return next(errorHandler(400, 'Invalid admin password. Owner removal unauthorized.'));
     }
 
     const listing = await Listing.findById(listingId);
@@ -1246,6 +1414,25 @@ export const deassignPropertyOwner = async (req, res, next) => {
     listing.userRef = null;
     await listing.save();
 
+    // 📝 Save Permanent Ownership Audit Log
+    try {
+      const auditLog = new OwnershipAuditLog({
+        propertyId: listing._id,
+        propertyName: listing.name,
+        adminId: req.user.id,
+        adminName: req.user.username || req.user.email || 'Admin',
+        action: 'REMOVE',
+        previousOwnerId: previousOwner?._id || null,
+        previousOwnerEmail: previousOwner?.email || null,
+        reason: reason.trim(),
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'Unknown',
+        userAgent: req.headers['user-agent'] || 'Unknown'
+      });
+      await auditLog.save();
+    } catch (auditError) {
+      console.error('Failed to save ownership audit log:', auditError);
+    }
+
     if (previousOwner) {
       try {
         const notification = new Notification({
@@ -1255,19 +1442,8 @@ export const deassignPropertyOwner = async (req, res, next) => {
           message: `You have been removed as the owner of "${listing.name}". Reason: ${reason}`,
           listingId: listing._id,
           adminId: req.user.id,
-          meta: {
-            reason,
-            listingId: listing._id,
-            listingName: listing.name
-          }
         });
         await notification.save();
-
-        const { sendPushNotification } = await import('../utils/pushNotification.js');
-        sendPushNotification(previousOwner._id.toString(), '⚠️ Ownership Removed', `You have been removed as the owner of "${listing.name}".`, {
-          category: 'property_deassigned',
-          data: { listingId: listing._id }
-        });
       } catch (notificationError) {
         console.error('Failed to create deassign notification:', notificationError);
       }
@@ -1277,7 +1453,7 @@ export const deassignPropertyOwner = async (req, res, next) => {
           await sendOwnerDeassignedEmail(previousOwner.email, {
             propertyName: listing.name,
             propertyId: listing._id,
-            reason,
+            reason: reason.trim(),
             adminName: req.user.username || req.user.email || 'Admin',
             ownerName: previousOwner.username || previousOwner.name || previousOwner.email
           });
@@ -1289,7 +1465,7 @@ export const deassignPropertyOwner = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Property owner deassigned successfully.',
+      message: 'Property owner removed successfully.',
       listingId: listing._id
     });
   } catch (error) {

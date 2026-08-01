@@ -527,7 +527,7 @@ export default function PropertyDeleteModal({
                                     disabled={sendingOtp || resendCooldown > 0}
                                     className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
                                 >
-                                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : sendingOtp ? 'Sending...' : 'Resend Code via Email'}
+                                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : sendingOtp ? 'Sending...' : 'Resend Code'}
                                 </button>
                             </div>
 

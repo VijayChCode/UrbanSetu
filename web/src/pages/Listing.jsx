@@ -41,6 +41,7 @@ import AdvancedImage from "../components/AdvancedImage";
 import UrbanSetuSpinner from "../components/UrbanSetuSpinner";
 import VerifiedBadge from '../components/VerifiedBadge';
 import PropertyDeleteModal from "../components/PropertyDeleteModal";
+import PropertyOwnershipModal from "../components/PropertyOwnershipModal";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const UNAVAILABLE_STATUSES = ['reserved', 'under_contract', 'rented', 'sold', 'suspended'];
@@ -224,6 +225,8 @@ export default function Listing() {
   const [visibleRecsCount, setVisibleRecsCount] = useState(4);
   const [vrTextExpanded, setVrTextExpanded] = useState(true);
   const [isVrHovered, setIsVrHovered] = useState(false);
+  const [showOwnershipModal, setShowOwnershipModal] = useState(false);
+  const [ownershipMode, setOwnershipMode] = useState('transfer');
 
   const listingAvailabilityStatus = listing?.availabilityStatus;
   const isListingUnavailable = listing && UNAVAILABLE_STATUSES.includes(listingAvailabilityStatus);
@@ -3693,13 +3696,26 @@ export default function Listing() {
                             ℹ️ Owner account is active and accessible.
                           </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2.5">
                           <button
                             type="button"
-                            onClick={openDeassignOwnerModal}
-                            className="px-4 py-2 rounded-lg bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition-colors flex items-center gap-2"
+                            onClick={() => {
+                              setOwnershipMode('transfer');
+                              setShowOwnershipModal(true);
+                            }}
+                            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold transition-all shadow-md shadow-purple-500/20 text-xs sm:text-sm flex items-center gap-2"
                           >
-                            <FaBan /> Deassign Owner
+                            <FaExchangeAlt /> Transfer Ownership
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOwnershipMode('remove');
+                              setShowOwnershipModal(true);
+                            }}
+                            className="px-4 py-2.5 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-bold hover:bg-red-200 transition-colors text-xs sm:text-sm flex items-center gap-2"
+                          >
+                            <FaUserMinus /> Remove Owner
                           </button>
                         </div>
                       </div>
@@ -3707,16 +3723,16 @@ export default function Listing() {
                   </div>
                 ) : ownerError ? (
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-red-500">{ownerError}</p>
+                    <p className="text-red-500 font-medium text-xs sm:text-sm">{ownerError}</p>
                     {isAdmin && (
                       <button
                         onClick={() => {
-                          fetchAvailableUsers();
-                          setShowAssignOwnerModal(true);
+                          setOwnershipMode('assign');
+                          setShowOwnershipModal(true);
                         }}
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg font-semibold flex items-center gap-2"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-bold shadow-md shadow-blue-500/20 text-xs sm:text-sm flex items-center gap-2"
                       >
-                        <FaEdit /> Assign New Owner
+                        <FaUserCheck /> Assign New Owner
                       </button>
                     )}
                   </div>
@@ -5682,6 +5698,18 @@ export default function Listing() {
           } else {
             navigate('/user/my-listings');
           }
+        }}
+      />
+
+      <PropertyOwnershipModal
+        isOpen={showOwnershipModal}
+        onClose={() => setShowOwnershipModal(false)}
+        mode={ownershipMode}
+        listing={listing}
+        currentOwner={ownerDetails}
+        onSuccess={() => {
+          // Refresh listing & owner details
+          window.location.reload();
         }}
       />
     </>
