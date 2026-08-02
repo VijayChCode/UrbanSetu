@@ -509,7 +509,7 @@ export default function Header() {
             </Link>
 
             {/* Desktop Navigation - Right Side */}
-            <nav className="hidden lg:flex items-center space-x-2">
+            <nav className="hidden lg:flex items-center gap-1">
               <UserNavLinks signout={signout} />
             </nav>
 
@@ -855,7 +855,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
           : 'text-gray-200 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-white/10 hover:text-white border-transparent'
       } ${animationClass}`;
     }
-    return `transition-all duration-300 font-semibold text-xs sm:text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-xl cursor-pointer select-none border ${
+    return `transition-all duration-300 font-semibold text-xs sm:text-sm flex items-center gap-1 px-2.5 py-1.5 rounded-xl cursor-pointer select-none border ${
       active
         ? 'bg-gradient-to-b from-white/40 via-white/25 to-white/15 text-yellow-300 font-extrabold backdrop-blur-2xl border-white/60 shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.8),0_6px_20px_rgba(0,0,0,0.35),0_0_14px_rgba(253,224,71,0.35)] ring-1 ring-yellow-300/50 drop-shadow-md'
         : 'text-white/85 hover:text-white hover:bg-white/15 border-transparent'
@@ -863,7 +863,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
   };
 
   return (
-    <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center gap-1.5'}`}>
+    <ul className={`${mobile ? 'flex flex-col gap-1' : 'flex items-center gap-1'}`}>
       {/* Desktop Search */}
       {!mobile && (
         <li className="flex items-center">
