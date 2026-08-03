@@ -192,12 +192,26 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
   }, [showSettings, showSideBrightnessSlider]);
 
+  // Timer toast state
+  const [showTimerToast, setShowTimerToast] = useState(false);
+  const toastTimeoutRef = useRef(null);
+
   // Cycle timer handler: 0 (Off) -> 3s -> 5s -> 10s -> 0 (Off)
   const handleCycleTimer = () => {
     const timerModes = [0, 3, 5, 10];
     const currentIndex = timerModes.indexOf(timerDuration);
     const nextIndex = (currentIndex + 1) % timerModes.length;
-    setTimerDuration(timerModes[nextIndex]);
+    const newDuration = timerModes[nextIndex];
+    setTimerDuration(newDuration);
+
+    // Temporarily show timer toast beside icon when timer is toggled
+    setShowTimerToast(true);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setShowTimerToast(false);
+    }, 1500);
   };
 
   // Switch camera handler (for mobile with multiple cameras)
