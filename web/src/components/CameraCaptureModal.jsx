@@ -212,14 +212,15 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
   return (
     <div className="fixed inset-0 bg-black/95 sm:bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-0 sm:p-4 md:p-6 animate-fadeIn">
-      <div className="bg-gray-950 border-0 sm:border border-gray-800/80 rounded-none sm:rounded-3xl shadow-2xl w-full h-full sm:h-auto sm:max-h-[92vh] max-w-3xl overflow-hidden flex flex-col relative">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-800/80 bg-gray-950/90 z-10 flex-shrink-0">
+      <div className="bg-black border-0 sm:border border-gray-800/80 rounded-none sm:rounded-3xl shadow-2xl w-full h-full sm:h-[85vh] max-w-4xl overflow-hidden flex flex-col relative">
+        
+        {/* Floating Header */}
+        <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-4 sm:px-6 py-4 sm:py-5 z-30 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
-              <FaCamera size={14} />
+            <div className="w-9 h-9 rounded-full bg-purple-500/20 backdrop-blur-md text-purple-400 flex items-center justify-center border border-purple-500/30 shadow-lg">
+              <FaCamera size={15} />
             </div>
-            <span className="text-sm sm:text-base font-bold text-white tracking-wide">
+            <span className="text-sm sm:text-base font-bold text-white tracking-wide drop-shadow-md">
               {capturedBlob ? 'Review Photo' : 'Take Photo'}
             </span>
           </div>
@@ -228,15 +229,15 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               stopCameraStream();
               onClose();
             }}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white flex items-center justify-center transition-colors active:scale-95 border border-gray-700/50"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 border border-white/20 backdrop-blur-md shadow-lg"
             title="Close Camera"
           >
-            <FaTimes size={15} />
+            <FaTimes size={16} />
           </button>
         </div>
 
-        {/* Viewport Box - Expanded height for mobile / small screen maximization */}
-        <div className="relative flex-1 min-h-[55vh] sm:min-h-[50vh] sm:aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+        {/* Fullscreen Video / Image Viewport Container */}
+        <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
           {/* Off-screen Canvas */}
           <canvas ref={canvasRef} className="hidden" />
 
@@ -245,13 +246,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
             <img
               src={capturedPreviewUrl}
               alt="Captured preview"
-              className="w-full h-full object-contain bg-black"
+              className="w-full h-full object-cover bg-black"
             />
           ) : cameraError ? (
             /* Error State with Top-Left Browser Permission Arrow */
-            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300 overflow-hidden">
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-300 overflow-hidden z-20">
               {/* Top-Left Directional Pointer to Browser Address Bar Site Info Icon */}
-              <div className="absolute top-2 left-4 sm:left-6 z-30 flex flex-col items-start pointer-events-none animate-pulse">
+              <div className="absolute top-16 left-4 sm:left-6 z-30 flex flex-col items-start pointer-events-none animate-pulse">
                 <svg className="w-20 h-20 sm:w-24 sm:h-24 filter drop-shadow-[0_0_16px_rgba(168,85,247,0.85)]" viewBox="0 0 120 120" fill="none">
                   <path
                     d="M 95 95 C 20 110 -10 40 40 35 C 75 30 75 75 45 75 C 20 75 15 35 25 15"
@@ -315,21 +316,21 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           )}
         </div>
 
-        {/* Modal Controls Footer */}
-        <div className="p-3 sm:p-5 bg-gray-950 border-t border-gray-800/80 flex items-center justify-between flex-shrink-0">
+        {/* Floating Bottom Controls Footer */}
+        <div className="absolute bottom-0 inset-x-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-between z-30">
           {capturedBlob ? (
             /* Confirmation Actions: Retake or OK */
-            <div className="flex items-center justify-between w-full gap-3 sm:gap-4">
+            <div className="flex items-center justify-between w-full gap-3 sm:gap-4 max-w-md mx-auto">
               <button
                 onClick={handleRetake}
-                className="flex-1 py-3 px-4 sm:px-5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2 border border-gray-700"
+                className="flex-1 py-3 px-4 sm:px-5 rounded-full bg-black/60 hover:bg-black/80 text-gray-200 text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/20 backdrop-blur-md shadow-lg"
               >
                 <FaUndo size={13} className="text-gray-400" />
                 <span>Retake</span>
               </button>
               <button
                 onClick={handleConfirmPhoto}
-                className="flex-1 py-3 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-95 flex items-center justify-center gap-2 border border-white/20"
+                className="flex-1 py-3 px-4 sm:px-5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 active:scale-95 flex items-center justify-center gap-2 border border-white/30 backdrop-blur-md"
               >
                 <FaCheck size={13} />
                 <span>OK (Use Photo)</span>
@@ -337,14 +338,14 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
             </div>
           ) : (
             /* Live Camera Capture Controls */
-            <div className="flex items-center justify-between w-full px-2 sm:px-6">
+            <div className="flex items-center justify-between w-full max-w-md mx-auto px-2">
               {/* Secondary option: Cancel */}
               <button
                 onClick={() => {
                   stopCameraStream();
                   onClose();
                 }}
-                className="px-3 sm:px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-xs sm:text-sm font-bold text-white/80 hover:text-white transition-colors drop-shadow-md bg-black/40 hover:bg-black/60 rounded-full border border-white/10 backdrop-blur-md"
               >
                 Cancel
               </button>
@@ -353,15 +354,15 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               <button
                 onClick={handleCapturePhoto}
                 disabled={isLoading || !!cameraError}
-                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-4 border-white p-1 flex items-center justify-center transition-all duration-300 ${
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white p-1 flex items-center justify-center transition-all duration-300 ${
                   isLoading || cameraError
                     ? 'opacity-40 cursor-not-allowed'
-                    : 'hover:scale-105 active:scale-95 shadow-xl shadow-purple-500/20'
+                    : 'hover:scale-105 active:scale-95 shadow-2xl shadow-purple-500/40'
                 }`}
                 title="Capture Photo"
               >
-                <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 flex items-center justify-center">
-                  <FaCamera size={18} className="text-white" />
+                <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 flex items-center justify-center shadow-inner">
+                  <FaCamera size={22} className="text-white drop-shadow-sm" />
                 </div>
               </button>
 
@@ -369,12 +370,12 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               <button
                 onClick={handleSwitchCamera}
                 disabled={isLoading || !!cameraError}
-                className={`p-3 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white transition-all border border-gray-700 ${
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all border border-white/20 backdrop-blur-md shadow-lg ${
                   isLoading || cameraError ? 'opacity-40 pointer-events-none' : 'active:scale-95'
                 }`}
                 title={videoDevices.length > 1 ? 'Switch Camera' : 'Flip Mirror View'}
               >
-                <FaSync size={15} />
+                <FaSync size={16} />
               </button>
             </div>
           )}
