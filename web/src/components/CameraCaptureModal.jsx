@@ -192,6 +192,14 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
   }, [showSettings, showSideBrightnessSlider]);
 
+  // Cycle timer handler: 0 (Off) -> 3s -> 5s -> 10s -> 0 (Off)
+  const handleCycleTimer = () => {
+    const timerModes = [0, 3, 5, 10];
+    const currentIndex = timerModes.indexOf(timerDuration);
+    const nextIndex = (currentIndex + 1) % timerModes.length;
+    setTimerDuration(timerModes[nextIndex]);
+  };
+
   // Switch camera handler (for mobile with multiple cameras)
   const handleSwitchCamera = () => {
     if (videoDevices.length > 1) {
@@ -457,36 +465,6 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                   </div>
 
                   <div className="p-3 space-y-3.5">
-                    {/* Photo Timer Option */}
-                    <div>
-                      <div className="flex items-center justify-between px-1 mb-2">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <FaStopwatch size={11} className="text-purple-400" />
-                          Photo Timer
-                        </span>
-                        {timerDuration > 0 && (
-                          <span className="text-[10px] font-bold text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded">
-                            {timerDuration}s Active
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {timerOptions.map((opt) => (
-                          <button
-                            key={opt.value}
-                            onClick={() => setTimerDuration(opt.value)}
-                            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 ${
-                              timerDuration === opt.value
-                                ? 'bg-purple-600/40 text-purple-300 border border-purple-500/60 shadow-md shadow-purple-900/40 scale-105'
-                                : 'bg-gray-800/60 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Brightness Slider */}
                     <div>
                       <div className="flex items-center justify-between px-1 mb-2">
@@ -618,47 +596,74 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           {/* Off-screen Canvas */}
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Quick Side Brightness Control Bar (Inspired by native camera app) */}
+          {/* Quick Side Controls (Timer & Brightness) */}
           {!capturedBlob && !cameraError && (
-            <div ref={sideSliderRef} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2">
-              <button
-                onClick={() => setShowSideBrightnessSlider(!showSideBrightnessSlider)}
-                className={`w-10 h-10 rounded-full ${showSideBrightnessSlider || brightness !== 100 ? 'bg-amber-500/80 text-white shadow-lg shadow-amber-500/30' : 'bg-black/50 hover:bg-black/80 text-amber-300'} border border-white/20 backdrop-blur-md flex flex-col items-center justify-center transition-all active:scale-95`}
-                title="Quick Brightness Slider"
-              >
-                <FaSun size={15} />
-                {brightness !== 100 && (
-                  <span className="text-[8px] font-extrabold font-mono leading-none mt-0.5">
-                    {brightness}
-                  </span>
-                )}
-              </button>
-
-              {/* Vertical Slider Popup */}
-              {showSideBrightnessSlider && (
-                <div className="bg-gray-950/95 backdrop-blur-xl border border-amber-500/40 p-3 rounded-2xl shadow-2xl flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
-                  <span className="text-[10px] font-extrabold text-amber-300 font-mono">
-                    {brightness}%
-                  </span>
-                  <div className="h-32 flex items-center justify-center py-1">
-                    <input
-                      type="range"
-                      min="50"
-                      max="150"
-                      step="5"
-                      value={brightness}
-                      onChange={(e) => setBrightness(Number(e.target.value))}
-                      className="w-28 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400 -rotate-90 origin-center"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setBrightness(100)}
-                    className="text-[9px] font-bold text-gray-400 hover:text-amber-300 uppercase tracking-wider"
-                  >
-                    Reset
-                  </button>
+            <div ref={sideSliderRef} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-start gap-3">
+              {/* Photo Timer Button + Text beside it */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCycleTimer}
+                  className={`w-10 h-10 rounded-full ${
+                    timerDuration > 0
+                      ? 'bg-purple-600/90 text-white shadow-lg shadow-purple-600/40 border-purple-400'
+                      : 'bg-black/50 hover:bg-black/80 text-purple-300'
+                  } border border-white/20 backdrop-blur-md flex items-center justify-center transition-all active:scale-95`}
+                  title={`Photo Timer: ${timerDuration > 0 ? `${timerDuration}s` : 'Off'} (Click to switch)`}
+                >
+                  <FaStopwatch size={16} className={timerDuration > 0 ? 'animate-pulse' : ''} />
+                </button>
+                
+                {/* Timer text badge beside icon */}
+                <div className={`px-2.5 py-1 rounded-full text-xs font-extrabold font-mono border backdrop-blur-md transition-all duration-300 ${
+                  timerDuration > 0
+                    ? 'bg-purple-950/90 text-purple-200 border-purple-500/50 shadow-md shadow-purple-950/60 animate-fadeIn'
+                    : 'bg-black/50 text-gray-400 border-white/10'
+                }`}>
+                  {timerDuration > 0 ? `${timerDuration}s` : 'Off'}
                 </div>
-              )}
+              </div>
+
+              {/* Brightness Quick Button & Slider */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSideBrightnessSlider(!showSideBrightnessSlider)}
+                  className={`w-10 h-10 rounded-full ${showSideBrightnessSlider || brightness !== 100 ? 'bg-amber-500/80 text-white shadow-lg shadow-amber-500/30' : 'bg-black/50 hover:bg-black/80 text-amber-300'} border border-white/20 backdrop-blur-md flex flex-col items-center justify-center transition-all active:scale-95`}
+                  title="Quick Brightness Slider"
+                >
+                  <FaSun size={15} />
+                  {brightness !== 100 && (
+                    <span className="text-[8px] font-extrabold font-mono leading-none mt-0.5">
+                      {brightness}
+                    </span>
+                  )}
+                </button>
+
+                {/* Vertical Slider Popup */}
+                {showSideBrightnessSlider && (
+                  <div className="absolute left-12 top-0 bg-gray-950/95 backdrop-blur-xl border border-amber-500/40 p-3 rounded-2xl shadow-2xl flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+                    <span className="text-[10px] font-extrabold text-amber-300 font-mono">
+                      {brightness}%
+                    </span>
+                    <div className="h-32 flex items-center justify-center py-1">
+                      <input
+                        type="range"
+                        min="50"
+                        max="150"
+                        step="5"
+                        value={brightness}
+                        onChange={(e) => setBrightness(Number(e.target.value))}
+                        className="w-28 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400 -rotate-90 origin-center"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setBrightness(100)}
+                      className="text-[9px] font-bold text-gray-400 hover:text-amber-300 uppercase tracking-wider"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
