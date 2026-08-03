@@ -566,28 +566,33 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           {/* Quick Side Controls (Timer & Brightness) */}
           {!capturedBlob && !cameraError && (
             <div ref={sideSliderRef} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-start gap-3">
-              {/* Photo Timer Button + Text beside it */}
+              {/* Photo Timer Button + Text beside it (only shown when active) */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCycleTimer}
                   className={`w-10 h-10 rounded-full ${
                     timerDuration > 0
                       ? 'bg-purple-600/90 text-white shadow-lg shadow-purple-600/40 border-purple-400'
-                      : 'bg-black/50 hover:bg-black/80 text-purple-300'
+                      : 'bg-black/50 hover:bg-black/80 text-gray-300'
                   } border border-white/20 backdrop-blur-md flex items-center justify-center transition-all active:scale-95`}
-                  title={`Photo Timer: ${timerDuration > 0 ? `${timerDuration}s` : 'Off'} (Click to switch)`}
+                  title={`Photo Timer: ${timerDuration > 0 ? `${timerDuration}s` : 'Off'} (Click to cycle)`}
                 >
-                  <FaStopwatch size={16} className={timerDuration > 0 ? 'animate-pulse' : ''} />
+                  <div className="relative flex items-center justify-center">
+                    <FaStopwatch size={15} className={timerDuration > 0 ? 'animate-pulse text-white' : 'text-gray-300'} />
+                    {timerDuration === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-5 h-[2px] bg-red-400 rotate-45 rounded-full shadow-sm" />
+                      </div>
+                    )}
+                  </div>
                 </button>
                 
-                {/* Timer text badge beside icon */}
-                <div className={`px-2.5 py-1 rounded-full text-xs font-extrabold font-mono border backdrop-blur-md transition-all duration-300 ${
-                  timerDuration > 0
-                    ? 'bg-purple-950/90 text-purple-200 border-purple-500/50 shadow-md shadow-purple-950/60 animate-fadeIn'
-                    : 'bg-black/50 text-gray-400 border-white/10'
-                }`}>
-                  {timerDuration > 0 ? `${timerDuration}s` : 'Off'}
-                </div>
+                {/* Timer text badge beside icon — ONLY shown when timer is active (>0s) */}
+                {timerDuration > 0 && (
+                  <div className="px-2.5 py-1 rounded-full text-xs font-extrabold font-mono border backdrop-blur-md bg-purple-950/90 text-purple-200 border-purple-500/50 shadow-md shadow-purple-950/60 animate-in fade-in zoom-in-95 duration-200">
+                    {timerDuration}s
+                  </div>
+                )}
               </div>
 
               {/* Brightness Quick Button & Slider */}
