@@ -572,7 +572,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           {/* Quick Side Controls (Timer & Brightness) */}
           {!capturedBlob && !cameraError && (
             <div ref={sideSliderRef} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-start gap-3">
-              {/* Photo Timer Button + Text beside it (only shown when active) */}
+              {/* Photo Timer Button + Temporary Toast beside it */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCycleTimer}
@@ -580,7 +580,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                     timerDuration > 0
                       ? 'bg-purple-600/90 text-white shadow-lg shadow-purple-600/40 border-purple-400'
                       : 'bg-black/50 hover:bg-black/80 text-gray-300'
-                  } border border-white/20 backdrop-blur-md flex items-center justify-center transition-all active:scale-95`}
+                  } border border-white/20 backdrop-blur-md flex items-center justify-center transition-all active:scale-95 relative`}
                   title={`Photo Timer: ${timerDuration > 0 ? `${timerDuration}s` : 'Off'} (Click to cycle)`}
                 >
                   <div className="relative flex items-center justify-center">
@@ -593,10 +593,10 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                   </div>
                 </button>
                 
-                {/* Timer text badge beside icon — ONLY shown when timer is active (>0s) */}
-                {timerDuration > 0 && (
-                  <div className="px-2.5 py-1 rounded-full text-xs font-extrabold font-mono border backdrop-blur-md bg-purple-950/90 text-purple-200 border-purple-500/50 shadow-md shadow-purple-950/60 animate-in fade-in zoom-in-95 duration-200">
-                    {timerDuration}s
+                {/* Timer text toast beside icon — ONLY shown temporarily when changing timer */}
+                {showTimerToast && (
+                  <div className="px-2.5 py-1 rounded-full text-xs font-extrabold font-mono border backdrop-blur-md bg-purple-950/95 text-purple-200 border-purple-500/50 shadow-md shadow-purple-950/60 animate-in fade-in zoom-in-95 duration-200">
+                    {timerDuration > 0 ? `${timerDuration}s` : 'Off'}
                   </div>
                 )}
               </div>
