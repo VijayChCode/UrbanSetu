@@ -413,20 +413,12 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
             </span>
 
             {/* Quick indicators in header */}
-            {!capturedBlob && (
+            {!capturedBlob && brightness !== 100 && (
               <div className="flex items-center gap-1.5 ml-2">
-                {timerDuration > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-purple-500/30 border border-purple-400/40 text-purple-300 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md animate-fadeIn">
-                    <FaStopwatch size={10} />
-                    {timerDuration}s
-                  </span>
-                )}
-                {brightness !== 100 && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/30 border border-amber-400/40 text-amber-300 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md animate-fadeIn">
-                    <FaSun size={10} />
-                    {brightness}%
-                  </span>
-                )}
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/30 border border-amber-400/40 text-amber-300 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md animate-fadeIn">
+                  <FaSun size={10} />
+                  {brightness}%
+                </span>
               </div>
             )}
           </div>
