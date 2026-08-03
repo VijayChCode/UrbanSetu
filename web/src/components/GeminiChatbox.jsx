@@ -6915,6 +6915,31 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showCameraCaptureModal, setShowCameraCaptureModal] = useState(false);
 
     useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!isOpen) return;
+
+            const isCtrl = e.ctrlKey || e.metaKey;
+
+            if (isCtrl && e.shiftKey && e.key.toLowerCase() === 'c') {
+                e.preventDefault();
+                if (isBlockedByPolicy) {
+                    toast.warning('Camera is disabled during your policy cooldown.');
+                    return;
+                }
+                if (!currentUser) {
+                    toast.info('Please login to use camera');
+                    return;
+                }
+                setShowCameraCaptureModal(true);
+                setShowInputOptions(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, isBlockedByPolicy, currentUser]);
+
+    useEffect(() => {
         // Cleanup on unmount
         return () => {
             if (recognitionRef.current) {
@@ -11372,6 +11397,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                 </div>
                                                                 <span className="text-sm font-medium">Camera</span>
                                                             </div>
+                                                            <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
+                                                                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
+                                                            }`}>Ctrl+Shift+C</span>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -14953,6 +14981,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Voice Input</span>
                                                     <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + A</kbd>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Camera (Take Photo)</span>
+                                                    <kbd className="px-2.5 py-1 rounded border bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-mono font-semibold">Ctrl + Shift + C</kbd>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm">
                                                     <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Image Link</span>
