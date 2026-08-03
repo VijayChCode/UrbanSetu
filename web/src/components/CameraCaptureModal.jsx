@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaCamera, FaTimes, FaSync, FaCheck, FaUndo, FaExclamationTriangle, FaCog, FaExpand, FaCompress, FaExchangeAlt, FaVideo } from 'react-icons/fa';
+import { FaCamera, FaTimes, FaSync, FaCheck, FaUndo, FaExclamationTriangle, FaCog, FaExpand, FaCompress, FaExchangeAlt, FaVideo, FaSun, FaStopwatch, FaSlidersH } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
@@ -20,11 +20,21 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('free'); // 'free', '16:9', '4:3', '1:1'
 
+  // Brightness state (50% to 150%, default 100%)
+  const [brightness, setBrightness] = useState(100);
+  const [showSideBrightnessSlider, setShowSideBrightnessSlider] = useState(false);
+
+  // Timer state (0 = off, 3 = 3s, 5 = 5s, 10 = 10s)
+  const [timerDuration, setTimerDuration] = useState(0);
+  const [countdown, setCountdown] = useState(null);
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const modalContainerRef = useRef(null);
   const settingsPanelRef = useRef(null);
+  const sideSliderRef = useRef(null);
+  const timerIntervalRef = useRef(null);
 
   // Detect mobile device
   const isMobile = typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -39,6 +49,15 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+  };
+
+  // Clear running countdown
+  const cancelCountdown = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    setCountdown(null);
   };
 
   // Enumerate video devices
@@ -112,6 +131,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       startCameraStream();
     } else if (!isOpen) {
       stopCameraStream();
+      cancelCountdown();
       setCapturedBlob(null);
       if (capturedPreviewUrl) {
         URL.revokeObjectURL(capturedPreviewUrl);
@@ -122,6 +142,9 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       setLoadingMessage('Initializing Camera...');
       setIsMirrored(true);
       setShowSettings(false);
+      setShowSideBrightnessSlider(false);
+      setBrightness(100);
+      setTimerDuration(0);
       setAspectRatio('free');
       // Exit fullscreen if active
       if (document.fullscreenElement) {
@@ -132,6 +155,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
     return () => {
       stopCameraStream();
+      cancelCountdown();
     };
   }, [isOpen, facingMode, currentDeviceId]);
 
@@ -152,18 +176,21 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Close settings when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showSettings && settingsPanelRef.current && !settingsPanelRef.current.contains(e.target)) {
         setShowSettings(false);
       }
+      if (showSideBrightnessSlider && sideSliderRef.current && !sideSliderRef.current.contains(e.target)) {
+        setShowSideBrightnessSlider(false);
+      }
     };
-    if (showSettings) {
+    if (showSettings || showSideBrightnessSlider) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showSettings]);
+  }, [showSettings, showSideBrightnessSlider]);
 
   // Switch camera handler (for mobile with multiple cameras)
   const handleSwitchCamera = () => {
@@ -218,8 +245,8 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
   const [isFlashing, setIsFlashing] = useState(false);
 
-  // Capture snapshot photo with shutter flash effect
-  const handleCapturePhoto = () => {
+  // Execute snapshot capture onto canvas with mirror & brightness filter
+  const executeCapturePhoto = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
@@ -236,10 +263,18 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
     const ctx = canvas.getContext('2d');
     
+    // Reset filters
+    ctx.filter = 'none';
+
     // Apply horizontal mirror transformation if isMirrored is true
     if (isMirrored) {
       ctx.translate(width, 0);
       ctx.scale(-1, 1);
+    }
+
+    // Apply brightness filter onto canvas snapshot
+    if (brightness !== 100) {
+      ctx.filter = `brightness(${brightness}%)`;
     }
 
     ctx.drawImage(video, 0, 0, width, height);
@@ -251,8 +286,37 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
         setCapturedPreviewUrl(previewUrl);
         stopCameraStream();
         setShowSettings(false);
+        setShowSideBrightnessSlider(false);
       }
     }, 'image/jpeg', 0.95);
+  };
+
+  // Main shutter click handler (checks timer)
+  const handleCapturePhoto = () => {
+    // If a countdown is running, cancel it
+    if (countdown !== null) {
+      cancelCountdown();
+      return;
+    }
+
+    // If timer is configured, start countdown
+    if (timerDuration > 0) {
+      setCountdown(timerDuration);
+      let current = timerDuration;
+      timerIntervalRef.current = setInterval(() => {
+        current -= 1;
+        if (current > 0) {
+          setCountdown(current);
+        } else {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+          setCountdown(null);
+          executeCapturePhoto();
+        }
+      }, 1000);
+    } else {
+      executeCapturePhoto();
+    }
   };
 
   // Retake photo
@@ -298,6 +362,14 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     { value: '1:1', label: '1:1', icon: '□' },
   ];
 
+  // Timer options
+  const timerOptions = [
+    { value: 0, label: 'Off' },
+    { value: 3, label: '3s' },
+    { value: 5, label: '5s' },
+    { value: 10, label: '10s' },
+  ];
+
   return (
     <div className="fixed inset-0 bg-black/95 sm:bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-0 sm:p-4 md:p-6 animate-fadeIn">
       {/* Shutter Flash Animation Overlay */}
@@ -317,6 +389,24 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
             <span className="text-sm sm:text-base font-bold text-white tracking-wide drop-shadow-md animate-fadeIn">
               {capturedBlob ? 'Review Photo' : 'Take Photo'}
             </span>
+
+            {/* Quick indicators in header */}
+            {!capturedBlob && (
+              <div className="flex items-center gap-1.5 ml-2">
+                {timerDuration > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-purple-500/30 border border-purple-400/40 text-purple-300 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md animate-fadeIn">
+                    <FaStopwatch size={10} />
+                    {timerDuration}s
+                  </span>
+                )}
+                {brightness !== 100 && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/30 border border-amber-400/40 text-amber-300 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md animate-fadeIn">
+                    <FaSun size={10} />
+                    {brightness}%
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Top-right: Settings (Take Photo) or Close (Review Photo) */}
@@ -339,7 +429,10 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
             /* Settings button in Take Photo phase */
             <div ref={settingsPanelRef} className="relative">
               <button
-                onClick={() => setShowSettings(!showSettings)}
+                onClick={() => {
+                  setShowSettings(!showSettings);
+                  setShowSideBrightnessSlider(false);
+                }}
                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${showSettings ? 'bg-purple-600/80 text-white' : 'bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white'} flex items-center justify-center transition-all active:scale-95 border border-white/20 backdrop-blur-md shadow-lg`}
                 title="Camera Settings"
               >
@@ -348,7 +441,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
               {/* Settings Panel Dropdown — animated pop-in entrance */}
               {showSettings && (
-                <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-12 sm:right-0 sm:w-72 bg-gray-950/95 backdrop-blur-xl border border-gray-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 transition-all duration-300 transform origin-top-right animate-in fade-in zoom-in-95 max-h-[70vh] overflow-y-auto">
+                <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-12 sm:right-0 sm:w-72 bg-gray-950/95 backdrop-blur-xl border border-gray-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 transition-all duration-300 transform origin-top-right animate-in fade-in zoom-in-95 max-h-[75vh] overflow-y-auto">
                   {/* Header */}
                   <div className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between bg-white/[0.02]">
                     <span className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -363,7 +456,70 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                     </button>
                   </div>
 
-                  <div className="p-3 space-y-3">
+                  <div className="p-3 space-y-3.5">
+                    {/* Photo Timer Option */}
+                    <div>
+                      <div className="flex items-center justify-between px-1 mb-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <FaStopwatch size={11} className="text-purple-400" />
+                          Photo Timer
+                        </span>
+                        {timerDuration > 0 && (
+                          <span className="text-[10px] font-bold text-purple-300 bg-purple-500/20 px-1.5 py-0.5 rounded">
+                            {timerDuration}s Active
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {timerOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setTimerDuration(opt.value)}
+                            className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 ${
+                              timerDuration === opt.value
+                                ? 'bg-purple-600/40 text-purple-300 border border-purple-500/60 shadow-md shadow-purple-900/40 scale-105'
+                                : 'bg-gray-800/60 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Brightness Slider */}
+                    <div>
+                      <div className="flex items-center justify-between px-1 mb-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <FaSun size={11} className="text-amber-400" />
+                          Brightness ({brightness}%)
+                        </span>
+                        {brightness !== 100 && (
+                          <button
+                            onClick={() => setBrightness(100)}
+                            className="text-[10px] text-amber-400 hover:underline font-semibold"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 bg-gray-800/60 p-2.5 rounded-xl border border-gray-700/50">
+                        <FaSun size={12} className="text-amber-500 flex-shrink-0" />
+                        <input
+                          type="range"
+                          min="50"
+                          max="150"
+                          step="5"
+                          value={brightness}
+                          onChange={(e) => setBrightness(Number(e.target.value))}
+                          className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                        />
+                        <span className="text-[11px] font-bold text-amber-300 w-10 text-right font-mono flex-shrink-0">
+                          {brightness}%
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Fullscreen Toggle */}
                     <button
                       onClick={toggleFullscreen}
@@ -462,6 +618,68 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           {/* Off-screen Canvas */}
           <canvas ref={canvasRef} className="hidden" />
 
+          {/* Quick Side Brightness Control Bar (Inspired by native camera app) */}
+          {!capturedBlob && !cameraError && (
+            <div ref={sideSliderRef} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2">
+              <button
+                onClick={() => setShowSideBrightnessSlider(!showSideBrightnessSlider)}
+                className={`w-10 h-10 rounded-full ${showSideBrightnessSlider || brightness !== 100 ? 'bg-amber-500/80 text-white shadow-lg shadow-amber-500/30' : 'bg-black/50 hover:bg-black/80 text-amber-300'} border border-white/20 backdrop-blur-md flex flex-col items-center justify-center transition-all active:scale-95`}
+                title="Quick Brightness Slider"
+              >
+                <FaSun size={15} />
+                {brightness !== 100 && (
+                  <span className="text-[8px] font-extrabold font-mono leading-none mt-0.5">
+                    {brightness}
+                  </span>
+                )}
+              </button>
+
+              {/* Vertical Slider Popup */}
+              {showSideBrightnessSlider && (
+                <div className="bg-gray-950/95 backdrop-blur-xl border border-amber-500/40 p-3 rounded-2xl shadow-2xl flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+                  <span className="text-[10px] font-extrabold text-amber-300 font-mono">
+                    {brightness}%
+                  </span>
+                  <div className="h-32 flex items-center justify-center py-1">
+                    <input
+                      type="range"
+                      min="50"
+                      max="150"
+                      step="5"
+                      value={brightness}
+                      onChange={(e) => setBrightness(Number(e.target.value))}
+                      className="w-28 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400 -rotate-90 origin-center"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setBrightness(100)}
+                    className="text-[9px] font-bold text-gray-400 hover:text-amber-300 uppercase tracking-wider"
+                  >
+                    Reset
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Countdown Timer Big Overlay */}
+          {countdown !== null && (
+            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-purple-500 border-4 border-white text-white font-black text-6xl sm:text-7xl flex items-center justify-center shadow-2xl shadow-purple-900/80 animate-bounce">
+                {countdown}
+              </div>
+              <span className="text-sm font-semibold text-gray-200 mt-4 tracking-wide">
+                Get ready! Taking photo in {countdown}s...
+              </span>
+              <button
+                onClick={cancelCountdown}
+                className="mt-4 px-5 py-2 rounded-full bg-black/70 hover:bg-black/90 text-xs font-bold text-white border border-white/30 backdrop-blur-md shadow-lg active:scale-95 transition-all"
+              >
+                Cancel Timer
+              </button>
+            </div>
+          )}
+
           {/* Captured Image Preview with animated zoom-in entrance */}
           {capturedPreviewUrl ? (
             <img
@@ -529,6 +747,9 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 autoPlay
                 playsInline
                 muted
+                style={{
+                  filter: `brightness(${brightness}%)`
+                }}
                 className={`transition-transform duration-300 ${
                   isMirrored ? 'scale-x-[-1]' : 'scale-x-1'
                 } ${isLoading ? 'opacity-0' : 'opacity-100'} ${
@@ -568,6 +789,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               <button
                 onClick={() => {
                   stopCameraStream();
+                  cancelCountdown();
                   if (document.fullscreenElement) {
                     document.exitFullscreen().catch(() => {});
                   }
@@ -587,19 +809,27 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                     ? 'opacity-40 cursor-not-allowed'
                     : 'hover:scale-105 active:scale-95 shadow-2xl shadow-purple-500/40'
                 }`}
-                title="Capture Photo"
+                title={countdown !== null ? 'Cancel Timer' : timerDuration > 0 ? `Capture Photo (${timerDuration}s timer)` : 'Capture Photo'}
               >
-                <div className="w-full h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 flex items-center justify-center shadow-inner">
-                  <FaCamera size={22} className="text-white drop-shadow-sm" />
+                <div className={`w-full h-full rounded-full flex items-center justify-center shadow-inner ${
+                  countdown !== null
+                    ? 'bg-red-600 animate-pulse'
+                    : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500'
+                }`}>
+                  {countdown !== null ? (
+                    <span className="text-white font-extrabold text-lg font-mono">{countdown}</span>
+                  ) : (
+                    <FaCamera size={22} className="text-white drop-shadow-sm" />
+                  )}
                 </div>
               </button>
 
               {/* Switch Camera (mobile with >1 cameras) / Mirror (desktop single camera) */}
               <button
                 onClick={handleSwitchCamera}
-                disabled={isLoading || !!cameraError}
+                disabled={isLoading || !!cameraError || countdown !== null}
                 className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all border border-white/20 backdrop-blur-md shadow-lg ${
-                  isLoading || cameraError ? 'opacity-40 pointer-events-none' : 'active:scale-95'
+                  isLoading || cameraError || countdown !== null ? 'opacity-40 pointer-events-none' : 'active:scale-95'
                 }`}
                 title={videoDevices.length > 1 ? 'Switch Camera' : 'Flip Mirror View'}
               >
