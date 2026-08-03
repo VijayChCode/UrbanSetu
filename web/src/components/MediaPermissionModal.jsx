@@ -55,18 +55,18 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video', actio
   const { title, accessText, toggleText } = getPermissionDetails();
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-[110] p-3 sm:p-4 animate-fadeIn">
-      <div className="bg-gray-900 border border-gray-800 text-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center z-[110] p-3 sm:p-4 animate-fadeIn">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
         {/* Title */}
-        <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-wide text-left">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 tracking-wide text-left">
           {title}
         </h3>
 
         {/* Description Text */}
-        <p className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-5 sm:mb-6 text-left">
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-5 sm:mb-6 text-left">
           To {getActionPhrase()}, UrbanSetu needs access to your {accessText}. Click the{' '}
-          <span className="inline-flex items-center justify-center bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 mx-0.5 align-middle">
-            <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className="text-gray-300">
+          <span className="inline-flex items-center justify-center bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-700 mx-0.5 align-middle">
+            <svg viewBox="0 0 14 14" width="14" height="14" fill="none" className="text-gray-600 dark:text-gray-300">
               <title>chrome-permissions</title>
               <path fill="currentColor" fillRule="evenodd" d="M11.13 7.62a2.76 2.76 0 0 1 2.62 2.75v.15a2.76 2.76 0 0 1-2.76 2.62h-.14a2.76 2.76 0 0 1-2.62-2.62v-.15a2.76 2.76 0 0 1 2.76-2.76zm-.14 1.8a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.93" clipRule="evenodd" />
               <path fill="currentColor" d="M7 11.3H.86V9.45H7" />
@@ -75,7 +75,7 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video', actio
             </svg>
           </span>{' '}
           icon next to the address bar and toggle{' '}
-          <strong className="text-white font-bold">
+          <strong className="text-gray-900 dark:text-white font-bold">
             {toggleText}
           </strong>{' '}
           on. If you've already updated your permission settings, reload the page for the change to take effect.
@@ -85,7 +85,7 @@ const MediaPermissionModal = ({ isOpen, onClose, permissionType = 'video', actio
         <div className="flex justify-end w-full">
           <button
             onClick={onClose}
-            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold py-2.5 px-6 rounded-full shadow-lg shadow-indigo-500/30 hover:shadow-purple-500/40 border border-white/20 active:scale-95 transition-all text-center"
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-bold py-2.5 px-6 rounded-full shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/30 hover:shadow-purple-500/30 dark:hover:shadow-purple-500/40 border border-transparent dark:border-white/20 active:scale-95 transition-all text-center"
           >
             OK, got it
           </button>

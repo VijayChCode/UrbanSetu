@@ -2018,7 +2018,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const [showVoiceInput, setShowVoiceInput] = useState(false);
     const [showFileUpload, setShowFileUpload] = useState(false);
-
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [showSmartSuggestions, setShowSmartSuggestions] = useState(false); // Default to false, handled conditionally
     const [smartSuggestions, setSmartSuggestions] = useState([
