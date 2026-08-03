@@ -465,39 +465,6 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                   </div>
 
                   <div className="p-3 space-y-3.5">
-                    {/* Brightness Slider */}
-                    <div>
-                      <div className="flex items-center justify-between px-1 mb-2">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <FaSun size={11} className="text-amber-400" />
-                          Brightness ({brightness}%)
-                        </span>
-                        {brightness !== 100 && (
-                          <button
-                            onClick={() => setBrightness(100)}
-                            className="text-[10px] text-amber-400 hover:underline font-semibold"
-                          >
-                            Reset
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 bg-gray-800/60 p-2.5 rounded-xl border border-gray-700/50">
-                        <FaSun size={12} className="text-amber-500 flex-shrink-0" />
-                        <input
-                          type="range"
-                          min="50"
-                          max="150"
-                          step="5"
-                          value={brightness}
-                          onChange={(e) => setBrightness(Number(e.target.value))}
-                          className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400"
-                        />
-                        <span className="text-[11px] font-bold text-amber-300 w-10 text-right font-mono flex-shrink-0">
-                          {brightness}%
-                        </span>
-                      </div>
-                    </div>
-
                     {/* Fullscreen Toggle */}
                     <button
                       onClick={toggleFullscreen}
