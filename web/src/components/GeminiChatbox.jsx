@@ -32,6 +32,8 @@ import 'prismjs/components/prism-sql';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-markdown';
 import DOMPurify from 'dompurify';
+import MediaPermissionModal from './MediaPermissionModal';
+
 
 // Dynamic Script Loader for CDN dependencies
 const loadScript = (src) => {
@@ -2016,6 +2018,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     const [showVoiceInput, setShowVoiceInput] = useState(false);
     const [showFileUpload, setShowFileUpload] = useState(false);
+
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [showSmartSuggestions, setShowSmartSuggestions] = useState(false); // Default to false, handled conditionally
     const [smartSuggestions, setSmartSuggestions] = useState([
@@ -6906,6 +6909,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isProcessingVoice, setIsProcessingVoice] = useState(false);
     const recognitionRef = useRef(null);
     const transcriptAccumulator = useRef('');
+    const [showMediaPermissionModal, setShowMediaPermissionModal] = useState(false);
+    const [mediaPermissionType, setMediaPermissionType] = useState('microphone');
+    const [mediaPermissionActionText, setMediaPermissionActionText] = useState('use voice input');
 
     useEffect(() => {
         // Cleanup on unmount
@@ -6933,10 +6939,25 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     }
 
-    const startListening = () => {
+    const startListening = async () => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             toast.error('Voice input is supported only in Chrome, Edge, and Safari.');
             return;
+        }
+
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+            }
+        } catch (err) {
+            console.error('Microphone permission error:', err);
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message?.includes('Permission denied') || err.message?.includes('not allowed')) {
+                setMediaPermissionType('microphone');
+                setMediaPermissionActionText('use voice input');
+                setShowMediaPermissionModal(true);
+                return;
+            }
         }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -6945,7 +6966,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         // Continuous listening so it doesn't stop automatically on silence
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = navigator.language || 'en-US'; // Use browser language preferencerecognition.lang = 'en-US';
+        recognition.lang = navigator.language || 'en-US';
 
         transcriptAccumulator.current = ''; // Reset accumulator
 
@@ -6986,8 +7007,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             if (event.error !== 'no-speech') {
                 setIsListening(false);
                 setIsProcessingVoice(false);
-                if (event.error === 'not-allowed') {
-                    toast.error('Microphone access denied.');
+                if (['not-allowed', 'service-not-allowed', 'permission-denied'].includes(event.error)) {
+                    setMediaPermissionType('microphone');
+                    setMediaPermissionActionText('use voice input');
+                    setShowMediaPermissionModal(true);
+                } else if (event.error !== 'aborted') {
+                    toast.error(`Voice input error: ${event.error}`);
                 }
             }
         };
@@ -16434,6 +16459,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     </div>
                 </div>
             )}
+            {/* Media Permission Modal */}
+            <MediaPermissionModal
+                isOpen={showMediaPermissionModal}
+                onClose={() => setShowMediaPermissionModal(false)}
+                permissionType={mediaPermissionType}
+                actionText={mediaPermissionActionText}
+            />
         </div>
     );
 };
