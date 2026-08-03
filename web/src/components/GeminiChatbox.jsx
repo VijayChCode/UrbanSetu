@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaPause, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle, FaPlus, FaThumbtack } from 'react-icons/fa';
+import { FaComments, FaTimes, FaWifi, FaPaperPlane, FaRobot, FaCopy, FaSync, FaUser, FaCheck, FaHome, FaFileAlt, FaDownload, FaUpload, FaPaperclip, FaCog, FaLightbulb, FaHistory, FaBookmark, FaShare, FaThumbsUp, FaThumbsDown, FaRegBookmark, FaBookmark as FaBookmarkSolid, FaMicrophone, FaStop, FaImage, FaMagic, FaStar, FaMoon, FaSun, FaPalette, FaVolumeUp, FaVolumeMute, FaExpand, FaCompress, FaSearch, FaFilter, FaSort, FaEye, FaEyeSlash, FaEdit, FaCheck as FaCheckCircle, FaTimes as FaTimesCircle, FaFlag, FaShieldAlt, FaClipboardList, FaCommentAlt, FaArrowDown, FaTrash, FaEllipsisH, FaEllipsisV, FaShareAlt, FaBan, FaChevronLeft, FaChevronRight, FaSave, FaLink, FaPlay, FaPause, FaRegSmile, FaClock, FaCalendarAlt, FaGlobe, FaBrain, FaArrowUp, FaBell, FaInfoCircle, FaPlus, FaThumbtack, FaCamera } from 'react-icons/fa';
 import EqualizerButton from './EqualizerButton';
 import ShareChatModal from './ShareChatModal';
 import SocialSharePanel from './SocialSharePanel';
@@ -33,6 +33,7 @@ import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-markdown';
 import DOMPurify from 'dompurify';
 import MediaPermissionModal from './MediaPermissionModal';
+import CameraCaptureModal from './CameraCaptureModal';
 
 
 // Dynamic Script Loader for CDN dependencies
@@ -6911,6 +6912,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [showMediaPermissionModal, setShowMediaPermissionModal] = useState(false);
     const [mediaPermissionType, setMediaPermissionType] = useState('microphone');
     const [mediaPermissionActionText, setMediaPermissionActionText] = useState('use voice input');
+    const [showCameraCaptureModal, setShowCameraCaptureModal] = useState(false);
 
     useEffect(() => {
         // Cleanup on unmount
@@ -11346,6 +11348,30 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             <span className={`hidden sm:inline-block text-[10px] opacity-0 group-hover/menu:opacity-60 font-mono px-1.5 py-0.5 rounded ml-auto whitespace-nowrap transition-opacity duration-300 ${
                                                                 isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 border border-gray-200 text-gray-500 shadow-sm'
                                                             }`}>Ctrl+Shift+A</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (isBlockedByPolicy) {
+                                                                    toast.warning('Camera is disabled during your policy cooldown.');
+                                                                    return;
+                                                                }
+                                                                if (!currentUser) {
+                                                                    toast.info('Please login to use camera');
+                                                                    return;
+                                                                }
+                                                                setShowCameraCaptureModal(true);
+                                                                setShowInputOptions(false);
+                                                            }}
+                                                            disabled={isBlockedByPolicy}
+                                                            className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'} ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                                    <FaCamera size={14} />
+                                                                </div>
+                                                                <span className="text-sm font-medium">Camera</span>
+                                                            </div>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -16464,6 +16490,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 onClose={() => setShowMediaPermissionModal(false)}
                 permissionType={mediaPermissionType}
                 actionText={mediaPermissionActionText}
+            />
+            {/* Camera Capture Modal */}
+            <CameraCaptureModal
+                isOpen={showCameraCaptureModal}
+                onClose={() => setShowCameraCaptureModal(false)}
+                onCapture={(photoFile) => {
+                    uploadFilesAndSend([photoFile]);
+                }}
             />
         </div>
     );
