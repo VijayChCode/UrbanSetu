@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaCamera, FaTimes, FaSync, FaCheck, FaUndo, FaExclamationTriangle } from 'react-icons/fa';
+import { FaCamera, FaTimes, FaSync, FaCheck, FaUndo, FaExclamationTriangle, FaCog, FaExpand, FaCompress, FaExchangeAlt, FaVideo } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
@@ -15,9 +15,19 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   const [capturedBlob, setCapturedBlob] = useState(null);
   const [capturedPreviewUrl, setCapturedPreviewUrl] = useState(null);
 
+  // Settings panel state
+  const [showSettings, setShowSettings] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState('free'); // 'free', '16:9', '4:3', '1:1'
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const modalContainerRef = useRef(null);
+  const settingsPanelRef = useRef(null);
+
+  // Detect mobile device
+  const isMobile = typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   // Stop camera tracks helper
   const stopCameraStream = () => {
@@ -111,6 +121,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       setIsSwitching(false);
       setLoadingMessage('Initializing Camera...');
       setIsMirrored(true);
+      setShowSettings(false);
+      setAspectRatio('free');
+      // Exit fullscreen if active
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
     }
 
     return () => {
@@ -126,11 +143,34 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
   }, [stream, capturedBlob]);
 
-  // Switch camera / mirror flip handler
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Close settings when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showSettings && settingsPanelRef.current && !settingsPanelRef.current.contains(e.target)) {
+        setShowSettings(false);
+      }
+    };
+    if (showSettings) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSettings]);
+
+  // Switch camera handler (for mobile with multiple cameras)
   const handleSwitchCamera = () => {
     if (videoDevices.length > 1) {
       setIsSwitching(true);
       setLoadingMessage('Switching Camera...');
+      setShowSettings(false);
       if (currentDeviceId) {
         const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
         const nextIndex = (currentIndex + 1) % videoDevices.length;
@@ -141,8 +181,38 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
         setIsMirrored(nextFacing === 'user');
       }
     } else {
-      // Single camera (Desktop/Laptop): Toggle horizontal mirror effect smoothly without re-querying stream
+      // Single camera (Desktop/Laptop): Toggle horizontal mirror
       setIsMirrored(prev => !prev);
+    }
+  };
+
+  // Select specific camera device
+  const handleSelectDevice = (deviceId) => {
+    setIsSwitching(true);
+    setLoadingMessage('Switching Camera...');
+    setCurrentDeviceId(deviceId);
+    setShowSettings(false);
+  };
+
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (modalContainerRef.current) {
+        modalContainerRef.current.requestFullscreen().catch(() => {});
+      }
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+    setShowSettings(false);
+  };
+
+  // Get aspect ratio CSS for the video viewport
+  const getAspectRatioClasses = () => {
+    switch (aspectRatio) {
+      case '16:9': return 'aspect-video';
+      case '4:3': return 'aspect-[4/3]';
+      case '1:1': return 'aspect-square';
+      default: return ''; // 'free' = fill container
     }
   };
 
@@ -174,6 +244,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
         setCapturedBlob(blob);
         setCapturedPreviewUrl(previewUrl);
         stopCameraStream();
+        setShowSettings(false);
       }
     }, 'image/jpeg', 0.95);
   };
@@ -205,14 +276,28 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
     setCapturedBlob(null);
     stopCameraStream();
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
     onClose();
   };
 
   if (!isOpen) return null;
 
+  // Aspect ratio options
+  const aspectRatioOptions = [
+    { value: 'free', label: 'Free', icon: '⊡' },
+    { value: '16:9', label: '16:9', icon: '▬' },
+    { value: '4:3', label: '4:3', icon: '▭' },
+    { value: '1:1', label: '1:1', icon: '□' },
+  ];
+
   return (
     <div className="fixed inset-0 bg-black/95 sm:bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-0 sm:p-4 md:p-6 animate-fadeIn">
-      <div className="bg-black border-0 sm:border border-gray-800/80 rounded-none sm:rounded-3xl shadow-2xl w-full h-full sm:h-[85vh] max-w-4xl overflow-hidden flex flex-col relative">
+      <div
+        ref={modalContainerRef}
+        className={`bg-black border-0 sm:border border-gray-800/80 rounded-none sm:rounded-3xl shadow-2xl w-full h-full ${isFullscreen ? '' : 'sm:h-[85vh] max-w-4xl'} overflow-hidden flex flex-col relative`}
+      >
         
         {/* Floating Header */}
         <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-4 sm:px-6 py-4 sm:py-5 z-30 flex items-center justify-between flex-shrink-0">
@@ -224,20 +309,144 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               {capturedBlob ? 'Review Photo' : 'Take Photo'}
             </span>
           </div>
-          <button
-            onClick={() => {
-              stopCameraStream();
-              onClose();
-            }}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 border border-white/20 backdrop-blur-md shadow-lg"
-            title="Close Camera"
-          >
-            <FaTimes size={16} />
-          </button>
+
+          {/* Top-right: Settings (Take Photo) or Close (Review Photo) */}
+          {capturedBlob ? (
+            /* Close button in Review Photo phase */
+            <button
+              onClick={() => {
+                stopCameraStream();
+                if (document.fullscreenElement) {
+                  document.exitFullscreen().catch(() => {});
+                }
+                onClose();
+              }}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 border border-white/20 backdrop-blur-md shadow-lg"
+              title="Close Camera"
+            >
+              <FaTimes size={16} />
+            </button>
+          ) : (
+            /* Settings button in Take Photo phase */
+            <div ref={settingsPanelRef} className="relative">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full ${showSettings ? 'bg-purple-600/80 text-white' : 'bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white'} flex items-center justify-center transition-all active:scale-95 border border-white/20 backdrop-blur-md shadow-lg`}
+                title="Camera Settings"
+              >
+                <FaCog size={16} className={showSettings ? 'animate-spin' : ''} style={showSettings ? { animationDuration: '3s' } : {}} />
+              </button>
+
+              {/* Settings Panel Dropdown */}
+              {showSettings && (
+                <div className="absolute top-12 right-0 w-64 sm:w-72 bg-gray-950/95 backdrop-blur-xl border border-gray-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fadeIn">
+                  {/* Header */}
+                  <div className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Camera Settings</span>
+                    <button
+                      onClick={() => setShowSettings(false)}
+                      className="p-1 rounded-full hover:bg-gray-800 text-gray-500 hover:text-white transition-colors"
+                    >
+                      <FaTimes size={10} />
+                    </button>
+                  </div>
+
+                  <div className="p-3 space-y-3">
+                    {/* Fullscreen Toggle */}
+                    <button
+                      onClick={toggleFullscreen}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800/60 hover:bg-gray-800 text-gray-200 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {isFullscreen ? <FaCompress size={13} className="text-purple-400" /> : <FaExpand size={13} className="text-purple-400" />}
+                        <span className="text-xs font-semibold">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFullscreen ? 'bg-purple-500/30 text-purple-300' : 'bg-gray-700 text-gray-400'}`}>
+                        {isFullscreen ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+
+                    {/* Aspect Ratio */}
+                    <div>
+                      <div className="flex items-center gap-2 px-1 mb-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Aspect Ratio</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {aspectRatioOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setAspectRatio(opt.value)}
+                            className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all ${
+                              aspectRatio === opt.value
+                                ? 'bg-purple-600/40 text-purple-300 border border-purple-500/50 shadow-md'
+                                : 'bg-gray-800/60 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent'
+                            }`}
+                          >
+                            <span className="text-base leading-none">{opt.icon}</span>
+                            <span className="text-[10px]">{opt.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mirror Video Toggle */}
+                    <button
+                      onClick={() => setIsMirrored(prev => !prev)}
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800/60 hover:bg-gray-800 text-gray-200 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <FaExchangeAlt size={13} className="text-cyan-400" />
+                        <span className="text-xs font-semibold">Mirror Video</span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isMirrored ? 'bg-cyan-500/30 text-cyan-300' : 'bg-gray-700 text-gray-400'}`}>
+                        {isMirrored ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+
+                    {/* Available Cameras */}
+                    {videoDevices.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 px-1 mb-2">
+                          <FaVideo size={10} className="text-gray-500" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Cameras ({videoDevices.length})
+                          </span>
+                        </div>
+                        <div className="space-y-1 max-h-28 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
+                          {videoDevices.map((device, index) => {
+                            const isActive = currentDeviceId
+                              ? device.deviceId === currentDeviceId
+                              : index === 0;
+                            return (
+                              <button
+                                key={device.deviceId}
+                                onClick={() => handleSelectDevice(device.deviceId)}
+                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all ${
+                                  isActive
+                                    ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40'
+                                    : 'bg-gray-800/40 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent'
+                                }`}
+                              >
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-gray-600'}`} />
+                                <span className="truncate font-medium">
+                                  {device.label || `Camera ${index + 1}`}
+                                </span>
+                                {isActive && <FaCheck size={9} className="ml-auto text-purple-400 flex-shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Fullscreen Video / Image Viewport Container */}
-        <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
+        <div className={`relative w-full h-full bg-black flex items-center justify-center overflow-hidden ${aspectRatio !== 'free' ? 'p-2 sm:p-4' : ''}`}>
           {/* Off-screen Canvas */}
           <canvas ref={canvasRef} className="hidden" />
 
@@ -246,7 +455,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
             <img
               src={capturedPreviewUrl}
               alt="Captured preview"
-              className="w-full h-full object-cover bg-black"
+              className={`bg-black ${aspectRatio !== 'free' ? `max-w-full max-h-full object-contain ${getAspectRatioClasses()}` : 'w-full h-full object-cover'}`}
             />
           ) : cameraError ? (
             /* Error State with Top-Left Browser Permission Arrow */
@@ -308,9 +517,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 autoPlay
                 playsInline
                 muted
-                className={`w-full h-full object-cover transition-transform duration-300 ${
+                className={`transition-transform duration-300 ${
                   isMirrored ? 'scale-x-[-1]' : 'scale-x-1'
-                } ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+                } ${isLoading ? 'opacity-0' : 'opacity-100'} ${
+                  aspectRatio !== 'free'
+                    ? `max-w-full max-h-full object-contain ${getAspectRatioClasses()}`
+                    : 'w-full h-full object-cover'
+                }`}
               />
             </>
           )}
@@ -339,10 +552,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           ) : (
             /* Live Camera Capture Controls */
             <div className="flex items-center justify-between w-full max-w-md mx-auto px-2">
-              {/* Secondary option: Cancel */}
+              {/* Cancel */}
               <button
                 onClick={() => {
                   stopCameraStream();
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                  }
                   onClose();
                 }}
                 className="px-4 py-2 text-xs sm:text-sm font-bold text-white/80 hover:text-white transition-colors drop-shadow-md bg-black/40 hover:bg-black/60 rounded-full border border-white/10 backdrop-blur-md"
@@ -366,7 +582,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 </div>
               </button>
 
-              {/* Switch Camera / Mirror Toggle Button */}
+              {/* Switch Camera (mobile with >1 cameras) / Mirror (desktop single camera) */}
               <button
                 onClick={handleSwitchCamera}
                 disabled={isLoading || !!cameraError}
@@ -375,7 +591,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 }`}
                 title={videoDevices.length > 1 ? 'Switch Camera' : 'Flip Mirror View'}
               >
-                <FaSync size={16} />
+                {videoDevices.length > 1 ? <FaSync size={16} /> : <FaExchangeAlt size={16} />}
               </button>
             </div>
           )}
@@ -386,4 +602,3 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 };
 
 export default CameraCaptureModal;
-
