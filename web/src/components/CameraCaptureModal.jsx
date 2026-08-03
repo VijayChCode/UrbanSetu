@@ -337,15 +337,18 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 <FaCog size={16} className={showSettings ? 'animate-spin' : ''} style={showSettings ? { animationDuration: '3s' } : {}} />
               </button>
 
-              {/* Settings Panel Dropdown */}
+              {/* Settings Panel Dropdown — animated pop-in entrance */}
               {showSettings && (
-                <div className="absolute top-12 right-0 w-64 sm:w-72 bg-gray-950/95 backdrop-blur-xl border border-gray-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fadeIn">
+                <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-12 sm:right-0 sm:w-72 bg-gray-950/95 backdrop-blur-xl border border-gray-700/80 rounded-2xl shadow-2xl overflow-hidden z-50 transition-all duration-300 transform origin-top-right animate-in fade-in zoom-in-95 max-h-[70vh] overflow-y-auto">
                   {/* Header */}
-                  <div className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">Camera Settings</span>
+                  <div className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between bg-white/[0.02]">
+                    <span className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <FaCog size={12} className="text-purple-400 animate-spin" style={{ animationDuration: '6s' }} />
+                      Camera Settings
+                    </span>
                     <button
                       onClick={() => setShowSettings(false)}
-                      className="p-1 rounded-full hover:bg-gray-800 text-gray-500 hover:text-white transition-colors"
+                      className="p-1 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-all active:scale-90"
                     >
                       <FaTimes size={10} />
                     </button>
@@ -355,13 +358,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                     {/* Fullscreen Toggle */}
                     <button
                       onClick={toggleFullscreen}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800/60 hover:bg-gray-800 text-gray-200 transition-colors group"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800/60 hover:bg-gray-800/90 text-gray-200 transition-all duration-200 hover:scale-[1.01] active:scale-95 border border-transparent hover:border-purple-500/30 group"
                     >
                       <div className="flex items-center gap-2.5">
-                        {isFullscreen ? <FaCompress size={13} className="text-purple-400" /> : <FaExpand size={13} className="text-purple-400" />}
+                        {isFullscreen ? <FaCompress size={13} className="text-purple-400 transition-transform group-hover:scale-110" /> : <FaExpand size={13} className="text-purple-400 transition-transform group-hover:scale-110" />}
                         <span className="text-xs font-semibold">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFullscreen ? 'bg-purple-500/30 text-purple-300' : 'bg-gray-700 text-gray-400'}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all duration-300 ${isFullscreen ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50 shadow-sm shadow-purple-500/20' : 'bg-gray-700/80 text-gray-400 border border-transparent'}`}>
                         {isFullscreen ? 'ON' : 'OFF'}
                       </span>
                     </button>
@@ -376,13 +379,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                           <button
                             key={opt.value}
                             onClick={() => setAspectRatio(opt.value)}
-                            className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all ${
+                            className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-95 ${
                               aspectRatio === opt.value
-                                ? 'bg-purple-600/40 text-purple-300 border border-purple-500/50 shadow-md'
-                                : 'bg-gray-800/60 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent'
+                                ? 'bg-purple-600/40 text-purple-300 border border-purple-500/60 shadow-md shadow-purple-900/40 scale-105'
+                                : 'bg-gray-800/60 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent hover:scale-102'
                             }`}
                           >
-                            <span className="text-base leading-none">{opt.icon}</span>
+                            <span className="text-base leading-none transition-transform group-hover:scale-110">{opt.icon}</span>
                             <span className="text-[10px]">{opt.label}</span>
                           </button>
                         ))}
@@ -392,13 +395,13 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                     {/* Mirror Video Toggle */}
                     <button
                       onClick={() => setIsMirrored(prev => !prev)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800/60 hover:bg-gray-800 text-gray-200 transition-colors"
+                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-800/60 hover:bg-gray-800/90 text-gray-200 transition-all duration-200 hover:scale-[1.01] active:scale-95 border border-transparent hover:border-cyan-500/30 group"
                     >
                       <div className="flex items-center gap-2.5">
-                        <FaExchangeAlt size={13} className="text-cyan-400" />
+                        <FaExchangeAlt size={13} className="text-cyan-400 transition-transform group-hover:rotate-180 duration-300" />
                         <span className="text-xs font-semibold">Mirror Video</span>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isMirrored ? 'bg-cyan-500/30 text-cyan-300' : 'bg-gray-700 text-gray-400'}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all duration-300 ${isMirrored ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 shadow-sm shadow-cyan-500/20' : 'bg-gray-700/80 text-gray-400 border border-transparent'}`}>
                         {isMirrored ? 'ON' : 'OFF'}
                       </span>
                     </button>
@@ -421,17 +424,17 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                               <button
                                 key={device.deviceId}
                                 onClick={() => handleSelectDevice(device.deviceId)}
-                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all ${
+                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all duration-200 active:scale-95 ${
                                   isActive
-                                    ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40'
+                                    ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-sm'
                                     : 'bg-gray-800/40 text-gray-400 hover:bg-gray-800 hover:text-gray-200 border border-transparent'
                                 }`}
                               >
-                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-gray-600'}`} />
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300 ${isActive ? 'bg-green-400 shadow-sm shadow-green-400/80 scale-110' : 'bg-gray-600'}`} />
                                 <span className="truncate font-medium">
                                   {device.label || `Camera ${index + 1}`}
                                 </span>
-                                {isActive && <FaCheck size={9} className="ml-auto text-purple-400 flex-shrink-0" />}
+                                {isActive && <FaCheck size={9} className="ml-auto text-purple-400 flex-shrink-0 animate-fadeIn" />}
                               </button>
                             );
                           })}
