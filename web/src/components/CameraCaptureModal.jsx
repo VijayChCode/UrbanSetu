@@ -216,11 +216,17 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
   };
 
-  // Capture snapshot photo
+  const [isFlashing, setIsFlashing] = useState(false);
+
+  // Capture snapshot photo with shutter flash effect
   const handleCapturePhoto = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
+
+    // Trigger white shutter flash effect
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), 250);
 
     const width = video.videoWidth || 1280;
     const height = video.videoHeight || 720;
@@ -294,6 +300,9 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
 
   return (
     <div className="fixed inset-0 bg-black/95 sm:bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-0 sm:p-4 md:p-6 animate-fadeIn">
+      {/* Shutter Flash Animation Overlay */}
+      <div className={`fixed inset-0 bg-white z-[200] pointer-events-none transition-opacity duration-300 ${isFlashing ? 'opacity-90' : 'opacity-0'}`} />
+
       <div
         ref={modalContainerRef}
         className={`bg-black border-0 sm:border border-gray-800/80 rounded-none sm:rounded-3xl shadow-2xl w-full h-full ${isFullscreen ? '' : 'sm:h-[85vh] max-w-4xl'} overflow-hidden flex flex-col relative`}
@@ -302,10 +311,10 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
         {/* Floating Header */}
         <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-4 sm:px-6 py-4 sm:py-5 z-30 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-purple-500/20 backdrop-blur-md text-purple-400 flex items-center justify-center border border-purple-500/30 shadow-lg">
+            <div className="w-9 h-9 rounded-full bg-purple-500/20 backdrop-blur-md text-purple-400 flex items-center justify-center border border-purple-500/30 shadow-lg transition-transform duration-300">
               <FaCamera size={15} />
             </div>
-            <span className="text-sm sm:text-base font-bold text-white tracking-wide drop-shadow-md">
+            <span className="text-sm sm:text-base font-bold text-white tracking-wide drop-shadow-md animate-fadeIn">
               {capturedBlob ? 'Review Photo' : 'Take Photo'}
             </span>
           </div>
@@ -321,7 +330,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 }
                 onClose();
               }}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 border border-white/20 backdrop-blur-md shadow-lg"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/80 text-gray-300 hover:text-white flex items-center justify-center transition-all active:scale-95 border border-white/20 backdrop-blur-md shadow-lg animate-fadeIn"
               title="Close Camera"
             >
               <FaTimes size={16} />
@@ -453,12 +462,12 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           {/* Off-screen Canvas */}
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Captured Image Preview */}
+          {/* Captured Image Preview with animated zoom-in entrance */}
           {capturedPreviewUrl ? (
             <img
               src={capturedPreviewUrl}
               alt="Captured preview"
-              className={`bg-black ${aspectRatio !== 'free' ? `max-w-full max-h-full object-contain ${getAspectRatioClasses()}` : 'w-full h-full object-cover'}`}
+              className={`bg-black animate-in fade-in zoom-in-95 duration-300 ${aspectRatio !== 'free' ? `max-w-full max-h-full object-contain ${getAspectRatioClasses()}` : 'w-full h-full object-cover'}`}
             />
           ) : cameraError ? (
             /* Error State with Top-Left Browser Permission Arrow */
@@ -535,11 +544,11 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
         {/* Floating Bottom Controls Footer */}
         <div className="absolute bottom-0 inset-x-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-between z-30">
           {capturedBlob ? (
-            /* Confirmation Actions: Retake or OK */
-            <div className="flex items-center justify-between w-full gap-3 sm:gap-4 max-w-md mx-auto">
+            /* Confirmation Actions: Retake or OK with animated slide-up entrance */
+            <div className="flex items-center justify-between w-full gap-3 sm:gap-4 max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
               <button
                 onClick={handleRetake}
-                className="flex-1 py-3 px-4 sm:px-5 rounded-full bg-black/60 hover:bg-black/80 text-gray-200 text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/20 backdrop-blur-md shadow-lg"
+                className="flex-1 py-3 px-4 sm:px-5 rounded-full bg-black/60 hover:bg-black/80 text-gray-200 text-xs sm:text-sm font-semibold tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/20 backdrop-blur-md shadow-lg hover:border-white/40"
               >
                 <FaUndo size={13} className="text-gray-400" />
                 <span>Retake</span>
@@ -553,8 +562,8 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               </button>
             </div>
           ) : (
-            /* Live Camera Capture Controls */
-            <div className="flex items-center justify-between w-full max-w-md mx-auto px-2">
+            /* Live Camera Capture Controls with animated slide-up entrance */
+            <div className="flex items-center justify-between w-full max-w-md mx-auto px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
               {/* Cancel */}
               <button
                 onClick={() => {
