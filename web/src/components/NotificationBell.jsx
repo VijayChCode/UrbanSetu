@@ -591,6 +591,15 @@ export default function NotificationBell({ mobile = false }) {
     setNotifications(filteredNotifications);
   }, [filteredNotifications]);
 
+  // Listen for open-notification-bell custom event (e.g. when toast notification is clicked)
+  useEffect(() => {
+    const handleOpenBell = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener('open-notification-bell', handleOpenBell);
+    return () => window.removeEventListener('open-notification-bell', handleOpenBell);
+  }, []);
+
   useEffect(() => {
     const handleNewNotification = (notification) => {
       if (!currentUser) return;
@@ -608,6 +617,25 @@ export default function NotificationBell({ mobile = false }) {
       setUnreadCount((count) => count + 1);
       triggerBellRing(); // Ring bell when new notification arrives
       fetchNotifications(); // Refresh list to get fully formatted notification object
+
+      // Display interactive toast that opens NotificationBell when clicked
+      toast.info(
+        <div className="cursor-pointer">
+          <div className="font-bold text-sm">{notification.title || 'New Notification'}</div>
+          {notification.message && (
+            <div className="text-xs opacity-90 line-clamp-2 mt-0.5">{notification.message}</div>
+          )}
+        </div>,
+        {
+          onClick: () => {
+            window.dispatchEvent(new CustomEvent('open-notification-bell'));
+          },
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+        }
+      );
     };
 
     const handleAllNotificationsMarkedAsRead = (data) => {
@@ -659,6 +687,25 @@ export default function NotificationBell({ mobile = false }) {
           if (exists) return prev;
           return [data.notification, ...prev];
         });
+
+        // Display interactive toast that opens NotificationBell when clicked
+        toast.info(
+          <div className="cursor-pointer">
+            <div className="font-bold text-sm">{data.notification.title || 'Watchlist Alert'}</div>
+            {data.notification.message && (
+              <div className="text-xs opacity-90 line-clamp-2 mt-0.5">{data.notification.message}</div>
+            )}
+          </div>,
+          {
+            onClick: () => {
+              window.dispatchEvent(new CustomEvent('open-notification-bell'));
+            },
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+          }
+        );
       }
       setUnreadCount((count) => count + 1);
       triggerBellRing(); // Ring bell for watchlist notifications
