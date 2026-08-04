@@ -54,7 +54,7 @@ export default function UserPrivacy() {
 
         <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-600 dark:text-blue-300 transition-colors">6. Real Estate & Transaction Data</h2>
         <ul className="list-disc ml-6 space-y-3">
-          <li><strong>Bookings & Calls:</strong> We store details of your appointments, chat history, and audio/video calls for dispute‑resolution and safety.</li>
+          <li><strong>Bookings, Chat & Calls:</strong> We store details of your appointments, end-to-end encrypted chat history, media attachments, and audio/video calls for dispute‑resolution and safety.</li>
           <li><strong>Documents:</strong> Any agreements or KYC files you upload are kept securely and accessed only when needed for verification or legal compliance.</li>
           <li><strong>Retention:</strong> Some property and payment records may be kept for several years to meet tax, accounting, and real‑estate regulation requirements.</li>
         </ul>

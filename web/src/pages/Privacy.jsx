@@ -119,12 +119,13 @@ export default function Privacy() {
         <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-600 dark:text-blue-300 transition-colors">13. Changes to This Policy</h2>
         <p className="ml-6">We may update this privacy policy from time to time. We will notify you of significant changes through email or platform notifications. Continued use of the platform constitutes acceptance of the updated policy.</p>
 
-        <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-600 dark:text-blue-300 transition-colors">14. Call, Chat & Live Monitor Data</h2>
+        <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-600 dark:text-blue-300 transition-colors">14. Call, Chat, Messaging & Media Data Privacy</h2>
         <ul className="list-disc ml-6 space-y-3">
-          <li><strong>Audio/Video Streams:</strong> Calls initiated on UrbanSetu may be monitored or recorded for dispute resolution, training, and fraud prevention. Streams are encrypted and retained per legal requirements.</li>
-          <li><strong>Chat Transcripts:</strong> Buyer–seller chats, admin interventions, and file attachments are stored securely and may be exported for audits when legally required.</li>
-          <li><strong>Redaction:</strong> Sensitive data (PAN, bank details) shared in chats may be automatically redacted in admin views to reduce exposure.</li>
-          <li><strong>Access:</strong> Only authorized support or compliance personnel can access call/chat data, and only for legitimate business reasons.</li>
+          <li><strong>End-to-End & In-Transit Encryption:</strong> All real-time messages, audio/video call streams, and socket communications are transmitted over secure, end-to-end encrypted transport protocols (TLS/WSS).</li>
+          <li><strong>Private Attachment Storage:</strong> Shared chat media (photos up to 10MB, videos up to 100MB, documents up to 10MB, and voice notes up to 10MB) are stored in access-controlled cloud storage, accessible only by conversation participants.</li>
+          <li><strong>Chat Lock & Dispute Preservation:</strong> During active dispute resolution, chat threads may be locked by admins to preserve evidentiary records. Locked logs remain confidential and restricted to compliance personnel.</li>
+          <li><strong>Transcript & PDF Exports:</strong> Chat export features generate encrypted PDF transcripts containing timestamped message histories for your personal records.</li>
+          <li><strong>Redaction & Privacy Access:</strong> Sensitive information (such as bank details or ID numbers) shared in chats is automatically redacted in administrative views. Access is strictly limited to conversation participants and authorized compliance teams.</li>
         </ul>
 
         <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-600 dark:text-blue-300 transition-colors">15. Cookies & Tracking</h2>
