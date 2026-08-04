@@ -1828,31 +1828,33 @@ export default function NotificationBell({ mobile = false }) {
                               disabled={fetchingUsers}
                             />
                           </div>
-                          <div className="relative">
+                          <div>
                             <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">Select Recipient</label>
-                            <select
-                              value={selectedUser}
-                              onChange={(e) => setSelectedUser(e.target.value)}
-                              className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 focus:border-blue-300 dark:focus:border-blue-700 transition-all appearance-none text-gray-900 dark:text-white"
-                              required
-                              disabled={fetchingUsers}
-                            >
-                              <option value="" disabled>-- Select a user --</option>
-                              {users.length === 0 && !fetchingUsers && (
-                                <option value="" disabled>No users found. Click "Refresh Users" to load.</option>
+                            <div className="relative">
+                              <select
+                                value={selectedUser}
+                                onChange={(e) => setSelectedUser(e.target.value)}
+                                className="w-full px-4 py-2.5 pr-10 bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 focus:border-blue-300 dark:focus:border-blue-700 transition-all appearance-none text-gray-900 dark:text-white"
+                                required
+                                disabled={fetchingUsers}
+                              >
+                                <option value="" disabled>-- Select a user --</option>
+                                {users.length === 0 && !fetchingUsers && (
+                                  <option value="" disabled>No users found. Click "Refresh Users" to load.</option>
+                                )}
+                                {users.filter(u => {
+                                  const q = userSearch.toLowerCase();
+                                  return !q || (u.username || u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+                                }).slice(0, 50).map(u => (
+                                  <option key={u._id} value={u._id}>{u.username || u.email}</option>
+                                ))}
+                              </select>
+                              {fetchingUsers && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                                  <UrbanSetuSpinner size="sm" />
+                                </div>
                               )}
-                              {users.filter(u => {
-                                const q = userSearch.toLowerCase();
-                                return !q || (u.username || u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
-                              }).slice(0, 50).map(u => (
-                                <option key={u._id} value={u._id}>{u.username || u.email}</option>
-                              ))}
-                            </select>
-                            {fetchingUsers && (
-                              <div className="absolute right-3 top-10 transform">
-                                <UrbanSetuSpinner size="sm" />
-                              </div>
-                            )}
+                            </div>
                             <div className="flex items-center justify-between mt-1.5">
                               <span className="text-[10px] text-gray-500 font-bold">
                                 {users.filter(u => {
