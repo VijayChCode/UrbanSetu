@@ -46,7 +46,17 @@ const ThemeToggle = ({ mobile = false, variant = 'dropdown', className = '' }) =
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleThemeChange = async (newTheme) => {
+    const dbSaveTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (dbSaveTimeoutRef.current) {
+                clearTimeout(dbSaveTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const handleThemeChange = (newTheme) => {
         setTheme(newTheme);
         localStorage.setItem('theme', newTheme);
         setIsOpen(false);
@@ -70,24 +80,27 @@ const ThemeToggle = ({ mobile = false, variant = 'dropdown', className = '' }) =
             }
         }
 
-        // Persist to DB if user is logged in
+        // Debounced DB persistence to prevent rate-limiting and server overload on rapid toggles
+        if (dbSaveTimeoutRef.current) {
+            clearTimeout(dbSaveTimeoutRef.current);
+        }
+
         if (currentUser?._id) {
-            try {
-                dispatch(updateUserStart());
-                const res = await authenticatedFetch(`${API_BASE_URL}/api/user/update/${currentUser._id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ settings: { theme: newTheme } }),
-                });
-                const data = await res.json();
-                if (data.status !== 'error' && data.success !== false) {
-                    dispatch(updateUserSuccess(data.updatedUser));
-                } else {
-                    dispatch(updateUserFailure(data.message || 'Failed to save theme'));
+            dbSaveTimeoutRef.current = setTimeout(async () => {
+                try {
+                    const res = await authenticatedFetch(`${API_BASE_URL}/api/user/update/${currentUser._id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ settings: { theme: newTheme } }),
+                    });
+                    const data = await res.json();
+                    if (data.status !== 'error' && data.success !== false && data.updatedUser) {
+                        dispatch(updateUserSuccess(data.updatedUser));
+                    }
+                } catch (error) {
+                    console.error('Failed to sync theme with database:', error);
                 }
-            } catch (error) {
-                dispatch(updateUserFailure(error.message));
-            }
+            }, 800);
         }
     };
 
