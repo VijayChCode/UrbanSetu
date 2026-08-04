@@ -237,7 +237,7 @@ export default function AdminHeader() {
       const randomIndex = Math.floor(Math.random() * allowedOptions.length);
       setRandomNavOption(allowedOptions[randomIndex]);
     }
-  }, [currentUser]);
+  }, [currentUser?._id, currentUser?.role, currentUser?.adminApprovalStatus]);
 
   useEffect(() => {
     setFadeIn(true);
@@ -246,7 +246,7 @@ export default function AdminHeader() {
       fetchPendingCount();
       fetchAppointmentCount();
     }
-  }, [currentUser]);
+  }, [currentUser?._id, currentUser?.role, currentUser?.adminApprovalStatus]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -853,7 +853,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
     if (mobile) {
       return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium border ${
         active
-          ? 'bg-blue-50 text-blue-700 font-bold border-blue-200 shadow-sm ring-1 ring-blue-300/40 dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-indigo-600/25 dark:to-purple-600/20 dark:text-yellow-300 dark:border-blue-400/30 dark:shadow-none dark:ring-1 dark:ring-yellow-300/40'
+          ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-blue-500/25 border-transparent'
           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border-transparent'
       } ${animationClass}`;
     }
@@ -874,7 +874,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getAdminNavLinkClass('/admin', 'animate-mobile-item-in')}
         >
-          <FaHome className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isAdminNavActive('/admin') ? 'scale-110' : ''}`} />
+          <FaHome className={`${mobile ? (isAdminNavActive('/admin') ? 'text-lg text-white scale-110' : 'text-lg text-blue-500') : 'text-base text-blue-500'} ${!mobile && isAdminNavActive('/admin') ? 'scale-110' : ''}`} />
           <span>Dashboard</span>
         </motion.li>
       </Link>
@@ -886,7 +886,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getAdminNavLinkClass('/admin/create-listing', 'animate-mobile-item-in-delay-1')}
         >
-          <FaPlus className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'} ${isAdminNavActive('/admin/create-listing') ? 'scale-110' : ''}`} />
+          <FaPlus className={`${mobile ? (isAdminNavActive('/admin/create-listing') ? 'text-lg text-white scale-110' : 'text-lg text-green-500') : 'text-base text-green-500'} ${!mobile && isAdminNavActive('/admin/create-listing') ? 'scale-110' : ''}`} />
           <span>Add Property</span>
         </motion.li>
       </Link>
@@ -898,7 +898,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getAdminNavLinkClass('/admin/listings', 'animate-mobile-item-in-delay-2')}
         >
-          <FaList className={`${mobile ? 'text-lg text-purple-500' : 'text-base text-purple-500'} ${isAdminNavActive('/admin/listings') ? 'scale-110' : ''}`} />
+          <FaList className={`${mobile ? (isAdminNavActive('/admin/listings') ? 'text-lg text-white scale-110' : 'text-lg text-purple-500') : 'text-base text-purple-500'} ${!mobile && isAdminNavActive('/admin/listings') ? 'scale-110' : ''}`} />
           <span>All Listings</span>
         </motion.li>
       </Link>
@@ -911,7 +911,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getAdminNavLinkClass('/admin/services', 'animate-mobile-item-in-delay-3')}
         >
-          <FaTools className={`${mobile ? 'text-lg text-purple-600' : 'text-base text-purple-600'} ${isAdminNavActive('/admin/services') ? 'scale-110' : ''}`} />
+          <FaTools className={`${mobile ? (isAdminNavActive('/admin/services') ? 'text-lg text-white scale-110' : 'text-lg text-purple-600') : 'text-base text-purple-600'} ${!mobile && isAdminNavActive('/admin/services') ? 'scale-110' : ''}`} />
           <span>Services</span>
         </motion.li>
       </Link>
@@ -924,7 +924,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
             className={getAdminNavLinkClass('/admin/requests', 'relative animate-mobile-item-in')}
           >
-            <FaUserCheck className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'} ${isAdminNavActive('/admin/requests') ? 'scale-110' : ''}`} />
+            <FaUserCheck className={`${mobile ? (isAdminNavActive('/admin/requests') ? 'text-lg text-white scale-110' : 'text-lg text-orange-500') : 'text-base text-orange-500'} ${!mobile && isAdminNavActive('/admin/requests') ? 'scale-110' : ''}`} />
             <span>Requests</span>
             {pendingCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
@@ -942,7 +942,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getAdminNavLinkClass('/admin/community', 'animate-mobile-item-in-delay-1')}
         >
-          <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'} ${isAdminNavActive('/admin/community') ? 'scale-110' : ''}`} />
+          <FaUsers className={`${mobile ? (isAdminNavActive('/admin/community') ? 'text-lg text-white scale-110' : 'text-lg text-pink-500') : 'text-base text-pink-500'} ${!mobile && isAdminNavActive('/admin/community') ? 'scale-110' : ''}`} />
           <span>Community</span>
         </motion.li>
       </Link>
@@ -954,7 +954,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getAdminNavLinkClass('/admin/explore', 'animate-mobile-item-in-delay-2')}
         >
-          <FaCompass className={`${mobile ? 'text-lg text-teal-500' : 'text-base text-teal-500'} ${isAdminNavActive('/admin/explore') ? 'scale-110' : ''}`} />
+          <FaCompass className={`${mobile ? (isAdminNavActive('/admin/explore') ? 'text-lg text-white scale-110' : 'text-lg text-teal-500') : 'text-base text-teal-500'} ${!mobile && isAdminNavActive('/admin/explore') ? 'scale-110' : ''}`} />
           <span>Explore</span>
         </motion.li>
       </Link>

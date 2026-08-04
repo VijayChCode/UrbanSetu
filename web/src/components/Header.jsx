@@ -851,7 +851,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
     if (mobile) {
       return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium border ${
         active
-          ? 'bg-blue-50 text-blue-700 font-bold border-blue-200 shadow-sm ring-1 ring-blue-300/40 dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-indigo-600/25 dark:to-purple-600/20 dark:text-yellow-300 dark:border-blue-400/30 dark:shadow-none dark:ring-1 dark:ring-yellow-300/40'
+          ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-blue-500/25 border-transparent'
           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border-transparent'
       } ${animationClass}`;
     }
@@ -933,7 +933,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getNavLinkClass(currentUser ? '/user' : '/', 'animate-mobile-item-in')}
         >
-          <FaHome className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isNavActive(currentUser ? '/user' : '/') ? 'scale-110' : ''}`} />
+          <FaHome className={`${mobile ? (isNavActive(currentUser ? '/user' : '/') ? 'text-lg text-white scale-110' : 'text-lg text-blue-500') : 'text-base text-blue-500'} ${!mobile && isNavActive(currentUser ? '/user' : '/') ? 'scale-110' : ''}`} />
           <span>Home</span>
         </motion.li>
       </Link>
@@ -948,7 +948,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/about', 'animate-mobile-item-in-delay-1')}
             >
-              <FaInfoCircle className={`${mobile ? 'text-lg text-green-500' : 'text-base text-green-500'} ${isNavActive('/about') ? 'scale-110' : ''}`} />
+              <FaInfoCircle className={`${mobile ? (isNavActive('/about') ? 'text-lg text-white scale-110' : 'text-lg text-green-500') : 'text-base text-green-500'} ${!mobile && isNavActive('/about') ? 'scale-110' : ''}`} />
               <span>About</span>
             </motion.li>
           </Link>
@@ -959,7 +959,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/blogs', 'animate-mobile-item-in-delay-1')}
             >
-              <FaBookOpen className={`${mobile ? 'text-lg text-blue-500' : 'text-base text-blue-500'} ${isNavActive('/blogs') ? 'scale-110' : ''}`} />
+              <FaBookOpen className={`${mobile ? (isNavActive('/blogs') ? 'text-lg text-white scale-110' : 'text-lg text-blue-500') : 'text-base text-blue-500'} ${!mobile && isNavActive('/blogs') ? 'scale-110' : ''}`} />
               <span>Blogs</span>
             </motion.li>
           </Link>
@@ -971,7 +971,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/faqs', 'animate-mobile-item-in-delay-1')}
             >
-              <FaQuestionCircle className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'} ${isNavActive('/faqs') ? 'scale-110' : ''}`} />
+              <FaQuestionCircle className={`${mobile ? (isNavActive('/faqs') ? 'text-lg text-white scale-110' : 'text-lg text-orange-500') : 'text-base text-orange-500'} ${!mobile && isNavActive('/faqs') ? 'scale-110' : ''}`} />
               <span>FAQs</span>
             </motion.li>
           </Link>
@@ -982,7 +982,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/community', 'animate-mobile-item-in-delay-1')}
             >
-              <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'} ${isNavActive('/community') ? 'scale-110' : ''}`} />
+              <FaUsers className={`${mobile ? (isNavActive('/community') ? 'text-lg text-white scale-110' : 'text-lg text-pink-500') : 'text-base text-pink-500'} ${!mobile && isNavActive('/community') ? 'scale-110' : ''}`} />
               <span>Community</span>
             </motion.li>
           </Link>
@@ -996,7 +996,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className={getNavLinkClass('/search', 'animate-mobile-item-in-delay-2')}
         >
-          <FaCompass className={`${mobile ? 'text-lg text-purple-500' : 'text-base text-purple-500'} ${isNavActive('/search') ? 'scale-110' : ''}`} />
+          <FaCompass className={`${mobile ? (isNavActive('/search') || isNavActive('/user/search') ? 'text-lg text-white scale-110' : 'text-lg text-purple-500') : 'text-base text-purple-500'} ${!mobile && (isNavActive('/search') || isNavActive('/user/search')) ? 'scale-110' : ''}`} />
           <span>Explore</span>
         </motion.li>
       </Link>
@@ -1010,7 +1010,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/user/community', 'animate-mobile-item-in-delay-2')}
             >
-              <FaUsers className={`${mobile ? 'text-lg text-pink-500' : 'text-base text-pink-500'} ${isNavActive('/user/community') ? 'scale-110' : ''}`} />
+              <FaUsers className={`${mobile ? (isNavActive('/user/community') ? 'text-lg text-white scale-110' : 'text-lg text-pink-500') : 'text-base text-pink-500'} ${!mobile && isNavActive('/user/community') ? 'scale-110' : ''}`} />
               <span>Community</span>
             </motion.li>
           </Link>
@@ -1021,7 +1021,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/user/create-listing', 'animate-mobile-item-in')}
             >
-              <FaPlus className={`${mobile ? 'text-lg text-orange-500' : 'text-base text-orange-500'} ${isNavActive('/user/create-listing') ? 'scale-110' : ''}`} />
+              <FaPlus className={`${mobile ? (isNavActive('/user/create-listing') ? 'text-lg text-white scale-110' : 'text-lg text-orange-500') : 'text-base text-orange-500'} ${!mobile && isNavActive('/user/create-listing') ? 'scale-110' : ''}`} />
               <span>Add Property</span>
             </motion.li>
           </Link>
@@ -1033,7 +1033,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/user/my-listings', 'animate-mobile-item-in-delay-1')}
             >
-              <FaList className={`${mobile ? 'text-lg text-indigo-500' : 'text-base text-indigo-500'} ${isNavActive('/user/my-listings') ? 'scale-110' : ''}`} />
+              <FaList className={`${mobile ? (isNavActive('/user/my-listings') ? 'text-lg text-white scale-110' : 'text-lg text-indigo-500') : 'text-base text-indigo-500'} ${!mobile && isNavActive('/user/my-listings') ? 'scale-110' : ''}`} />
               <span>My Listings</span>
             </motion.li>
           </Link>
@@ -1045,7 +1045,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/user/wishlist', 'animate-mobile-item-in-delay-2')}
             >
-              <FaHeart className={`${mobile ? 'text-lg text-red-500' : 'text-base text-red-500'} ${isNavActive('/user/wishlist') ? 'scale-110' : ''}`} />
+              <FaHeart className={`${mobile ? (isNavActive('/user/wishlist') ? 'text-lg text-white scale-110' : 'text-lg text-red-500') : 'text-base text-red-500'} ${!mobile && isNavActive('/user/wishlist') ? 'scale-110' : ''}`} />
               <span>My Wishlist</span>
             </motion.li>
           </Link>
@@ -1057,7 +1057,7 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className={getNavLinkClass('/user/my-appointments', 'animate-mobile-item-in-delay-3')}
             >
-              <FaCalendarAlt className={`${mobile ? 'text-lg text-teal-500' : 'text-base text-teal-500'} ${isNavActive('/user/my-appointments') ? 'scale-110' : ''}`} />
+              <FaCalendarAlt className={`${mobile ? (isNavActive('/user/my-appointments') ? 'text-lg text-white scale-110' : 'text-lg text-teal-500') : 'text-base text-teal-500'} ${!mobile && isNavActive('/user/my-appointments') ? 'scale-110' : ''}`} />
               <span>My Appointments</span>
             </motion.li>
           </Link>
