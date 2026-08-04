@@ -853,7 +853,7 @@ function AdminNavLinks({ mobile = false, onNavigate, pendingCount, handleSignout
     if (mobile) {
       return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium border ${
         active
-          ? 'bg-blue-50 dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-indigo-600/25 dark:to-purple-600/20 text-blue-700 dark:text-yellow-300 font-bold backdrop-blur-xl border-blue-200 dark:border-blue-400/30 shadow-sm ring-1 ring-blue-300/50 dark:ring-yellow-300/40'
+          ? 'bg-blue-50 text-blue-700 font-bold border-blue-200 shadow-sm ring-1 ring-blue-300/40 dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-indigo-600/25 dark:to-purple-600/20 dark:text-yellow-300 dark:border-blue-400/30 dark:shadow-none dark:ring-1 dark:ring-yellow-300/40'
           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border-transparent'
       } ${animationClass}`;
     }
