@@ -1091,6 +1091,12 @@ export const adminSendNotification = async (req, res, next) => {
 
     const savedNotification = await notification.save();
 
+    // Emit real-time socket event to the recipient user room
+    const io = req.app.get('io');
+    if (io) {
+      io.to(userId.toString()).emit('notificationCreated', savedNotification);
+    }
+
     res.status(201).json({
       success: true,
       message: `Notification sent successfully to ${user.email}`,
@@ -1163,6 +1169,14 @@ export const adminSendNotificationToAll = async (req, res, next) => {
     }));
 
     const created = await Notification.insertMany(notifications);
+
+    // Emit real-time socket events to each user room
+    const io = req.app.get('io');
+    if (io) {
+      created.forEach(n => {
+        io.to(n.userId.toString()).emit('notificationCreated', n);
+      });
+    }
 
     res.status(201).json({
       success: true,

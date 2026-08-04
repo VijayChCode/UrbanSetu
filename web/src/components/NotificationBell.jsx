@@ -125,6 +125,7 @@ export default function NotificationBell({ mobile = false }) {
         // Check if this is a new notification (count increased)
         if (newCount > previousUnreadCount && previousUnreadCount > 0) {
           triggerBellRing();
+          fetchNotifications(); // Refresh notifications stack list when new unread notifications arrive
         }
         setUnreadCount(newCount);
         setPreviousUnreadCount(newCount);
@@ -596,16 +597,23 @@ export default function NotificationBell({ mobile = false }) {
       // Compare using .toString() since notification.userId is a MongoDB ObjectId object
       // while currentUser._id is a plain string - strict equality (===) would always fail
       const notifUserId = notification.userId?.toString?.() || notification.userId;
-      if (notifUserId !== currentUser._id) return;
-      setAllNotifications((prev) => [notification, ...prev]);
+      if (notifUserId && notifUserId !== currentUser._id.toString()) return;
+
+      setAllNotifications((prev) => {
+        const notifId = notification._id?.toString?.() || notification._id;
+        const exists = prev.some((n) => (n._id?.toString?.() || n._id) === notifId);
+        if (exists) return prev;
+        return [notification, ...prev];
+      });
       setUnreadCount((count) => count + 1);
       triggerBellRing(); // Ring bell when new notification arrives
+      fetchNotifications(); // Refresh list to get fully formatted notification object
     };
 
     const handleAllNotificationsMarkedAsRead = (data) => {
       if (!currentUser) return;
       const adminId = data.adminId?.toString?.() || data.adminId;
-      if (adminId !== currentUser._id) return;
+      if (adminId !== currentUser._id.toString()) return;
 
       // Update local state to mark all notifications as read
       setAllNotifications(prev =>
@@ -615,7 +623,7 @@ export default function NotificationBell({ mobile = false }) {
 
       // Show toast notification about who marked them as read
       const markedById = data.markedBy?.toString?.() || data.markedBy;
-      const markedBy = markedById === currentUser._id ? 'You' : 'Another admin';
+      const markedBy = markedById === currentUser._id.toString() ? 'You' : 'Another admin';
       toast.info(`${markedBy} marked all notifications as read for all admins`);
     };
 
@@ -635,7 +643,7 @@ export default function NotificationBell({ mobile = false }) {
 
         // Show toast notification about who marked it as read
         const markedById = data.markedBy?.toString?.() || data.markedBy;
-        const markedBy = markedById === currentUser._id ? 'You' : (data.markedByUsername || data.markedByEmail || 'Another admin');
+        const markedBy = markedById === currentUser._id.toString() ? 'You' : (data.markedByUsername || data.markedByEmail || 'Another admin');
         toast.info(`${markedBy} marked a notification as read`);
       }
     };
@@ -643,10 +651,18 @@ export default function NotificationBell({ mobile = false }) {
     const handleWatchlistNotification = (data) => {
       if (!currentUser) return;
       const dataUserId = data.userId?.toString?.() || data.userId;
-      if (dataUserId !== currentUser._id) return;
-      setAllNotifications((prev) => [data.notification, ...prev]);
+      if (dataUserId && dataUserId !== currentUser._id.toString()) return;
+      if (data.notification) {
+        setAllNotifications((prev) => {
+          const notifId = data.notification._id?.toString?.() || data.notification._id;
+          const exists = prev.some((n) => (n._id?.toString?.() || n._id) === notifId);
+          if (exists) return prev;
+          return [data.notification, ...prev];
+        });
+      }
       setUnreadCount((count) => count + 1);
       triggerBellRing(); // Ring bell for watchlist notifications
+      fetchNotifications();
     };
 
     socket.on('notificationCreated', handleNewNotification);
