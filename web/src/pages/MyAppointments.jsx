@@ -14344,7 +14344,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
               {/* Footer */}
               <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">UrbanSetu Chat Media</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate max-w-[250px] sm:max-w-xs" title={`${otherParty?.username || otherParty?.fullName || otherParty?.name || 'UrbanSetu'} Chat Media`}>
+                  {otherParty?.username || otherParty?.fullName || otherParty?.name ? `${otherParty.username || otherParty.fullName || otherParty.name} Chat Media` : 'UrbanSetu Chat Media'}
+                </span>
                 <button
                   onClick={() => setShowMediaModal(false)}
                   className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md shadow-blue-500/20 font-semibold text-xs sm:text-sm transition-all"
