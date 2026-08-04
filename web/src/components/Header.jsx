@@ -851,8 +851,8 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
     if (mobile) {
       return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium border ${
         active
-          ? 'bg-gradient-to-r from-blue-600/30 via-indigo-600/25 to-purple-600/20 text-yellow-300 dark:text-yellow-300 font-bold backdrop-blur-xl border-blue-400/40 dark:border-blue-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_4px_15px_rgba(37,99,235,0.25)] ring-1 ring-yellow-300/40'
-          : 'text-gray-200 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-white/10 hover:text-white border-transparent'
+          ? 'bg-blue-50 dark:bg-gradient-to-r dark:from-blue-600/30 dark:via-indigo-600/25 dark:to-purple-600/20 text-blue-700 dark:text-yellow-300 font-bold backdrop-blur-xl border-blue-200 dark:border-blue-400/30 shadow-sm ring-1 ring-blue-300/50 dark:ring-yellow-300/40'
+          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border-transparent'
       } ${animationClass}`;
     }
     return `transition-all duration-300 font-semibold text-xs sm:text-sm flex items-center gap-1 px-2.5 py-1.5 rounded-xl cursor-pointer select-none border ${
