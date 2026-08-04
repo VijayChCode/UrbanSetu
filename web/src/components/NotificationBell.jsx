@@ -498,7 +498,7 @@ export default function NotificationBell({ mobile = false }) {
 
       return () => clearInterval(interval);
     }
-  }, [currentUser]);
+  }, [currentUser?._id, currentUser?.role]);
 
   // Fetch users when send tab is active (admin only)
   useEffect(() => {
@@ -508,7 +508,7 @@ export default function NotificationBell({ mobile = false }) {
 
       fetchUsers();
     }
-  }, [isOpen, activeTab, currentUser]);
+  }, [isOpen, activeTab, currentUser?._id, currentUser?.role]);
 
   // Don't render if no user
   if (!currentUser) return null;
@@ -540,7 +540,7 @@ export default function NotificationBell({ mobile = false }) {
     }
 
     return categories;
-  }, [currentUser]);
+  }, [currentUser?._id, currentUser?.role]);
 
   // Filter notifications based on search, status, date, and category criteria
   const filteredNotifications = useMemo(() => {
@@ -650,7 +650,7 @@ export default function NotificationBell({ mobile = false }) {
       socket.off('notificationMarkedAsRead', handleNotificationMarkedAsRead);
       socket.off('watchlistNotification', handleWatchlistNotification);
     };
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   return (
     <div className="relative">
