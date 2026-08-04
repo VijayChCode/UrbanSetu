@@ -42,6 +42,7 @@ const SessionManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showLogoutAllModal, setShowLogoutAllModal] = useState(false);
   const [logoutAllTargetSession, setLogoutAllTargetSession] = useState(null);
+  const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
 
   // Debounced search effect
   useEffect(() => {
@@ -193,6 +194,7 @@ const SessionManagement = () => {
   };
 
   const forceLogoutAllUserSessions = async (userId, reason) => {
+    setIsLoggingOutAll(true);
     try {
       const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/session-management/admin/force-logout-all`, {
         method: 'POST',
@@ -220,6 +222,7 @@ const SessionManagement = () => {
       console.error('Error force logging out all sessions:', error);
       toast.error('Failed to force logout all sessions');
     } finally {
+      setIsLoggingOutAll(false);
       setShowLogoutAllModal(false);
       setLogoutAllTargetSession(null);
     }
@@ -699,7 +702,8 @@ const SessionManagement = () => {
                   id="reason"
                   value={forceLogoutReason}
                   onChange={(e) => setForceLogoutReason(e.target.value)}
-                  className="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all text-sm outline-none"
+                  disabled={revokingSession === selectedSession.sessionId}
+                  className="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="e.g. Suspicious activity detected"
                 />
               </div>
@@ -711,15 +715,26 @@ const SessionManagement = () => {
                     setSelectedSession(null);
                     setForceLogoutReason('');
                   }}
-                  className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all"
+                  disabled={revokingSession === selectedSession.sessionId}
+                  className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => forceLogoutSession(selectedSession.sessionId, selectedSession.userId, forceLogoutReason)}
-                  className="px-5 py-2.5 text-sm font-bold text-white bg-red-600 border border-transparent rounded-xl hover:bg-red-700 shadow-lg shadow-red-500/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all flex items-center gap-2"
+                  disabled={revokingSession === selectedSession.sessionId}
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-red-600 border border-transparent rounded-xl hover:bg-red-700 shadow-lg shadow-red-500/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <FaSignOutAlt /> Force Logout
+                  {revokingSession === selectedSession.sessionId ? (
+                    <>
+                      <UrbanSetuSpinner size="xs" isBright={true} />
+                      <span>Logging Out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaSignOutAlt /> Force Logout
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -776,15 +791,26 @@ const SessionManagement = () => {
                     setShowLogoutAllModal(false);
                     setLogoutAllTargetSession(null);
                   }}
-                  className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all"
+                  disabled={isLoggingOutAll}
+                  className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => forceLogoutAllUserSessions(logoutAllTargetSession.userId, 'Admin action - Logout all sessions')}
-                  className="px-5 py-2.5 text-sm font-bold text-white bg-orange-600 border border-transparent rounded-xl hover:bg-orange-700 shadow-lg shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all flex items-center gap-2"
+                  disabled={isLoggingOutAll}
+                  className="px-5 py-2.5 text-sm font-bold text-white bg-orange-600 border border-transparent rounded-xl hover:bg-orange-700 shadow-lg shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <FaUserSlash /> Logout All Sessions
+                  {isLoggingOutAll ? (
+                    <>
+                      <UrbanSetuSpinner size="xs" isBright={true} />
+                      <span>Logging Out All...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaUserSlash /> Logout All Sessions
+                    </>
+                  )}
                 </button>
               </div>
             </div>
