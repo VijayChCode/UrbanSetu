@@ -592,14 +592,20 @@ export default function NotificationBell({ mobile = false }) {
 
   useEffect(() => {
     const handleNewNotification = (notification) => {
-      if (!currentUser || notification.userId !== currentUser._id) return;
+      if (!currentUser) return;
+      // Compare using .toString() since notification.userId is a MongoDB ObjectId object
+      // while currentUser._id is a plain string - strict equality (===) would always fail
+      const notifUserId = notification.userId?.toString?.() || notification.userId;
+      if (notifUserId !== currentUser._id) return;
       setAllNotifications((prev) => [notification, ...prev]);
       setUnreadCount((count) => count + 1);
       triggerBellRing(); // Ring bell when new notification arrives
     };
 
     const handleAllNotificationsMarkedAsRead = (data) => {
-      if (!currentUser || data.adminId !== currentUser._id) return;
+      if (!currentUser) return;
+      const adminId = data.adminId?.toString?.() || data.adminId;
+      if (adminId !== currentUser._id) return;
 
       // Update local state to mark all notifications as read
       setAllNotifications(prev =>
@@ -608,7 +614,8 @@ export default function NotificationBell({ mobile = false }) {
       setUnreadCount(0);
 
       // Show toast notification about who marked them as read
-      const markedBy = data.markedBy === currentUser._id ? 'You' : 'Another admin';
+      const markedById = data.markedBy?.toString?.() || data.markedBy;
+      const markedBy = markedById === currentUser._id ? 'You' : 'Another admin';
       toast.info(`${markedBy} marked all notifications as read for all admins`);
     };
 
@@ -627,13 +634,16 @@ export default function NotificationBell({ mobile = false }) {
         setUnreadCount(prev => Math.max(0, prev - 1));
 
         // Show toast notification about who marked it as read
-        const markedBy = data.markedBy === currentUser._id ? 'You' : (data.markedByUsername || data.markedByEmail || 'Another admin');
+        const markedById = data.markedBy?.toString?.() || data.markedBy;
+        const markedBy = markedById === currentUser._id ? 'You' : (data.markedByUsername || data.markedByEmail || 'Another admin');
         toast.info(`${markedBy} marked a notification as read`);
       }
     };
 
     const handleWatchlistNotification = (data) => {
-      if (!currentUser || data.userId !== currentUser._id) return;
+      if (!currentUser) return;
+      const dataUserId = data.userId?.toString?.() || data.userId;
+      if (dataUserId !== currentUser._id) return;
       setAllNotifications((prev) => [data.notification, ...prev]);
       setUnreadCount((count) => count + 1);
       triggerBellRing(); // Ring bell for watchlist notifications
