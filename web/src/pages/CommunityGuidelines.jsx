@@ -4,7 +4,8 @@ import {
     FaShieldAlt, FaHandshake, FaComments, FaPhone, FaHome,
     FaStar, FaUserShield, FaExclamationTriangle, FaCheckCircle,
     FaChevronDown, FaChevronUp, FaVideo, FaFileAlt, FaUsers,
-    FaGavel, FaEye, FaBullhorn, FaLock, FaHeart, FaArrowRight, FaEnvelope
+    FaGavel, FaEye, FaBullhorn, FaLock, FaHeart, FaArrowRight, FaEnvelope,
+    FaMicrophone, FaCamera, FaEdit, FaTrashAlt, FaDownload, FaFingerprint
 } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import ContactSupportWrapper from '../components/ContactSupportWrapper';
@@ -62,17 +63,29 @@ export default function CommunityGuidelines() {
         {
             id: 'chat',
             icon: <FaComments className="text-3xl text-green-500" />,
-            title: "Chat & Messaging Etiquette",
+            title: "Chat & Messaging Policies",
             color: "green",
             rules: [
-                "Keep conversations relevant to property transactions",
-                "No spam, promotional content, or unsolicited advertising",
-                "Don't share external links to competing platforms",
-                "Respect response times - allow reasonable time for replies",
-                "Use appropriate file sharing - only property-related documents/images",
-                "Max file sizes: Images 5MB, Videos 5MB, Documents 10MB",
-                "No sharing of inappropriate, offensive, or illegal content",
-                "Use emojis appropriately and professionally"
+                "💬 Messaging Conduct: Keep all conversations relevant to property transactions, inquiries, and appointments",
+                "No spam, promotional content, unsolicited advertising, or flooding of messages",
+                "Don't share external links to competing platforms or suspicious URLs",
+                "Use professional and appropriate language — no hate speech, threats, or harassment",
+                "Respect response times — allow reasonable time for replies before following up",
+                "📎 File Sharing: Only share property-related files — Photos (JPG, PNG, GIF, WebP ≤ 10MB), Videos (MP4, WebM, MOV, MKV ≤ 100MB), Documents (PDF, DOCX, XLSX, TXT ≤ 10MB), Audio (MP3, WAV, M4A ≤ 10MB)",
+                "No sharing of inappropriate, offensive, illegal, or copyrighted content as attachments",
+                "Add meaningful captions to shared media — describe property details, room names, or context",
+                "📸 Camera Capture: Direct photo capture from your device is available — use it only for property-related photos",
+                "Do not capture or share photos of people without their explicit consent",
+                "🎤 Audio Messages: Keep voice messages concise, relevant, and professional",
+                "No offensive, threatening, or inappropriate audio content — all audio is subject to moderation",
+                "Audio messages support pause/resume recording — review before sending",
+                "✏️ Message Editing: Edited messages are visibly marked as 'edited' — don't misuse editing to alter the context of conversations",
+                "🗑️ Message Deletion: Deleted messages are logged — do not abuse deletion to hide inappropriate behavior or evidence",
+                "⭐ Starred Messages: Use the star feature to bookmark important property information, pricing, or appointment details",
+                "😀 Reactions & Emojis: Use message reactions and emojis appropriately — no spamming reactions on every message",
+                "📥 Chat Export: Chat transcripts can be exported as PDF — these are for your personal records and should not be shared publicly without consent from all parties",
+                "📌 @Mentions: Use @mentions to reference properties, blogs, and guides — do not abuse mentions for spamming",
+                "⌨️ Keyboard Shortcuts: Press Ctrl + / to focus chat input, Esc to close chatbox — use these for efficiency"
             ]
         },
         {
@@ -120,6 +133,32 @@ export default function CommunityGuidelines() {
                 "🚫 Discriminatory practices in property access",
                 "🚫 Harassment or stalking other users",
                 "🚫 Sharing login credentials or account access"
+            ]
+        },
+        {
+            id: 'securechat',
+            icon: <FaFingerprint className="text-3xl text-cyan-500" />,
+            title: "Secure Chat & Data Protection",
+            color: "cyan",
+            rules: [
+                "🔒 Chat Security: All messages are transmitted over secure, encrypted connections to protect your conversations",
+                "Real-time messaging is powered by secure socket connections — your messages are delivered instantly and safely",
+                "🛡️ Content Moderation: All shared content (text, images, videos, audio, documents) is subject to platform content filtering and moderation",
+                "Automated systems scan for inappropriate, harmful, or illegal content — violations are flagged and acted upon",
+                "🔐 Chat Lock: Admins may lock a chat conversation during active dispute resolution — locked chats are preserved as evidence",
+                "Do not attempt to bypass chat locks or create alternative channels to circumvent dispute processes",
+                "Cooperate fully with admin investigations when a chat is locked for review",
+                "🚨 Reporting: Use the 'Report' button to flag inappropriate messages, content, or user behavior",
+                "Report entire chat conversations if you experience persistent harassment or policy violations",
+                "All reports are reviewed confidentially — reporter identity is always protected",
+                "🚫 User Blocking: You can block users who violate guidelines — blocked users cannot send you messages or initiate calls",
+                "Blocking is reversible but should be used responsibly and not as a tool for manipulation",
+                "📞 Call History: Audio and video call records are private — call history cannot be shared publicly",
+                "Calls may be monitored by admins for quality assurance, safety, and dispute resolution",
+                "📊 Data Retention: Chat data is retained as per our privacy policy — you can request data export or deletion through settings",
+                "Exported chat PDFs and media files are your responsibility once downloaded — handle with care",
+                "👁️ Admin Oversight: Platform admins reserve the right to review chat conversations for safety, compliance, and dispute resolution purposes",
+                "Admin actions on chats (lock, unlock, content removal) are documented and notified to all parties via email"
             ]
         },
         {
@@ -233,7 +272,7 @@ export default function CommunityGuidelines() {
                     <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-lg">
                         <FaEye className="text-green-600 dark:text-green-400" />
                         <span className="text-sm font-medium text-green-800 dark:text-green-300">
-                            Last Updated: December 2025
+                            Last Updated: August 2026
                         </span>
                     </div>
                 </div>
