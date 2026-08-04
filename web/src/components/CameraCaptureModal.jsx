@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaCamera, FaTimes, FaSync, FaCheck, FaUndo, FaExclamationTriangle, FaCog, FaExpand, FaCompress, FaExchangeAlt, FaVideo, FaSun, FaStopwatch, FaSlidersH } from 'react-icons/fa';
+import { FaCamera, FaTimes, FaSync, FaCheck, FaUndo, FaExclamationTriangle, FaCog, FaExpand, FaCompress, FaExchangeAlt, FaVideo, FaSun, FaStopwatch, FaSlidersH, FaBolt } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
@@ -15,6 +15,10 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   const [capturedBlob, setCapturedBlob] = useState(null);
   const [capturedPreviewUrl, setCapturedPreviewUrl] = useState(null);
 
+  // Torch / Flashlight state
+  const [hasTorchSupport, setHasTorchSupport] = useState(false);
+  const [isTorchOn, setIsTorchOn] = useState(false);
+
   // Settings panel state
   const [showSettings, setShowSettings] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -27,6 +31,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   // Timer state (0 = off, 3 = 3s, 5 = 5s, 10 = 10s)
   const [timerDuration, setTimerDuration] = useState(0);
   const [countdown, setCountdown] = useState(null);
+  const [showTimerToast, setShowTimerToast] = useState(false);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -34,7 +39,9 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   const modalContainerRef = useRef(null);
   const settingsPanelRef = useRef(null);
   const sideSliderRef = useRef(null);
+  const sliderTrackRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  const toastTimeoutRef = useRef(null);
 
   // Detect mobile device
   const isMobile = typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -42,13 +49,20 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
   // Stop camera tracks helper
   const stopCameraStream = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        if (track.applyConstraints && isTorchOn) {
+          track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+        }
+        track.stop();
+      });
       streamRef.current = null;
     }
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+    setIsTorchOn(false);
+    setHasTorchSupport(false);
   };
 
   // Clear running countdown
@@ -58,6 +72,45 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       timerIntervalRef.current = null;
     }
     setCountdown(null);
+  };
+
+  // Toggle Torch/Flashlight
+  const toggleTorch = async () => {
+    if (streamRef.current) {
+      const track = streamRef.current.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        try {
+          const nextState = !isTorchOn;
+          await track.applyConstraints({
+            advanced: [{ torch: nextState }]
+          });
+          setIsTorchOn(nextState);
+        } catch (err) {
+          console.warn('[CameraCaptureModal] Torch toggle error:', err);
+        }
+      }
+    }
+  };
+
+  // Touch & Drag handler for Vertical Brightness Slider on Mobile/Desktop
+  const updateBrightnessFromY = (clientY) => {
+    if (!sliderTrackRef.current) return;
+    const rect = sliderTrackRef.current.getBoundingClientRect();
+    // ratio: 0 at bottom, 1 at top
+    const ratio = Math.max(0, Math.min(1, (rect.bottom - clientY) / rect.height));
+    const newVal = Math.round(50 + ratio * 100);
+    setBrightness(newVal);
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      updateBrightnessFromY(e.touches[0].clientY);
+    }
+  };
+
+  const handleMouseDownOrTouch = (e) => {
+    const clientY = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
+    updateBrightnessFromY(clientY);
   };
 
   // Enumerate video devices
@@ -105,6 +158,18 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
         videoRef.current.play().catch(() => {});
       }
 
+      // Check if torch/flashlight is supported on the active video track
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      let torchCapable = false;
+      if (videoTrack && typeof videoTrack.getCapabilities === 'function') {
+        const capabilities = videoTrack.getCapabilities();
+        if (capabilities && capabilities.torch) {
+          torchCapable = true;
+        }
+      }
+      setHasTorchSupport(torchCapable);
+      setIsTorchOn(false);
+
       await detectDevices();
       setIsLoading(false);
       setIsSwitching(false);
@@ -132,6 +197,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     } else if (!isOpen) {
       stopCameraStream();
       cancelCountdown();
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       setCapturedBlob(null);
       if (capturedPreviewUrl) {
         URL.revokeObjectURL(capturedPreviewUrl);
@@ -145,6 +211,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       setShowSideBrightnessSlider(false);
       setBrightness(100);
       setTimerDuration(0);
+      setShowTimerToast(false);
       setAspectRatio('free');
       // Exit fullscreen if active
       if (document.fullscreenElement) {
@@ -156,6 +223,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     return () => {
       stopCameraStream();
       cancelCountdown();
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     };
   }, [isOpen, facingMode, currentDeviceId]);
 
@@ -192,10 +260,6 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     }
   }, [showSettings, showSideBrightnessSlider]);
 
-  // Timer toast state
-  const [showTimerToast, setShowTimerToast] = useState(false);
-  const toastTimeoutRef = useRef(null);
-
   // Cycle timer handler: 0 (Off) -> 3s -> 5s -> 10s -> 0 (Off)
   const handleCycleTimer = () => {
     const timerModes = [0, 3, 5, 10];
@@ -220,6 +284,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
       setIsSwitching(true);
       setLoadingMessage('Switching Camera...');
       setShowSettings(false);
+      setIsTorchOn(false);
       if (currentDeviceId) {
         const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
         const nextIndex = (currentIndex + 1) % videoDevices.length;
@@ -241,6 +306,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     setLoadingMessage('Switching Camera...');
     setCurrentDeviceId(deviceId);
     setShowSettings(false);
+    setIsTorchOn(false);
   };
 
   // Toggle fullscreen
@@ -384,14 +450,6 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
     { value: '1:1', label: '1:1', icon: '□' },
   ];
 
-  // Timer options
-  const timerOptions = [
-    { value: 0, label: 'Off' },
-    { value: 3, label: '3s' },
-    { value: 5, label: '5s' },
-    { value: 10, label: '10s' },
-  ];
-
   return (
     <div className="fixed inset-0 bg-black/95 sm:bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-0 sm:p-4 md:p-6 animate-fadeIn">
       {/* Shutter Flash Animation Overlay */}
@@ -412,7 +470,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
               {capturedBlob ? 'Review Photo' : 'Take Photo'}
             </span>
 
-            {/* Quick indicators in header */}
+            {/* Quick brightness indicator in header when non-default */}
             {!capturedBlob && brightness !== 100 && (
               <div className="flex items-center gap-1.5 ml-2">
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/30 border border-amber-400/40 text-amber-300 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md animate-fadeIn">
@@ -569,9 +627,24 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
           {/* Off-screen Canvas */}
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Quick Side Controls (Timer & Brightness) */}
+          {/* Quick Side Controls (Torch, Timer & Brightness) */}
           {!capturedBlob && !cameraError && (
             <div ref={sideSliderRef} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-30 flex flex-col items-start gap-3">
+              {/* Torch Button (ONLY shown when supported & facing rear environment camera) */}
+              {facingMode === 'environment' && hasTorchSupport && (
+                <button
+                  onClick={toggleTorch}
+                  className={`w-10 h-10 rounded-full ${
+                    isTorchOn
+                      ? 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/60 border-amber-300 font-bold scale-105'
+                      : 'bg-black/50 hover:bg-black/80 text-amber-300'
+                  } border border-white/20 backdrop-blur-md flex items-center justify-center transition-all active:scale-95 animate-fadeIn`}
+                  title={isTorchOn ? 'Turn Flashlight OFF' : 'Turn Flashlight ON'}
+                >
+                  <FaBolt size={16} className={isTorchOn ? 'animate-pulse' : ''} />
+                </button>
+              )}
+
               {/* Photo Timer Button + Temporary Toast beside it */}
               <div className="flex items-center gap-2">
                 <button
@@ -601,7 +674,7 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                 )}
               </div>
 
-              {/* Brightness Quick Button & Slider */}
+              {/* Brightness Quick Button & Mobile Touch-Friendly Vertical Slider */}
               <div className="relative">
                 <button
                   onClick={() => setShowSideBrightnessSlider(!showSideBrightnessSlider)}
@@ -616,26 +689,41 @@ const CameraCaptureModal = ({ isOpen, onClose, onCapture }) => {
                   )}
                 </button>
 
-                {/* Vertical Slider Popup */}
+                {/* Touch-Friendly Vertical Slider Popup */}
                 {showSideBrightnessSlider && (
-                  <div className="absolute left-12 top-0 bg-gray-950/95 backdrop-blur-xl border border-amber-500/40 p-3 rounded-2xl shadow-2xl flex flex-col items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="absolute left-12 top-0 bg-gray-950/95 backdrop-blur-xl border border-amber-500/40 p-3.5 rounded-2xl shadow-2xl flex flex-col items-center gap-2.5 animate-in fade-in zoom-in-95 duration-200 select-none">
                     <span className="text-[10px] font-extrabold text-amber-300 font-mono">
                       {brightness}%
                     </span>
-                    <div className="h-32 flex items-center justify-center py-1">
-                      <input
-                        type="range"
-                        min="50"
-                        max="150"
-                        step="5"
-                        value={brightness}
-                        onChange={(e) => setBrightness(Number(e.target.value))}
-                        className="w-28 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400 -rotate-90 origin-center"
+
+                    {/* Touch-Safe Vertical Slider Track */}
+                    <div
+                      ref={sliderTrackRef}
+                      onPointerDown={handleMouseDownOrTouch}
+                      onPointerMove={(e) => {
+                        if (e.buttons === 1) updateBrightnessFromY(e.clientY);
+                      }}
+                      onTouchStart={handleMouseDownOrTouch}
+                      onTouchMove={handleTouchMove}
+                      className="w-7 h-36 bg-gray-900 rounded-full border border-amber-500/40 p-1 flex flex-col justify-end items-center cursor-pointer select-none touch-none relative shadow-inner"
+                    >
+                      {/* Filled track level */}
+                      <div
+                        className="w-full bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-300 rounded-full transition-all duration-75 pointer-events-none"
+                        style={{ height: `${((brightness - 50) / 100) * 100}%` }}
                       />
+                      {/* Drag Knob */}
+                      <div
+                        className="absolute w-6 h-6 rounded-full bg-white shadow-lg border-2 border-amber-500 -translate-x-1/2 left-1/2 flex items-center justify-center transition-all duration-75 pointer-events-none"
+                        style={{ bottom: `calc(${((brightness - 50) / 100) * 100}% - 12px)` }}
+                      >
+                        <FaSun size={9} className="text-amber-600" />
+                      </div>
                     </div>
+
                     <button
                       onClick={() => setBrightness(100)}
-                      className="text-[9px] font-bold text-gray-400 hover:text-amber-300 uppercase tracking-wider"
+                      className="text-[9px] font-bold text-gray-400 hover:text-amber-300 uppercase tracking-wider mt-1"
                     >
                       Reset
                     </button>
