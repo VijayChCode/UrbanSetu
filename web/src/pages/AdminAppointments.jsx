@@ -8095,7 +8095,7 @@ function AdminAppointmentRow({
                       {/* Loading older messages indicator */}
                       {isLoadingOlderMessages && (
                         <div className="flex justify-center py-3 animate-fadeIn">
-                          <div className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg bg-gray-800/90 border-gray-700 text-blue-400 backdrop-blur-md">
+                          <div className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-lg bg-white/90 dark:bg-slate-800/90 border-blue-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 backdrop-blur-md">
                             <UrbanSetuSpinner size="sm" />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Loading History</span>
                           </div>
@@ -8123,7 +8123,7 @@ function AdminAppointmentRow({
                                 });
                               }, 150);
                             }}
-                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-400 bg-gray-800/60 border border-gray-700 hover:bg-gray-700/80 hover:text-blue-300 transition-all duration-200 shadow-md hover:shadow-lg"
+                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-blue-600 dark:text-blue-400 bg-white/95 dark:bg-slate-800/90 border border-blue-200/80 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200 shadow-md hover:shadow-lg backdrop-blur-md"
                           >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                             Load earlier messages ({mergedTimeline.length - visibleItems.length} more)
