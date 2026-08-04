@@ -273,8 +273,13 @@ class GlobalErrorBoundary extends React.Component {
     };
 
     handleReset = () => {
-        sessionStorage.removeItem('err_reload_count');
-        localStorage.removeItem('err_switch_count_persistent');
+        try {
+            sessionStorage.removeItem('err_reload_count');
+            sessionStorage.setItem('err_reload_count', '0');
+            localStorage.removeItem('err_switch_count_persistent');
+            localStorage.setItem('err_switch_count_persistent', '0');
+        } catch (e) { }
+        this.setState({ reloadCount: 0, switchCount: 0 });
         window.location.href = window.location.pathname;
     };
 
@@ -383,14 +388,6 @@ class GlobalErrorBoundary extends React.Component {
                                         <FaEnvelope className="text-xs" />
                                         <span>Contact Support</span>
                                     </button>
-
-                                    <button
-                                        onClick={this.handleReset}
-                                        className="w-full py-3 px-4 bg-transparent border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98] hover:border-slate-700"
-                                    >
-                                        <FaSync className="text-xs" />
-                                        <span>Reset and Try Again</span>
-                                    </button>
                                 </>
                             ) : (
                                 reloadCount < 3 ? (
@@ -436,6 +433,16 @@ class GlobalErrorBoundary extends React.Component {
                                     </>
                                 )
                             )}
+
+                            {/* Always visible Reset Reload Count button */}
+                            <button
+                                onClick={this.handleReset}
+                                className="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2 active:scale-[0.98] hover:border-slate-600 shadow-sm mt-1"
+                                title="Reset auto-reload counter back to 0 and refresh page"
+                            >
+                                <FaSync className="text-xs text-blue-400" />
+                                <span>Reset Reload Count ({reloadCount}/3) & Refresh</span>
+                            </button>
                         </div>
                     </div>
 
