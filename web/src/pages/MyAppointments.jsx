@@ -276,6 +276,7 @@ export default function MyAppointments() {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkModalData, setLinkModalData] = useState(null);
   const [linkModalLoading, setLinkModalLoading] = useState(false);
+  const [modalActionLoading, setModalActionLoading] = useState(null); // 'join' | 'send_join' | 'send' | null
   const [linkCopied, setLinkCopied] = useState(false);
   const [generatingLinkType, setGeneratingLinkType] = useState(null); // 'audio' | 'video' | null
   const activeLinkCacheRef = useRef({});
@@ -363,11 +364,15 @@ export default function MyAppointments() {
 
   // Join call (navigate to CallRoom without sending to chat)
   const handleLinkModalJoin = useCallback(() => {
-    if (!linkModalData) return;
+    if (!linkModalData || modalActionLoading) return;
+    setModalActionLoading('join');
     if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
-    setShowLinkModal(false);
-    navigate(`/call/${linkModalData.callType}/${linkModalData.linkToken}`);
-  }, [linkModalData, navigate]);
+    setTimeout(() => {
+      setShowLinkModal(false);
+      setModalActionLoading(null);
+      navigate(`/call/${linkModalData.callType}/${linkModalData.linkToken}`);
+    }, 250);
+  }, [linkModalData, modalActionLoading, navigate]);
 
   // Send link to chat (shared helper)
   const sendLinkToChat = useCallback(async () => {
@@ -395,23 +400,37 @@ export default function MyAppointments() {
 
   // Send link to chat AND join
   const handleLinkModalSendAndJoin = useCallback(async () => {
-    if (!linkModalData) return;
-    if (!linkModalData.sentToChat) await sendLinkToChat();
-    if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
-    setShowLinkModal(false);
-    navigate(`/call/${linkModalData.callType}/${linkModalData.linkToken}`);
-  }, [linkModalData, sendLinkToChat, navigate]);
+    if (!linkModalData || modalActionLoading) return;
+    setModalActionLoading('send_join');
+    try {
+      if (!linkModalData.sentToChat) await sendLinkToChat();
+      if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
+      setShowLinkModal(false);
+      navigate(`/call/${linkModalData.callType}/${linkModalData.linkToken}`);
+    } catch (err) {
+      console.error('Error sending link and joining:', err);
+    } finally {
+      setModalActionLoading(null);
+    }
+  }, [linkModalData, modalActionLoading, sendLinkToChat, navigate]);
 
   // Send link to chat only (stay on page)
   const handleLinkModalSendOnly = useCallback(async () => {
-    if (!linkModalData || linkModalData.sentToChat) return;
-    const success = await sendLinkToChat();
-    if (success) toast.success('Call link sent to chat!');
-  }, [linkModalData, sendLinkToChat]);
+    if (!linkModalData || linkModalData.sentToChat || modalActionLoading) return;
+    setModalActionLoading('send');
+    try {
+      const success = await sendLinkToChat();
+      if (success) toast.success('Call link sent to chat!');
+    } catch (err) {
+      console.error('Error sending link to chat:', err);
+    } finally {
+      setModalActionLoading(null);
+    }
+  }, [linkModalData, modalActionLoading, sendLinkToChat]);
 
   // Generate new link (when expired)
   const handleLinkModalGenerateNew = useCallback(async () => {
-    if (!linkModalData) return;
+    if (!linkModalData || modalActionLoading) return;
     const appt = allAppointments.find(a => a._id === linkModalData.appointmentId) || appointments.find(a => a._id === linkModalData.appointmentId);
     if (!appt) return;
     clearCachedLink(appt._id, linkModalData.callType);
@@ -435,7 +454,7 @@ export default function MyAppointments() {
     } finally {
       setLinkModalLoading(false);
     }
-  }, [linkModalData, allAppointments, appointments, currentUser, clearCachedLink, setCachedLink, startCountdown]);
+  }, [linkModalData, modalActionLoading, allAppointments, appointments, currentUser, clearCachedLink, setCachedLink, startCountdown]);
 
   // Copy link to clipboard
   const handleCopyLink = useCallback(() => {
@@ -452,6 +471,7 @@ export default function MyAppointments() {
     setShowLinkModal(false);
     setLinkModalLoading(false);
     setLinkCopied(false);
+    setModalActionLoading(null);
   }, []);
 
   // Get other party name for active call
@@ -2596,16 +2616,26 @@ export default function MyAppointments() {
                     {/* Join Call */}
                     <button
                       onClick={handleLinkModalJoin}
-                      className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.01] flex items-center justify-center gap-2"
+                      disabled={!!modalActionLoading}
+                      className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.01] flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
                     >
-                      {linkModalData.callType === 'video' ? <FaVideo /> : <FaPhone />}
-                      Join Call
+                      {modalActionLoading === 'join' ? (
+                        <>
+                          <UrbanSetuSpinner size="sm" isBright={true} />
+                          <span>Joining Call...</span>
+                        </>
+                      ) : (
+                        <>
+                          {linkModalData.callType === 'video' ? <FaVideo /> : <FaPhone />}
+                          <span>Join Call</span>
+                        </>
+                      )}
                     </button>
 
                     {/* Send & Join */}
                     <button
                       onClick={handleLinkModalSendAndJoin}
-                      disabled={linkModalData.sentToChat}
+                      disabled={linkModalData.sentToChat || !!modalActionLoading}
                       className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                         linkModalData.sentToChat
                           ? isDarkMode
@@ -2614,16 +2644,25 @@ export default function MyAppointments() {
                           : isDarkMode
                             ? 'bg-white/10 hover:bg-white/15 text-white border border-white/10 hover:border-white/20'
                             : 'bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-800 dark:text-white border border-gray-200 dark:border-white/10'
-                      }`}
+                      } disabled:opacity-75 disabled:cursor-not-allowed`}
                     >
-                      <FaPaperPlane className="text-xs" />
-                      {linkModalData.sentToChat ? 'Already Sent ✓' : 'Send & Join'}
+                      {modalActionLoading === 'send_join' ? (
+                        <>
+                          <UrbanSetuSpinner size="sm" isBright={!isDarkMode} />
+                          <span>Sending & Joining...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaPaperPlane className="text-xs" />
+                          <span>{linkModalData.sentToChat ? 'Already Sent ✓' : 'Send & Join'}</span>
+                        </>
+                      )}
                     </button>
 
                     {/* Send Link to Chat Only */}
                     <button
                       onClick={handleLinkModalSendOnly}
-                      disabled={linkModalData.sentToChat}
+                      disabled={linkModalData.sentToChat || !!modalActionLoading}
                       className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                         linkModalData.sentToChat
                           ? isDarkMode
@@ -2632,10 +2671,19 @@ export default function MyAppointments() {
                           : isDarkMode
                             ? 'bg-transparent hover:bg-white/5 text-gray-300 border border-white/10 hover:border-white/20'
                             : 'bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'
-                      }`}
+                      } disabled:opacity-75 disabled:cursor-not-allowed`}
                     >
-                      <FaLink className="text-xs" />
-                      {linkModalData.sentToChat ? 'Already Sent ✓' : 'Send Link to Chat'}
+                      {modalActionLoading === 'send' ? (
+                        <>
+                          <UrbanSetuSpinner size="sm" isBright={!isDarkMode} />
+                          <span>Sending Link...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaLink className="text-xs" />
+                          <span>{linkModalData.sentToChat ? 'Already Sent ✓' : 'Send Link to Chat'}</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </>
@@ -9266,8 +9314,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           {callChoiceType === 'audio' && (
                             <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1 backdrop-blur-md">
                               <button
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={async () => {
+                                  if (generatingLinkType) return;
                                   setCallChoiceType(null);
                                   const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
                                   try {
@@ -9289,6 +9338,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                     }
                                   }
                                 }}
+                                disabled={generatingLinkType === 'audio'}
                               >
                                 <FaPhone className="text-teal-400" />
                                 <span>Direct Call</span>
@@ -9338,8 +9388,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           {callChoiceType === 'video' && (
                             <div className="absolute top-full right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1 backdrop-blur-md">
                               <button
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={async () => {
+                                  if (generatingLinkType) return;
                                   setCallChoiceType(null);
                                   const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
                                   try {
@@ -9399,6 +9450,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                     }
                                   }
                                 }}
+                                disabled={generatingLinkType === 'video'}
                               >
                                 <FaVideo className="text-teal-400" />
                                 <span>Direct Call</span>
