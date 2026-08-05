@@ -15938,7 +15938,7 @@ function PaymentStatusCell({ appointment, isBuyer }) {
       {/* Global Contact Support */}
 
       {/* ========== Call via Link Modal (Glassmorphism) ========== */}
-      {showLinkModal && (
+      {showLinkModal && createPortal((
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) handleCloseLinkModal(); }}
@@ -16150,7 +16150,7 @@ function PaymentStatusCell({ appointment, isBuyer }) {
             }
           `}</style>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 }
