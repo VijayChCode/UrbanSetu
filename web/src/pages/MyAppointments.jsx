@@ -2309,24 +2309,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     return () => { if (linkCountdownRef.current) clearInterval(linkCountdownRef.current); };
   }, []);
 
+  const [generatingLinkType, setGeneratingLinkType] = useState(null); // 'audio' | 'video' | null
+
   // Handle "Call via Link" button click — checks cache, opens modal
   const handleCallViaLinkClick = useCallback(async (callType) => {
-    setCallChoiceType(null);
+    if (generatingLinkType) return;
     setLinkCopied(false);
 
     // Check cache first
     const cached = getCachedLink(appt._id, callType);
     if (cached) {
+      setCallChoiceType(null);
       setLinkModalData(cached);
       startCountdown(cached.expiresAt);
       setShowLinkModal(true);
       return;
     }
 
-    // No cached link — generate new one
-    setLinkModalLoading(true);
-    setLinkModalData(null);
-    setShowLinkModal(true);
+    // No cached link — generate new one (show loading on button before opening modal)
+    setGeneratingLinkType(callType);
 
     try {
       const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
@@ -2335,17 +2336,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         setCachedLink(appt._id, callType, result);
         setLinkModalData(result);
         startCountdown(result.expiresAt);
-      } else {
-        setShowLinkModal(false);
+        setCallChoiceType(null);
+        setShowLinkModal(true);
       }
     } catch (err) {
       console.error('Error generating call link:', err);
       toast.error('Failed to generate call link');
-      setShowLinkModal(false);
     } finally {
-      setLinkModalLoading(false);
+      setGeneratingLinkType(null);
     }
-  }, [appt, currentUser, onInitiateCallViaLink, getCachedLink, setCachedLink, startCountdown]);
+  }, [generatingLinkType, appt, currentUser, onInitiateCallViaLink, getCachedLink, setCachedLink, startCountdown]);
 
   // Join call (navigate to CallRoom without sending to chat)
   const handleLinkModalJoin = useCallback(() => {
@@ -9027,11 +9027,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               </button>
 
                               <button
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800"
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800 disabled:opacity-75 disabled:cursor-not-allowed"
                                 onClick={() => handleCallViaLinkClick('audio')}
+                                disabled={generatingLinkType === 'audio'}
                               >
-                                <span className="text-blue-400 font-bold text-sm">🔗</span>
-                                <span>Call via Link</span>
+                                {generatingLinkType === 'audio' ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    <span className="text-blue-300 font-medium animate-pulse">Generating Call Link...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-blue-400 font-bold text-sm">🔗</span>
+                                    <span>Call via Link</span>
+                                  </>
+                                )}
                               </button>
                             </div>
                           )}
@@ -9127,11 +9137,21 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               </button>
 
                               <button
-                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800"
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800 disabled:opacity-75 disabled:cursor-not-allowed"
                                 onClick={() => handleCallViaLinkClick('video')}
+                                disabled={generatingLinkType === 'video'}
                               >
-                                <span className="text-blue-400 font-bold text-sm">🔗</span>
-                                <span>Call via Link</span>
+                                {generatingLinkType === 'video' ? (
+                                  <>
+                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                    <span className="text-blue-300 font-medium animate-pulse">Generating Call Link...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-blue-400 font-bold text-sm">🔗</span>
+                                    <span>Call via Link</span>
+                                  </>
+                                )}
                               </button>
                             </div>
                           )}
