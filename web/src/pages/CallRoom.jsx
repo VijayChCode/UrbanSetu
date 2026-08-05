@@ -7,9 +7,12 @@ import { API_BASE_URL } from '../config/api';
 import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaArrowLeft, FaExclamationTriangle, FaClock } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { toast } from 'react-toastify';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function CallRoom() {
-  const { token } = useParams();
+  const params = useParams();
+  const token = params.token;
+  const routeCallType = params.type;
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
 
@@ -31,6 +34,15 @@ export default function CallRoom() {
   const [error, setError] = useState(null);
   const [joining, setJoining] = useState(false);
   const localVideoRef = useRef(null);
+
+  // Dynamic page title
+  const isVideoCall = (callData?.callType || routeCallType) === 'video';
+  const callTypeLabel = isVideoCall ? 'Video Call' : 'Audio Call';
+  const otherPartyName = callData ? (callData.isCaller ? callData.receiverName : callData.callerName) : '';
+  const pageTitle = otherPartyName 
+    ? `${callTypeLabel} with ${otherPartyName} - UrbanSetu` 
+    : `${callTypeLabel} Room - UrbanSetu`;
+  usePageTitle(pageTitle);
 
   // Attach local stream to video ref if available during preview
   useEffect(() => {

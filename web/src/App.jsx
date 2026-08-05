@@ -1433,6 +1433,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/user/appointment" element={<Appointment />} />
               <Route path="/user/my-appointments" element={<MyAppointments />} />
               <Route path="/user/my-appointments/chat/:chatId" element={<MyAppointments />} />
+              <Route path="/call/audio/:token" element={<CallRoom />} />
+              <Route path="/call/video/:token" element={<CallRoom />} />
               <Route path="/call/:token" element={<CallRoom />} />
               <Route path="/user/call-history" element={<CallHistory />} />
               <Route path="/user/my-payments" element={<MyPayments />} />

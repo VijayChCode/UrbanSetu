@@ -208,8 +208,9 @@ export default function MyAppointments() {
     try {
       const res = await initiateCallViaLink(appointment._id, callType);
       if (res && res.linkToken) {
+        const actualCallType = res.callType || callType;
         // Build the call link using the current frontend origin (ensures correct URL on any deployment)
-        const callLink = `${window.location.origin}/call/${res.linkToken}`;
+        const callLink = `${window.location.origin}/call/${actualCallType}/${res.linkToken}`;
 
         // Automatically send the link as a chat comment/message
         await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appointment._id}/comment`, {
@@ -218,13 +219,13 @@ export default function MyAppointments() {
           body: JSON.stringify({
             message: callLink,
             type: 'call_link',
-            callType: res.callType,
+            callType: actualCallType,
             callId: res.callId
           })
         });
 
         // Navigate caller to the CallRoom page
-        navigate(`/call/${res.linkToken}`);
+        navigate(`/call/${actualCallType}/${res.linkToken}`);
       }
     } catch (error) {
       console.error('Error initiating call via link:', error);
@@ -10250,49 +10251,59 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                           })()}
 
                                           {/* Call Link Card */}
-                                          {(c.type === 'call_link' || (c.message && c.message.includes('/call/'))) && (
-                                            <div className="bg-slate-900/95 text-white rounded-2xl p-4 my-2 border border-slate-700/80 shadow-xl max-w-xs backdrop-blur-md">
-                                              <div className="flex items-center gap-3 mb-2">
-                                                <div className={`p-3 rounded-full ${c.callType === 'video' ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
-                                                  {c.callType === 'video' ? <FaVideo className="text-lg" /> : <FaPhone className="text-lg" />}
+                                          {(c.type === 'call_link' || (c.message && c.message.includes('/call/'))) && (() => {
+                                            const isVideoCall = c.callType === 'video' || (c.message && c.message.includes('/call/video/'));
+                                            return (
+                                              <div className="bg-slate-900/95 text-white rounded-2xl p-4 my-2 border border-slate-700/80 shadow-xl max-w-xs backdrop-blur-md">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                  <div className={`p-3 rounded-full ${isVideoCall ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
+                                                    {isVideoCall ? <FaVideo className="text-lg" /> : <FaPhone className="text-lg" />}
+                                                  </div>
+                                                  <div className="flex-1 min-w-0 text-left">
+                                                    <h4 className="font-bold text-xs text-slate-100 uppercase tracking-wider">
+                                                      {isVideoCall ? 'Video Call Link' : 'Audio Call Link'}
+                                                    </h4>
+                                                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                      Click Join Call to enter the room
+                                                    </p>
+                                                  </div>
                                                 </div>
-                                                <div className="flex-1 min-w-0 text-left">
-                                                  <h4 className="font-bold text-xs text-slate-100 uppercase tracking-wider">
-                                                    {c.callType === 'video' ? 'Video Call Link' : 'Audio Call Link'}
-                                                  </h4>
-                                                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                                                    Click Join Call to enter the room
-                                                  </p>
+                                                <div className="flex items-center gap-2 mt-3">
+                                                  <button
+                                                    onClick={() => {
+                                                      const tokenMatch = (c.message || '').match(/\/call\/(?:(audio|video)\/)?([a-zA-Z0-9-]+)/);
+                                                      if (tokenMatch) {
+                                                        const typeParam = tokenMatch[1];
+                                                        const tokenParam = tokenMatch[2];
+                                                        if (typeParam && tokenParam) {
+                                                          navigate(`/call/${typeParam}/${tokenParam}`);
+                                                        } else if (tokenParam || typeParam) {
+                                                          navigate(`/call/${isVideoCall ? 'video' : 'audio'}/${tokenParam || typeParam}`);
+                                                        } else {
+                                                          window.open(c.message, '_blank');
+                                                        }
+                                                      } else {
+                                                        window.open(c.message, '_blank');
+                                                      }
+                                                    }}
+                                                    className="flex-1 py-2.5 px-3 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl transition-all shadow-md hover:shadow-teal-500/20 flex items-center justify-center gap-1.5"
+                                                  >
+                                                    <FaPhone className="text-xs" /> Join Call
+                                                  </button>
+                                                  <button
+                                                    onClick={() => {
+                                                      navigator.clipboard.writeText(c.message || '');
+                                                      toast.success('Call link copied to clipboard!');
+                                                    }}
+                                                    className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition-all border border-slate-700 flex items-center justify-center gap-1"
+                                                    title="Share / Copy Link"
+                                                  >
+                                                    <FaCopy />
+                                                  </button>
                                                 </div>
                                               </div>
-                                              <div className="flex items-center gap-2 mt-3">
-                                                <button
-                                                  onClick={() => {
-                                                    const tokenMatch = (c.message || '').match(/\/call\/([a-zA-Z0-9-]+)/);
-                                                    const linkToken = tokenMatch ? tokenMatch[1] : '';
-                                                    if (linkToken) {
-                                                      navigate(`/call/${linkToken}`);
-                                                    } else {
-                                                      window.open(c.message, '_blank');
-                                                    }
-                                                  }}
-                                                  className="flex-1 py-2.5 px-3 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl transition-all shadow-md hover:shadow-teal-500/20 flex items-center justify-center gap-1.5"
-                                                >
-                                                  <FaPhone className="text-xs" /> Join Call
-                                                </button>
-                                                <button
-                                                  onClick={() => {
-                                                    navigator.clipboard.writeText(c.message || '');
-                                                    toast.success('Call link copied to clipboard!');
-                                                  }}
-                                                  className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition-all border border-slate-700 flex items-center justify-center gap-1"
-                                                  title="Share / Copy Link"
-                                                >
-                                                  <FaCopy />
-                                                </button>
-                                              </div>
-                                            </div>
-                                          )}
+                                            );
+                                          })()}
 
                                           {/* Link Preview in Message */}
                                           {(() => {

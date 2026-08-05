@@ -71,7 +71,7 @@ router.post("/create-link", verifyToken, async (req, res) => {
 
     // Determine frontend URL (primary: FRONTEND_URL env, fallback: production Vercel URL)
     const frontendUrl = process.env.FRONTEND_URL || 'https://urbansetuglobal.onrender.com';
-    const callLink = `${frontendUrl}/call/${linkToken}`;
+    const callLink = `${frontendUrl}/call/${callType}/${linkToken}`;
 
     // Send automated email to the receiver
     if (receiverUser && receiverUser.email) {
