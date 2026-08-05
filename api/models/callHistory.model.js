@@ -24,9 +24,13 @@ const callHistorySchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ['initiated', 'ringing', 'accepted', 'rejected', 'ended', 'missed', 'cancelled'], 
+    enum: ['initiated', 'ringing', 'accepted', 'rejected', 'ended', 'missed', 'cancelled', 'waiting'], 
     default: 'initiated' 
   },
+  // Link-based calling fields
+  linkToken: { type: String },
+  expiresAt: { type: Date },
+  callMode: { type: String, enum: ['direct', 'link'], default: 'direct' },
   startTime: { type: Date, default: Date.now },
   endTime: { type: Date },
   duration: { type: Number, default: 0 }, // Duration in seconds
@@ -61,6 +65,7 @@ callHistorySchema.index({ callerId: 1, createdAt: -1 });
 callHistorySchema.index({ receiverId: 1, createdAt: -1 });
 callHistorySchema.index({ status: 1 });
 callHistorySchema.index({ callType: 1 });
+callHistorySchema.index({ linkToken: 1 }, { sparse: true });
 
 // Pre-save middleware to update updatedAt
 callHistorySchema.pre('save', function(next) {

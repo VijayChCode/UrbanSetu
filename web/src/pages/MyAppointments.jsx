@@ -167,6 +167,7 @@ export default function MyAppointments() {
     localVideoRef,
     remoteVideoRef,
     initiateCall,
+    initiateCallViaLink,
     acceptCall,
     rejectCall,
     endCall,
@@ -182,7 +183,7 @@ export default function MyAppointments() {
   const themeColors = useMemo(() => getThemeColors(settings.themeColor || 'blue'), [settings.themeColor]);
   const isDarkMode = settings.theme === 'dark';
 
-  // Handle initiate call
+  // Handle initiate call (Direct)
   const handleInitiateCall = async (appointment, callType, receiverId) => {
     if (!appointment || !appointment._id) {
       toast.error('Appointment not found');
@@ -194,6 +195,37 @@ export default function MyAppointments() {
     } catch (error) {
       console.error('Error initiating call:', error);
       throw error;
+    }
+  };
+
+  // Handle initiate call via Link
+  const handleInitiateCallViaLink = async (appointment, callType, receiverId) => {
+    if (!appointment || !appointment._id) {
+      toast.error('Appointment not found');
+      return;
+    }
+
+    try {
+      const res = await initiateCallViaLink(appointment._id, callType);
+      if (res && res.callLink) {
+        // Automatically send the link as a chat comment/message
+        await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appointment._id}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: res.callLink,
+            type: 'call_link',
+            callType: res.callType,
+            callId: res.callId
+          })
+        });
+
+        // Navigate caller to the CallRoom page
+        navigate(`/call/${res.linkToken}`);
+      }
+    } catch (error) {
+      console.error('Error initiating call via link:', error);
+      toast.error('Failed to create call link');
     }
   };
 
@@ -1542,6 +1574,7 @@ export default function MyAppointments() {
                         setShowExportModal(true);
                       }}
                       onInitiateCall={handleInitiateCall}
+                      onInitiateCallViaLink={handleInitiateCallViaLink}
                       callState={callState}
                       incomingCall={incomingCall}
                       activeCall={activeCall}
@@ -1631,6 +1664,7 @@ export default function MyAppointments() {
                         setShowExportModal(true);
                       }}
                       onInitiateCall={handleInitiateCall}
+                      onInitiateCallViaLink={handleInitiateCallViaLink}
                       callState={callState}
                       incomingCall={incomingCall}
                       activeCall={activeCall}
@@ -2202,7 +2236,7 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId }) {
   // Camera modal state - moved to main MyAppointments component
   const navigate = useNavigate();
   const params = useParams();
@@ -2219,6 +2253,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const location = useLocation();
   const [showChatModal, setShowChatModal] = useState(false);
   const [imageErrorMap, setImageErrorMap] = useState({});
+  const [callChoiceType, setCallChoiceType] = useState(null); // 'audio' | 'video' | null
 
   useEffect(() => {
     if (showChatModal) {
@@ -8755,125 +8790,129 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
 
 
-                      {/* Call buttons */}
+                      {/* Call buttons with Choice Dropdown */}
                       <div className="relative flex items-center gap-2">
                         {/* Audio Call Button */}
-                        <button
-                          className={`text-white rounded-full p-2 transition-all duration-300 shadow ${
-                            isChatSendBlocked
-                              ? 'opacity-40 cursor-not-allowed bg-black/10'
-                              : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
-                          }`}
-                          onClick={async () => {
-                            if (isChatSendBlocked) return;
-                            const receiverId = appt.buyerId._id === currentUser._id
-                              ? appt.sellerId._id
-                              : appt.buyerId._id;
+                        <div className="relative">
+                          <button
+                            className={`text-white rounded-full p-2 transition-all duration-300 shadow ${
+                              isChatSendBlocked
+                                ? 'opacity-40 cursor-not-allowed bg-black/10'
+                                : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
+                            }`}
+                            onClick={() => {
+                              if (isChatSendBlocked) return;
+                              setCallChoiceType(prev => prev === 'audio' ? null : 'audio');
+                            }}
+                            title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call Options"}
+                            aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call Options"}
+                            disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
+                          >
+                            <FaPhone className="text-sm" />
+                          </button>
 
-                            try {
-                              await onInitiateCall(appt, 'audio', receiverId);
-                            } catch (err) {
-                              if (
-                                err?.name === 'NotAllowedError' ||
-                                err?.name === 'PermissionDeniedError' ||
-                                err?.isPermissionDenied ||
-                                (err?.message && (
-                                  err.message.toLowerCase().includes('permission') ||
-                                  err.message.toLowerCase().includes('forbidden') ||
-                                  err.message.toLowerCase().includes('denied')
-                                ))
-                              ) {
-                                setMediaPermissionType('microphone');
-                                setMediaPermissionActionText('make calls');
-                                setShowMediaPermissionModal(true);
-                              }
-                            }
-                          }}
-                          title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
-                          aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
-                          disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
-                        >
-                          <FaPhone className="text-sm" />
-                        </button>
+                          {/* Audio Call Choice Dropdown */}
+                          {callChoiceType === 'audio' && (
+                            <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1 backdrop-blur-md">
+                              <button
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
+                                onClick={async () => {
+                                  setCallChoiceType(null);
+                                  const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
+                                  try {
+                                    await onInitiateCall(appt, 'audio', receiverId);
+                                  } catch (err) {
+                                    if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError' || err?.isPermissionDenied) {
+                                      setMediaPermissionType('microphone');
+                                      setMediaPermissionActionText('make calls');
+                                      setShowMediaPermissionModal(true);
+                                    }
+                                  }
+                                }}
+                              >
+                                <FaPhone className="text-teal-400" />
+                                <span>Direct Call</span>
+                              </button>
+
+                              <button
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800"
+                                onClick={async () => {
+                                  setCallChoiceType(null);
+                                  const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
+                                  try {
+                                    await onInitiateCallViaLink(appt, 'audio', receiverId);
+                                  } catch (err) {
+                                    console.error('Link call error:', err);
+                                  }
+                                }}
+                              >
+                                <span className="text-blue-400 font-bold text-sm">🔗</span>
+                                <span>Call via Link</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Video Call Button */}
-                        <button
-                          className={`text-white rounded-full p-2 transition-all duration-300 shadow ${
-                            isChatSendBlocked
-                              ? 'opacity-40 cursor-not-allowed bg-black/10'
-                              : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
-                          }`}
-                          onClick={async () => {
-                            if (isChatSendBlocked) return;
-                            const receiverId = appt.buyerId._id === currentUser._id
-                              ? appt.sellerId._id
-                              : appt.buyerId._id;
+                        <div className="relative">
+                          <button
+                            className={`text-white rounded-full p-2 transition-all duration-300 shadow ${
+                              isChatSendBlocked
+                                ? 'opacity-40 cursor-not-allowed bg-black/10'
+                                : 'hover:text-gray-200 bg-white/10 hover:bg-white/20 transform hover:scale-110'
+                            }`}
+                            onClick={() => {
+                              if (isChatSendBlocked) return;
+                              setCallChoiceType(prev => prev === 'video' ? null : 'video');
+                            }}
+                            title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call Options"}
+                            aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call Options"}
+                            disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
+                          >
+                            <FaVideo className="text-sm" />
+                          </button>
 
-                            try {
-                              await onInitiateCall(appt, 'video', receiverId);
-                            } catch (err) {
-                              if (
-                                err?.name === 'NotAllowedError' ||
-                                err?.name === 'PermissionDeniedError' ||
-                                err?.isPermissionDenied ||
-                                (err?.message && (
-                                  err.message.toLowerCase().includes('permission') ||
-                                  err.message.toLowerCase().includes('forbidden') ||
-                                  err.message.toLowerCase().includes('denied')
-                                ))
-                              ) {
-                                // Smart permission detection for video calls
-                                let detectedType = 'both';
-                                try {
-                                  let micDenied = false;
-                                  let camDenied = false;
-                                  if (navigator.permissions && navigator.permissions.query) {
-                                    const micRes = await navigator.permissions.query({ name: 'microphone' }).catch(() => null);
-                                    const camRes = await navigator.permissions.query({ name: 'camera' }).catch(() => null);
-                                    if (micRes?.state === 'denied') micDenied = true;
-                                    if (camRes?.state === 'denied') camDenied = true;
+                          {/* Video Call Choice Dropdown */}
+                          {callChoiceType === 'video' && (
+                            <div className="absolute top-full right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden py-1 backdrop-blur-md">
+                              <button
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors"
+                                onClick={async () => {
+                                  setCallChoiceType(null);
+                                  const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
+                                  try {
+                                    await onInitiateCall(appt, 'video', receiverId);
+                                  } catch (err) {
+                                    if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError' || err?.isPermissionDenied) {
+                                      setMediaPermissionType('camera');
+                                      setMediaPermissionActionText('make video calls');
+                                      setShowMediaPermissionModal(true);
+                                    }
                                   }
+                                }}
+                              >
+                                <FaVideo className="text-teal-400" />
+                                <span>Direct Call</span>
+                              </button>
 
-                                  if (micDenied && !camDenied) {
-                                    detectedType = 'microphone';
-                                  } else if (camDenied && !micDenied) {
-                                    detectedType = 'camera';
-                                  } else if (micDenied && camDenied) {
-                                    detectedType = 'both';
-                                  } else {
-                                    // Fallback individual getUserMedia check
-                                    let micOk = true;
-                                    let camOk = true;
-                                    try {
-                                      const mStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                                      mStream.getTracks().forEach(t => t.stop());
-                                    } catch (e) { micOk = false; }
-
-                                    try {
-                                      const cStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                                      cStream.getTracks().forEach(t => t.stop());
-                                    } catch (e) { camOk = false; }
-
-                                    if (!micOk && camOk) detectedType = 'microphone';
-                                    else if (!camOk && micOk) detectedType = 'camera';
-                                    else detectedType = 'both';
+                              <button
+                                className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800"
+                                onClick={async () => {
+                                  setCallChoiceType(null);
+                                  const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
+                                  try {
+                                    await onInitiateCallViaLink(appt, 'video', receiverId);
+                                  } catch (err) {
+                                    console.error('Link call error:', err);
                                   }
-                                } catch (e) {
-                                  console.warn('Media permission detection fallback:', e);
-                                }
-
-                                setMediaPermissionType(detectedType);
-                                setMediaPermissionActionText('make calls');
-                                setShowMediaPermissionModal(true);
-                              }
-                            }
-                          }}
-                          title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
-                          aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
-                          disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
-                        >
-                          <FaVideo className="text-sm" />
-                        </button>
+                                }}
+                              >
+                                <span className="text-blue-400 font-bold text-sm">🔗</span>
+                                <span>Call via Link</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Chat options menu */}
@@ -10086,6 +10125,52 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                               </div>
                                             );
                                           })()}
+
+                                          {/* Call Link Card */}
+                                          {(c.type === 'call_link' || (c.message && c.message.includes('/call/'))) && (
+                                            <div className="bg-slate-900/95 text-white rounded-2xl p-4 my-2 border border-slate-700/80 shadow-xl max-w-xs backdrop-blur-md">
+                                              <div className="flex items-center gap-3 mb-2">
+                                                <div className={`p-3 rounded-full ${c.callType === 'video' ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
+                                                  {c.callType === 'video' ? <FaVideo className="text-lg" /> : <FaPhone className="text-lg" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0 text-left">
+                                                  <h4 className="font-bold text-xs text-slate-100 uppercase tracking-wider">
+                                                    {c.callType === 'video' ? 'Video Call Link' : 'Audio Call Link'}
+                                                  </h4>
+                                                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                    Click Join Call to enter the room
+                                                  </p>
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center gap-2 mt-3">
+                                                <button
+                                                  onClick={() => {
+                                                    const tokenMatch = (c.message || '').match(/\/call\/([a-zA-Z0-9-]+)/);
+                                                    const linkToken = tokenMatch ? tokenMatch[1] : '';
+                                                    if (linkToken) {
+                                                      navigate(`/call/${linkToken}`);
+                                                    } else {
+                                                      window.open(c.message, '_blank');
+                                                    }
+                                                  }}
+                                                  className="flex-1 py-2.5 px-3 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl transition-all shadow-md hover:shadow-teal-500/20 flex items-center justify-center gap-1.5"
+                                                >
+                                                  <FaPhone className="text-xs" /> Join Call
+                                                </button>
+                                                <button
+                                                  onClick={() => {
+                                                    navigator.clipboard.writeText(c.message || '');
+                                                    toast.success('Call link copied to clipboard!');
+                                                  }}
+                                                  className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition-all border border-slate-700 flex items-center justify-center gap-1"
+                                                  title="Share / Copy Link"
+                                                >
+                                                  <FaCopy />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+
                                           {/* Link Preview in Message */}
                                           {(() => {
                                             // Only show preview if it wasn't dismissed before sending

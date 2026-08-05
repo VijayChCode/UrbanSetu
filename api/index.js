@@ -1530,6 +1530,138 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ========== LINK-BASED CALL HANDLERS ==========
+
+  // Caller joins the call room and waits for receiver to join via link
+  socket.on('call-link-waiting', async ({ callId, linkToken }) => {
+    try {
+      const callerId = socket.user?._id?.toString();
+      if (!callerId) {
+        return socket.emit('call-error', { message: 'Not authenticated' });
+      }
+
+      const call = await CallHistory.findOne({ callId, linkToken });
+      if (!call) {
+        return socket.emit('call-error', { message: 'Call not found' });
+      }
+
+      if (call.callerId.toString() !== callerId) {
+        return socket.emit('call-error', { message: 'Unauthorized' });
+      }
+
+      // Check expiry
+      if (call.expiresAt && new Date() > call.expiresAt) {
+        if (call.status === 'waiting') {
+          call.status = 'cancelled';
+          await call.save();
+        }
+        return socket.emit('call-link-expired', { callId });
+      }
+
+      // Store in activeCalls map so we can track the caller's socket
+      activeCalls.set(callId, {
+        callerSocketId: socket.id,
+        callerId,
+        receiverId: call.receiverId.toString(),
+        appointmentId: call.appointmentId.toString(),
+        callType: call.callType,
+        callMode: 'link',
+        status: 'waiting',
+        callerName: socket.user?.username || 'Participant',
+        callerState: { isMuted: false, isVideoEnabled: true, isScreenSharing: false },
+        receiverState: { isMuted: false, isVideoEnabled: true, isScreenSharing: false }
+      });
+
+      // Join a room specific to this call
+      socket.join(`call_${callId}`);
+
+      socket.emit('call-link-waiting-ack', { callId, status: 'waiting' });
+      console.log(`[Link Call] Caller ${callerId} waiting in room call_${callId}`);
+    } catch (err) {
+      console.error("Error in call-link-waiting:", err);
+      socket.emit('call-error', { message: 'Failed to start waiting' });
+    }
+  });
+
+  // Receiver joins via the call link
+  socket.on('call-join-via-link', async ({ callId, linkToken }) => {
+    try {
+      const joinerId = socket.user?._id?.toString();
+      if (!joinerId) {
+        return socket.emit('call-error', { message: 'Not authenticated' });
+      }
+
+      const call = await CallHistory.findOne({ callId, linkToken });
+      if (!call) {
+        return socket.emit('call-error', { message: 'Call not found' });
+      }
+
+      // Verify joiner is the receiver
+      if (call.receiverId.toString() !== joinerId) {
+        return socket.emit('call-error', { message: 'Unauthorized — you are not the receiver of this call' });
+      }
+
+      // Check expiry
+      if (call.expiresAt && new Date() > call.expiresAt) {
+        if (call.status === 'waiting') {
+          call.status = 'cancelled';
+          await call.save();
+        }
+        return socket.emit('call-link-expired', { callId });
+      }
+
+      // Check if call is still waiting
+      if (call.status !== 'waiting') {
+        return socket.emit('call-error', { message: 'This call is no longer available' });
+      }
+
+      // Verify the caller is still connected
+      const activeCall = activeCalls.get(callId);
+      if (!activeCall) {
+        return socket.emit('call-error', { message: 'The caller has left the call' });
+      }
+
+      const startTime = new Date();
+
+      // Update DB
+      call.status = 'accepted';
+      call.startTime = startTime;
+      await call.save();
+
+      // Update activeCalls
+      activeCall.receiverSocketId = socket.id;
+      activeCall.status = 'active';
+      activeCall.startTime = startTime;
+      activeCall.receiverName = socket.user?.username || 'Participant';
+
+      // Join the call room
+      socket.join(`call_${callId}`);
+
+      // Notify the caller that the receiver has joined
+      io.to(activeCall.callerSocketId).emit('call-link-joined', {
+        callId,
+        startTime,
+        receiverName: socket.user?.username || 'Participant',
+        callType: call.callType,
+        appointmentId: call.appointmentId.toString()
+      });
+
+      // Send ack to the joiner
+      socket.emit('call-link-join-ack', {
+        callId,
+        startTime,
+        callerName: activeCall.callerName,
+        callType: call.callType,
+        appointmentId: call.appointmentId.toString()
+      });
+
+      console.log(`[Link Call] Receiver ${joinerId} joined call ${callId}`);
+    } catch (err) {
+      console.error("Error in call-join-via-link:", err);
+      socket.emit('call-error', { message: 'Failed to join call' });
+    }
+  });
+
   // Call accept handler
   socket.on('call-accept', async ({ callId }) => {
     try {

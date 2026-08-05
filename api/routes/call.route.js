@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto";
 import CallHistory from "../models/callHistory.model.js";
 import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
@@ -6,6 +7,147 @@ import { verifyToken } from '../utils/verify.js';
 import { sendCallInitiatedEmail, sendCallMissedEmail, sendCallEndedEmail, sendAdminCallTerminationEmail } from '../utils/emailService.js';
 
 const router = express.Router();
+
+// ========== LINK-BASED CALLING ==========
+
+// POST: Create a call link (generates a token)
+router.post("/create-link", verifyToken, async (req, res) => {
+  try {
+    const { appointmentId, callType } = req.body;
+    const userId = req.user.id;
+
+    if (!appointmentId || !callType) {
+      return res.status(400).json({ message: "appointmentId and callType are required" });
+    }
+
+    if (!['audio', 'video'].includes(callType)) {
+      return res.status(400).json({ message: "callType must be 'audio' or 'video'" });
+    }
+
+    // Validate appointment and authorization
+    const appointment = await Booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ message: "Unauthorized — you are not part of this appointment" });
+    }
+
+    // Determine the receiver
+    const receiverId = isBuyer ? appointment.sellerId.toString() : appointment.buyerId.toString();
+
+    // Generate secure link token
+    const linkToken = crypto.randomUUID();
+    const callId = generateCallId();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Create call record with 'waiting' status
+    const callHistory = new CallHistory({
+      callId,
+      appointmentId,
+      callerId: userId,
+      receiverId,
+      callType,
+      status: 'waiting',
+      callMode: 'link',
+      linkToken,
+      expiresAt,
+      callerIP: req.ip
+    });
+    await callHistory.save();
+
+    // Determine frontend URL
+    const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://urbansetu.com';
+    const callLink = `${frontendUrl}/call/${linkToken}`;
+
+    res.json({
+      success: true,
+      callId,
+      linkToken,
+      callLink,
+      callType,
+      appointmentId,
+      expiresAt
+    });
+  } catch (err) {
+    console.error("Error creating call link:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET: Validate a call link token
+router.get("/link/:token", verifyToken, async (req, res) => {
+  try {
+    const { token } = req.params;
+    const userId = req.user.id;
+
+    const call = await CallHistory.findOne({ linkToken: token })
+      .populate('callerId', 'username email avatar')
+      .populate('receiverId', 'username email avatar')
+      .populate('appointmentId', 'propertyName');
+
+    if (!call) {
+      return res.status(404).json({ valid: false, message: "Call link not found or invalid" });
+    }
+
+    // Check expiry
+    if (call.expiresAt && new Date() > call.expiresAt) {
+      // Mark as cancelled if still waiting
+      if (call.status === 'waiting') {
+        call.status = 'cancelled';
+        await call.save();
+      }
+      return res.status(410).json({ valid: false, message: "This call link has expired" });
+    }
+
+    // Check that the call is still joinable
+    if (!['waiting', 'accepted'].includes(call.status)) {
+      return res.status(410).json({ valid: false, message: "This call is no longer available", status: call.status });
+    }
+
+    // Verify the user is part of this appointment
+    const appointmentId = call.appointmentId?._id || call.appointmentId;
+    const appointment = await Booking.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ valid: false, message: "Associated appointment not found" });
+    }
+
+    const isBuyer = appointment.buyerId.toString() === userId;
+    const isSeller = appointment.sellerId.toString() === userId;
+
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({ valid: false, message: "You are not authorized to join this call" });
+    }
+
+    // Determine role
+    const isCaller = call.callerId?._id?.toString() === userId || call.callerId?.toString() === userId;
+
+    res.json({
+      valid: true,
+      callId: call.callId,
+      appointmentId: appointmentId.toString(),
+      callType: call.callType,
+      status: call.status,
+      isCaller,
+      callerName: call.callerId?.username || 'Participant',
+      callerAvatar: call.callerId?.avatar,
+      receiverName: call.receiverId?.username || 'Participant',
+      receiverAvatar: call.receiverId?.avatar,
+      propertyName: call.appointmentId?.propertyName,
+      callerId: (call.callerId?._id || call.callerId)?.toString(),
+      receiverId: (call.receiverId?._id || call.receiverId)?.toString(),
+      expiresAt: call.expiresAt
+    });
+  } catch (err) {
+    console.error("Error validating call link:", err);
+    res.status(500).json({ valid: false, message: "Server error" });
+  }
+});
+
 
 // Generate unique call ID
 const generateCallId = () => {

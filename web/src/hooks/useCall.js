@@ -1713,6 +1713,307 @@ export const useCall = () => {
     }
   };
 
+  // ========== LINK-BASED CALLING ==========
+
+  // Create a call link and wait for the receiver to join
+  const initiateCallViaLink = async (appointmentId, callType) => {
+    try {
+      // Check socket connection (same as initiateCall)
+      if (!socket || !socket.connected) {
+        const token = getAuthToken();
+        if (!token) {
+          toast.error('Please sign in to make calls.');
+          return null;
+        }
+        reconnectSocket();
+        toast.info('Reconnecting to server...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!socket || !socket.connected) {
+          toast.error('Failed to connect to server. Please refresh the page.');
+          return null;
+        }
+      }
+
+      // Call the API to create a link
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/calls/create-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointmentId, callType })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.message || 'Failed to create call link');
+        return null;
+      }
+
+      const data = await response.json();
+      const { callId, linkToken, callLink } = data;
+
+      return { callId, linkToken, callLink, callType, appointmentId };
+    } catch (error) {
+      console.error('Error creating call link:', error);
+      toast.error('Failed to create call link');
+      return null;
+    }
+  };
+
+  // Start waiting for receiver after navigating to the call room (caller side)
+  const startLinkCallWaiting = async (callId, linkToken, callType, appointmentId, receiverId) => {
+    try {
+      // Request fullscreen for video calls
+      if (callType === 'video') {
+        try {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(err => console.warn('Fullscreen request failed:', err));
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
+        } catch (err) {
+          console.warn('Failed to enter fullscreen:', err);
+        }
+      }
+
+      // Enumerate cameras for video calls
+      if (callType === 'video') {
+        await enumerateCameras();
+      }
+
+      // Get user media
+      const constraints = {
+        audio: true,
+        video: callType === 'video' ? (currentCameraId ? { deviceId: { exact: currentCameraId } } : true) : false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
+      localStreamRef.current = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      setActiveCall({ callId, appointmentId, receiverId, callType, callMode: 'link', linkToken });
+      setCallState('link-waiting');
+
+      // Emit to server to register in the call room
+      socket.emit('call-link-waiting', { callId, linkToken });
+
+      // Listen for the receiver to join
+      const handleLinkJoined = async (data) => {
+        if (data.callId !== callId) return;
+        socket.off('call-link-joined', handleLinkJoined);
+
+        console.log('[Link Call] Receiver joined, starting WebRTC as initiator');
+
+        // Start timer from server-provided startTime
+        if (data.startTime) {
+          const serverStart = new Date(data.startTime).getTime();
+          if (callTimerRef.current) clearInterval(callTimerRef.current);
+          callTimerRef.current = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - serverStart) / 1000);
+            setCallDuration(elapsed);
+          }, 1000);
+        }
+
+        // Create peer connection as initiator
+        const iceServers = await fetchIceServers();
+        const peer = new SimplePeer({
+          initiator: true,
+          trickle: true,
+          stream: stream,
+          config: { iceServers }
+        });
+
+        if (peer._pc) {
+          peer._pc.addEventListener('track', (event) => {
+            if (event.streams && event.streams[0]) {
+              setRemoteStream(event.streams[0]);
+            }
+          });
+        }
+
+        peer.on('signal', (signalData) => {
+          if (signalData.type === 'offer') {
+            socket.emit('webrtc-offer', { callId, offer: signalData });
+          } else if (signalData.type === 'candidate') {
+            socket.emit('ice-candidate', { callId, candidate: signalData });
+          }
+        });
+
+        peer.on('stream', (remoteStream) => {
+          setRemoteStream(remoteStream);
+        });
+
+        peer.on('connect', () => {
+          console.log('[Link Call] Peer connection established (initiator)');
+        });
+
+        peer.on('error', (err) => {
+          if (isEndingCallRef.current || (err.message && (err.message.includes('Abort') || err.message.includes('Close called')))) {
+            return;
+          }
+          console.error('Peer connection error:', err);
+          toast.error('Connection error occurred');
+          endCall();
+        });
+
+        peerRef.current = peer;
+        setupPeerConnectionMonitoring(peer);
+
+        setCallState('active');
+      };
+
+      socket.on('call-link-joined', handleLinkJoined);
+
+      // Listen for link expiry
+      const handleLinkExpired = (data) => {
+        if (data.callId !== callId) return;
+        socket.off('call-link-expired', handleLinkExpired);
+        socket.off('call-link-joined', handleLinkJoined);
+        toast.error('Call link has expired');
+        endCall();
+      };
+      socket.on('call-link-expired', handleLinkExpired);
+
+    } catch (error) {
+      console.error('Error starting link call waiting:', error);
+      setCallState(null);
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        error.isPermissionDenied = true;
+      } else {
+        toast.error('Failed to access microphone/camera. Please check permissions.');
+      }
+      throw error;
+    }
+  };
+
+  // Join a call via link token (receiver side)
+  const joinCallViaLink = async (callId, linkToken, callType, appointmentId, callerId) => {
+    try {
+      // Request fullscreen for video calls
+      if (callType === 'video') {
+        try {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(err => console.warn('Fullscreen request failed:', err));
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
+        } catch (err) {
+          console.warn('Failed to enter fullscreen:', err);
+        }
+      }
+
+      // Enumerate cameras for video calls
+      if (callType === 'video') {
+        await enumerateCameras();
+      }
+
+      // Get user media
+      const constraints = {
+        audio: true,
+        video: callType === 'video' ? (currentCameraId ? { deviceId: { exact: currentCameraId } } : true) : false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
+      localStreamRef.current = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      setActiveCall({ callId, appointmentId, receiverId: callerId, callType, callMode: 'link', linkToken });
+      setCallState('link-joining');
+
+      // Emit join to server
+      socket.emit('call-join-via-link', { callId, linkToken });
+
+      // Listen for join acknowledgment
+      const handleJoinAck = async (data) => {
+        if (data.callId !== callId) return;
+        socket.off('call-link-join-ack', handleJoinAck);
+
+        console.log('[Link Call] Join acknowledged, waiting for WebRTC offer');
+
+        // Start timer from server-provided startTime
+        if (data.startTime) {
+          const serverStart = new Date(data.startTime).getTime();
+          if (callTimerRef.current) clearInterval(callTimerRef.current);
+          callTimerRef.current = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - serverStart) / 1000);
+            setCallDuration(elapsed);
+          }, 1000);
+        }
+
+        // Create peer connection as non-initiator
+        const iceServers = await fetchIceServers();
+        const peer = new SimplePeer({
+          initiator: false,
+          trickle: true,
+          stream: stream,
+          config: { iceServers }
+        });
+
+        if (peer._pc) {
+          peer._pc.addEventListener('track', (event) => {
+            if (event.streams && event.streams[0]) {
+              setRemoteStream(event.streams[0]);
+            }
+          });
+        }
+
+        peer.on('signal', (signalData) => {
+          if (signalData.type === 'answer') {
+            socket.emit('webrtc-answer', { callId, answer: signalData });
+          } else if (signalData.type === 'candidate') {
+            socket.emit('ice-candidate', { callId, candidate: signalData });
+          }
+        });
+
+        peer.on('stream', (remoteStream) => {
+          setRemoteStream(remoteStream);
+        });
+
+        peer.on('connect', () => {
+          console.log('[Link Call] Peer connection established (joiner)');
+        });
+
+        peer.on('error', (err) => {
+          if (isEndingCallRef.current || (err.message && (err.message.includes('Abort') || err.message.includes('Close called')))) {
+            return;
+          }
+          console.error('Peer connection error:', err);
+          toast.error('Connection error occurred');
+          endCall();
+        });
+
+        // If we already have a pending offer, signal it now
+        if (pendingOfferRef.current && pendingOfferRef.current.callId === callId) {
+          peer.signal(pendingOfferRef.current.offer);
+          pendingOfferRef.current = null;
+        }
+
+        peerRef.current = peer;
+        setupPeerConnectionMonitoring(peer);
+
+        setCallState('active');
+      };
+
+      socket.on('call-link-join-ack', handleJoinAck);
+
+    } catch (error) {
+      console.error('Error joining call via link:', error);
+      setCallState(null);
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        error.isPermissionDenied = true;
+      } else {
+        toast.error('Failed to access microphone/camera. Please check permissions.');
+      }
+      throw error;
+    }
+  };
+
   // Accept incoming call
   const acceptCall = async () => {
     if (!incomingCall) return;
@@ -2650,7 +2951,11 @@ export const useCall = () => {
     preCallMuted,
     preCallVideoOff,
     setPreCallMuted,
-    setPreCallVideoOff
+    setPreCallVideoOff,
+    // Link-based calling
+    initiateCallViaLink,
+    startLinkCallWaiting,
+    joinCallViaLink
   }; // End of return
 }; // End of useCall
 
