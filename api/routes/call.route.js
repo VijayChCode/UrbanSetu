@@ -4,7 +4,7 @@ import CallHistory from "../models/callHistory.model.js";
 import Booking from "../models/booking.model.js";
 import User from "../models/user.model.js";
 import { verifyToken } from '../utils/verify.js';
-import { sendCallInitiatedEmail, sendCallMissedEmail, sendCallEndedEmail, sendAdminCallTerminationEmail } from '../utils/emailService.js';
+import { sendCallInitiatedEmail, sendCallMissedEmail, sendCallEndedEmail, sendAdminCallTerminationEmail, sendCallLinkEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -25,20 +25,29 @@ router.post("/create-link", verifyToken, async (req, res) => {
     }
 
     // Validate appointment and authorization
-    const appointment = await Booking.findById(appointmentId);
+    const appointment = await Booking.findById(appointmentId)
+      .populate('buyerId', 'username email')
+      .populate('sellerId', 'username email')
+      .populate('listingId', 'title');
+
     if (!appointment) {
       return res.status(404).json({ message: "Appointment not found" });
     }
 
-    const isBuyer = appointment.buyerId.toString() === userId;
-    const isSeller = appointment.sellerId.toString() === userId;
+    const buyerIdStr = appointment.buyerId._id ? appointment.buyerId._id.toString() : appointment.buyerId.toString();
+    const sellerIdStr = appointment.sellerId._id ? appointment.sellerId._id.toString() : appointment.sellerId.toString();
+
+    const isBuyer = buyerIdStr === userId;
+    const isSeller = sellerIdStr === userId;
 
     if (!isBuyer && !isSeller) {
       return res.status(403).json({ message: "Unauthorized — you are not part of this appointment" });
     }
 
     // Determine the receiver
-    const receiverId = isBuyer ? appointment.sellerId.toString() : appointment.buyerId.toString();
+    const receiverId = isBuyer ? sellerIdStr : buyerIdStr;
+    const callerUser = isBuyer ? appointment.buyerId : appointment.sellerId;
+    const receiverUser = isBuyer ? appointment.sellerId : appointment.buyerId;
 
     // Generate secure link token
     const linkToken = crypto.randomUUID();
@@ -63,6 +72,19 @@ router.post("/create-link", verifyToken, async (req, res) => {
     // Determine frontend URL
     const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://urbansetu.com';
     const callLink = `${frontendUrl}/call/${linkToken}`;
+
+    // Send automated email to the receiver
+    if (receiverUser && receiverUser.email) {
+      sendCallLinkEmail({
+        receiverEmail: receiverUser.email,
+        receiverName: receiverUser.username,
+        callerName: callerUser?.username || 'User',
+        propertyName: appointment.listingId?.title || 'Property Appointment',
+        callType,
+        callLink,
+        expiresAt
+      }).catch(err => console.error("Error sending automated call link email:", err));
+    }
 
     res.json({
       success: true,

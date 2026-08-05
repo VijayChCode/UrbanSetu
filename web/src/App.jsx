@@ -561,7 +561,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
     location.pathname.startsWith('/blog/') ||
     location.pathname.startsWith('/user/blog/') ||
     location.pathname.startsWith('/guide/') ||
-    location.pathname.startsWith('/user/guide/');
+    location.pathname.startsWith('/user/guide/') ||
+    location.pathname.includes('/call/');
 
   const [pendingTransfer, setPendingTransfer] = useState(null);
   const [checkingTransferUser, setCheckingTransferUser] = useState(false);
@@ -1343,7 +1344,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
       <VisitorTracker />
       <GoogleOneTap />
       <SitemapNav />
-      {!hideHeaderRoutes.includes(location.pathname) && !location.pathname.includes('/year/') && isHeaderVisible && (
+      {!hideHeaderRoutes.includes(location.pathname) && !location.pathname.includes('/year/') && !location.pathname.includes('/call/') && isHeaderVisible && (
         currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')
           ? <AdminHeader />
           : <Header />

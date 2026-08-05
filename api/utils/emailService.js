@@ -18152,3 +18152,85 @@ export const sendPropertyDeletionOTPEmail = async (email, otp, propertyName = 'P
     return createErrorResponse(error, 'property_deletion_otp');
   }
 };
+
+/**
+ * Send automated email containing call link to receiver
+ */
+export const sendCallLinkEmail = async ({
+  receiverEmail,
+  receiverName,
+  callerName,
+  propertyName,
+  callType,
+  callLink,
+  expiresAt
+}) => {
+  const isVideo = callType === 'video';
+  const typeLabel = isVideo ? 'Video Call' : 'Audio Call';
+  const headerBg = isVideo ? '#0d9488' : '#2563eb';
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: receiverEmail,
+    subject: `📞 ${callerName} is inviting you to a ${typeLabel} - UrbanSetu`,
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0f172a;">
+        <div style="background-color: #1e293b; padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); border: 1px solid #334155;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h1 style="color: #38bdf8; margin: 0; font-size: 26px; font-weight: 800;">UrbanSetu</h1>
+            <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px; font-weight: 500;">Real Estate Call Invitation</p>
+          </div>
+
+          <div style="background-color: #0f172a; padding: 24px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid ${headerBg};">
+            <h2 style="color: #f8fafc; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">
+              ${typeLabel} Invitation
+            </h2>
+            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+              Hello <strong>${receiverName || 'Valued User'}</strong>, <strong>${callerName}</strong> has created a call room link for your appointment.
+            </p>
+
+            <div style="background-color: #1e293b; padding: 16px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 20px;">
+              <p style="color: #94a3b8; font-size: 13px; margin: 0 0 6px 0;">
+                <strong style="color: #e2e8f0;">Caller:</strong> ${callerName}
+              </p>
+              ${propertyName ? `
+              <p style="color: #94a3b8; font-size: 13px; margin: 0 0 6px 0;">
+                <strong style="color: #e2e8f0;">Property:</strong> ${propertyName}
+              </p>` : ''}
+              <p style="color: #94a3b8; font-size: 13px; margin: 0 0 6px 0;">
+                <strong style="color: #e2e8f0;">Call Mode:</strong> ${typeLabel}
+              </p>
+              <p style="color: #94a3b8; font-size: 13px; margin: 0;">
+                <strong style="color: #e2e8f0;">Link Validity:</strong> 10 Minutes
+              </p>
+            </div>
+
+            <div style="text-align: center; margin: 28px 0 20px 0;">
+              <a href="${callLink}" target="_blank" style="display: inline-block; background-color: ${headerBg}; color: #ffffff; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+                👉 Join ${typeLabel} Room
+              </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 12px; word-break: break-all; margin: 16px 0 0 0; text-align: center;">
+              Or copy this link to your browser:<br/>
+              <a href="${callLink}" style="color: #38bdf8; text-decoration: underline;">${callLink}</a>
+            </p>
+          </div>
+
+          <div style="text-align: center; padding-top: 16px; border-top: 1px solid #334155;">
+            <p style="color: #64748b; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    return await sendEmailWithRetry(mailOptions);
+  } catch (error) {
+    console.error('Error sending call link email:', error);
+    return { success: false, error: error.message };
+  }
+};
