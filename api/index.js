@@ -1145,7 +1145,7 @@ io.on('connection', (socket) => {
             appointmentId: activeCall.appointmentId,
             role,
             callType: activeCall.callType,
-            startTime: activeCall.startTime.getTime(),
+            startTime: activeCall.startTime ? (typeof activeCall.startTime.getTime === 'function' ? activeCall.startTime.getTime() : new Date(activeCall.startTime).getTime()) : Date.now(),
             callerId: activeCall.callerId,
             receiverId: activeCall.receiverId,
             callerName: activeCall.callerName,
