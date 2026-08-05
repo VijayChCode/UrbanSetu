@@ -8804,8 +8804,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               if (isChatSendBlocked) return;
                               setCallChoiceType(prev => prev === 'audio' ? null : 'audio');
                             }}
-                            title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call Options"}
-                            aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call Options"}
+                            title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
+                            aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Audio Call"}
                             disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
                           >
                             <FaPhone className="text-sm" />
@@ -8822,7 +8822,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   try {
                                     await onInitiateCall(appt, 'audio', receiverId);
                                   } catch (err) {
-                                    if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError' || err?.isPermissionDenied) {
+                                    if (
+                                      err?.name === 'NotAllowedError' ||
+                                      err?.name === 'PermissionDeniedError' ||
+                                      err?.isPermissionDenied ||
+                                      (err?.message && (
+                                        err.message.toLowerCase().includes('permission') ||
+                                        err.message.toLowerCase().includes('forbidden') ||
+                                        err.message.toLowerCase().includes('denied')
+                                      ))
+                                    ) {
                                       setMediaPermissionType('microphone');
                                       setMediaPermissionActionText('make calls');
                                       setShowMediaPermissionModal(true);
@@ -8842,7 +8851,20 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   try {
                                     await onInitiateCallViaLink(appt, 'audio', receiverId);
                                   } catch (err) {
-                                    console.error('Link call error:', err);
+                                    if (
+                                      err?.name === 'NotAllowedError' ||
+                                      err?.name === 'PermissionDeniedError' ||
+                                      err?.isPermissionDenied ||
+                                      (err?.message && (
+                                        err.message.toLowerCase().includes('permission') ||
+                                        err.message.toLowerCase().includes('forbidden') ||
+                                        err.message.toLowerCase().includes('denied')
+                                      ))
+                                    ) {
+                                      setMediaPermissionType('microphone');
+                                      setMediaPermissionActionText('make calls');
+                                      setShowMediaPermissionModal(true);
+                                    }
                                   }
                                 }}
                               >
@@ -8865,8 +8887,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               if (isChatSendBlocked) return;
                               setCallChoiceType(prev => prev === 'video' ? null : 'video');
                             }}
-                            title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call Options"}
-                            aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call Options"}
+                            title={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
+                            aria-label={isChatSendBlocked ? "Calling disabled for this appointment status" : "Video Call"}
                             disabled={callState === 'active' || callState === 'ringing' || isChatSendBlocked}
                           >
                             <FaVideo className="text-sm" />
@@ -8883,9 +8905,56 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   try {
                                     await onInitiateCall(appt, 'video', receiverId);
                                   } catch (err) {
-                                    if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError' || err?.isPermissionDenied) {
-                                      setMediaPermissionType('camera');
-                                      setMediaPermissionActionText('make video calls');
+                                    if (
+                                      err?.name === 'NotAllowedError' ||
+                                      err?.name === 'PermissionDeniedError' ||
+                                      err?.isPermissionDenied ||
+                                      (err?.message && (
+                                        err.message.toLowerCase().includes('permission') ||
+                                        err.message.toLowerCase().includes('forbidden') ||
+                                        err.message.toLowerCase().includes('denied')
+                                      ))
+                                    ) {
+                                      let detectedType = 'both';
+                                      try {
+                                        let micDenied = false;
+                                        let camDenied = false;
+                                        if (navigator.permissions && navigator.permissions.query) {
+                                          const micRes = await navigator.permissions.query({ name: 'microphone' }).catch(() => null);
+                                          const camRes = await navigator.permissions.query({ name: 'camera' }).catch(() => null);
+                                          if (micRes?.state === 'denied') micDenied = true;
+                                          if (camRes?.state === 'denied') camDenied = true;
+                                        }
+
+                                        if (micDenied && !camDenied) {
+                                          detectedType = 'microphone';
+                                        } else if (camDenied && !micDenied) {
+                                          detectedType = 'camera';
+                                        } else if (micDenied && camDenied) {
+                                          detectedType = 'both';
+                                        } else {
+                                          let micOk = true;
+                                          let camOk = true;
+                                          try {
+                                            const mStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                            mStream.getTracks().forEach(t => t.stop());
+                                          } catch (e) { micOk = false; }
+
+                                          try {
+                                            const cStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                                            cStream.getTracks().forEach(t => t.stop());
+                                          } catch (e) { camOk = false; }
+
+                                          if (!micOk && camOk) detectedType = 'microphone';
+                                          else if (!camOk && micOk) detectedType = 'camera';
+                                          else detectedType = 'both';
+                                        }
+                                      } catch (e) {
+                                        console.warn('Media permission detection fallback:', e);
+                                      }
+
+                                      setMediaPermissionType(detectedType);
+                                      setMediaPermissionActionText('make calls');
                                       setShowMediaPermissionModal(true);
                                     }
                                   }
@@ -8903,7 +8972,58 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   try {
                                     await onInitiateCallViaLink(appt, 'video', receiverId);
                                   } catch (err) {
-                                    console.error('Link call error:', err);
+                                    if (
+                                      err?.name === 'NotAllowedError' ||
+                                      err?.name === 'PermissionDeniedError' ||
+                                      err?.isPermissionDenied ||
+                                      (err?.message && (
+                                        err.message.toLowerCase().includes('permission') ||
+                                        err.message.toLowerCase().includes('forbidden') ||
+                                        err.message.toLowerCase().includes('denied')
+                                      ))
+                                    ) {
+                                      let detectedType = 'both';
+                                      try {
+                                        let micDenied = false;
+                                        let camDenied = false;
+                                        if (navigator.permissions && navigator.permissions.query) {
+                                          const micRes = await navigator.permissions.query({ name: 'microphone' }).catch(() => null);
+                                          const camRes = await navigator.permissions.query({ name: 'camera' }).catch(() => null);
+                                          if (micRes?.state === 'denied') micDenied = true;
+                                          if (camRes?.state === 'denied') camDenied = true;
+                                        }
+
+                                        if (micDenied && !camDenied) {
+                                          detectedType = 'microphone';
+                                        } else if (camDenied && !micDenied) {
+                                          detectedType = 'camera';
+                                        } else if (micDenied && camDenied) {
+                                          detectedType = 'both';
+                                        } else {
+                                          let micOk = true;
+                                          let camOk = true;
+                                          try {
+                                            const mStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                            mStream.getTracks().forEach(t => t.stop());
+                                          } catch (e) { micOk = false; }
+
+                                          try {
+                                            const cStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                                            cStream.getTracks().forEach(t => t.stop());
+                                          } catch (e) { camOk = false; }
+
+                                          if (!micOk && camOk) detectedType = 'microphone';
+                                          else if (!camOk && micOk) detectedType = 'camera';
+                                          else detectedType = 'both';
+                                        }
+                                      } catch (e) {
+                                        console.warn('Media permission detection fallback:', e);
+                                      }
+
+                                      setMediaPermissionType(detectedType);
+                                      setMediaPermissionActionText('make calls');
+                                      setShowMediaPermissionModal(true);
+                                    }
                                   }
                                 }}
                               >
