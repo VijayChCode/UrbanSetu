@@ -33,6 +33,7 @@ const CallHistory = () => {
 
   // Filters
   const [activeTab, setActiveTab] = useState('all'); // all, audio, video
+  const [modeFilter, setModeFilter] = useState('all'); // all, direct, link
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // all, missed, accepted, ended, rejected
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -51,11 +52,11 @@ const CallHistory = () => {
   useEffect(() => {
     // Reset to first page when filtering
     setCurrentPage(1);
-  }, [activeTab, search, statusFilter, dateRange]);
+  }, [activeTab, modeFilter, search, statusFilter, dateRange]);
 
   useEffect(() => {
     applyFiltersAndPagination();
-  }, [allCalls, activeTab, search, statusFilter, dateRange, currentPage]);
+  }, [allCalls, activeTab, modeFilter, search, statusFilter, dateRange, currentPage]);
 
   const fetchCallHistory = async () => {
     try {
@@ -85,6 +86,13 @@ const CallHistory = () => {
       filtered = filtered.filter(call => call.callType === 'audio');
     } else if (activeTab === 'video') {
       filtered = filtered.filter(call => call.callType === 'video');
+    }
+
+    // Mode Filter (Direct vs Link)
+    if (modeFilter === 'link') {
+      filtered = filtered.filter(call => call.callMode === 'link' || !!call.linkToken);
+    } else if (modeFilter === 'direct') {
+      filtered = filtered.filter(call => call.callMode !== 'link' && !call.linkToken);
     }
 
     // Status Filter
@@ -224,25 +232,49 @@ const CallHistory = () => {
         {/* Filters & Search */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 space-y-4 transition-colors duration-200">
           {/* Tabs */}
-          <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg w-fit">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'all' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-            >
-              All Calls
-            </button>
-            <button
-              onClick={() => setActiveTab('audio')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'audio' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-            >
-              Audio
-            </button>
-            <button
-              onClick={() => setActiveTab('video')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'video' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-            >
-              Video
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg w-fit">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'all' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              >
+                All Calls
+              </button>
+              <button
+                onClick={() => setActiveTab('audio')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'audio' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              >
+                Audio
+              </button>
+              <button
+                onClick={() => setActiveTab('video')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'video' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              >
+                Video
+              </button>
+            </div>
+
+            {/* Mode Filter */}
+            <div className="flex p-1 bg-gray-100 dark:bg-gray-900 rounded-lg w-fit">
+              <button
+                onClick={() => setModeFilter('all')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${modeFilter === 'all' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              >
+                All Modes
+              </button>
+              <button
+                onClick={() => setModeFilter('direct')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${modeFilter === 'direct' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              >
+                📞 Direct Calls
+              </button>
+              <button
+                onClick={() => setModeFilter('link')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${modeFilter === 'link' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+              >
+                🔗 Link Calls
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -308,7 +340,7 @@ const CallHistory = () => {
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">No calls found</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto mt-1">
-              {statusFilter !== 'all' || search || activeTab !== 'all' ? 'Try adjusting your filters.' : 'Your call history will appear here once you make or receive calls.'}
+              {statusFilter !== 'all' || search || activeTab !== 'all' || modeFilter !== 'all' ? 'Try adjusting your filters.' : 'Your call history will appear here once you make or receive calls.'}
             </p>
           </div>
         ) : (
@@ -326,29 +358,40 @@ const CallHistory = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {calls.map((call, index) => (
-                    <tr
-                      key={call._id}
-                      className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
-                      style={{ animation: `fadeIn 0.2s ease-out ${index * 0.03}s backwards` }}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className={`p-2 rounded-lg ${call.callType === 'video' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'}`}>
-                            {call.callType === 'video' ? <FaVideo /> : <FaPhone />}
+                  {calls.map((call, index) => {
+                    const isLinkCall = call.callMode === 'link' || !!call.linkToken;
+                    return (
+                      <tr
+                        key={call._id}
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
+                        style={{ animation: `fadeIn 0.2s ease-out ${index * 0.03}s backwards` }}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className={`p-2 rounded-lg ${call.callType === 'video' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'}`}>
+                              {call.callType === 'video' ? <FaVideo /> : <FaPhone />}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {call.callerId?.username || 'Unknown'} <span className="text-gray-400">→</span> {call.receiverId?.username || 'Unknown'}
-                          </span>
-                          {call.appointmentId?.propertyName && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{call.appointmentId.propertyName}</span>
-                          )}
-                        </div>
-                      </td>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {call.callerId?.username || 'Unknown'} <span className="text-gray-400">→</span> {call.receiverId?.username || 'Unknown'}
+                              </span>
+                              <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md flex items-center gap-1 ${
+                                isLinkCall
+                                  ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                  : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                              }`}>
+                                {isLinkCall ? '🔗 Link Call' : '📞 Direct Call'}
+                              </span>
+                            </div>
+                            {call.appointmentId?.propertyName && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{call.appointmentId.propertyName}</span>
+                            )}
+                          </div>
+                        </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex flex-col">
                           <span>{new Date(call.startTime).toLocaleDateString(undefined, {
@@ -385,8 +428,9 @@ const CallHistory = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  );
+                })}
+              </tbody>
               </table>
             </div>
           </div>

@@ -33,6 +33,7 @@ const AdminCallHistory = () => {
   // Filters
   const [search, setSearch] = useState('');
   const [callType, setCallType] = useState('all');
+  const [callMode, setCallMode] = useState('all'); // 'all', 'direct', 'link'
   const [status, setStatus] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
@@ -45,7 +46,7 @@ const AdminCallHistory = () => {
 
   useEffect(() => {
     applyFiltersAndPagination();
-  }, [allCalls, search, callType, status, dateRange, currentPage]);
+  }, [allCalls, search, callType, callMode, status, dateRange, currentPage]);
 
   const fetchAllCallHistory = async () => {
     try {
@@ -71,6 +72,12 @@ const AdminCallHistory = () => {
 
     if (callType !== 'all') {
       filtered = filtered.filter(call => call.callType === callType);
+    }
+
+    if (callMode === 'link') {
+      filtered = filtered.filter(call => call.callMode === 'link' || !!call.linkToken);
+    } else if (callMode === 'direct') {
+      filtered = filtered.filter(call => call.callMode !== 'link' && !call.linkToken);
     }
 
     if (status !== 'all') {
@@ -105,6 +112,8 @@ const AdminCallHistory = () => {
   const getFilteredTotal = () => {
     let filtered = allCalls;
     if (callType !== 'all') filtered = filtered.filter(call => call.callType === callType);
+    if (callMode === 'link') filtered = filtered.filter(call => call.callMode === 'link' || !!call.linkToken);
+    else if (callMode === 'direct') filtered = filtered.filter(call => call.callMode !== 'link' && !call.linkToken);
     if (status !== 'all') filtered = filtered.filter(call => call.status === status);
     if (search.trim()) {
       const query = search.toLowerCase();
@@ -210,6 +219,19 @@ const AdminCallHistory = () => {
               </select>
             </div>
 
+            {/* Mode */}
+            <div className="md:col-span-2 relative">
+              <select
+                value={callMode}
+                onChange={(e) => setCallMode(e.target.value)}
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm cursor-pointer dark:text-white"
+              >
+                <option value="all">All Modes</option>
+                <option value="direct">Direct Calls</option>
+                <option value="link">Link Calls</option>
+              </select>
+            </div>
+
             {/* Status */}
             <div className="md:col-span-2 relative">
               <select
@@ -225,7 +247,7 @@ const AdminCallHistory = () => {
             </div>
 
             {/* Date Range */}
-            <div className="md:col-span-4 flex gap-2">
+            <div className="md:col-span-3 flex gap-2">
               <input
                 type="date"
                 value={dateRange.start}
@@ -262,7 +284,7 @@ const AdminCallHistory = () => {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50/50 dark:bg-gray-700/50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type & Mode</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Caller</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Receiver</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Property</th>
@@ -272,19 +294,28 @@ const AdminCallHistory = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {visibleCalls.map((call, index) => (
-                    <tr
-                      key={call._id}
-                      className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
-                      style={{ animation: `fadeIn 0.2s ease-out ${index * 0.03}s backwards` }}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className={`p-2 rounded-lg ${call.callType === 'video' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'}`}>
-                            {call.callType === 'video' ? <FaVideo /> : <FaPhone />}
+                  {visibleCalls.map((call, index) => {
+                    const isLinkCall = call.callMode === 'link' || !!call.linkToken;
+                    return (
+                      <tr
+                        key={call._id}
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
+                        style={{ animation: `fadeIn 0.2s ease-out ${index * 0.03}s backwards` }}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className={`p-2 rounded-lg ${call.callType === 'video' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'}`}>
+                              {call.callType === 'video' ? <FaVideo /> : <FaPhone />}
+                            </div>
+                            <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md flex items-center gap-1 ${
+                              isLinkCall
+                                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                            }`}>
+                              {isLinkCall ? '🔗 Link' : '📞 Direct'}
+                            </span>
                           </div>
-                        </div>
-                      </td>
+                        </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{call.callerId?.username || 'Unknown'}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">{call.callerId?.email}</div>
@@ -311,8 +342,9 @@ const AdminCallHistory = () => {
                         </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  );
+                })}
+              </tbody>
               </table>
             </div>
           )}

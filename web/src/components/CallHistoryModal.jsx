@@ -18,6 +18,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
   // Filters
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterMode, setFilterMode] = useState('all'); // 'all', 'direct', 'link'
 
   useEffect(() => {
     if (isOpen && appointmentId) {
@@ -28,6 +29,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
       // Reset filters on close/open
       setFilterType('all');
       setFilterStatus('all');
+      setFilterMode('all');
     }
   }, [isOpen, appointmentId]);
 
@@ -44,6 +46,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
         // Reset filters when data is refreshed
         setFilterType('all');
         setFilterStatus('all');
+        setFilterMode('all');
       }
     } catch (err) {
       console.error('Error fetching call history:', err);
@@ -101,11 +104,16 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
       const matchesType = filterType === 'all' || call.callType === filterType;
       const matchesStatus = filterStatus === 'all' ||
         (filterStatus === 'ended' && (call.status === 'ended' || call.status === 'accepted')) ||
-        (filterStatus === 'missed' && (call.status === 'missed' || call.status === 'rejected' || call.status === 'cancelled'));
+        (filterStatus === 'missed' && (call.status === 'missed' || call.status === 'rejected' || call.status === 'cancelled' || call.status === 'waiting'));
 
-      return matchesType && matchesStatus;
+      const isLink = call.callMode === 'link' || !!call.linkToken;
+      const matchesMode = filterMode === 'all' ||
+        (filterMode === 'link' && isLink) ||
+        (filterMode === 'direct' && !isLink);
+
+      return matchesType && matchesStatus && matchesMode;
     });
-  }, [calls, filterType, filterStatus]);
+  }, [calls, filterType, filterStatus, filterMode]);
 
   const formatDuration = (seconds) => {
     if (!seconds || seconds === 0) return 'N/A';
@@ -246,11 +254,22 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
             <option value="missed">Missed/Rejected</option>
           </select>
 
-          {(filterType !== 'all' || filterStatus !== 'all') && (
+          <select
+            value={filterMode}
+            onChange={(e) => setFilterMode(e.target.value)}
+            className="px-3 py-1.5 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md text-sm text-gray-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+          >
+            <option value="all">All Modes</option>
+            <option value="direct">Direct Calls</option>
+            <option value="link">Link Calls</option>
+          </select>
+
+          {(filterType !== 'all' || filterStatus !== 'all' || filterMode !== 'all') && (
             <button
               onClick={() => {
                 setFilterType('all');
                 setFilterStatus('all');
+                setFilterMode('all');
               }}
               className="px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors ml-auto"
             >
@@ -297,6 +316,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
                 const isCaller = call.callerId?._id === currentUser?._id || call.callerId === currentUser?._id;
                 const callerName = typeof call.callerId === 'object' ? call.callerId?.username : 'Unknown';
                 const receiverName = typeof call.receiverId === 'object' ? call.receiverId?.username : 'Unknown';
+                const isLinkCall = call.callMode === 'link' || !!call.linkToken;
 
                 return (
                   <div
@@ -317,7 +337,7 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
 
                         {/* Call Details */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="font-semibold text-gray-800 dark:text-white">
                               {isAdmin
                                 ? `${callerName} → ${receiverName}`
@@ -326,8 +346,15 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
                                   : `${callerName} called you`
                               }
                             </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                               {call.callType === 'video' ? 'Video' : 'Audio'}
+                            </span>
+                            <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md flex items-center gap-1 ${
+                              isLinkCall
+                                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                            }`}>
+                              {isLinkCall ? '🔗 Link Call' : '📞 Direct Call'}
                             </span>
                           </div>
 
