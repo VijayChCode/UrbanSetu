@@ -179,9 +179,52 @@ export default function MyAppointments() {
   const { settings, updateSetting } = useChatSettings('myappointments_chat_settings');
   const [showChatSettings, setShowChatSettings] = useState(false);
 
-  // Compute theme colors and dark mode from settings
+  // Compute theme colors and dark mode from settings & app global theme
   const themeColors = useMemo(() => getThemeColors(settings.themeColor || 'blue'), [settings.themeColor]);
-  const isDarkMode = settings.theme === 'dark';
+  
+  const [globalTheme, setGlobalTheme] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('theme') || 'system' : 'system'));
+
+  useEffect(() => {
+    const handleThemeChange = (e) => {
+      if (e?.detail?.theme) {
+        setGlobalTheme(e.detail.theme);
+      } else {
+        setGlobalTheme(localStorage.getItem('theme') || 'system');
+      }
+    };
+
+    window.addEventListener('theme-change', handleThemeChange);
+    window.addEventListener('storage', handleThemeChange);
+
+    const observer = new MutationObserver(() => {
+      setGlobalTheme(localStorage.getItem('theme') || 'system');
+    });
+    if (typeof document !== 'undefined') {
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    return () => {
+      window.removeEventListener('theme-change', handleThemeChange);
+      window.removeEventListener('storage', handleThemeChange);
+      observer.disconnect();
+    };
+  }, []);
+
+  const isDarkMode = useMemo(() => {
+    if (settings?.theme === 'dark') return true;
+    if (settings?.theme === 'light') return false;
+    if (globalTheme === 'dark') return true;
+    if (globalTheme === 'light') return false;
+    const isDocDark = typeof document !== 'undefined' && (
+      document.documentElement.classList.contains('dark') || 
+      document.body.classList.contains('dark')
+    );
+    if (isDocDark) return true;
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  }, [settings?.theme, globalTheme]);
 
   // Handle initiate call (Direct)
   const handleInitiateCall = async (appointment, callType, receiverId) => {
@@ -283,7 +326,7 @@ export default function MyAppointments() {
   }, []);
 
   // Handle "Call via Link" button click — checks cache, opens modal
-  const handleCallViaLinkClick = useCallback(async (appt, callType) => {
+  const handleCallViaLinkClick = useCallback(async (appt, callType, onComplete) => {
     if (generatingLinkType) return;
     setLinkCopied(false);
 
@@ -293,10 +336,11 @@ export default function MyAppointments() {
       setLinkModalData(cached);
       startCountdown(cached.expiresAt);
       setShowLinkModal(true);
+      if (onComplete) onComplete();
       return;
     }
 
-    // No cached link — generate new one
+    // No cached link — generate new one (showing loading spinner on button)
     setGeneratingLinkType(callType);
 
     try {
@@ -313,6 +357,7 @@ export default function MyAppointments() {
       toast.error('Failed to generate call link');
     } finally {
       setGeneratingLinkType(null);
+      if (onComplete) onComplete();
     }
   }, [generatingLinkType, currentUser, getCachedLink, setCachedLink, startCountdown]);
 
@@ -9246,7 +9291,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                               <button
                                 className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800 disabled:opacity-75 disabled:cursor-not-allowed"
-                                onClick={() => { setCallChoiceType(null); handleCallViaLinkClick(appt, 'audio'); }}
+                                onClick={() => handleCallViaLinkClick(appt, 'audio', () => setCallChoiceType(null))}
                                 disabled={generatingLinkType === 'audio'}
                               >
                                 {generatingLinkType === 'audio' ? (
@@ -9356,7 +9401,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                               <button
                                 className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800 disabled:opacity-75 disabled:cursor-not-allowed"
-                                onClick={() => { setCallChoiceType(null); handleCallViaLinkClick(appt, 'video'); }}
+                                onClick={() => handleCallViaLinkClick(appt, 'video', () => setCallChoiceType(null))}
                                 disabled={generatingLinkType === 'video'}
                               >
                                 {generatingLinkType === 'video' ? (
