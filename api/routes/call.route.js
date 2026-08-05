@@ -69,8 +69,8 @@ router.post("/create-link", verifyToken, async (req, res) => {
     });
     await callHistory.save();
 
-    // Determine frontend URL
-    const frontendUrl = process.env.FRONTEND_URL || req.headers.origin || 'https://urbansetu.com';
+    // Determine frontend URL (primary: FRONTEND_URL env, fallback: production Vercel URL)
+    const frontendUrl = process.env.FRONTEND_URL || 'https://urbansetu.vercel.app';
     const callLink = `${frontendUrl}/call/${linkToken}`;
 
     // Send automated email to the receiver
