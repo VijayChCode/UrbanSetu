@@ -49,9 +49,9 @@ const callHistorySchema = new mongoose.Schema({
   callerDevice: String, // Browser, mobile app, etc.
   receiverDevice: String,
   endedBy: { 
-    type: mongoose.Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.Mixed, 
     ref: 'User' 
-  }, // Who ended the call
+  }, // Who ended the call (User ObjectId or string like 'system', 'caller-disconnected')
   // Admin notes
   adminNotes: String,
   createdAt: { type: Date, default: Date.now },

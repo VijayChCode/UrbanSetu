@@ -198,38 +198,34 @@ export default function MyAppointments() {
     }
   };
 
-  // Handle initiate call via Link
+  // Handle initiate call via Link — returns link data for the modal (no auto-send or navigate)
   const handleInitiateCallViaLink = async (appointment, callType, receiverId) => {
     if (!appointment || !appointment._id) {
       toast.error('Appointment not found');
-      return;
+      return null;
     }
 
     try {
       const res = await initiateCallViaLink(appointment._id, callType);
       if (res && res.linkToken) {
         const actualCallType = res.callType || callType;
-        // Build the call link using the current frontend origin (ensures correct URL on any deployment)
         const callLink = `${window.location.origin}/call/${actualCallType}/${res.linkToken}`;
-
-        // Automatically send the link as a chat comment/message
-        await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appointment._id}/comment`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: callLink,
-            type: 'call_link',
-            callType: actualCallType,
-            callId: res.callId
-          })
-        });
-
-        // Navigate caller to the CallRoom page
-        navigate(`/call/${actualCallType}/${res.linkToken}`);
+        return {
+          callLink,
+          callType: actualCallType,
+          callId: res.callId,
+          linkToken: res.linkToken,
+          appointmentId: appointment._id,
+          expiresAt: Date.now() + 10 * 60 * 1000,
+          sentToChat: false,
+          createdAt: Date.now()
+        };
       }
+      return null;
     } catch (error) {
       console.error('Error initiating call via link:', error);
       toast.error('Failed to create call link');
+      return null;
     }
   };
 
@@ -1596,6 +1592,7 @@ export default function MyAppointments() {
                       // Call History Modal props
                       setShowCallHistoryModal={setShowCallHistoryModal}
                       setCallHistoryAppointmentId={setCallHistoryAppointmentId}
+                      isDarkMode={isDarkMode}
                     />
                   ))}
                 </tbody>
@@ -1686,6 +1683,7 @@ export default function MyAppointments() {
                       // Call History Modal props
                       setShowCallHistoryModal={setShowCallHistoryModal}
                       setCallHistoryAppointmentId={setCallHistoryAppointmentId}
+                      isDarkMode={isDarkMode}
                     />
                   ))}
                 </tbody>
@@ -2240,7 +2238,7 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId, isDarkMode }) {
   // Camera modal state - moved to main MyAppointments component
   const navigate = useNavigate();
   const params = useParams();
@@ -2258,6 +2256,187 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [showChatModal, setShowChatModal] = useState(false);
   const [imageErrorMap, setImageErrorMap] = useState({});
   const [callChoiceType, setCallChoiceType] = useState(null); // 'audio' | 'video' | null
+
+  // ========== Call via Link Modal State ==========
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkModalData, setLinkModalData] = useState(null);
+  const [linkModalLoading, setLinkModalLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const activeLinkCacheRef = useRef({});
+  const linkCountdownRef = useRef(null);
+  const [linkTimeLeft, setLinkTimeLeft] = useState(0); // seconds remaining
+
+  // Link cache helpers
+  const getCachedLink = useCallback((appointmentId, callType) => {
+    const key = `${appointmentId}_${callType}`;
+    const cached = activeLinkCacheRef.current[key];
+    if (cached && cached.expiresAt > Date.now()) return cached;
+    if (cached) delete activeLinkCacheRef.current[key];
+    return null;
+  }, []);
+
+  const setCachedLink = useCallback((appointmentId, callType, data) => {
+    activeLinkCacheRef.current[`${appointmentId}_${callType}`] = data;
+  }, []);
+
+  const markLinkSent = useCallback((appointmentId, callType) => {
+    const key = `${appointmentId}_${callType}`;
+    if (activeLinkCacheRef.current[key]) {
+      activeLinkCacheRef.current[key].sentToChat = true;
+    }
+  }, []);
+
+  const clearCachedLink = useCallback((appointmentId, callType) => {
+    delete activeLinkCacheRef.current[`${appointmentId}_${callType}`];
+  }, []);
+
+  // Start countdown timer when modal opens
+  const startCountdown = useCallback((expiresAt) => {
+    if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
+    const update = () => {
+      const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+      setLinkTimeLeft(remaining);
+      if (remaining <= 0 && linkCountdownRef.current) {
+        clearInterval(linkCountdownRef.current);
+      }
+    };
+    update();
+    linkCountdownRef.current = setInterval(update, 1000);
+  }, []);
+
+  // Cleanup countdown on unmount
+  useEffect(() => {
+    return () => { if (linkCountdownRef.current) clearInterval(linkCountdownRef.current); };
+  }, []);
+
+  // Handle "Call via Link" button click — checks cache, opens modal
+  const handleCallViaLinkClick = useCallback(async (callType) => {
+    setCallChoiceType(null);
+    setLinkCopied(false);
+
+    // Check cache first
+    const cached = getCachedLink(appt._id, callType);
+    if (cached) {
+      setLinkModalData(cached);
+      startCountdown(cached.expiresAt);
+      setShowLinkModal(true);
+      return;
+    }
+
+    // No cached link — generate new one
+    setLinkModalLoading(true);
+    setLinkModalData(null);
+    setShowLinkModal(true);
+
+    try {
+      const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
+      const result = await onInitiateCallViaLink(appt, callType, receiverId);
+      if (result) {
+        setCachedLink(appt._id, callType, result);
+        setLinkModalData(result);
+        startCountdown(result.expiresAt);
+      } else {
+        setShowLinkModal(false);
+      }
+    } catch (err) {
+      console.error('Error generating call link:', err);
+      toast.error('Failed to generate call link');
+      setShowLinkModal(false);
+    } finally {
+      setLinkModalLoading(false);
+    }
+  }, [appt, currentUser, onInitiateCallViaLink, getCachedLink, setCachedLink, startCountdown]);
+
+  // Join call (navigate to CallRoom without sending to chat)
+  const handleLinkModalJoin = useCallback(() => {
+    if (!linkModalData) return;
+    if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
+    setShowLinkModal(false);
+    navigate(`/call/${linkModalData.callType}/${linkModalData.linkToken}`);
+  }, [linkModalData, navigate]);
+
+  // Send link to chat (shared helper)
+  const sendLinkToChat = useCallback(async () => {
+    if (!linkModalData || linkModalData.sentToChat) return false;
+    try {
+      await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: linkModalData.callLink,
+          type: 'call_link',
+          callType: linkModalData.callType,
+          callId: linkModalData.callId
+        })
+      });
+      markLinkSent(appt._id, linkModalData.callType);
+      setLinkModalData(prev => prev ? { ...prev, sentToChat: true } : prev);
+      return true;
+    } catch (err) {
+      console.error('Error sending link to chat:', err);
+      toast.error('Failed to send link to chat');
+      return false;
+    }
+  }, [linkModalData, appt._id, markLinkSent]);
+
+  // Send link to chat AND join
+  const handleLinkModalSendAndJoin = useCallback(async () => {
+    if (!linkModalData) return;
+    if (!linkModalData.sentToChat) await sendLinkToChat();
+    if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
+    setShowLinkModal(false);
+    navigate(`/call/${linkModalData.callType}/${linkModalData.linkToken}`);
+  }, [linkModalData, sendLinkToChat, navigate]);
+
+  // Send link to chat only (stay on page)
+  const handleLinkModalSendOnly = useCallback(async () => {
+    if (!linkModalData || linkModalData.sentToChat) return;
+    const success = await sendLinkToChat();
+    if (success) toast.success('Call link sent to chat!');
+  }, [linkModalData, sendLinkToChat]);
+
+  // Generate new link (when expired)
+  const handleLinkModalGenerateNew = useCallback(async () => {
+    if (!linkModalData) return;
+    clearCachedLink(appt._id, linkModalData.callType);
+    setLinkModalData(null);
+    setLinkModalLoading(true);
+    setLinkCopied(false);
+    try {
+      const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
+      const result = await onInitiateCallViaLink(appt, linkModalData.callType, receiverId);
+      if (result) {
+        setCachedLink(appt._id, linkModalData.callType, result);
+        setLinkModalData(result);
+        startCountdown(result.expiresAt);
+      } else {
+        setShowLinkModal(false);
+      }
+    } catch (err) {
+      console.error('Error regenerating call link:', err);
+      toast.error('Failed to generate new link');
+      setShowLinkModal(false);
+    } finally {
+      setLinkModalLoading(false);
+    }
+  }, [linkModalData, appt, currentUser, clearCachedLink, onInitiateCallViaLink, setCachedLink, startCountdown]);
+
+  // Copy link to clipboard
+  const handleCopyLink = useCallback(() => {
+    if (!linkModalData?.callLink) return;
+    navigator.clipboard.writeText(linkModalData.callLink).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => toast.error('Failed to copy'));
+  }, [linkModalData]);
+
+  // Close link modal
+  const handleCloseLinkModal = useCallback(() => {
+    if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
+    setShowLinkModal(false);
+    setLinkModalLoading(false);
+    setLinkCopied(false);
+  }, []);
 
   useEffect(() => {
     if (showChatModal) {
@@ -8849,28 +9028,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                               <button
                                 className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800"
-                                onClick={async () => {
-                                  setCallChoiceType(null);
-                                  const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
-                                  try {
-                                    await onInitiateCallViaLink(appt, 'audio', receiverId);
-                                  } catch (err) {
-                                    if (
-                                      err?.name === 'NotAllowedError' ||
-                                      err?.name === 'PermissionDeniedError' ||
-                                      err?.isPermissionDenied ||
-                                      (err?.message && (
-                                        err.message.toLowerCase().includes('permission') ||
-                                        err.message.toLowerCase().includes('forbidden') ||
-                                        err.message.toLowerCase().includes('denied')
-                                      ))
-                                    ) {
-                                      setMediaPermissionType('microphone');
-                                      setMediaPermissionActionText('make calls');
-                                      setShowMediaPermissionModal(true);
-                                    }
-                                  }
-                                }}
+                                onClick={() => handleCallViaLinkClick('audio')}
                               >
                                 <span className="text-blue-400 font-bold text-sm">🔗</span>
                                 <span>Call via Link</span>
@@ -8970,66 +9128,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                               <button
                                 className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition-colors border-t border-slate-800"
-                                onClick={async () => {
-                                  setCallChoiceType(null);
-                                  const receiverId = appt.buyerId._id === currentUser._id ? appt.sellerId._id : appt.buyerId._id;
-                                  try {
-                                    await onInitiateCallViaLink(appt, 'video', receiverId);
-                                  } catch (err) {
-                                    if (
-                                      err?.name === 'NotAllowedError' ||
-                                      err?.name === 'PermissionDeniedError' ||
-                                      err?.isPermissionDenied ||
-                                      (err?.message && (
-                                        err.message.toLowerCase().includes('permission') ||
-                                        err.message.toLowerCase().includes('forbidden') ||
-                                        err.message.toLowerCase().includes('denied')
-                                      ))
-                                    ) {
-                                      let detectedType = 'both';
-                                      try {
-                                        let micDenied = false;
-                                        let camDenied = false;
-                                        if (navigator.permissions && navigator.permissions.query) {
-                                          const micRes = await navigator.permissions.query({ name: 'microphone' }).catch(() => null);
-                                          const camRes = await navigator.permissions.query({ name: 'camera' }).catch(() => null);
-                                          if (micRes?.state === 'denied') micDenied = true;
-                                          if (camRes?.state === 'denied') camDenied = true;
-                                        }
-
-                                        if (micDenied && !camDenied) {
-                                          detectedType = 'microphone';
-                                        } else if (camDenied && !micDenied) {
-                                          detectedType = 'camera';
-                                        } else if (micDenied && camDenied) {
-                                          detectedType = 'both';
-                                        } else {
-                                          let micOk = true;
-                                          let camOk = true;
-                                          try {
-                                            const mStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                                            mStream.getTracks().forEach(t => t.stop());
-                                          } catch (e) { micOk = false; }
-
-                                          try {
-                                            const cStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                                            cStream.getTracks().forEach(t => t.stop());
-                                          } catch (e) { camOk = false; }
-
-                                          if (!micOk && camOk) detectedType = 'microphone';
-                                          else if (!camOk && micOk) detectedType = 'camera';
-                                          else detectedType = 'both';
-                                        }
-                                      } catch (e) {
-                                        console.warn('Media permission detection fallback:', e);
-                                      }
-
-                                      setMediaPermissionType(detectedType);
-                                      setMediaPermissionActionText('make calls');
-                                      setShowMediaPermissionModal(true);
-                                    }
-                                  }
-                                }}
+                                onClick={() => handleCallViaLinkClick('video')}
                               >
                                 <span className="text-blue-400 font-bold text-sm">🔗</span>
                                 <span>Call via Link</span>
@@ -15817,6 +15916,221 @@ function PaymentStatusCell({ appointment, isBuyer }) {
       <ConnectedDisputeModal />
 
       {/* Global Contact Support */}
+
+      {/* ========== Call via Link Modal (Glassmorphism) ========== */}
+      {showLinkModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) handleCloseLinkModal(); }}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+          {/* Modal Card */}
+          <div
+            className={`relative w-full max-w-md rounded-2xl shadow-2xl border overflow-hidden transition-all duration-300 animate-[fadeInScale_0.25s_ease-out]
+              ${isDarkMode
+                ? 'bg-gray-900/80 backdrop-blur-xl border-white/10 text-white'
+                : 'bg-white/80 backdrop-blur-xl border-gray-200/50 text-gray-900'
+              }`}
+            style={{ animation: 'fadeInScale 0.25s ease-out' }}
+          >
+            {/* Gradient accent bar */}
+            <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600" />
+
+            {/* Close button */}
+            <button
+              onClick={handleCloseLinkModal}
+              className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors z-10
+                ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}`}
+              aria-label="Close"
+            >
+              <FaTimes className="text-sm" />
+            </button>
+
+            {/* Content */}
+            <div className="p-5 sm:p-6">
+              {/* Loading State */}
+              {linkModalLoading && !linkModalData && (
+                <div className="flex flex-col items-center gap-4 py-8">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center animate-pulse">
+                      <FaLink className="text-white text-xl" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Generating Call Link...</p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>This will also send an email notification</p>
+                  </div>
+                  <UrbanSetuSpinner size="sm" />
+                </div>
+              )}
+
+              {/* Link Generated State */}
+              {linkModalData && linkTimeLeft > 0 && (
+                <>
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg ${
+                      linkModalData.callType === 'video'
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                        : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                    }`}>
+                      {linkModalData.callType === 'video'
+                        ? <FaVideo className="text-white text-lg" />
+                        : <FaPhone className="text-white text-lg" />
+                      }
+                    </div>
+                    <div>
+                      <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {linkModalData.callType === 'video' ? 'Video' : 'Audio'} Call Link
+                      </h3>
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Share this link to start the call
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Link Input + Copy */}
+                  <div className={`flex items-center gap-2 rounded-xl p-1 mb-4 ${
+                    isDarkMode ? 'bg-gray-800/80 border border-white/5' : 'bg-gray-100/80 border border-gray-200/50'
+                  }`}>
+                    <input
+                      type="text"
+                      readOnly
+                      value={linkModalData.callLink}
+                      className={`flex-1 text-xs font-mono px-3 py-2.5 bg-transparent border-none outline-none truncate ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex-shrink-0 ${
+                        linkCopied
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                          : isDarkMode
+                            ? 'bg-white/10 hover:bg-white/15 text-gray-300 border border-white/5'
+                            : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm'
+                      }`}
+                    >
+                      {linkCopied ? <><FaCheck className="text-[10px]" /> Copied</> : <><FaCopy className="text-[10px]" /> Copy</>}
+                    </button>
+                  </div>
+
+                  {/* Countdown Timer */}
+                  <div className={`flex items-center justify-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs font-medium ${
+                    linkTimeLeft <= 60
+                      ? isDarkMode ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-red-50 text-red-600 border border-red-200'
+                      : linkTimeLeft <= 180
+                        ? isDarkMode ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                        : isDarkMode ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                  }`}>
+                    <FaClock className="text-[10px]" />
+                    <span>Expires in {Math.floor(linkTimeLeft / 60)}:{String(linkTimeLeft % 60).padStart(2, '0')}</span>
+                  </div>
+
+                  {/* Already Sent Indicator */}
+                  {linkModalData.sentToChat && (
+                    <div className={`flex items-center justify-center gap-2 mb-4 px-3 py-2 rounded-lg text-xs font-medium ${
+                      isDarkMode ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-green-50 text-green-600 border border-green-200'
+                    }`}>
+                      <FaCheckCircle className="text-[10px]" />
+                      <span>Link already sent to chat</span>
+                    </div>
+                  )}
+
+                  {/* Email notification info */}
+                  <div className={`flex items-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs ${
+                    isDarkMode ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' : 'bg-purple-50 text-purple-600 border border-purple-200'
+                  }`}>
+                    <FaEnvelope className="text-[10px] flex-shrink-0" />
+                    <span>Email notification sent to the other party</span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-2.5">
+                    {/* Join Call */}
+                    <button
+                      onClick={handleLinkModalJoin}
+                      className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-[1.01] flex items-center justify-center gap-2"
+                    >
+                      {linkModalData.callType === 'video' ? <FaVideo /> : <FaPhone />}
+                      Join Call
+                    </button>
+
+                    {/* Send & Join */}
+                    <button
+                      onClick={handleLinkModalSendAndJoin}
+                      disabled={linkModalData.sentToChat}
+                      className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                        linkModalData.sentToChat
+                          ? isDarkMode
+                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                          : isDarkMode
+                            ? 'bg-white/10 hover:bg-white/15 text-white border border-white/10 hover:border-white/20'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200'
+                      }`}
+                    >
+                      <FaPaperPlane className="text-xs" />
+                      {linkModalData.sentToChat ? 'Already Sent ✓' : 'Send & Join'}
+                    </button>
+
+                    {/* Send Link to Chat Only */}
+                    <button
+                      onClick={handleLinkModalSendOnly}
+                      disabled={linkModalData.sentToChat}
+                      className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                        linkModalData.sentToChat
+                          ? isDarkMode
+                            ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                          : isDarkMode
+                            ? 'bg-transparent hover:bg-white/5 text-gray-300 border border-white/10 hover:border-white/20'
+                            : 'bg-transparent hover:bg-gray-50 text-gray-600 border border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <FaLink className="text-xs" />
+                      {linkModalData.sentToChat ? 'Already Sent ✓' : 'Send Link to Chat'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Link Expired State */}
+              {linkModalData && linkTimeLeft <= 0 && (
+                <div className="flex flex-col items-center gap-4 py-6">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center border border-red-500/20">
+                    <FaClock className={`text-xl ${isDarkMode ? 'text-red-400' : 'text-red-500'}`} />
+                  </div>
+                  <div className="text-center">
+                    <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Link Expired</h3>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      This call link has expired. Generate a new one to continue.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleLinkModalGenerateNew}
+                    disabled={linkModalLoading}
+                    className="w-full max-w-[200px] py-2.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {linkModalLoading ? <UrbanSetuSpinner size="sm" isBright={true} /> : <><FaSync className="text-xs" /> Generate New Link</>}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Keyframe animation */}
+          <style>{`
+            @keyframes fadeInScale {
+              from { opacity: 0; transform: scale(0.92); }
+              to { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
