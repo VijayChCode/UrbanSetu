@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useCallContext } from '../contexts/CallContext';
 import { authenticatedFetch } from '../utils/auth';
@@ -11,8 +11,9 @@ import { usePageTitle } from '../hooks/usePageTitle';
 
 export default function CallRoom() {
   const params = useParams();
+  const location = useLocation();
   const token = params.token;
-  const routeCallType = params.type;
+  const routeCallType = params.type || (location.pathname.includes('/call/video') ? 'video' : location.pathname.includes('/call/audio') ? 'audio' : null);
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
 
@@ -40,8 +41,8 @@ export default function CallRoom() {
   const callTypeLabel = isVideoCall ? 'Video Call' : 'Audio Call';
   const otherPartyName = callData ? (callData.isCaller ? callData.receiverName : callData.callerName) : '';
   const pageTitle = otherPartyName 
-    ? `${callTypeLabel} with ${otherPartyName} - UrbanSetu` 
-    : `${callTypeLabel} Room - UrbanSetu`;
+    ? `${callTypeLabel} with ${otherPartyName}` 
+    : `${callTypeLabel} Room`;
   usePageTitle(pageTitle);
 
   // Attach local stream to video ref if available during preview
