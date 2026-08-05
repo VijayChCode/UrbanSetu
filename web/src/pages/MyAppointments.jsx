@@ -2468,8 +2468,8 @@ export default function MyAppointments() {
           <div
             className={`relative w-full max-w-md rounded-2xl shadow-2xl border overflow-hidden transition-all duration-300 animate-[fadeInScale_0.25s_ease-out]
               ${isDarkMode
-                ? 'bg-gray-900/80 backdrop-blur-xl border-white/10 text-white'
-                : 'bg-white/80 backdrop-blur-xl border-gray-200/50 text-gray-900'
+                ? 'bg-gray-900/95 backdrop-blur-xl border-white/10 text-white'
+                : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-gray-200/50 dark:border-white/10 text-gray-900 dark:text-white'
               }`}
             style={{ animation: 'fadeInScale 0.25s ease-out' }}
           >
@@ -2480,7 +2480,10 @@ export default function MyAppointments() {
             <button
               onClick={handleCloseLinkModal}
               className={`absolute top-3 right-3 p-1.5 rounded-full transition-colors z-10
-                ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}`}
+                ${isDarkMode 
+                  ? 'hover:bg-white/10 text-gray-400 hover:text-white' 
+                  : 'hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
               aria-label="Close"
             >
               <FaTimes className="text-sm" />
@@ -2497,8 +2500,8 @@ export default function MyAppointments() {
                     </div>
                   </div>
                   <div className="text-center">
-                    <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Generating Call Link...</p>
-                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>This will also send an email notification</p>
+                    <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}>Generating Call Link...</p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>This will also send an email notification</p>
                   </div>
                   <UrbanSetuSpinner size="sm" />
                 </div>
@@ -2520,10 +2523,10 @@ export default function MyAppointments() {
                       }
                     </div>
                     <div>
-                      <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                         {linkModalData.callType === 'video' ? 'Video' : 'Audio'} Call Link
                       </h3>
-                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                         Share this link to start the call
                       </p>
                     </div>
@@ -2531,14 +2534,16 @@ export default function MyAppointments() {
 
                   {/* Link Input + Copy */}
                   <div className={`flex items-center gap-2 rounded-xl p-1 mb-4 ${
-                    isDarkMode ? 'bg-gray-800/80 border border-white/5' : 'bg-gray-100/80 border border-gray-200/50'
+                    isDarkMode 
+                      ? 'bg-gray-800/80 border border-white/5' 
+                      : 'bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-white/5'
                   }`}>
                     <input
                       type="text"
                       readOnly
                       value={linkModalData.callLink}
                       className={`flex-1 text-xs font-mono px-3 py-2.5 bg-transparent border-none outline-none truncate ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700 dark:text-gray-300'
                       }`}
                       onClick={(e) => e.target.select()}
                     />
@@ -2549,7 +2554,7 @@ export default function MyAppointments() {
                           ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                           : isDarkMode
                             ? 'bg-white/10 hover:bg-white/15 text-gray-300 border border-white/5'
-                            : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm'
+                            : 'bg-white dark:bg-white/10 hover:bg-gray-50 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/5 shadow-sm'
                       }`}
                     >
                       {linkCopied ? <><FaCheck className="text-[10px]" /> Copied</> : <><FaCopy className="text-[10px]" /> Copy</>}
@@ -2559,10 +2564,10 @@ export default function MyAppointments() {
                   {/* Countdown Timer */}
                   <div className={`flex items-center justify-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs font-medium ${
                     linkTimeLeft <= 60
-                      ? isDarkMode ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-red-50 text-red-600 border border-red-200'
+                      ? isDarkMode ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'
                       : linkTimeLeft <= 180
-                        ? isDarkMode ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                        : isDarkMode ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                        ? isDarkMode ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20'
+                        : isDarkMode ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
                   }`}>
                     <FaClock className="text-[10px]" />
                     <span>Expires in {Math.floor(linkTimeLeft / 60)}:{String(linkTimeLeft % 60).padStart(2, '0')}</span>
@@ -2571,7 +2576,7 @@ export default function MyAppointments() {
                   {/* Already Sent Indicator */}
                   {linkModalData.sentToChat && (
                     <div className={`flex items-center justify-center gap-2 mb-4 px-3 py-2 rounded-lg text-xs font-medium ${
-                      isDarkMode ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-green-50 text-green-600 border border-green-200'
+                      isDarkMode ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20'
                     }`}>
                       <FaCheckCircle className="text-[10px]" />
                       <span>Link already sent to chat</span>
@@ -2580,7 +2585,7 @@ export default function MyAppointments() {
 
                   {/* Email notification info */}
                   <div className={`flex items-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs ${
-                    isDarkMode ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' : 'bg-purple-50 text-purple-600 border border-purple-200'
+                    isDarkMode ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20'
                   }`}>
                     <FaEnvelope className="text-[10px] flex-shrink-0" />
                     <span>Email notification sent to the other party</span>
@@ -2605,10 +2610,10 @@ export default function MyAppointments() {
                         linkModalData.sentToChat
                           ? isDarkMode
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-700'
                           : isDarkMode
                             ? 'bg-white/10 hover:bg-white/15 text-white border border-white/10 hover:border-white/20'
-                            : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-200'
+                            : 'bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-800 dark:text-white border border-gray-200 dark:border-white/10'
                       }`}
                     >
                       <FaPaperPlane className="text-xs" />
@@ -2623,10 +2628,10 @@ export default function MyAppointments() {
                         linkModalData.sentToChat
                           ? isDarkMode
                             ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-700'
                           : isDarkMode
                             ? 'bg-transparent hover:bg-white/5 text-gray-300 border border-white/10 hover:border-white/20'
-                            : 'bg-transparent hover:bg-gray-50 text-gray-600 border border-gray-200 hover:border-gray-300'
+                            : 'bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-white/10 hover:border-gray-300'
                       }`}
                     >
                       <FaLink className="text-xs" />
