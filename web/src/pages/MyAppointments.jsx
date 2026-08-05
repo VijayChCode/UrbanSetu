@@ -207,13 +207,16 @@ export default function MyAppointments() {
 
     try {
       const res = await initiateCallViaLink(appointment._id, callType);
-      if (res && res.callLink) {
+      if (res && res.linkToken) {
+        // Build the call link using the current frontend origin (ensures correct URL on any deployment)
+        const callLink = `${window.location.origin}/call/${res.linkToken}`;
+
         // Automatically send the link as a chat comment/message
         await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appointment._id}/comment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: res.callLink,
+            message: callLink,
             type: 'call_link',
             callType: res.callType,
             callId: res.callId
