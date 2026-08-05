@@ -2604,7 +2604,7 @@ export default function MyAppointments() {
                   )}
 
                   {/* Email notification info */}
-                  <div className={`flex items-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs ${
+                  <div className={`flex items-center justify-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs font-medium ${
                     isDarkMode ? 'bg-purple-500/10 text-purple-300 border border-purple-500/20' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-500/20'
                   }`}>
                     <FaEnvelope className="text-[10px] flex-shrink-0" />
