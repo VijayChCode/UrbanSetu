@@ -2944,7 +2944,7 @@ router.patch('/:id/comment/:commentId/remove-for-me', verifyToken, async (req, r
 
     // Mark modified to ensure Mongoose saves nested changes
     appointment.markModified('comments');
-    await appointment.save();
+    await appointment.save({ validateModifiedOnly: true });
 
     // Notify this user's other sessions immediately
     const io = req.app.get('io');
@@ -2992,7 +2992,7 @@ router.post('/:id/comments/removed/sync', verifyToken, async (req, res) => {
     }
 
     appointment.markModified('comments');
-    await appointment.save();
+    await appointment.save({ validateModifiedOnly: true });
 
     return res.status(200).json({ message: 'Removed comments synced.' });
   } catch (err) {
@@ -3032,7 +3032,7 @@ router.patch('/:id/comment/:commentId/undo-remove-for-me', verifyToken, async (r
     }
 
     appointment.markModified('comments');
-    await appointment.save();
+    await appointment.save({ validateModifiedOnly: true });
 
     return res.status(200).json({ message: 'Comment restored for current user.' });
   } catch (err) {
@@ -3073,7 +3073,7 @@ router.post('/:id/comments/removed/undo-sync', verifyToken, async (req, res) => 
     }
 
     appointment.markModified('comments');
-    await appointment.save();
+    await appointment.save({ validateModifiedOnly: true });
 
     return res.status(200).json({ message: 'Removed comments restored.' });
   } catch (err) {
@@ -3129,7 +3129,7 @@ router.patch('/:id/comment/:commentId/star', verifyToken, async (req, res) => {
     }
 
     appointment.markModified('comments');
-    await appointment.save();
+    await appointment.save({ validateModifiedOnly: true });
 
     return res.status(200).json({
       message: starred ? 'Message starred successfully' : 'Message unstarred successfully',
@@ -3211,7 +3211,7 @@ router.patch('/:id/comment/:commentId/pin', verifyToken, async (req, res) => {
     }
 
     appointment.markModified('comments');
-    await appointment.save();
+    await appointment.save({ validateModifiedOnly: true });
 
     // Emit real-time update so both parties (and admins) see pin/unpin immediately
     try {
@@ -3309,7 +3309,7 @@ router.patch('/:id/comment/:commentId/react', verifyToken, async (req, res) => {
 
     while (retryCount < maxRetries) {
       try {
-        await appointment.save();
+        await appointment.save({ validateModifiedOnly: true });
         break; // Success, exit retry loop
       } catch (saveError) {
         if (saveError.name === 'VersionError' && retryCount < maxRetries - 1) {

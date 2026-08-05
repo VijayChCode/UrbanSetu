@@ -1808,12 +1808,7 @@ export const useCall = () => {
 
         // Start timer from server-provided startTime
         if (data.startTime) {
-          const serverStart = new Date(data.startTime).getTime();
-          if (callTimerRef.current) clearInterval(callTimerRef.current);
-          callTimerRef.current = setInterval(() => {
-            const elapsed = Math.floor((Date.now() - serverStart) / 1000);
-            setCallDuration(elapsed);
-          }, 1000);
+          startCallTimer(new Date(data.startTime));
         }
 
         // Create peer connection as initiator
@@ -1938,12 +1933,7 @@ export const useCall = () => {
 
         // Start timer from server-provided startTime
         if (data.startTime) {
-          const serverStart = new Date(data.startTime).getTime();
-          if (callTimerRef.current) clearInterval(callTimerRef.current);
-          callTimerRef.current = setInterval(() => {
-            const elapsed = Math.floor((Date.now() - serverStart) / 1000);
-            setCallDuration(elapsed);
-          }, 1000);
+          startCallTimer(new Date(data.startTime));
         }
 
         // Create peer connection as non-initiator

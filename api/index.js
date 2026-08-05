@@ -937,7 +937,7 @@ io.on('connection', (socket) => {
           activeCall.receiverSocketId = socket.id;
         }
 
-        activeCalls.set(callId, activeCall);
+        activeCalls.set(callId, activeCall);  
 
         console.log(`[Call Recovery] User ${userIdStr} re-joined active call ${callId} as ${role}`);
 
@@ -964,7 +964,7 @@ io.on('connection', (socket) => {
             appointmentId: activeCall.appointmentId,
             role,
             callType: activeCall.callType,
-            startTime: activeCall.startTime.getTime(),
+            startTime: activeCall.startTime ? (typeof activeCall.startTime.getTime === 'function' ? activeCall.startTime.getTime() : new Date(activeCall.startTime).getTime()) : Date.now(),
             callerId: activeCall.callerId,
             receiverId: activeCall.receiverId,
             callerName: activeCall.callerName,
