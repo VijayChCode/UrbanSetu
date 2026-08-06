@@ -253,9 +253,6 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           : 'bg-gray-100/50 dark:bg-[#1f2c34] border-l-4 border-l-gray-400 dark:border-l-gray-600'
       } rounded-r-lg p-3 pr-10 mb-2 max-w-full shadow-sm ${className}`}>
         <div className="flex items-center space-x-3.5">
-          <div className={`w-12 h-12 ${isSentMessage ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700/60'} rounded-lg flex items-center justify-center flex-shrink-0`}>
-            <FaExternalLinkAlt className={`${isSentMessage ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'} text-lg`} />
-          </div>
           <div className="flex-1 min-w-0 max-w-full">
             <div className={`text-[13px] font-semibold break-all ${isSentMessage ? 'text-white' : 'text-gray-950 dark:text-gray-100'}`}>Link Preview Unavailable</div>
             <div className={`text-[11px] break-all mt-1 ${isSentMessage ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>{url}</div>
@@ -297,7 +294,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       } : undefined}
     >
       <div className="flex items-start space-x-3.5">
-        {!imgFailed && imgSrc ? (
+        {!imgFailed && imgSrc && (
           <div className="flex-shrink-0">
             <img
               src={imgSrc}
@@ -309,14 +306,6 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
               }`}
               onError={handleImageError}
             />
-          </div>
-        ) : (
-          <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 border shadow-xs ${
-            isSentMessage
-              ? 'bg-white/15 border-white/20 text-white'
-              : 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/50 dark:border-indigo-800/50 text-indigo-600 dark:text-indigo-400'
-          }`}>
-            <FaGlobe className="text-xl" />
           </div>
         )}
         <div className="flex-1 min-w-0 max-w-full">
