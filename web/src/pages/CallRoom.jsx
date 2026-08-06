@@ -4,12 +4,13 @@ import { useSelector } from 'react-redux';
 import { useCallContext } from '../contexts/CallContext';
 import { authenticatedFetch } from '../utils/auth';
 import { API_BASE_URL } from '../config/api';
-import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaArrowLeft, FaExclamationTriangle, FaClock } from 'react-icons/fa';
+import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaArrowLeft, FaExclamationTriangle, FaClock, FaCheckCircle } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { usePageTitle } from '../hooks/usePageTitle';
 import MediaPermissionModal from '../components/MediaPermissionModal';
 import MicLevelBar from '../components/MicLevelBar';
+import { socket } from '../utils/socket';
 
 export default function CallRoom() {
   const params = useParams();
@@ -36,6 +37,7 @@ export default function CallRoom() {
   const [callData, setCallData] = useState(null);
   const [error, setError] = useState(null);
   const [joining, setJoining] = useState(false);
+  const [participantJoined, setParticipantJoined] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionType, setPermissionType] = useState('video');
   const localVideoRef = useRef(null);
@@ -57,12 +59,37 @@ export default function CallRoom() {
     }
   }, [localStream, isVideoEnabled]);
 
-  // Auto-reset joining state on callState transition
+  // Auto-reset joining state and sync participantJoined state on callState transition
   useEffect(() => {
     if (callState === 'active' || callState === 'ended' || !callState) {
       setJoining(false);
     }
+    if (callState === 'active') {
+      setParticipantJoined(true);
+    }
   }, [callState]);
+
+  // Listen for receiver joining or entering the call room
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleParticipantEvent = (data) => {
+      if (data?.callId === callData?.callId || data?.token === token) {
+        console.log('[CallRoom] Participant presence/join detected:', data);
+        setParticipantJoined(true);
+      }
+    };
+
+    socket.on('call-link-joined', handleParticipantEvent);
+    socket.on('call-link-presence', handleParticipantEvent);
+    socket.on('call-link-waiting', handleParticipantEvent);
+
+    return () => {
+      socket.off('call-link-joined', handleParticipantEvent);
+      socket.off('call-link-presence', handleParticipantEvent);
+      socket.off('call-link-waiting', handleParticipantEvent);
+    };
+  }, [callData?.callId, token]);
 
   // Validate token on mount
   useEffect(() => {
@@ -293,8 +320,20 @@ export default function CallRoom() {
 
             {/* Status Overlay */}
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 px-2.5 py-1 rounded-full text-[10px] sm:text-xs text-slate-300 flex items-center gap-1.5 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span>{isCaller ? 'Waiting for participant...' : isCallActive ? 'Connected' : 'Ready to join'}</span>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${
+                isCallActive || participantJoined ? 'bg-emerald-400' : 'bg-amber-400'
+              }`} />
+              <span>
+                {isCallActive
+                  ? 'Connected'
+                  : isCaller
+                    ? participantJoined
+                      ? `${callData?.receiverName || 'Participant'} joined — Connecting...`
+                      : `Waiting for ${callData?.receiverName || 'participant'}...`
+                    : joining || callState === 'link-joining'
+                      ? `Connecting to ${callData?.callerName || 'caller'}...`
+                      : `${callData?.callerName || 'Caller'} is waiting in room`}
+              </span>
             </div>
           </div>
 
@@ -345,9 +384,22 @@ export default function CallRoom() {
           {/* Action Buttons */}
           {isCaller ? (
             <div className="w-full space-y-3">
-              <div className="flex items-center justify-center gap-2 text-amber-400 bg-amber-500/10 border border-amber-500/20 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-medium">
-                <FaClock className="animate-spin flex-shrink-0" />
-                <span>Share the link or wait in chat for them to join</span>
+              <div className={`flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                participantJoined || isCallActive
+                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                  : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+              }`}>
+                {participantJoined || isCallActive ? (
+                  <>
+                    <FaCheckCircle className="text-emerald-400 flex-shrink-0 animate-bounce" />
+                    <span>{callData?.receiverName || 'Participant'} has joined! Establishing connection...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaClock className="animate-spin flex-shrink-0" />
+                    <span>Share the link or wait in chat for them to join</span>
+                  </>
+                )}
               </div>
 
               <button
