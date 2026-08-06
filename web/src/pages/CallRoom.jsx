@@ -295,6 +295,7 @@ export default function CallRoom() {
   };
 
   const handleBackToAppointments = async () => {
+    const targetApptId = callData?.appointmentId || activeCall?.appointmentId;
     try {
       if (localStream) {
         localStream.getTracks().forEach(track => {
@@ -311,7 +312,11 @@ export default function CallRoom() {
     } catch (err) {
       console.error('[CallRoom] Navigation cleanup error:', err);
     } finally {
-      navigate('/user/my-appointments');
+      if (targetApptId) {
+        navigate(`/user/my-appointments/chat/${targetApptId}?chatopen=true`);
+      } else {
+        navigate('/user/my-appointments');
+      }
     }
   };
 
