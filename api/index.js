@@ -1593,11 +1593,48 @@ io.on('connection', (socket) => {
       socket.join(`call_${callId}`);
 
       socket.emit('call-link-waiting-ack', { callId, status: 'waiting' });
+
+      // Broadcast to room so joiner (if already in CallRoom) knows host entered
+      socket.to(`call_${callId}`).emit('call-link-waiting', { callId, token: linkToken, callerName: socket.user?.username });
+
       console.log(`[Link Call] Caller ${callerId} waiting in room call_${callId}`);
     } catch (err) {
       console.error("Error in call-link-waiting:", err);
       socket.emit('call-error', { message: 'Failed to start waiting' });
     }
+  });
+
+  // Presence relay: When any participant announces their presence in a call room,
+  // broadcast it to other participants so they can update UI (e.g., enable Join button)
+  socket.on('call-link-presence', ({ callId, token, isCaller }) => {
+    if (!callId) return;
+    // Join the call room so they receive future events
+    socket.join(`call_${callId}`);
+    // Broadcast presence to others in the room
+    socket.to(`call_${callId}`).emit('call-link-presence', {
+      callId,
+      token,
+      isCaller: !!isCaller,
+      userId: socket.user?._id?.toString(),
+      username: socket.user?.username
+    });
+
+    // TIMING FIX: If the joiner just announced presence, check if the host
+    // is ALREADY in activeCalls (host entered before joiner opened CallRoom).
+    // If so, immediately notify the joiner that the caller is waiting.
+    if (!isCaller) {
+      const activeCall = activeCalls.get(callId);
+      if (activeCall && activeCall.callerSocketId && (activeCall.status === 'waiting' || activeCall.status === 'active')) {
+        console.log(`[Link Call] Host already waiting for call ${callId}, notifying joiner immediately`);
+        socket.emit('call-link-waiting', {
+          callId,
+          token,
+          callerName: activeCall.callerName
+        });
+      }
+    }
+
+    console.log(`[Link Call] Presence announced in call_${callId} by ${socket.user?.username} (isCaller: ${isCaller})`);
   });
 
   // Receiver joins via the call link
