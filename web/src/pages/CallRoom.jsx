@@ -293,15 +293,16 @@ export default function CallRoom() {
     }
   };
 
-  const handleBackToAppointments = () => {
+  const handleBackToAppointments = async () => {
     if (localStream) {
       localStream.getTracks().forEach(track => {
         track.stop();
         track.enabled = false;
       });
+      setLocalStream(null);
     }
     if (callState === 'link-waiting' || callState === 'link-joining' || callState === 'active') {
-      endCall();
+      await endCall();
     }
     navigate('/user/my-appointments');
   };

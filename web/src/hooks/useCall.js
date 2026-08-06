@@ -2242,7 +2242,7 @@ export const useCall = () => {
     const currentActiveCall = activeCallRef.current;
     const currentCallState = callStateRef.current;
 
-    if (currentActiveCall?.callId && (currentCallState === 'initiating' || currentCallState === 'ringing')) {
+    if (currentActiveCall?.callId && (currentCallState === 'initiating' || currentCallState === 'ringing' || currentCallState === 'link-waiting' || currentCallState === 'link-joining')) {
       socket.emit('call-cancel', { callId: currentActiveCall.callId });
 
       // Broadcast to other same-device tabs that the call was cancelled
