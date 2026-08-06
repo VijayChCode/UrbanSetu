@@ -10692,6 +10692,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                           {/* Call Link Card */}
                                           {(c.type === 'call_link' || (c.message && c.message.includes('/call/'))) && (() => {
                                             const isVideoCall = c.callType === 'video' || (c.message && c.message.includes('/call/video/'));
+                                            const linkInfoId = `link-info-${c._id || c.tempId || idx}`;
                                             return (
                                               <div className="bg-slate-900/95 text-white rounded-2xl p-4 my-2 border border-slate-700/80 shadow-xl max-w-xs backdrop-blur-md">
                                                 <div className="flex items-center gap-3 mb-2">
@@ -10706,7 +10707,47 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                       Click Join Call to enter the room
                                                     </p>
                                                   </div>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      const el = document.getElementById(linkInfoId);
+                                                      if (el) el.classList.toggle('hidden');
+                                                    }}
+                                                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-all"
+                                                    title="Link Details"
+                                                  >
+                                                    <FaInfoCircle className="text-sm" />
+                                                  </button>
                                                 </div>
+
+                                                {/* Expandable Link Details Panel */}
+                                                <div id={linkInfoId} className="hidden mb-3 p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-2 animate-[fadeIn_0.2s_ease-out]">
+                                                  <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Type</span>
+                                                    <span className="text-[11px] text-slate-200 font-medium capitalize">{isVideoCall ? 'Video Call' : 'Audio Call'}</span>
+                                                  </div>
+                                                  <div className="flex items-start gap-2">
+                                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0 mt-0.5">Link</span>
+                                                    <span className="text-[11px] text-teal-400 break-all cursor-pointer hover:underline flex-1 min-w-0" onClick={() => { navigator.clipboard.writeText(c.message || ''); toast.success('Link copied!'); }}>
+                                                      {c.message || 'N/A'}
+                                                    </span>
+                                                  </div>
+                                                  {c.createdAt && (
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Sent</span>
+                                                      <span className="text-[11px] text-slate-300">
+                                                        {new Date(c.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                  {c.callId && (
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Call ID</span>
+                                                      <span className="text-[11px] text-slate-400 font-mono truncate">{c.callId}</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+
                                                 <div className="flex items-center gap-2 mt-3">
                                                   <button
                                                     onClick={() => {
