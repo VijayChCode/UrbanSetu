@@ -506,6 +506,32 @@ export default function MyAppointments() {
     setModalActionLoading(null);
   }, []);
 
+  // Open link details modal from a chat message's info icon (called from AppointmentRow)
+  const handleOpenLinkDetailsFromChat = useCallback((chatMessage, appointmentId) => {
+    const c = chatMessage;
+    const tokenMatch = (c.message || '').match(/\/call\/(?:(audio|video)\/)?([a-zA-Z0-9-]+)/);
+    const actualCallType = c.callType || (tokenMatch && tokenMatch[1] ? tokenMatch[1] : (c.message?.includes('/call/video/') ? 'video' : 'audio'));
+    const linkToken = tokenMatch ? (tokenMatch[2] || tokenMatch[1]) : '';
+    const createdAtTime = c.createdAt ? new Date(c.createdAt).getTime() : Date.now();
+    const expiresAtTime = c.expiresAt ? new Date(c.expiresAt).getTime() : (createdAtTime + 24 * 60 * 60 * 1000);
+
+    const modalData = {
+      callLink: c.message,
+      callType: actualCallType,
+      callId: c.callId || '',
+      linkToken: linkToken,
+      appointmentId: appointmentId,
+      expiresAt: expiresAtTime,
+      sentToChat: true,
+      createdAt: createdAtTime
+    };
+
+    setLinkCopied(false);
+    setLinkModalData(modalData);
+    startCountdown(expiresAtTime);
+    setShowLinkModal(true);
+  }, [startCountdown]);
+
   // Get other party name for active call
   const getOtherPartyName = (appointment) => {
     if (!appointment || !currentUser) return 'Calling...';
