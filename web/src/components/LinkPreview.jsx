@@ -4,6 +4,37 @@ import { FaExternalLinkAlt, FaTimes, FaGlobe } from 'react-icons/fa';
 // Global cache for link previews to prevent redundant network requests and 429 rate limit issues
 const previewCache = new Map();
 
+const COMMON_TLDS = new Set([
+  'com', 'org', 'net', 'edu', 'gov', 'mil', 'io', 'app', 'dev', 'co', 'in', 
+  'uk', 'us', 'ca', 'de', 'fr', 'jp', 'cn', 'ru', 'br', 'au', 'info', 'biz', 
+  'me', 'tv', 'site', 'online', 'tech', 'store', 'agency', 'xyz', 'ai', 'cloud',
+  'link', 'live', 'digital', 'global', 'space', 'website', 'cc', 'to', 'pro'
+]);
+
+const isValidDomain = (hostname) => {
+  if (!hostname || typeof hostname !== 'string') return false;
+  const clean = hostname.split(':')[0].toLowerCase();
+
+  if (clean === 'localhost' || clean === '127.0.0.1') return true;
+  if (clean.includes('urbansetu')) return true;
+
+  const parts = clean.split('.');
+  if (parts.length < 2) return false;
+
+  const tld = parts[parts.length - 1];
+  
+  // TLD must be purely alphabetic (2-24 chars)
+  if (!/^[a-z]{2,24}$/.test(tld)) return false;
+
+  // 2-letter TLDs (country codes like .in, .uk, .co) or known TLDs are valid
+  if (tld.length === 2 || COMMON_TLDS.has(tld)) return true;
+
+  // If part of multi-subdomain like foo.bar.com
+  if (parts.length >= 3 && COMMON_TLDS.has(tld)) return true;
+
+  return false;
+};
+
 const getDomain = (urlStr) => {
   try {
     const parsed = new URL(urlStr);
@@ -14,7 +45,7 @@ const getDomain = (urlStr) => {
 };
 
 const getGoogleFavicon = (domain) => {
-  if (!domain) return null;
+  if (!domain || !isValidDomain(domain)) return null;
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
 };
 
@@ -87,6 +118,24 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
     const hostname = parsedUrl.hostname;
     const domain = getDomain(fetchUrl);
+    const validDomain = isValidDomain(hostname);
+
+    // If domain is invalid / incomplete (e.g. "web.whatsapp" before ".com" is typed), skip API fetch & favicon image
+    if (!validDomain) {
+      const basicPreview = {
+        title: domain,
+        description: fetchUrl,
+        image: null,
+        siteName: domain,
+        url: fetchUrl
+      };
+      setPreview(basicPreview);
+      setImgSrc(null);
+      setImgFailed(true);
+      setLoading(false);
+      return;
+    }
+
     const googleFavicon = getGoogleFavicon(domain);
 
     // Check in-memory cache first

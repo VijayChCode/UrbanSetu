@@ -9731,8 +9731,8 @@ function AdminAppointmentRow({
                       setNewComment(value);
                       if (settings.soundEnabled) playTyping();
 
-                      // Detect URLs in the input
-                      const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]{2,}(?:\/[^\s]*)?|[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/gi;
+                      // Detect URLs in the input (requires explicit protocol/www or valid standard TLD)
+                      const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+\.[^\s]{2,}(?:\/[^\s]*)?|[a-zA-Z0-9-]+\.(?:com|org|net|edu|gov|io|app|dev|co|in|uk|us|ca|de|fr|jp|cn|xyz|ai|cloud|site|tech|me|tv|online|live|global|space|website|vercel\.app|onrender\.com)(?:\/[^\s]*)?)/gi;
                       const urls = value.match(urlRegex);
                       if (urls && urls.length > 0) {
                         const newUrl = urls[0];
