@@ -10721,32 +10721,58 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                 </div>
 
                                                 {/* Expandable Link Details Panel */}
-                                                <div id={linkInfoId} className="hidden mb-3 p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-2 animate-[fadeIn_0.2s_ease-out]">
-                                                  <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Type</span>
-                                                    <span className="text-[11px] text-slate-200 font-medium capitalize">{isVideoCall ? 'Video Call' : 'Audio Call'}</span>
-                                                  </div>
-                                                  <div className="flex items-start gap-2">
-                                                    <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0 mt-0.5">Link</span>
-                                                    <span className="text-[11px] text-teal-400 break-all cursor-pointer hover:underline flex-1 min-w-0" onClick={() => { navigator.clipboard.writeText(c.message || ''); toast.success('Link copied!'); }}>
-                                                      {c.message || 'N/A'}
-                                                    </span>
-                                                  </div>
-                                                  {c.createdAt && (
-                                                    <div className="flex items-center gap-2">
-                                                      <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Sent</span>
-                                                      <span className="text-[11px] text-slate-300">
-                                                        {new Date(c.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                                                      </span>
+                                                {(() => {
+                                                  const createdAtTime = c.createdAt ? new Date(c.createdAt).getTime() : null;
+                                                  const expiresAtTime = c.expiresAt ? new Date(c.expiresAt).getTime() : (createdAtTime ? createdAtTime + 24 * 60 * 60 * 1000 : null);
+                                                  const isExpired = expiresAtTime ? Date.now() > expiresAtTime : false;
+
+                                                  return (
+                                                    <div id={linkInfoId} className="hidden mb-3 p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-2 animate-[fadeIn_0.2s_ease-out]">
+                                                      <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Status</span>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                          isExpired
+                                                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                                        }`}>
+                                                          {isExpired ? 'Expired' : 'Active (24h Link)'}
+                                                        </span>
+                                                      </div>
+                                                      <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Type</span>
+                                                        <span className="text-[11px] text-slate-200 font-medium capitalize">{isVideoCall ? 'Video Call' : 'Audio Call'}</span>
+                                                      </div>
+                                                      <div className="flex items-start gap-2">
+                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0 mt-0.5">Link</span>
+                                                        <span className="text-[11px] text-teal-400 break-all cursor-pointer hover:underline flex-1 min-w-0" onClick={() => { navigator.clipboard.writeText(c.message || ''); toast.success('Link copied!'); }}>
+                                                          {c.message || 'N/A'}
+                                                        </span>
+                                                      </div>
+                                                      {c.createdAt && (
+                                                        <div className="flex items-center gap-2">
+                                                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Sent</span>
+                                                          <span className="text-[11px] text-slate-300">
+                                                            {new Date(c.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                                          </span>
+                                                        </div>
+                                                      )}
+                                                      {expiresAtTime && (
+                                                        <div className="flex items-center gap-2">
+                                                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Expires</span>
+                                                          <span className={`text-[11px] ${isExpired ? 'text-red-400 font-medium' : 'text-slate-300'}`}>
+                                                            {new Date(expiresAtTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                                                          </span>
+                                                        </div>
+                                                      )}
+                                                      {c.callId && (
+                                                        <div className="flex items-center gap-2">
+                                                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Call ID</span>
+                                                          <span className="text-[11px] text-slate-400 font-mono truncate">{c.callId}</span>
+                                                        </div>
+                                                      )}
                                                     </div>
-                                                  )}
-                                                  {c.callId && (
-                                                    <div className="flex items-center gap-2">
-                                                      <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Call ID</span>
-                                                      <span className="text-[11px] text-slate-400 font-mono truncate">{c.callId}</span>
-                                                    </div>
-                                                  )}
-                                                </div>
+                                                  );
+                                                })()}
 
                                                 <div className="flex items-center gap-2 mt-3">
                                                   <button
