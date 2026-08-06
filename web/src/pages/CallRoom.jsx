@@ -375,6 +375,21 @@ export default function CallRoom() {
         setLocalStream(stream);
         setShowPermissionModal(false);
         toast.success('Media permissions granted!');
+
+        // If this is the host (caller) and not yet in waiting state, start waiting now
+        if (callData.isCaller && (!callState || callState === null)) {
+          try {
+            await startLinkCallWaiting(
+              callData.callId,
+              token,
+              callData.callType,
+              callData.appointmentId,
+              callData.receiverId
+            );
+          } catch (e) {
+            console.warn('[CallRoom] Failed to start waiting after permission grant:', e);
+          }
+        }
       } catch (err) {
         console.warn('[CallRoom] Combined stream failed despite individual grants:', err);
         setPermissionType(isVideo ? 'video' : 'microphone');

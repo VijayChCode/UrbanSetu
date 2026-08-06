@@ -1575,6 +1575,44 @@ io.on('connection', (socket) => {
         return socket.emit('call-link-expired', { callId });
       }
 
+      // If call is already accepted (joiner joined while host was refreshing),
+      // re-join the room and immediately notify the host so they can create WebRTC peer
+      if (call.status === 'accepted' || call.status === 'active') {
+        const existingActive = activeCalls.get(callId);
+        if (existingActive) {
+          existingActive.callerSocketId = socket.id;
+          activeCalls.set(callId, existingActive);
+        } else {
+          activeCalls.set(callId, {
+            callerSocketId: socket.id,
+            callerId,
+            receiverId: call.receiverId.toString(),
+            appointmentId: call.appointmentId.toString(),
+            callType: call.callType,
+            callMode: 'link',
+            status: call.status,
+            startTime: call.startTime,
+            callerName: socket.user?.username || 'Participant',
+            callerState: { isMuted: false, isVideoEnabled: true, isScreenSharing: false },
+            receiverState: { isMuted: false, isVideoEnabled: true, isScreenSharing: false }
+          });
+        }
+
+        socket.join(`call_${callId}`);
+        socket.emit('call-link-waiting-ack', { callId, status: call.status });
+
+        // Immediately fire call-link-joined so the host's startLinkCallWaiting listener creates WebRTC peer
+        socket.emit('call-link-joined', {
+          callId,
+          joinerId: call.receiverId.toString(),
+          joinerName: call.receiverId?.username || 'Participant',
+          startTime: call.startTime || new Date()
+        });
+
+        console.log(`[Link Call] Host ${callerId} rejoined already-accepted call ${callId} — re-emitting call-link-joined`);
+        return;
+      }
+
       // Store in activeCalls map so we can track the caller's socket
       activeCalls.set(callId, {
         callerSocketId: socket.id,
@@ -1902,23 +1940,34 @@ io.on('connection', (socket) => {
       const callerId = socket.user?._id?.toString();
       const call = await CallHistory.findOne({ callId });
 
-      // Allow cancellation if call is initiated, ringing, OR waiting/accepted (link calls)
-      if (call && call.callerId.toString() === callerId &&
-        (call.status === 'initiated' || call.status === 'ringing' || call.status === 'waiting' || call.status === 'accepted')) {
-        call.status = 'cancelled';
-        call.endTime = new Date();
-        await call.save();
+      if (call && call.callerId.toString() === callerId) {
+        const isLinkWaiting = call.callMode === 'link' && call.status === 'waiting';
 
-        // Emit to both caller and receiver rooms to close modals on all tabs
-        io.to(`user_${call.receiverId}`).emit('call-cancelled', { callId });
-        io.to(`user_${call.callerId}`).emit('call-cancelled', { callId });
+        if (isLinkWaiting) {
+          // LINK CALL in waiting state: Host is just leaving the waiting room.
+          // DON'T cancel the DB record — the link stays valid until its expiry time.
+          // Only clean up the in-memory activeCalls entry and broadcast to room.
+          activeCalls.delete(callId);
+          socket.leave(`call_${callId}`);
 
-        // Also broadcast to the call room (for link-based calls where joiner is in CallRoom)
-        io.to(`call_${callId}`).emit('call-cancelled', { callId });
-        io.to(`call_${callId}`).emit('call-ended', { callId });
-        
-        activeCalls.delete(callId);
-        console.log(`[Call Cancel] Call ${callId} cancelled by caller (was ${call.status === 'waiting' ? 'link-waiting' : call.status})`);
+          // Notify joiner (if in CallRoom) that the host left
+          io.to(`call_${callId}`).emit('call-cancelled', { callId, hostLeft: true });
+          console.log(`[Call Cancel] Host left link call waiting room ${callId} — link still valid until expiry`);
+
+        } else if (call.status === 'initiated' || call.status === 'ringing' || call.status === 'accepted') {
+          // Direct calls or active link calls: Cancel permanently
+          call.status = 'cancelled';
+          call.endTime = new Date();
+          await call.save();
+
+          io.to(`user_${call.receiverId}`).emit('call-cancelled', { callId });
+          io.to(`user_${call.callerId}`).emit('call-cancelled', { callId });
+          io.to(`call_${callId}`).emit('call-cancelled', { callId });
+          io.to(`call_${callId}`).emit('call-ended', { callId });
+
+          activeCalls.delete(callId);
+          console.log(`[Call Cancel] Call ${callId} cancelled by caller (was ${call.status})`);
+        }
       }
     } catch (err) {
       console.error("Error cancelling call:", err);
