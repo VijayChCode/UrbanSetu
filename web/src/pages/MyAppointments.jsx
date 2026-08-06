@@ -326,6 +326,38 @@ export default function MyAppointments() {
     return () => { if (linkCountdownRef.current) clearInterval(linkCountdownRef.current); };
   }, []);
 
+  // Validate and sync link status / expiresAt from backend whenever link modal opens
+  useEffect(() => {
+    if (!showLinkModal || !linkModalData?.linkToken) return;
+
+    let isMounted = true;
+    const validateLinkFromBackend = async () => {
+      try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/api/calls/link/${linkModalData.linkToken}`);
+        const data = await response.json();
+        if (!isMounted) return;
+
+        if (response.ok && data.valid && data.expiresAt) {
+          const backendExpiresAt = new Date(data.expiresAt).getTime();
+          setLinkModalData(prev => prev ? { ...prev, expiresAt: backendExpiresAt } : prev);
+          startCountdown(backendExpiresAt);
+        } else if (!data.valid || response.status === 410) {
+          // Link is expired or invalid on backend
+          setLinkTimeLeft(0);
+          if (linkCountdownRef.current) clearInterval(linkCountdownRef.current);
+        }
+      } catch (err) {
+        console.error('Error validating call link from backend:', err);
+      }
+    };
+
+    validateLinkFromBackend();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [showLinkModal, linkModalData?.linkToken, startCountdown]);
+
   // Handle "Call via Link" button click — checks cache, opens modal
   const handleCallViaLinkClick = useCallback(async (appt, callType, onComplete) => {
     if (generatingLinkType) return;
