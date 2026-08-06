@@ -52,7 +52,7 @@ router.post("/create-link", verifyToken, async (req, res) => {
     // Generate secure link token
     const linkToken = crypto.randomUUID();
     const callId = generateCallId();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Create call record with 'waiting' status
     const callHistory = new CallHistory({

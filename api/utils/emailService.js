@@ -18201,7 +18201,7 @@ export const sendCallLinkEmail = async ({
                 <strong style="color: #e2e8f0;">Call Mode:</strong> ${typeLabel}
               </p>
               <p style="color: #94a3b8; font-size: 13px; margin: 0;">
-                <strong style="color: #e2e8f0;">Link Validity:</strong> 10 Minutes
+                <strong style="color: #e2e8f0;">Link Validity:</strong> 24 Hours
               </p>
             </div>
 
