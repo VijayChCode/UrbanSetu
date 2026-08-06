@@ -1898,6 +1898,7 @@ export default function MyAppointments() {
                       isDarkMode={isDarkMode}
                       handleCallViaLinkClick={handleCallViaLinkClick}
                       generatingLinkType={generatingLinkType}
+                      handleOpenLinkDetailsFromChat={handleOpenLinkDetailsFromChat}
                     />
                   ))}
                 </tbody>
@@ -1991,6 +1992,7 @@ export default function MyAppointments() {
                       isDarkMode={isDarkMode}
                       handleCallViaLinkClick={handleCallViaLinkClick}
                       generatingLinkType={generatingLinkType}
+                      handleOpenLinkDetailsFromChat={handleOpenLinkDetailsFromChat}
                     />
                   ))}
                 </tbody>
@@ -2793,7 +2795,7 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId, isDarkMode, handleCallViaLinkClick, generatingLinkType }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId, isDarkMode, handleCallViaLinkClick, generatingLinkType, handleOpenLinkDetailsFromChat }) {
   // Camera modal state - moved to main MyAppointments component
   const navigate = useNavigate();
   const params = useParams();
@@ -10767,27 +10769,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                   <button
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      const tokenMatch = (c.message || '').match(/\/call\/(?:(audio|video)\/)?([a-zA-Z0-9-]+)/);
-                                                      const actualCallType = c.callType || (tokenMatch && tokenMatch[1] ? tokenMatch[1] : (c.message.includes('/call/video/') ? 'video' : 'audio'));
-                                                      const linkToken = tokenMatch ? (tokenMatch[2] || tokenMatch[1]) : '';
-                                                      const createdAtTime = c.createdAt ? new Date(c.createdAt).getTime() : Date.now();
-                                                      const expiresAtTime = c.expiresAt ? new Date(c.expiresAt).getTime() : (createdAtTime + 24 * 60 * 60 * 1000);
-
-                                                      const modalData = {
-                                                        callLink: c.message,
-                                                        callType: actualCallType,
-                                                        callId: c.callId || '',
-                                                        linkToken: linkToken,
-                                                        appointmentId: appt?._id,
-                                                        expiresAt: expiresAtTime,
-                                                        sentToChat: true,
-                                                        createdAt: createdAtTime
-                                                      };
-
-                                                      setLinkCopied(false);
-                                                      setLinkModalData(modalData);
-                                                      startCountdown(expiresAtTime);
-                                                      setShowLinkModal(true);
+                                                      if (handleOpenLinkDetailsFromChat) {
+                                                        handleOpenLinkDetailsFromChat(c, appt?._id);
+                                                      }
                                                     }}
                                                     className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
                                                     title="View Link Details Modal"
