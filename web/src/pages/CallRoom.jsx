@@ -114,6 +114,34 @@ export default function CallRoom() {
     };
   }, [token]);
 
+  // Add beforeunload event listener to prompt user if they try to close/reload during an active/waiting call
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (callState === 'link-waiting' || callState === 'link-joining' || callState === 'active') {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave the call room?';
+        return 'Are you sure you want to leave the call room?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [callState]);
+
+  // Ensure media tracks are stopped when navigating away or unmounting CallRoom
+  useEffect(() => {
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+      }
+    };
+  }, [localStream]);
+
   // Handle Join button click for the receiver
   const handleJoinCall = async () => {
     if (!callData) return;
@@ -263,7 +291,7 @@ export default function CallRoom() {
           </div>
 
           {/* Media Toggle Controls (Pre-call) */}
-          {localStream && (
+          {localStream ? (
             <div className="flex items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
               <button
                 onClick={toggleMute}
@@ -290,6 +318,19 @@ export default function CallRoom() {
                   {!isVideoEnabled ? <FaVideoSlash className="text-lg sm:text-xl" /> : <FaVideo className="text-lg sm:text-xl" />}
                 </button>
               )}
+            </div>
+          ) : (
+            <div className="flex justify-center mb-6 sm:mb-8">
+              <button
+                onClick={() => {
+                  setPermissionType(callData?.callType === 'video' ? 'video' : 'microphone');
+                  setShowPermissionModal(true);
+                }}
+                className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
+              >
+                <FaExclamationTriangle className="text-amber-400" />
+                <span>Media permission required — click for instructions</span>
+              </button>
             </div>
           )}
 
