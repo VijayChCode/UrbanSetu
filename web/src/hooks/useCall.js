@@ -447,6 +447,12 @@ export const useCall = () => {
         return;
       }
 
+      // For link-based calls, do NOT auto-acquire media unless user is on the CallRoom page (/call/)
+      if ((session.callMode === 'link' || session.linkToken) && !window.location.pathname.includes('/call/')) {
+        console.log('[Call Recovery] Link call session found, but user is not in CallRoom. Skipping background media recovery.');
+        return;
+      }
+
       console.log('[Call Recovery] Server sent active session:', session);
 
       // IMMEDIATELY update refs to prevent double-fire
@@ -2919,6 +2925,7 @@ export const useCall = () => {
     callState,
     incomingCall,
     localStream,
+    setLocalStream,
     remoteStream,
     isMuted,
     isVideoEnabled,

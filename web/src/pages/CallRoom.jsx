@@ -27,6 +27,7 @@ export default function CallRoom() {
     joinCallViaLink,
     endCall,
     localStream,
+    setLocalStream,
     isMuted,
     isVideoEnabled,
     toggleMute,
@@ -294,17 +295,24 @@ export default function CallRoom() {
   };
 
   const handleBackToAppointments = async () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        track.stop();
-        track.enabled = false;
-      });
-      setLocalStream(null);
+    try {
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+        if (typeof setLocalStream === 'function') {
+          setLocalStream(null);
+        }
+      }
+      if (callState === 'link-waiting' || callState === 'link-joining' || callState === 'active') {
+        await endCall();
+      }
+    } catch (err) {
+      console.error('[CallRoom] Navigation cleanup error:', err);
+    } finally {
+      navigate('/user/my-appointments');
     }
-    if (callState === 'link-waiting' || callState === 'link-joining' || callState === 'active') {
-      await endCall();
-    }
-    navigate('/user/my-appointments');
   };
 
   if (loading) {
