@@ -95,11 +95,13 @@ export default function CallRoom() {
   }, [callState]);
 
   // Sync initial callerInRoom from callData
+  // NOTE: callData.status === 'waiting' means the link was CREATED in DB, NOT that the host
+  // is actively in the CallRoom. Only explicit socket events should confirm host presence.
   useEffect(() => {
     if (callData?.isCaller) {
       setCallerInRoom(true);
     } else if (callData) {
-      setCallerInRoom(!!(callData.isCallerWaiting || callData.callerInRoom || callData.status === 'waiting'));
+      setCallerInRoom(!!(callData.isCallerWaiting || callData.callerInRoom));
     }
   }, [callData]);
 
