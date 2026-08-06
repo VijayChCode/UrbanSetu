@@ -1792,9 +1792,18 @@ export const useCall = () => {
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Apply current pre-call mute / video off preferences
+      if (isMuted) {
+        stream.getAudioTracks().forEach(t => { t.enabled = false; });
+      }
+      if (!isVideoEnabled && callType === 'video') {
+        stream.getVideoTracks().forEach(t => { t.enabled = false; });
+      }
+
       setLocalStream(stream);
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
+      if (localVideoRef.current && localVideoRef.current.srcObject !== stream) {
         localVideoRef.current.srcObject = stream;
       }
 
@@ -1917,9 +1926,18 @@ export const useCall = () => {
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Apply current pre-call mute / video off preferences
+      if (isMuted) {
+        stream.getAudioTracks().forEach(t => { t.enabled = false; });
+      }
+      if (!isVideoEnabled && callType === 'video') {
+        stream.getVideoTracks().forEach(t => { t.enabled = false; });
+      }
+
       setLocalStream(stream);
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
+      if (localVideoRef.current && localVideoRef.current.srcObject !== stream) {
         localVideoRef.current.srcObject = stream;
       }
 

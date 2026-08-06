@@ -75,38 +75,61 @@ export default function CallRoom() {
   useEffect(() => {
     if (callData?.isCaller) {
       setCallerInRoom(true);
-    } else if (callData?.isCallerWaiting || callData?.callerInRoom || callData?.status === 'waiting') {
-      setCallerInRoom(true);
+    } else if (callData) {
+      setCallerInRoom(!!(callData.isCallerWaiting || callData.callerInRoom || callData.status === 'waiting'));
     }
   }, [callData]);
 
   // Listen for presence / joined events
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !callData?.callId) return;
 
-    // Joiner announces presence to room
-    if (callData?.callId) {
-      socket.emit('call-link-presence', { callId: callData.callId, token });
+    // Joiner announces presence to room (identifying as non-caller)
+    if (!callData.isCaller) {
+      socket.emit('call-link-presence', { callId: callData.callId, token, isCaller: false });
     }
 
-    const handleParticipantEvent = (data) => {
+    const handleParticipantJoined = (data) => {
       if (data?.callId === callData?.callId || data?.token === token) {
-        console.log('[CallRoom] Socket presence event:', data);
-        setParticipantJoined(true);
-        setCallerInRoom(true);
+        console.log('[CallRoom] Participant joined event:', data);
+        if (callData.isCaller) {
+          setParticipantJoined(true);
+        } else {
+          setCallerInRoom(true);
+        }
       }
     };
 
-    socket.on('call-link-joined', handleParticipantEvent);
-    socket.on('call-link-presence', handleParticipantEvent);
-    socket.on('call-link-waiting', handleParticipantEvent);
+    const handleCallerWaiting = (data) => {
+      if (data?.callId === callData?.callId || data?.token === token) {
+        console.log('[CallRoom] Caller waiting event:', data);
+        if (!callData.isCaller) {
+          setCallerInRoom(true);
+        }
+      }
+    };
+
+    const handlePresence = (data) => {
+      if (data?.callId === callData?.callId || data?.token === token) {
+        console.log('[CallRoom] Presence event:', data);
+        if (callData.isCaller) {
+          setParticipantJoined(true);
+        } else if (data?.isCaller) {
+          setCallerInRoom(true);
+        }
+      }
+    };
+
+    socket.on('call-link-joined', handleParticipantJoined);
+    socket.on('call-link-waiting', handleCallerWaiting);
+    socket.on('call-link-presence', handlePresence);
 
     return () => {
-      socket.off('call-link-joined', handleParticipantEvent);
-      socket.off('call-link-presence', handleParticipantEvent);
-      socket.off('call-link-waiting', handleParticipantEvent);
+      socket.off('call-link-joined', handleParticipantJoined);
+      socket.off('call-link-waiting', handleCallerWaiting);
+      socket.off('call-link-presence', handlePresence);
     };
-  }, [callData?.callId, token]);
+  }, [callData, token]);
 
   // Validate token on mount
   useEffect(() => {
@@ -140,6 +163,34 @@ export default function CallRoom() {
             } catch (err) {
               console.error('Failed to start waiting stream:', err);
               if (err?.isPermissionDenied || err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+                setPermissionType(data.callType === 'video' ? 'video' : 'microphone');
+                setShowPermissionModal(true);
+              }
+            }
+          } else if (!data.isCaller && !localStream) {
+            // For Joiner (Receiver): Acquire media preview on mount to verify permissions & show preview
+            try {
+              const constraints = {
+                audio: true,
+                video: data.callType === 'video'
+              };
+              const stream = await navigator.mediaDevices.getUserMedia(constraints);
+              if (isMounted) {
+                // Apply pre-call preferences
+                if (isMuted) {
+                  stream.getAudioTracks().forEach(t => { t.enabled = false; });
+                }
+                if (!isVideoEnabled && data.callType === 'video') {
+                  stream.getVideoTracks().forEach(t => { t.enabled = false; });
+                }
+                setLocalStream(stream);
+                setShowPermissionModal(false);
+              } else {
+                stream.getTracks().forEach(t => t.stop());
+              }
+            } catch (mediaErr) {
+              console.warn('[CallRoom] Joiner media preview access error:', mediaErr);
+              if (isMounted && (mediaErr?.name === 'NotAllowedError' || mediaErr?.name === 'PermissionDeniedError' || mediaErr?.isPermissionDenied)) {
                 setPermissionType(data.callType === 'video' ? 'video' : 'microphone');
                 setShowPermissionModal(true);
               }
@@ -192,6 +243,30 @@ export default function CallRoom() {
       }
     };
   }, [localStream]);
+
+  const checkAndRetryMedia = async () => {
+    if (!callData) return;
+    try {
+      const constraints = {
+        audio: true,
+        video: callData.callType === 'video'
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (isMuted) {
+        stream.getAudioTracks().forEach(t => { t.enabled = false; });
+      }
+      if (!isVideoEnabled && callData.callType === 'video') {
+        stream.getVideoTracks().forEach(t => { t.enabled = false; });
+      }
+      setLocalStream(stream);
+      setShowPermissionModal(false);
+      toast.success('Media permissions granted!');
+    } catch (err) {
+      console.warn('[CallRoom] Retry media stream failed:', err);
+      setPermissionType(callData.callType === 'video' ? 'video' : 'microphone');
+      setShowPermissionModal(true);
+    }
+  };
 
   // Handle Join button click for the receiver
   const handleJoinCall = async () => {
@@ -388,14 +463,11 @@ export default function CallRoom() {
           ) : (
             <div className="flex justify-center mb-6 sm:mb-8">
               <button
-                onClick={() => {
-                  setPermissionType(callData?.callType === 'video' ? 'video' : 'microphone');
-                  setShowPermissionModal(true);
-                }}
+                onClick={checkAndRetryMedia}
                 className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
               >
                 <FaExclamationTriangle className="text-amber-400" />
-                <span>Media permission required — click for instructions</span>
+                <span>Media permission required — click to enable/grant</span>
               </button>
             </div>
           )}
