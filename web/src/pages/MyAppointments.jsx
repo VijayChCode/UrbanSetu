@@ -431,7 +431,7 @@ export default function MyAppointments() {
   // Generate new link (when expired)
   const handleLinkModalGenerateNew = useCallback(async () => {
     if (!linkModalData || modalActionLoading) return;
-    const appt = allAppointments.find(a => a._id === linkModalData.appointmentId) || appointments.find(a => a._id === linkModalData.appointmentId);
+    const appt = allAppointments.find(a => a._id === linkModalData.appointmentId) || appointments.find(a => a._id === linkModalData.appointmentId) || activeChatAppointment;
     if (!appt) return;
     clearCachedLink(appt._id, linkModalData.callType);
     setLinkModalData(null);
@@ -10692,7 +10692,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                           {/* Call Link Card */}
                                           {(c.type === 'call_link' || (c.message && c.message.includes('/call/'))) && (() => {
                                             const isVideoCall = c.callType === 'video' || (c.message && c.message.includes('/call/video/'));
-                                            const linkInfoId = `link-info-${c._id || c.tempId || idx}`;
                                             return (
                                               <div className="bg-slate-900/95 text-white rounded-2xl p-4 my-2 border border-slate-700/80 shadow-xl max-w-xs backdrop-blur-md">
                                                 <div className="flex items-center gap-3 mb-2">
@@ -10710,69 +10709,34 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                                   <button
                                                     onClick={(e) => {
                                                       e.stopPropagation();
-                                                      const el = document.getElementById(linkInfoId);
-                                                      if (el) el.classList.toggle('hidden');
+                                                      const tokenMatch = (c.message || '').match(/\/call\/(?:(audio|video)\/)?([a-zA-Z0-9-]+)/);
+                                                      const actualCallType = c.callType || (tokenMatch && tokenMatch[1] ? tokenMatch[1] : (c.message.includes('/call/video/') ? 'video' : 'audio'));
+                                                      const linkToken = tokenMatch ? (tokenMatch[2] || tokenMatch[1]) : '';
+                                                      const createdAtTime = c.createdAt ? new Date(c.createdAt).getTime() : Date.now();
+                                                      const expiresAtTime = c.expiresAt ? new Date(c.expiresAt).getTime() : (createdAtTime + 24 * 60 * 60 * 1000);
+
+                                                      const modalData = {
+                                                        callLink: c.message,
+                                                        callType: actualCallType,
+                                                        callId: c.callId || '',
+                                                        linkToken: linkToken,
+                                                        appointmentId: appt?._id,
+                                                        expiresAt: expiresAtTime,
+                                                        sentToChat: true,
+                                                        createdAt: createdAtTime
+                                                      };
+
+                                                      setLinkCopied(false);
+                                                      setLinkModalData(modalData);
+                                                      startCountdown(expiresAtTime);
+                                                      setShowLinkModal(true);
                                                     }}
-                                                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-all"
-                                                    title="Link Details"
+                                                    className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
+                                                    title="View Link Details Modal"
                                                   >
                                                     <FaInfoCircle className="text-sm" />
                                                   </button>
                                                 </div>
-
-                                                {/* Expandable Link Details Panel */}
-                                                {(() => {
-                                                  const createdAtTime = c.createdAt ? new Date(c.createdAt).getTime() : null;
-                                                  const expiresAtTime = c.expiresAt ? new Date(c.expiresAt).getTime() : (createdAtTime ? createdAtTime + 24 * 60 * 60 * 1000 : null);
-                                                  const isExpired = expiresAtTime ? Date.now() > expiresAtTime : false;
-
-                                                  return (
-                                                    <div id={linkInfoId} className="hidden mb-3 p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-2 animate-[fadeIn_0.2s_ease-out]">
-                                                      <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Status</span>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                                          isExpired
-                                                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                                                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                                        }`}>
-                                                          {isExpired ? 'Expired' : 'Active (24h Link)'}
-                                                        </span>
-                                                      </div>
-                                                      <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Type</span>
-                                                        <span className="text-[11px] text-slate-200 font-medium capitalize">{isVideoCall ? 'Video Call' : 'Audio Call'}</span>
-                                                      </div>
-                                                      <div className="flex items-start gap-2">
-                                                        <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0 mt-0.5">Link</span>
-                                                        <span className="text-[11px] text-teal-400 break-all cursor-pointer hover:underline flex-1 min-w-0" onClick={() => { navigator.clipboard.writeText(c.message || ''); toast.success('Link copied!'); }}>
-                                                          {c.message || 'N/A'}
-                                                        </span>
-                                                      </div>
-                                                      {c.createdAt && (
-                                                        <div className="flex items-center gap-2">
-                                                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Sent</span>
-                                                          <span className="text-[11px] text-slate-300">
-                                                            {new Date(c.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                                                          </span>
-                                                        </div>
-                                                      )}
-                                                      {expiresAtTime && (
-                                                        <div className="flex items-center gap-2">
-                                                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Expires</span>
-                                                          <span className={`text-[11px] ${isExpired ? 'text-red-400 font-medium' : 'text-slate-300'}`}>
-                                                            {new Date(expiresAtTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                                                          </span>
-                                                        </div>
-                                                      )}
-                                                      {c.callId && (
-                                                        <div className="flex items-center gap-2">
-                                                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold w-14 flex-shrink-0">Call ID</span>
-                                                          <span className="text-[11px] text-slate-400 font-mono truncate">{c.callId}</span>
-                                                        </div>
-                                                      )}
-                                                    </div>
-                                                  );
-                                                })()}
 
                                                 <div className="flex items-center gap-2 mt-3">
                                                   <button
