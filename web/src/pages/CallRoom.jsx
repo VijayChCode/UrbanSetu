@@ -145,14 +145,34 @@ export default function CallRoom() {
       }
     };
 
+    // Handle host leaving / call cancelled while joiner is in CallRoom
+    const handleCallCancelled = (data) => {
+      if (data?.callId === callData?.callId) {
+        console.log('[CallRoom] Call cancelled by host:', data);
+        setCallerInRoom(false);
+        toast.info('The host has left the call room.');
+      }
+    };
+
+    const handleCallEnded = (data) => {
+      if (data?.callId === callData?.callId) {
+        console.log('[CallRoom] Call ended:', data);
+        setCallerInRoom(false);
+      }
+    };
+
     socket.on('call-link-joined', handleParticipantJoined);
     socket.on('call-link-waiting', handleCallerWaiting);
     socket.on('call-link-presence', handlePresence);
+    socket.on('call-cancelled', handleCallCancelled);
+    socket.on('call-ended', handleCallEnded);
 
     return () => {
       socket.off('call-link-joined', handleParticipantJoined);
       socket.off('call-link-waiting', handleCallerWaiting);
       socket.off('call-link-presence', handlePresence);
+      socket.off('call-cancelled', handleCallCancelled);
+      socket.off('call-ended', handleCallEnded);
     };
   }, [callData, token]);
 

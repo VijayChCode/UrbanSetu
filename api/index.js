@@ -1902,9 +1902,9 @@ io.on('connection', (socket) => {
       const callerId = socket.user?._id?.toString();
       const call = await CallHistory.findOne({ callId });
 
-      // Allow cancellation if call is initiated or ringing (caller can cancel before answer)
+      // Allow cancellation if call is initiated, ringing, OR waiting/accepted (link calls)
       if (call && call.callerId.toString() === callerId &&
-        (call.status === 'initiated' || call.status === 'ringing')) {
+        (call.status === 'initiated' || call.status === 'ringing' || call.status === 'waiting' || call.status === 'accepted')) {
         call.status = 'cancelled';
         call.endTime = new Date();
         await call.save();
@@ -1912,8 +1912,13 @@ io.on('connection', (socket) => {
         // Emit to both caller and receiver rooms to close modals on all tabs
         io.to(`user_${call.receiverId}`).emit('call-cancelled', { callId });
         io.to(`user_${call.callerId}`).emit('call-cancelled', { callId });
+
+        // Also broadcast to the call room (for link-based calls where joiner is in CallRoom)
+        io.to(`call_${callId}`).emit('call-cancelled', { callId });
+        io.to(`call_${callId}`).emit('call-ended', { callId });
         
         activeCalls.delete(callId);
+        console.log(`[Call Cancel] Call ${callId} cancelled by caller (was ${call.status === 'waiting' ? 'link-waiting' : call.status})`);
       }
     } catch (err) {
       console.error("Error cancelling call:", err);
