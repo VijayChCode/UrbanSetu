@@ -195,8 +195,10 @@ export default function CallRoom() {
 
         if (response.ok && data.valid) {
           setCallData(data);
-          // If the user is the caller and we're not yet in a call state, auto-start waiting
-          if (data.isCaller && !callState) {
+          // If the user is the caller, always (re-)start waiting & acquire media
+          // Only skip if we're already in an active WebRTC call for THIS callId
+          const isAlreadyActiveForThisCall = callState === 'active' && activeCall?.callId === data.callId;
+          if (data.isCaller && !isAlreadyActiveForThisCall) {
             try {
               await startLinkCallWaiting(
                 data.callId,
