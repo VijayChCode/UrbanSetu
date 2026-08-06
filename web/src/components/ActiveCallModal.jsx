@@ -1155,34 +1155,39 @@ const ActiveCallModal = ({
             </div>
 
             <div className="space-y-4 mb-8">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                     {callType === 'video' ? <FaVideo /> : <FaPhone />}
                   </div>
                   <span className="text-gray-600 font-medium">Call Type</span>
                 </div>
-                <span className="text-gray-900 font-bold capitalize">{callType}</span>
+                <span className="text-gray-900 font-bold capitalize text-right flex-shrink-0">{callType}</span>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                     <FaUser />
                   </div>
                   <span className="text-gray-600 font-medium">Participant</span>
                 </div>
-                <span className="text-gray-900 font-bold">{otherPartyName || 'Other Person'}</span>
+                <span 
+                  className="text-gray-900 font-bold text-right truncate min-w-0 flex-1 ml-2" 
+                  title={otherPartyName || 'Other Person'}
+                >
+                  {otherPartyName || 'Other Person'}
+                </span>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
                     <FaClock />
                   </div>
                   <span className="text-gray-600 font-medium">Duration</span>
                 </div>
-                <span className="text-gray-900 font-bold">
+                <span className="text-gray-900 font-bold text-right flex-shrink-0">
                   {isSyncingSummary ? (
                     <span className="flex items-center gap-2 text-blue-600 animate-pulse">
                       <FaSync className="animate-spin text-xs" />
