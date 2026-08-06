@@ -8,6 +8,8 @@ import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaArro
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { usePageTitle } from '../hooks/usePageTitle';
+import MediaPermissionModal from '../components/MediaPermissionModal';
+import MicLevelBar from '../components/MicLevelBar';
 
 export default function CallRoom() {
   const params = useParams();
@@ -34,6 +36,8 @@ export default function CallRoom() {
   const [callData, setCallData] = useState(null);
   const [error, setError] = useState(null);
   const [joining, setJoining] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionType, setPermissionType] = useState('video');
   const localVideoRef = useRef(null);
 
   // Dynamic page title
@@ -45,12 +49,13 @@ export default function CallRoom() {
     : `${callTypeLabel} Room`;
   usePageTitle(pageTitle);
 
-  // Attach local stream to video ref if available during preview
+  // Attach local stream to video ref if available during preview (and on video toggle)
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch(() => {});
     }
-  }, [localStream]);
+  }, [localStream, isVideoEnabled]);
 
   // Validate token on mount
   useEffect(() => {
@@ -73,15 +78,21 @@ export default function CallRoom() {
           setCallData(data);
           // If the user is the caller and we're not yet in a call state, auto-start waiting
           if (data.isCaller && !callState) {
-            startLinkCallWaiting(
-              data.callId,
-              token,
-              data.callType,
-              data.appointmentId,
-              data.receiverId
-            ).catch((err) => {
+            try {
+              await startLinkCallWaiting(
+                data.callId,
+                token,
+                data.callType,
+                data.appointmentId,
+                data.receiverId
+              );
+            } catch (err) {
               console.error('Failed to start waiting stream:', err);
-            });
+              if (err?.isPermissionDenied || err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+                setPermissionType(data.callType === 'video' ? 'video' : 'microphone');
+                setShowPermissionModal(true);
+              }
+            }
           }
         } else {
           setError(data.message || 'Invalid or expired call link.');
@@ -117,12 +128,23 @@ export default function CallRoom() {
       );
     } catch (err) {
       console.error('Failed to join call:', err);
-      toast.error('Failed to join call. Please check device permissions.');
+      if (err?.isPermissionDenied || err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        setPermissionType(callData.callType === 'video' ? 'video' : 'microphone');
+        setShowPermissionModal(true);
+      } else {
+        toast.error('Failed to join call. Please check device permissions.');
+      }
       setJoining(false);
     }
   };
 
   const handleBackToAppointments = () => {
+    if (localStream) {
+      localStream.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
+    }
     if (callState === 'link-waiting' || callState === 'link-joining' || callState === 'active') {
       endCall();
     }
@@ -202,7 +224,13 @@ export default function CallRoom() {
           <div className="w-full aspect-video bg-slate-950 rounded-xl sm:rounded-2xl border border-slate-800/80 overflow-hidden relative mb-4 sm:mb-6 shadow-inner flex items-center justify-center">
             {callData?.callType === 'video' && isVideoEnabled && localStream ? (
               <video
-                ref={localVideoRef}
+                ref={(el) => {
+                  localVideoRef.current = el;
+                  if (el && localStream) {
+                    el.srcObject = localStream;
+                    el.play().catch(() => {});
+                  }
+                }}
                 autoPlay
                 playsInline
                 muted
@@ -216,6 +244,14 @@ export default function CallRoom() {
                 <p className="text-[11px] sm:text-xs text-slate-400">
                   {callData?.callType === 'video' ? 'Camera is off' : 'Audio Call Preview'}
                 </p>
+              </div>
+            )}
+
+            {/* Mic level bar overlay */}
+            {localStream && (
+              <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 px-2.5 py-1 rounded-full text-[10px] sm:text-xs text-slate-300 flex items-center gap-1.5 shadow-sm">
+                <FaMicrophone className={isMuted ? "text-red-400" : "text-teal-400"} />
+                <MicLevelBar stream={localStream} barCount={5} height="16px" theme="dark" muted={isMuted} />
               </div>
             )}
 
@@ -293,6 +329,14 @@ export default function CallRoom() {
           )}
         </div>
       </div>
+
+      {/* Permission Modal */}
+      <MediaPermissionModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        permissionType={permissionType}
+        actionText="join call"
+      />
     </div>
   );
 }
