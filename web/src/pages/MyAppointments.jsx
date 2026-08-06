@@ -282,6 +282,7 @@ export default function MyAppointments() {
   const activeLinkCacheRef = useRef({});
   const linkCountdownRef = useRef(null);
   const [linkTimeLeft, setLinkTimeLeft] = useState(0); // seconds remaining
+  const [isFetchingExpiry, setIsFetchingExpiry] = useState(false);
 
   // Link cache helpers
   const getCachedLink = useCallback((appointmentId, callType) => {
@@ -328,9 +329,14 @@ export default function MyAppointments() {
 
   // Validate and sync link status / expiresAt from backend whenever link modal opens
   useEffect(() => {
-    if (!showLinkModal || !linkModalData?.linkToken) return;
+    if (!showLinkModal || !linkModalData?.linkToken) {
+      setIsFetchingExpiry(false);
+      return;
+    }
 
     let isMounted = true;
+    setIsFetchingExpiry(true);
+
     const validateLinkFromBackend = async () => {
       try {
         const response = await authenticatedFetch(`${API_BASE_URL}/api/calls/link/${linkModalData.linkToken}`);
@@ -348,6 +354,10 @@ export default function MyAppointments() {
         }
       } catch (err) {
         console.error('Error validating call link from backend:', err);
+      } finally {
+        if (isMounted) {
+          setIsFetchingExpiry(false);
+        }
       }
     };
 
@@ -503,6 +513,7 @@ export default function MyAppointments() {
     setShowLinkModal(false);
     setLinkModalLoading(false);
     setLinkCopied(false);
+    setIsFetchingExpiry(false);
     setModalActionLoading(null);
   }, []);
 
@@ -2642,16 +2653,25 @@ export default function MyAppointments() {
                   </div>
 
                   {/* Countdown Timer */}
-                  <div className={`flex items-center justify-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs font-medium ${
-                    linkTimeLeft <= 300
-                      ? isDarkMode ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'
-                      : linkTimeLeft <= 3600
-                        ? isDarkMode ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20'
-                        : isDarkMode ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
-                  }`}>
-                    <FaClock className="text-[10px]" />
-                    <span>Expires in {linkTimeLeft >= 3600 ? `${Math.floor(linkTimeLeft / 3600)}h ${String(Math.floor((linkTimeLeft % 3600) / 60)).padStart(2, '0')}m` : `${Math.floor(linkTimeLeft / 60)}:${String(linkTimeLeft % 60).padStart(2, '0')}`}</span>
-                  </div>
+                  {isFetchingExpiry ? (
+                    <div className={`flex items-center justify-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs font-medium ${
+                      isDarkMode ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
+                    }`}>
+                      <FaSync className="text-[10px] animate-spin" />
+                      <span className="animate-pulse">Fetching Expiry Time...</span>
+                    </div>
+                  ) : (
+                    <div className={`flex items-center justify-center gap-2 mb-5 px-3 py-2 rounded-lg text-xs font-medium ${
+                      linkTimeLeft <= 300
+                        ? isDarkMode ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'
+                        : linkTimeLeft <= 3600
+                          ? isDarkMode ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20'
+                          : isDarkMode ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20'
+                    }`}>
+                      <FaClock className="text-[10px]" />
+                      <span>Expires in {linkTimeLeft >= 3600 ? `${Math.floor(linkTimeLeft / 3600)}h ${String(Math.floor((linkTimeLeft % 3600) / 60)).padStart(2, '0')}m` : `${Math.floor(linkTimeLeft / 60)}:${String(linkTimeLeft % 60).padStart(2, '0')}`}</span>
+                    </div>
+                  )}
 
                   {/* Already Sent Indicator */}
                   {linkModalData.sentToChat && (
