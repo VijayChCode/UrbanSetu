@@ -43,6 +43,7 @@ export default function CallRoom() {
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionType, setPermissionType] = useState('video');
   const localVideoRef = useRef(null);
+  const prevCallStateRef = useRef(null);
 
   // Dynamic page title
   const isVideoCall = (callData?.callType || routeCallType) === 'video';
@@ -69,6 +70,27 @@ export default function CallRoom() {
     if (callState === 'active') {
       setParticipantJoined(true);
       setCallerInRoom(true);
+    }
+  }, [callState]);
+
+  // AUTO-NAVIGATE on call end: When callState transitions to 'ended' or null after being 'active',
+  // navigate away from CallRoom to the chatbox. This prevents re-entering the waiting room.
+  useEffect(() => {
+    const prev = prevCallStateRef.current;
+    prevCallStateRef.current = callState;
+
+    // If call was active and now it's ended or cleared, navigate to chatbox
+    if (prev === 'active' && (callState === 'ended' || callState === null)) {
+      const targetApptId = callData?.appointmentId || activeCall?.appointmentId;
+      // Small delay to allow cleanup, then navigate
+      const navTimer = setTimeout(() => {
+        if (targetApptId) {
+          navigate(`/user/my-appointments/chat/${targetApptId}?chatopen=true`);
+        } else {
+          navigate('/user/my-appointments');
+        }
+      }, 300);
+      return () => clearTimeout(navTimer);
     }
   }, [callState]);
 
@@ -170,31 +192,69 @@ export default function CallRoom() {
             }
           } else if (!data.isCaller && !localStream) {
             // For Joiner (Receiver): Acquire media preview on mount to verify permissions & show preview
+            // Test permissions individually for precise error reporting
+            const isVideo = data.callType === 'video';
+            let micOk = false;
+            let camOk = false;
+            let testMicStream = null;
+            let testCamStream = null;
+
             try {
-              const constraints = {
-                audio: true,
-                video: data.callType === 'video'
-              };
-              const stream = await navigator.mediaDevices.getUserMedia(constraints);
-              if (isMounted) {
-                // Apply pre-call preferences
-                if (isMuted) {
-                  stream.getAudioTracks().forEach(t => { t.enabled = false; });
+              testMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              micOk = true;
+            } catch (e) {
+              console.warn('[CallRoom] Joiner mic permission denied:', e.name);
+            }
+
+            if (isVideo) {
+              try {
+                testCamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                camOk = true;
+              } catch (e) {
+                console.warn('[CallRoom] Joiner camera permission denied:', e.name);
+              }
+            } else {
+              camOk = true; // Not needed for audio
+            }
+
+            // Cleanup test streams
+            if (testMicStream) testMicStream.getTracks().forEach(t => t.stop());
+            if (testCamStream) testCamStream.getTracks().forEach(t => t.stop());
+
+            if (micOk && camOk) {
+              // Both granted — acquire combined stream
+              try {
+                const constraints = { audio: true, video: isVideo };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (isMounted) {
+                  if (isMuted) {
+                    stream.getAudioTracks().forEach(t => { t.enabled = false; });
+                  }
+                  if (!isVideoEnabled && isVideo) {
+                    stream.getVideoTracks().forEach(t => { t.enabled = false; });
+                  }
+                  setLocalStream(stream);
+                  setShowPermissionModal(false);
+                } else {
+                  stream.getTracks().forEach(t => t.stop());
                 }
-                if (!isVideoEnabled && data.callType === 'video') {
-                  stream.getVideoTracks().forEach(t => { t.enabled = false; });
+              } catch (combinedErr) {
+                console.warn('[CallRoom] Joiner combined stream error:', combinedErr);
+                if (isMounted) {
+                  setPermissionType(isVideo ? 'video' : 'microphone');
+                  setShowPermissionModal(true);
                 }
-                setLocalStream(stream);
-                setShowPermissionModal(false);
+              }
+            } else if (isMounted) {
+              // Set precise permission type
+              if (!micOk && (!camOk && isVideo)) {
+                setPermissionType('video'); // Both denied
+              } else if (!micOk) {
+                setPermissionType('microphone');
               } else {
-                stream.getTracks().forEach(t => t.stop());
+                setPermissionType('camera');
               }
-            } catch (mediaErr) {
-              console.warn('[CallRoom] Joiner media preview access error:', mediaErr);
-              if (isMounted && (mediaErr?.name === 'NotAllowedError' || mediaErr?.name === 'PermissionDeniedError' || mediaErr?.isPermissionDenied)) {
-                setPermissionType(data.callType === 'video' ? 'video' : 'microphone');
-                setShowPermissionModal(true);
-              }
+              setShowPermissionModal(true);
             }
           }
         } else {
@@ -247,24 +307,66 @@ export default function CallRoom() {
 
   const checkAndRetryMedia = async () => {
     if (!callData) return;
+    const isVideo = callData.callType === 'video';
+
+    // Test permissions individually to determine precisely which is denied
+    let micGranted = false;
+    let camGranted = false;
+    let micStream = null;
+    let camStream = null;
+
+    // Test microphone
     try {
-      const constraints = {
-        audio: true,
-        video: callData.callType === 'video'
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (isMuted) {
-        stream.getAudioTracks().forEach(t => { t.enabled = false; });
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micGranted = true;
+    } catch (e) {
+      console.warn('[CallRoom] Mic permission denied:', e.name);
+    }
+
+    // Test camera (only for video calls)
+    if (isVideo) {
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        camGranted = true;
+      } catch (e) {
+        console.warn('[CallRoom] Camera permission denied:', e.name);
       }
-      if (!isVideoEnabled && callData.callType === 'video') {
-        stream.getVideoTracks().forEach(t => { t.enabled = false; });
+    } else {
+      camGranted = true; // Not needed for audio calls
+    }
+
+    // Cleanup test streams
+    if (micStream) micStream.getTracks().forEach(t => t.stop());
+    if (camStream) camStream.getTracks().forEach(t => t.stop());
+
+    if (micGranted && camGranted) {
+      // Both granted — acquire combined stream
+      try {
+        const constraints = { audio: true, video: isVideo };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (isMuted) {
+          stream.getAudioTracks().forEach(t => { t.enabled = false; });
+        }
+        if (!isVideoEnabled && isVideo) {
+          stream.getVideoTracks().forEach(t => { t.enabled = false; });
+        }
+        setLocalStream(stream);
+        setShowPermissionModal(false);
+        toast.success('Media permissions granted!');
+      } catch (err) {
+        console.warn('[CallRoom] Combined stream failed despite individual grants:', err);
+        setPermissionType(isVideo ? 'video' : 'microphone');
+        setShowPermissionModal(true);
       }
-      setLocalStream(stream);
-      setShowPermissionModal(false);
-      toast.success('Media permissions granted!');
-    } catch (err) {
-      console.warn('[CallRoom] Retry media stream failed:', err);
-      setPermissionType(callData.callType === 'video' ? 'video' : 'microphone');
+    } else {
+      // Set precise permission type based on what's denied
+      if (!micGranted && (!camGranted && isVideo)) {
+        setPermissionType('video'); // Both denied — shows "Allow camera and microphone"
+      } else if (!micGranted) {
+        setPermissionType('microphone');
+      } else {
+        setPermissionType('camera');
+      }
       setShowPermissionModal(true);
     }
   };
@@ -474,7 +576,7 @@ export default function CallRoom() {
                 </button>
               )}
             </div>
-          ) : (
+          ) : !error && callData ? (
             <div className="flex justify-center mb-6 sm:mb-8">
               <button
                 onClick={checkAndRetryMedia}
@@ -484,7 +586,7 @@ export default function CallRoom() {
                 <span>Media permission required — click to enable/grant</span>
               </button>
             </div>
-          )}
+          ) : null}
 
           {/* Action Buttons */}
           {isCaller ? (

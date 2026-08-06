@@ -360,6 +360,15 @@ export const useCall = () => {
     const handleConnect = async () => {
       // 1. If we ALREADY had an active call in this specific tab/state, try to resume WebRTC
       if (activeCallRef.current?.callId) {
+        // LINK CALL GUARD: Link calls in waiting/joining state are managed by CallRoom.jsx,
+        // not by auto-recovery. Only resume if the call was actually 'active' with a peer.
+        const currentCallMode = activeCallRef.current?.callMode;
+        const currentState = callStateRef.current;
+        if (currentCallMode === 'link' && (currentState === 'link-waiting' || currentState === 'link-joining')) {
+          console.log('[Call] Socket reconnected, but link call is in waiting/joining state. Skipping auto-resume.');
+          return;
+        }
+
         console.log('[Call] Socket reconnected, resuming call:', activeCallRef.current.callId);
         const callId = activeCallRef.current.callId;
         const currentStream = localStreamRef.current;
@@ -447,9 +456,12 @@ export const useCall = () => {
         return;
       }
 
-      // For link-based calls, do NOT auto-acquire media unless user is on the CallRoom page (/call/)
-      if ((session.callMode === 'link' || session.linkToken) && !window.location.pathname.includes('/call/')) {
-        console.log('[Call Recovery] Link call session found, but user is not in CallRoom. Skipping background media recovery.');
+      // LINK CALL GUARD: Link-based calls are ENTIRELY managed by CallRoom.jsx.
+      // They should NEVER trigger automatic media recovery or "Resuming ongoing call..." toasts.
+      // The user must explicitly click "Join Call Now" in CallRoom to initiate the call.
+      // This prevents cross-account media access and unwanted permission prompts.
+      if (session.callMode === 'link' || session.linkToken) {
+        console.log('[Call Recovery] Link call session detected — skipping automatic recovery. Link calls are managed by CallRoom.jsx only.');
         return;
       }
 
@@ -2316,9 +2328,14 @@ export const useCall = () => {
     }
 
     // Transition to 'ended' state for summary instead of null if it was active
-    if (wasActive) {
+    // For link calls that were never truly 'active' (link-waiting/link-joining), skip summary
+    const isLinkCall = currentActiveCall?.callMode === 'link';
+    if (wasActive && !isLinkCall) {
       setCallState('ended');
-      // Keep activeCall for summary display
+      // Keep activeCall for summary display (direct calls only)
+    } else if (wasActive && isLinkCall) {
+      // Link calls that were active: transition to ended briefly, CallRoom will auto-navigate
+      setCallState('ended');
     } else {
       setCallState(null);
       setActiveCall(null);
