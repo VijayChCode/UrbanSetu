@@ -51,11 +51,18 @@ export default function CallRoom() {
 
   // Attach local stream to video ref if available during preview (and on video toggle)
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
+    if (localVideoRef.current && localStream && localVideoRef.current.srcObject !== localStream) {
       localVideoRef.current.srcObject = localStream;
       localVideoRef.current.play().catch(() => {});
     }
   }, [localStream, isVideoEnabled]);
+
+  // Auto-reset joining state on callState transition
+  useEffect(() => {
+    if (callState === 'active' || callState === 'ended' || !callState) {
+      setJoining(false);
+    }
+  }, [callState]);
 
   // Validate token on mount
   useEffect(() => {
@@ -154,15 +161,16 @@ export default function CallRoom() {
         callData.appointmentId,
         callData.callerId
       );
+      setJoining(false);
     } catch (err) {
       console.error('Failed to join call:', err);
+      setJoining(false);
       if (err?.isPermissionDenied || err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
         setPermissionType(callData.callType === 'video' ? 'video' : 'microphone');
         setShowPermissionModal(true);
       } else {
         toast.error('Failed to join call. Please check device permissions.');
       }
-      setJoining(false);
     }
   };
 
@@ -254,7 +262,7 @@ export default function CallRoom() {
               <video
                 ref={(el) => {
                   localVideoRef.current = el;
-                  if (el && localStream) {
+                  if (el && localStream && el.srcObject !== localStream) {
                     el.srcObject = localStream;
                     el.play().catch(() => {});
                   }

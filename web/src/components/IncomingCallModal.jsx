@@ -76,7 +76,7 @@ const IncomingCallModal = ({ call, onAccept, onReject, onIgnore, preCallMuted, p
   // Callback ref to attach stream - fires every time the video element mounts/unmounts
   const videoRefCallback = (el) => {
     videoPreviewRef.current = el;
-    if (el && previewStream) {
+    if (el && previewStream && el.srcObject !== previewStream) {
       el.srcObject = previewStream;
       el.muted = true;
       el.play().catch(() => {});

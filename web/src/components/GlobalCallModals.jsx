@@ -255,7 +255,7 @@ const GlobalCallModals = () => {
                   <video
                     ref={(el) => {
                       callerVideoPreviewRef.current = el;
-                      if (el && localStream) {
+                      if (el && localStream && el.srcObject !== localStream) {
                         el.srcObject = localStream;
                         el.muted = true;
                         el.play().catch(() => {});

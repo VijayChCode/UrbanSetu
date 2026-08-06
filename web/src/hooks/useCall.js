@@ -309,6 +309,11 @@ export const useCall = () => {
       if (event.data.senderTabId === tabIdRef.current) return;
 
       if (event.data.type === 'CALL_TAKEN_OVER' && event.data.callId === activeCallRef.current?.callId) {
+        // Do not yield an active link call tab to passive background sync from another tab
+        if (activeCallRef.current?.callMode === 'link' && !event.data.isExplicit) {
+          console.log('[Call Sync] Ignoring passive CALL_TAKEN_OVER for active link call tab');
+          return;
+        }
         // Another tab has taken over this call
         toast.info('Call moved to another tab.');
         // Don't emit 'call-end' to server, just cleanup local state
