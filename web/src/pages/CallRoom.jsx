@@ -823,7 +823,7 @@ export default function CallRoom() {
                   ? `${otherPartyName || 'Participant'} joined — Connected`
                   : isCaller
                     ? participantJoined
-                      ? `${callData?.receiverName || 'Participant'} joined — Connecting...`
+                      ? `${callData?.receiverName || 'Participant'} is in room`
                       : `Waiting for ${callData?.receiverName || 'participant'}...`
                     : joining || callState === 'link-joining'
                       ? `Connecting to ${callData?.callerName || 'caller'}...`
@@ -893,7 +893,7 @@ export default function CallRoom() {
                 ) : participantJoined ? (
                   <>
                     <FaCheckCircle className="text-emerald-400 flex-shrink-0 animate-bounce" />
-                    <span>{callData?.receiverName || 'Participant'} has joined! Establishing connection...</span>
+                    <span>{callData?.receiverName || 'Participant'} has entered room — waiting for them to join</span>
                   </>
                 ) : (
                   <>
