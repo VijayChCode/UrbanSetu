@@ -1575,6 +1575,19 @@ io.on('connection', (socket) => {
         return socket.emit('call-link-expired', { callId });
       }
 
+      // Multi-device prevention: check if the host is already waiting from another socket
+      const existingCallForHost = activeCalls.get(callId);
+      if (existingCallForHost && existingCallForHost.callerSocketId && existingCallForHost.callerSocketId !== socket.id) {
+        // Check if the existing socket is still connected
+        const existingSocket = io.sockets.sockets.get(existingCallForHost.callerSocketId);
+        if (existingSocket && existingSocket.connected) {
+          console.log(`[Link Call] Host ${callerId} attempted to wait from another device — blocked (existing socket: ${existingCallForHost.callerSocketId})`);
+          return socket.emit('call-error', { message: 'You are already waiting in this call from another device. Please close the other tab first.' });
+        }
+        // Existing socket is disconnected — allow takeover
+        console.log(`[Link Call] Host ${callerId} previous socket disconnected — allowing takeover`);
+      }
+
       // If call is already accepted (joiner joined while host was refreshing),
       // re-join the room and immediately notify the host so they can create WebRTC peer
       if (call.status === 'accepted' || call.status === 'active') {
@@ -1711,6 +1724,17 @@ io.on('connection', (socket) => {
       const activeCall = activeCalls.get(callId);
       if (!activeCall) {
         return socket.emit('call-error', { message: 'The caller has left the call' });
+      }
+
+      // Multi-device prevention: check if another joiner socket is already connected
+      if (activeCall.receiverSocketId && activeCall.receiverSocketId !== socket.id) {
+        const existingReceiverSocket = io.sockets.sockets.get(activeCall.receiverSocketId);
+        if (existingReceiverSocket && existingReceiverSocket.connected) {
+          console.log(`[Link Call] Joiner ${joinerId} attempted to join from another device — blocked (existing socket: ${activeCall.receiverSocketId})`);
+          return socket.emit('call-error', { message: 'This call has already been joined from another device. Please close the other tab first.' });
+        }
+        // Existing socket is disconnected — allow takeover
+        console.log(`[Link Call] Joiner ${joinerId} previous socket disconnected — allowing takeover`);
       }
 
       const startTime = new Date();

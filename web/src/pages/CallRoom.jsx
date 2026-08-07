@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useCallContext } from '../contexts/CallContext';
 import { authenticatedFetch } from '../utils/auth';
 import { API_BASE_URL } from '../config/api';
-import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaArrowLeft, FaExclamationTriangle, FaClock, FaCheckCircle } from 'react-icons/fa';
+import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaArrowLeft, FaExclamationTriangle, FaClock, FaCheckCircle, FaExpand, FaBan } from 'react-icons/fa';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -31,7 +31,10 @@ export default function CallRoom() {
     isMuted,
     isVideoEnabled,
     toggleMute,
-    toggleVideo
+    toggleVideo,
+    callDuration,
+    isMinimized,
+    setIsMinimized
   } = useCallContext();
 
   const [loading, setLoading] = useState(true);
@@ -42,8 +45,12 @@ export default function CallRoom() {
   const [callerInRoom, setCallerInRoom] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionType, setPermissionType] = useState('video');
+  const [linkTimeLeft, setLinkTimeLeft] = useState(null); // null = not computed yet, 0 = expired
+  const [linkExpired, setLinkExpired] = useState(false);
+  const [multiDeviceError, setMultiDeviceError] = useState(null);
   const localVideoRef = useRef(null);
   const prevCallStateRef = useRef(null);
+  const linkCountdownRef = useRef(null);
 
   // Dynamic page title
   const isVideoCall = (callData?.callType || routeCallType) === 'video';
@@ -93,6 +100,71 @@ export default function CallRoom() {
       return () => clearTimeout(navTimer);
     }
   }, [callState]);
+
+  // Countdown timer for link expiry
+  useEffect(() => {
+    if (!callData?.expiresAt) return;
+    const expiresAtMs = new Date(callData.expiresAt).getTime();
+
+    const update = () => {
+      const remaining = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+      setLinkTimeLeft(remaining);
+      if (remaining <= 0) {
+        setLinkExpired(true);
+        if (linkCountdownRef.current) {
+          clearInterval(linkCountdownRef.current);
+          linkCountdownRef.current = null;
+        }
+      }
+    };
+    update();
+    linkCountdownRef.current = setInterval(update, 1000);
+
+    return () => {
+      if (linkCountdownRef.current) {
+        clearInterval(linkCountdownRef.current);
+        linkCountdownRef.current = null;
+      }
+    };
+  }, [callData?.expiresAt]);
+
+  // Listen for link expired + multi-device error socket events
+  useEffect(() => {
+    if (!socket || !callData?.callId) return;
+
+    const handleLinkExpiredInRoom = (data) => {
+      if (data?.callId === callData?.callId) {
+        console.log('[CallRoom] Link expired event received');
+        setLinkExpired(true);
+        setLinkTimeLeft(0);
+        if (linkCountdownRef.current) {
+          clearInterval(linkCountdownRef.current);
+          linkCountdownRef.current = null;
+        }
+        toast.error('This call link has expired.');
+      }
+    };
+
+    const handleCallError = (data) => {
+      if (data?.message && (
+        data.message.includes('already joined') ||
+        data.message.includes('already waiting') ||
+        data.message.includes('another device')
+      )) {
+        console.log('[CallRoom] Multi-device error:', data.message);
+        setMultiDeviceError(data.message);
+        setJoining(false);
+      }
+    };
+
+    socket.on('call-link-expired', handleLinkExpiredInRoom);
+    socket.on('call-error', handleCallError);
+
+    return () => {
+      socket.off('call-link-expired', handleLinkExpiredInRoom);
+      socket.off('call-error', handleCallError);
+    };
+  }, [callData?.callId]);
 
   // Sync initial callerInRoom from callData
   // NOTE: callData.status === 'waiting' means the link was CREATED in DB, NOT that the host
@@ -493,6 +565,134 @@ export default function CallRoom() {
   const isCaller = callData?.isCaller;
   const isCallActive = callState === 'active';
 
+  // Format countdown helper
+  const formatCountdown = (seconds) => {
+    if (seconds === null || seconds === undefined) return '';
+    if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}m`;
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  };
+
+  // =============================================
+  // MULTI-DEVICE ERROR VIEW
+  // =============================================
+  if (multiDeviceError) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+          <div className="w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaBan className="text-3xl" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">Already Active Elsewhere</h2>
+          <p className="text-slate-400 mb-6">{multiDeviceError}</p>
+          <p className="text-slate-500 text-sm mb-6">Please close the other tab or device first, then try again.</p>
+          <button
+            onClick={handleBackToAppointments}
+            className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+          >
+            <FaArrowLeft /> Return to Appointments
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // =============================================
+  // ACTIVE CALL VIEW — minimal "In Call" UI
+  // =============================================
+  if (isCallActive && activeCall?.callId === callData?.callId) {
+    return (
+      <div className="min-h-[100dvh] bg-slate-950 text-white flex flex-col items-center justify-center p-3 sm:p-6 relative overflow-hidden">
+        {/* Background ambient */}
+        <div className="absolute -top-40 -left-40 w-72 sm:w-96 h-72 sm:h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-72 sm:w-96 h-72 sm:h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-md flex flex-col items-center relative z-10">
+          {/* Top Bar */}
+          <div className="w-full flex items-center justify-between mb-4 px-1">
+            <button
+              onClick={handleBackToAppointments}
+              className="py-2 px-3 bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/60 rounded-xl text-slate-300 transition-all flex items-center gap-2 text-xs font-medium shadow-md active:scale-95"
+            >
+              <FaArrowLeft /> Back to Appointments
+            </button>
+          </div>
+
+          {/* In Call Card */}
+          <div className="w-full bg-slate-900/95 border border-emerald-500/20 rounded-2xl sm:rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center">
+            {/* Active indicator */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-xs font-semibold text-emerald-400 mb-6 animate-pulse">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>Call Active</span>
+            </div>
+
+            {/* Avatar */}
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-800 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-teal-400 border-2 border-emerald-500/30 mb-4 shadow-lg shadow-emerald-500/10">
+              {otherPartyName?.[0]?.toUpperCase() || 'U'}
+            </div>
+
+            <h2 className="text-lg sm:text-xl font-bold text-slate-100 mb-1">
+              In call with {otherPartyName || 'Participant'}
+            </h2>
+
+            {/* Call type + duration */}
+            <div className="flex items-center gap-3 text-sm text-slate-400 mb-6">
+              <span className="flex items-center gap-1.5">
+                {callData?.callType === 'video' ? <FaVideo className="text-teal-400" /> : <FaPhone className="text-teal-400" />}
+                {callData?.callType === 'video' ? 'Video' : 'Audio'} Call
+              </span>
+              {callDuration > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <FaClock className="text-emerald-400" />
+                  {formatCountdown(callDuration)}
+                </span>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="w-full space-y-3">
+              <button
+                onClick={() => setIsMinimized(false)}
+                className="w-full py-3.5 bg-teal-600 hover:bg-teal-500 text-white text-base font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2.5 active:scale-98 hover:shadow-teal-500/25"
+              >
+                <FaExpand /> Return to Call
+              </button>
+
+              <button
+                onClick={async () => { await endCall(); handleBackToAppointments(); }}
+                className="w-full py-3 bg-red-600/80 hover:bg-red-500 text-white text-sm font-semibold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 active:scale-98"
+              >
+                <FaPhone className="rotate-[135deg]" /> End Call
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =============================================
+  // LINK EXPIRED VIEW
+  // =============================================
+  if (linkExpired && !isCallActive) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6">
+        <div className="bg-slate-800 border border-red-500/20 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+          <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaClock className="text-3xl" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">Link Expired</h2>
+          <p className="text-slate-400 mb-6">This call link has expired. Please request a new link from the other party.</p>
+          <button
+            onClick={handleBackToAppointments}
+            className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+          >
+            <FaArrowLeft /> Return to Appointments
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] bg-slate-950 text-white flex flex-col items-center justify-center p-3 sm:p-6 relative overflow-x-hidden overflow-y-auto">
       {/* Background ambient lighting */}
@@ -514,10 +714,24 @@ export default function CallRoom() {
         {/* Main Room Card */}
         <div className="w-full bg-slate-900/95 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center">
           {/* Call Type Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800/80 border border-slate-700/70 rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-teal-400 mb-4 sm:mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800/80 border border-slate-700/70 rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-teal-400 mb-3 sm:mb-4">
             {callData?.callType === 'video' ? <FaVideo /> : <FaPhone />}
             <span>{callData?.callType === 'video' ? 'Video Call Room' : 'Audio Call Room'}</span>
           </div>
+
+          {/* Link Expiry Countdown Badge */}
+          {linkTimeLeft !== null && linkTimeLeft > 0 && (
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium mb-4 ${
+              linkTimeLeft <= 300
+                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                : linkTimeLeft <= 3600
+                  ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+            }`}>
+              <FaClock className="text-[9px]" />
+              <span>Link expires in {formatCountdown(linkTimeLeft)}</span>
+            </div>
+          )}
 
           {/* Appointment / Property Info */}
           {callData?.propertyName && (
@@ -631,11 +845,18 @@ export default function CallRoom() {
           {isCaller ? (
             <div className="w-full space-y-3">
               <div className={`flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition-all ${
-                participantJoined || isCallActive
+                isCallActive
                   ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                  : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+                  : participantJoined
+                    ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                    : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
               }`}>
-                {participantJoined || isCallActive ? (
+                {isCallActive ? (
+                  <>
+                    <FaCheckCircle className="text-emerald-400 flex-shrink-0" />
+                    <span>Connected! Call is active.</span>
+                  </>
+                ) : participantJoined ? (
                   <>
                     <FaCheckCircle className="text-emerald-400 flex-shrink-0 animate-bounce" />
                     <span>{callData?.receiverName || 'Participant'} has joined! Establishing connection...</span>
@@ -666,9 +887,9 @@ export default function CallRoom() {
 
               <button
                 onClick={handleJoinCall}
-                disabled={joining || isCallActive || !callerInRoom}
+                disabled={joining || isCallActive || !callerInRoom || linkExpired}
                 className={`w-full py-3.5 sm:py-4 font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg active:scale-98 ${
-                  !callerInRoom && !isCallActive
+                  !callerInRoom && !isCallActive || linkExpired
                     ? 'bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed shadow-none'
                     : 'bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white hover:shadow-teal-500/25'
                 }`}
@@ -676,6 +897,10 @@ export default function CallRoom() {
                 {joining ? (
                   <>
                     <UrbanSetuSpinner size="sm" isBright /> Connecting...
+                  </>
+                ) : linkExpired ? (
+                  <>
+                    <FaBan className="text-red-400" /> Link Expired
                   </>
                 ) : !callerInRoom && !isCallActive ? (
                   <>
