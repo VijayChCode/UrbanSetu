@@ -926,15 +926,8 @@ export const useCall = () => {
 
   // Start call timer with server-synchronized start time
   // CRITICAL: This function MUST be called with server's startTime to ensure both sides are synchronized
-  // Start call timer with server-synchronized start time
-  // CRITICAL: This function MUST be called with server's startTime to ensure both sides are synchronized
   const startCallTimer = useCallback((synchronizedStartTime) => {
-    if (!synchronizedStartTime) {
-      console.error('[Call Timer] ERROR: Cannot start timer without server startTime!');
-      return;
-    }
-
-    // Stop any existing timers
+    // Stop any existing timers before starting a new one
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
       durationIntervalRef.current = null;
@@ -944,9 +937,15 @@ export const useCall = () => {
       animationFrameRef.current = null;
     }
 
+    // Parse and validate startTime safely to prevent NaN durations
+    let validDate = synchronizedStartTime ? new Date(synchronizedStartTime) : new Date();
+    if (isNaN(validDate.getTime())) {
+      validDate = new Date();
+    }
+
     // Use the exact server start time as the reference point
     // Both sides will use this same timestamp, ensuring perfect synchronization
-    const serverStartTimestamp = synchronizedStartTime.getTime();
+    const serverStartTimestamp = validDate.getTime();
 
     // Calculate initial elapsed time to display immediately (accounts for network latency)
     const currentTimestamp = Date.now();

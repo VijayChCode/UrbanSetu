@@ -1586,6 +1586,16 @@ io.on('connection', (socket) => {
         return socket.emit('call-link-expired', { callId });
       }
 
+      // If call status in DB is 'waiting' (fresh or reset after call end),
+      // clear any stale activeCalls entry so new session starts cleanly
+      if (call.status === 'waiting') {
+        const existingActive = activeCalls.get(callId);
+        if (existingActive && (existingActive.status === 'active' || existingActive.status === 'ended')) {
+          activeCalls.delete(callId);
+          console.log(`[Link Call] Cleared stale activeCalls entry for call ${callId}`);
+        }
+      }
+
       // Multi-device prevention: check if the host is already waiting from another socket
       const existingCallForHost = activeCalls.get(callId);
       if (existingCallForHost && existingCallForHost.callerSocketId && existingCallForHost.callerSocketId !== socket.id) {

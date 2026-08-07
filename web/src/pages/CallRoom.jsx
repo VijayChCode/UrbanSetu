@@ -600,9 +600,10 @@ export default function CallRoom() {
 
   // Format countdown helper
   const formatCountdown = (seconds) => {
-    if (seconds === null || seconds === undefined) return '';
-    if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}m`;
-    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    const num = Number(seconds);
+    const safeSeconds = (!num || isNaN(num) || num < 0) ? 0 : Math.floor(num);
+    if (safeSeconds >= 3600) return `${Math.floor(safeSeconds / 3600)}h ${String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0')}m`;
+    return `${Math.floor(safeSeconds / 60)}:${String(safeSeconds % 60).padStart(2, '0')}`;
   };
 
   // =============================================

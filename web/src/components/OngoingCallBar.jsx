@@ -13,7 +13,8 @@ const OngoingCallBar = ({
   onAccept
 }) => {
   const formatDuration = (seconds) => {
-    const safeSeconds = Math.max(0, Math.floor(seconds || 0));
+    const num = Number(seconds);
+    const safeSeconds = (!num || isNaN(num) || num < 0) ? 0 : Math.floor(num);
     const hours = Math.floor(safeSeconds / 3600);
     const minutes = Math.floor((safeSeconds % 3600) / 60);
     const secs = safeSeconds % 60;
