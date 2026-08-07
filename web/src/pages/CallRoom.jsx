@@ -230,6 +230,8 @@ export default function CallRoom() {
       if (data?.callId === callData?.callId) {
         console.log('[CallRoom] Call ended:', data);
         setCallerInRoom(false);
+        setParticipantJoined(false);
+        toast.info('Call ended.', { toastId: `call_ended_${data.callId}` });
       }
     };
 
