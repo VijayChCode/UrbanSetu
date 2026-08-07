@@ -713,25 +713,28 @@ export default function CallRoom() {
 
         {/* Main Room Card */}
         <div className="w-full bg-slate-900/95 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center">
-          {/* Call Type Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800/80 border border-slate-700/70 rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-teal-400 mb-3 sm:mb-4">
-            {callData?.callType === 'video' ? <FaVideo /> : <FaPhone />}
-            <span>{callData?.callType === 'video' ? 'Video Call Room' : 'Audio Call Room'}</span>
-          </div>
-
-          {/* Link Expiry Countdown Badge */}
-          {linkTimeLeft !== null && linkTimeLeft > 0 && (
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium mb-4 ${
-              linkTimeLeft <= 300
-                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                : linkTimeLeft <= 3600
-                  ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-            }`}>
-              <FaClock className="text-[9px]" />
-              <span>Link expires in {formatCountdown(linkTimeLeft)}</span>
+          {/* Header Badges Bar (Call Type on left, Expiry on right) */}
+          <div className="w-full flex items-center justify-between gap-2 mb-4 sm:mb-6 px-1 flex-wrap">
+            {/* Call Type Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800/80 border border-slate-700/70 rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-teal-400 shadow-sm">
+              {callData?.callType === 'video' ? <FaVideo /> : <FaPhone />}
+              <span>{callData?.callType === 'video' ? 'Video Call Room' : 'Audio Call Room'}</span>
             </div>
-          )}
+
+            {/* Link Expiry Countdown Badge */}
+            {linkTimeLeft !== null && linkTimeLeft > 0 && (
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ml-auto shadow-sm ${
+                linkTimeLeft <= 300
+                  ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  : linkTimeLeft <= 3600
+                    ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+              }`}>
+                <FaClock className="text-[9px]" />
+                <span>Link expires in {formatCountdown(linkTimeLeft)}</span>
+              </div>
+            )}
+          </div>
 
           {/* Appointment / Property Info */}
           {callData?.propertyName && (
