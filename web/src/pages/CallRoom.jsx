@@ -233,9 +233,20 @@ export default function CallRoom() {
       }
     };
 
+    const handleHeartbeat = (data) => {
+      if (data?.callId === callData?.callId) {
+        if (callData.isCaller) {
+          setParticipantJoined(true);
+        } else if (data?.isCaller) {
+          setCallerInRoom(true);
+        }
+      }
+    };
+
     socket.on('call-link-joined', handleParticipantJoined);
     socket.on('call-link-waiting', handleCallerWaiting);
     socket.on('call-link-presence', handlePresence);
+    socket.on('call-link-heartbeat', handleHeartbeat);
     socket.on('call-cancelled', handleCallCancelled);
     socket.on('call-ended', handleCallEnded);
 
@@ -243,10 +254,30 @@ export default function CallRoom() {
       socket.off('call-link-joined', handleParticipantJoined);
       socket.off('call-link-waiting', handleCallerWaiting);
       socket.off('call-link-presence', handlePresence);
+      socket.off('call-link-heartbeat', handleHeartbeat);
       socket.off('call-cancelled', handleCallCancelled);
       socket.off('call-ended', handleCallEnded);
     };
   }, [callData, token]);
+
+  // Periodic heartbeat emission every 5s to keep host/joiner presence in sync (Fix F)
+  useEffect(() => {
+    if (!socket || !callData?.callId) return;
+
+    socket.emit('call-link-heartbeat', {
+      callId: callData.callId,
+      isCaller: !!callData.isCaller
+    });
+
+    const interval = setInterval(() => {
+      socket.emit('call-link-heartbeat', {
+        callId: callData.callId,
+        isCaller: !!callData.isCaller
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [socket, callData?.callId, callData?.isCaller]);
 
   // Validate token on mount
   useEffect(() => {
@@ -789,7 +820,7 @@ export default function CallRoom() {
               }`} />
               <span>
                 {isCallActive
-                  ? 'Connected'
+                  ? `${otherPartyName || 'Participant'} joined — Connected`
                   : isCaller
                     ? participantJoined
                       ? `${callData?.receiverName || 'Participant'} joined — Connecting...`
@@ -857,7 +888,7 @@ export default function CallRoom() {
                 {isCallActive ? (
                   <>
                     <FaCheckCircle className="text-emerald-400 flex-shrink-0" />
-                    <span>Connected! Call is active.</span>
+                    <span>{callData?.receiverName || 'Participant'} has joined! Connected</span>
                   </>
                 ) : participantJoined ? (
                   <>

@@ -1342,8 +1342,33 @@ export const useCall = () => {
     socket.on('request-reoffer', handleRequestReoffer);
     socket.on('call-error', (error) => {
       console.error('Call error:', error);
-      toast.error(error.message || 'Call error occurred');
-      endCall();
+      const msg = error.message || '';
+
+      // FIX D: Detect multi-device / informational errors that should NOT tear down an active call
+      const isMultiDeviceError = msg.includes('already joined') ||
+        msg.includes('already waiting') ||
+        msg.includes('another device') ||
+        msg.includes('other tab') ||
+        msg.includes('no longer available') ||
+        msg.includes('both participants');
+
+      toast.error(msg || 'Call error occurred');
+
+      // Only tear down the call for genuine connection/auth errors
+      // Multi-device rejections are handled by CallRoom's multiDeviceError state
+      if (!isMultiDeviceError) {
+        endCall();
+      } else {
+        // For multi-device errors, just clean up the local pre-call state
+        // without emitting call-cancel to the server
+        if (callStateRef.current === 'link-waiting' || callStateRef.current === 'link-joining') {
+          cleanupCall();
+          setCallState(null);
+          setActiveCall(null);
+          activeCallRef.current = null;
+          callStateRef.current = null;
+        }
+      }
     });
 
     // ===== Admin Monitor Request Handler (Participant Side) =====

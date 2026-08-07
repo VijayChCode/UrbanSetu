@@ -1592,6 +1592,18 @@ io.on('connection', (socket) => {
       // re-join the room and immediately notify the host so they can create WebRTC peer
       if (call.status === 'accepted' || call.status === 'active') {
         const existingActive = activeCalls.get(callId);
+
+        // FIX B: If BOTH peers are currently connected, block re-entry entirely
+        // This prevents a second host device from hijacking the callerSocketId
+        if (existingActive && existingActive.callerSocketId && existingActive.receiverSocketId) {
+          const callerSocket = io.sockets.sockets.get(existingActive.callerSocketId);
+          const receiverSocket = io.sockets.sockets.get(existingActive.receiverSocketId);
+          if (callerSocket && callerSocket.connected && receiverSocket && receiverSocket.connected) {
+            console.log(`[Link Call] Host ${callerId} tried to re-enter call ${callId} but both peers are active — blocked`);
+            return socket.emit('call-error', { message: 'This call is already active with both participants on another device. Please close the other tab first.' });
+          }
+        }
+
         if (existingActive) {
           existingActive.callerSocketId = socket.id;
           activeCalls.set(callId, existingActive);
@@ -1686,6 +1698,18 @@ io.on('connection', (socket) => {
     }
 
     console.log(`[Link Call] Presence announced in call_${callId} by ${socket.user?.username} (isCaller: ${isCaller})`);
+  });
+
+  // FIX C: Heartbeat handler — periodic presence confirmation for reliable Join button
+  socket.on('call-link-heartbeat', ({ callId, isCaller }) => {
+    if (!callId) return;
+    // Relay heartbeat to other participants in the room
+    socket.to(`call_${callId}`).emit('call-link-heartbeat', {
+      callId,
+      isCaller: !!isCaller,
+      userId: socket.user?._id?.toString(),
+      username: socket.user?.username
+    });
   });
 
   // Receiver joins via the call link
@@ -1971,7 +1995,12 @@ io.on('connection', (socket) => {
           // LINK CALL in waiting state: Host is just leaving the waiting room.
           // DON'T cancel the DB record — the link stays valid until its expiry time.
           // Only clean up the in-memory activeCalls entry and broadcast to room.
-          activeCalls.delete(callId);
+
+          // FIX A: Only delete activeCalls if this socket actually owns the entry
+          const activeCall = activeCalls.get(callId);
+          if (activeCall && activeCall.callerSocketId === socket.id) {
+            activeCalls.delete(callId);
+          }
           socket.leave(`call_${callId}`);
 
           // Notify joiner (if in CallRoom) that the host left
@@ -1979,6 +2008,15 @@ io.on('connection', (socket) => {
           console.log(`[Call Cancel] Host left link call waiting room ${callId} — link still valid until expiry`);
 
         } else if (call.status === 'initiated' || call.status === 'ringing' || call.status === 'accepted') {
+          // FIX A: For active/accepted calls, verify this socket is the actual caller socket
+          // A second device from the same user must NOT be able to cancel an active call
+          const activeCall = activeCalls.get(callId);
+          if (activeCall && activeCall.callerSocketId && activeCall.callerSocketId !== socket.id) {
+            console.log(`[Call Cancel] Blocked cancel from unauthorized socket ${socket.id} (authorized: ${activeCall.callerSocketId}) for call ${callId}`);
+            socket.leave(`call_${callId}`);
+            return; // Silently ignore — don't touch the active call
+          }
+
           // Direct calls or active link calls: Cancel permanently
           call.status = 'cancelled';
           call.endTime = new Date();
