@@ -127,8 +127,14 @@ router.get("/link/:token", verifyToken, async (req, res) => {
     }
 
     // Check that the call is still joinable
-    if (!['waiting', 'accepted'].includes(call.status)) {
-      return res.status(410).json({ valid: false, message: "This call is no longer available", status: call.status });
+    // For link calls that haven't expired: if status was previously marked 'ended', reset to 'waiting'
+    if (call.status === 'ended') {
+      call.status = 'waiting';
+      await call.save();
+    }
+
+    if (call.status === 'cancelled') {
+      return res.status(410).json({ valid: false, message: "This call link is no longer available", status: call.status });
     }
 
     // Verify the user is part of this appointment
@@ -399,9 +405,13 @@ router.post("/end", verifyToken, async (req, res) => {
     }
 
     const endTime = new Date();
-    const duration = Math.floor((endTime - call.startTime) / 1000);
+    const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
 
-    call.status = 'ended';
+    const isLinkCall = call.callMode === 'link';
+    const isNotExpired = call.expiresAt && new Date() < new Date(call.expiresAt);
+
+    // For link calls that haven't expired, reset status to 'waiting' so link remains reusable until expiresAt
+    call.status = (isLinkCall && isNotExpired) ? 'waiting' : 'ended';
     call.endTime = endTime;
     call.duration = duration;
     call.endedBy = userId;

@@ -1246,8 +1246,8 @@ io.on('connection', (socket) => {
         const otherIsAlsoGone = !otherSocket || !otherSocket.connected;
 
         if (otherIsAlsoGone) {
-          // BOTH users are disconnected — end call immediately
-          console.log(`[Call Cleanup] BOTH users disconnected for call ${callId}, ending immediately.`);
+          // BOTH users are disconnected — clean up call
+          console.log(`[Call Cleanup] BOTH users disconnected for call ${callId}.`);
 
           // Clear any existing termination timeout
           if (activeCall.terminationTimeout) {
@@ -1255,19 +1255,30 @@ io.on('connection', (socket) => {
             activeCall.terminationTimeout = null;
           }
 
-          // End call in DB
+          // Clean up in DB
           (async () => {
             try {
               const call = await CallHistory.findOne({ callId });
-              if (call && call.status !== 'ended') {
-                const endTime = new Date();
-                const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
-                call.status = 'ended';
-                call.endTime = endTime;
-                call.duration = duration;
-                call.endedBy = 'system';
-                await call.save();
-                console.log(`[Call Cleanup] Call ${callId} ended by system (both disconnected). Duration: ${duration}s`);
+              if (call) {
+                const isLinkCall = call.callMode === 'link' || activeCall.callMode === 'link';
+                const isNotExpired = call.expiresAt && new Date() < new Date(call.expiresAt);
+
+                if (isLinkCall && isNotExpired) {
+                  // Link calls before expiry: reset status to 'waiting' so link remains reusable
+                  call.status = 'waiting';
+                  await call.save();
+                  console.log(`[Call Cleanup] Link call ${callId} both users disconnected — reset status to 'waiting' until expiry (${call.expiresAt})`);
+                } else if (call.status !== 'ended') {
+                  // Direct calls or expired link calls: end call in DB
+                  const endTime = new Date();
+                  const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
+                  call.status = 'ended';
+                  call.endTime = endTime;
+                  call.duration = duration;
+                  call.endedBy = 'system';
+                  await call.save();
+                  console.log(`[Call Cleanup] Direct call ${callId} ended by system (both disconnected). Duration: ${duration}s`);
+                }
               }
             } catch (err) {
               console.error('Error auto-ending call:', err);
