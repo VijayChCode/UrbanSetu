@@ -417,12 +417,11 @@ router.post("/end", verifyToken, async (req, res) => {
     call.endedBy = userId;
     await call.save();
 
-    // Emit call ended event
+    // Emit call ended event to caller and receiver
     const io = req.app.get('io');
     if (io) {
       io.to(`user_${call.callerId}`).emit('call-ended', { callId, duration });
       io.to(`user_${call.receiverId}`).emit('call-ended', { callId, duration });
-      io.to(`appointment_${call.appointmentId}`).emit('call-ended', { callId, duration });
     }
 
     // CRITICAL: Clean up activeCalls Map to allow users to make new calls

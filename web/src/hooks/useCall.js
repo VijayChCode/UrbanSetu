@@ -1263,13 +1263,13 @@ export const useCall = () => {
           return;
         }
 
-        // Only play end call sound if we didn't just end the call ourselves
-        // (to prevent double playing when user clicks hang and server broadcasts back)
+        // Only play end call sound and show toast if we didn't just end the call ourselves
+        // (to prevent double notification when user clicks hang and server broadcasts back)
         if (!isEndingCallRef.current) {
+          isEndingCallRef.current = true;
           playEndCall();
+          toast.info('Call ended.', { toastId: `call_ended_${data.callId}` });
         }
-        // Show "Call ended" message when receiving call-ended event from other party
-        toast.info('Call ended.');
         endCall(data.duration);
       }
     };
@@ -2244,7 +2244,8 @@ export const useCall = () => {
     // Stop ringtone when rejecting call
     stopRingtone();
     ringtoneSoundRef.current = null;
-    // Play end call sound when rejecting call
+    // Set flag and play end call sound once
+    isEndingCallRef.current = true;
     playEndCall();
     if (incomingCall) {
       const rejectedCallId = incomingCall.callId;
@@ -2325,29 +2326,25 @@ export const useCall = () => {
           }
         }
 
-        // Play end call sound when user ends the call
-        // Only play if this is the first time ending (not from handleCallEnded)
+        // Play end call sound and show notification when user ends the call
+        // Only if this is the first time ending (not from handleCallEnded socket broadcast)
         if (!wasEndingCall) {
           playEndCall();
+          toast.info('Call ended.', { toastId: `call_ended_${currentActiveCall?.callId || 'active'}` });
         }
-        // Show "Call ended" message when user ends the call
-        toast.info('Call ended.');
       } catch (error) {
         console.error('Error ending call on server:', error);
         setIsSyncingSummary(false); // Cleanup so UI doesn't get stuck
-        // Still play sound and show message even if backend call fails
-        // Only play if this is the first time ending (not from handleCallEnded)
         if (!wasEndingCall) {
           playEndCall();
+          toast.info('Call ended.', { toastId: `call_ended_${currentActiveCall?.callId || 'active'}` });
         }
-        toast.info('Call ended.');
       }
     } else if (currentActiveCall?.callId || incomingCallRef.current?.callId) {
-      // Play end call sound even if call wasn't active yet (ringing/incoming state)
       if (!wasEndingCall) {
         playEndCall();
+        toast.info('Call ended.', { toastId: `call_ended_${currentActiveCall?.callId || incomingCallRef.current?.callId}` });
       }
-      toast.info('Call ended.');
       // Cleanup syncing state if call failed to properly start or ends in ringing
       setIsSyncingSummary(false);
     }
