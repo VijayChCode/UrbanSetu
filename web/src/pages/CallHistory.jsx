@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPhone, FaVideo, FaClock, FaCheckCircle, FaTimesCircle, FaTrash, FaSearch, FaCalendarAlt, FaFilter, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { FaPhone, FaVideo, FaClock, FaCheckCircle, FaTimesCircle, FaTrash, FaSearch, FaCalendarAlt, FaFilter, FaArrowLeft, FaArrowRight, FaInfoCircle, FaCopy, FaCheck, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -42,6 +42,8 @@ const CallHistory = () => {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showDeleteSingleModal, setShowDeleteSingleModal] = useState(false);
   const [callToDelete, setCallToDelete] = useState(null);
+  const [linkInfoCall, setLinkInfoCall] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -397,6 +399,18 @@ const CallHistory = () => {
                               }`}>
                                 {isLinkCall ? '🔗 Link Call' : '📞 Direct Call'}
                               </span>
+                              {isLinkCall && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLinkInfoCall(call);
+                                  }}
+                                  className="p-1 rounded-full text-purple-600 hover:text-purple-800 hover:bg-purple-100 dark:text-purple-400 dark:hover:text-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center justify-center"
+                                  title="View Call Link Details"
+                                >
+                                  <FaInfoCircle className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                             {call.appointmentId?.propertyName && (
                               <span className="text-xs text-gray-500 dark:text-gray-400">{call.appointmentId.propertyName}</span>
@@ -535,6 +549,141 @@ const CallHistory = () => {
           </div>
         </div>
       )}
+      {/* Call Link Info Modal */}
+      {linkInfoCall && (() => {
+        const callType = linkInfoCall.callType || 'video';
+        const linkToken = linkInfoCall.linkToken || linkInfoCall.callId;
+        const fullCallLink = linkInfoCall.callLink || `${window.location.origin}/call/${callType}/${linkToken}`;
+        const isExpired = linkInfoCall.expiresAt ? new Date() >= new Date(linkInfoCall.expiresAt) : false;
+
+        const getTimeLeftText = () => {
+          if (!linkInfoCall.expiresAt) return 'No expiry set';
+          const diffMs = new Date(linkInfoCall.expiresAt) - Date.now();
+          if (diffMs <= 0) return 'Expired';
+          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          if (hours > 0) return `Expires in ${hours}h ${mins}m`;
+          return `Expires in ${mins}m`;
+        };
+
+        return (
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setLinkInfoCall(null); }}
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+            {/* Modal Card */}
+            <div className="relative w-full max-w-md bg-gray-900/95 backdrop-blur-xl border border-white/10 text-white rounded-2xl shadow-2xl overflow-hidden animate-[fadeInScale_0.2s_ease-out]">
+              {/* Top Gradient Bar */}
+              <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600" />
+
+              {/* Close Button */}
+              <button
+                onClick={() => setLinkInfoCall(null)}
+                className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors z-10"
+                aria-label="Close"
+              >
+                <FaTimes className="text-sm" />
+              </button>
+
+              {/* Content */}
+              <div className="p-5 sm:p-6 space-y-4">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg ${
+                    callType === 'video'
+                      ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                      : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                  }`}>
+                    {callType === 'video'
+                      ? <FaVideo className="text-white text-lg" />
+                      : <FaPhone className="text-white text-lg" />
+                    }
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {callType === 'video' ? 'Video' : 'Audio'} Call Link
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      Share this link to start the call
+                    </p>
+                  </div>
+                </div>
+
+                {/* Link Input + Copy Button */}
+                <div className="flex items-center gap-2 rounded-xl p-1 bg-gray-800/80 border border-white/5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={fullCallLink}
+                    className="flex-1 text-xs font-mono px-3 py-2.5 bg-transparent border-none outline-none truncate text-gray-300"
+                    onClick={(e) => e.target.select()}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(fullCallLink);
+                      setLinkCopied(true);
+                      toast.success('Call link copied to clipboard!');
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex-shrink-0 ${
+                      linkCopied
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : 'bg-white/10 hover:bg-white/15 text-gray-300 border border-white/5'
+                    }`}
+                  >
+                    {linkCopied ? <><FaCheck className="text-[10px]" /> Copied</> : <><FaCopy className="text-[10px]" /> Copy</>}
+                  </button>
+                </div>
+
+                {/* Countdown / Expiry Badge */}
+                <div className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                  isExpired
+                    ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                }`}>
+                  <FaClock className="text-[10px]" />
+                  <span>{getTimeLeftText()}</span>
+                </div>
+
+                {/* Info Badges */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-emerald-950/40 text-emerald-300 border border-emerald-500/20">
+                    <FaCheckCircle className="text-emerald-400 text-xs flex-shrink-0" />
+                    <span>Link already sent to chat</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs bg-purple-950/40 text-purple-300 border border-purple-500/20">
+                    <FaEnvelope className="text-purple-400 text-xs flex-shrink-0" />
+                    <span>Email notification sent to the other party</span>
+                  </div>
+                </div>
+
+                {/* Join Call Button */}
+                {!isExpired ? (
+                  <button
+                    onClick={() => {
+                      window.open(fullCallLink, '_blank');
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {callType === 'video' ? <FaVideo /> : <FaPhone />}
+                    <span>Join Call</span>
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-gray-500 bg-gray-800 border border-white/5 cursor-not-allowed text-center"
+                  >
+                    Call Link Expired
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
