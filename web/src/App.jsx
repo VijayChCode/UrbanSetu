@@ -541,6 +541,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
   const hideHeaderRoutes = ["/appointments"];
 
   const shouldHideFooter = 
+    ['/sign-in', '/sign-up', '/forgot-password', '/user/change-password', '/admin/change-password', '/account-conflict'].some(path => location.pathname.startsWith(path)) ||
     location.pathname === '/community' ||
     location.pathname.startsWith('/community/post/') ||
     location.pathname === '/user/community' ||
@@ -562,6 +563,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
     location.pathname.startsWith('/user/blog/') ||
     location.pathname.startsWith('/guide/') ||
     location.pathname.startsWith('/user/guide/') ||
+    location.pathname.includes('/ai/share/') ||
     location.pathname.includes('/call/');
 
   const [pendingTransfer, setPendingTransfer] = useState(null);
