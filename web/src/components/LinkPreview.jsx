@@ -194,6 +194,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       setLoading(true);
       setError(false);
 
+      // Attempt 1: Microlink API
       try {
         const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(fetchUrl)}&meta=true`);
 
@@ -219,7 +220,34 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           }
         }
       } catch (err) {
-        // Silently catch rate limit or network errors
+        // Continue to Dub.co fallback API on 429 rate limit or network error
+      }
+
+      // Attempt 2: Dub.co Metatags API (Secondary free metadata API)
+      try {
+        const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(fetchUrl)}`);
+        if (dubRes.ok) {
+          const dubData = await dubRes.json();
+          if (dubData && (dubData.title || dubData.image)) {
+            const bestImage = dubData.image || null;
+            const result = {
+              title: dubData.title || domain,
+              description: dubData.description || fetchUrl,
+              image: bestImage,
+              siteName: domain,
+              url: fetchUrl
+            };
+            previewCache.set(fetchUrl, result);
+            setStoredPreview(fetchUrl, result);
+            setPreview(result);
+            setImgSrc(bestImage);
+            setImgFailed(!bestImage);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        // Continue to FaGlobe fallback
       }
 
       // Fallback: Domain preview with FaGlobe icon (image: null, imgFailed: true)
