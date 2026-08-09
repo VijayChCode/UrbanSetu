@@ -372,10 +372,28 @@ const PublicBlogDetail = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
     });
   };
 
@@ -406,10 +424,7 @@ const PublicBlogDetail = () => {
               <>
                 The {isGuide ? 'guide' : 'blog'} <strong className="text-gray-950 dark:text-white">"{unpublishedBlogData?.title}"</strong> is scheduled to go public on:
                 <span className="block font-bold text-blue-600 dark:text-blue-400 mt-2 mb-3 bg-blue-50 dark:bg-blue-900/30 py-2 rounded-xl border border-blue-100 dark:border-blue-900/50">
-                  {new Date(unpublishedBlogData?.scheduledAt).toLocaleString(undefined, {
-                    dateStyle: 'long',
-                    timeStyle: 'short'
-                  })}
+                  {formatDateTime(unpublishedBlogData?.scheduledAt)}
                 </span>
                 <span className="block text-xs text-gray-500 dark:text-gray-400 mt-3 italic font-medium">
                   Subscribers will receive a notification email the moment this article goes live.
@@ -477,7 +492,7 @@ const PublicBlogDetail = () => {
       {!blog.published && (
         <div className="bg-yellow-500 text-black py-3 px-4 font-bold text-center flex items-center justify-center gap-2 z-50 sticky top-0 shadow-md">
           {blog.scheduledAt ? (
-            <span>📅 This is a SCHEDULED {blog.type === 'guide' ? 'guide' : 'blog'} post. It is scheduled to publish on {new Date(blog.scheduledAt).toLocaleString()}.</span>
+            <span>📅 This is a SCHEDULED {blog.type === 'guide' ? 'guide' : 'blog'} post. It is scheduled to publish on {formatDateTime(blog.scheduledAt)}.</span>
           ) : (
             <span>📝 This is a DRAFT {blog.type === 'guide' ? 'guide' : 'blog'} post. It is not visible to the public.</span>
           )}
@@ -742,7 +757,7 @@ const PublicBlogDetail = () => {
                                 {isAdmin ? 'UrbanSetu Team' : comment.user?.username || 'Anonymous'}
                               </span>
                               {isAdmin && <span className="text-[10px] bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide">Admin</span>}
-                              <span className="text-xs text-gray-400 dark:text-gray-500">• {new Date(comment.createdAt).toLocaleDateString()}</span>
+                              <span className="text-xs text-gray-400 dark:text-gray-500">• {formatDate(comment.createdAt)}</span>
                               {comment.isEdited && (
                                 <span className="text-[10px] text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                   <Check className="w-2.5 h-2.5" /> Edited
@@ -863,7 +878,7 @@ const PublicBlogDetail = () => {
                       {related.title}
                     </h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">
-                      {new Date(related.publishedAt || related.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}
+                      {formatDate(related.publishedAt || related.createdAt)}
                     </p>
                   </div>
                 ))}

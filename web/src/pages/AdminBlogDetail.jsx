@@ -468,10 +468,28 @@ const AdminBlogDetail = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
     });
   };
 
@@ -516,7 +534,7 @@ const AdminBlogDetail = () => {
       {!blog.published && (
         <div className="bg-yellow-500 text-black py-3 px-4 font-bold text-center flex items-center justify-center gap-2 z-50 sticky top-0 shadow-md">
           {blog.scheduledAt ? (
-            <span>📅 This is a SCHEDULED {blog.type === 'guide' ? 'guide' : 'blog'} post. It is scheduled to publish on {new Date(blog.scheduledAt).toLocaleString()}.</span>
+            <span>📅 This is a SCHEDULED {blog.type === 'guide' ? 'guide' : 'blog'} post. It is scheduled to publish on {formatDateTime(blog.scheduledAt)}.</span>
           ) : (
             <span>📝 This is a DRAFT {blog.type === 'guide' ? 'guide' : 'blog'} post. It is not visible to the public.</span>
           )}
@@ -551,7 +569,7 @@ const AdminBlogDetail = () => {
                 {blog.published ? (
                   <span className='flex items-center gap-1'><CheckCircle className='w-3 h-3' /> Published</span>
                 ) : blog.scheduledAt ? (
-                  <span className='flex items-center gap-1'><Clock className='w-3 h-3' /> Scheduled: {new Date(blog.scheduledAt).toLocaleString()}</span>
+                  <span className='flex items-center gap-1'><Clock className='w-3 h-3' /> Scheduled: {formatDateTime(blog.scheduledAt)}</span>
                 ) : (
                   <span className='flex items-center gap-1'><Clock className='w-3 h-3' /> Draft Mode</span>
                 )}
@@ -806,7 +824,7 @@ const AdminBlogDetail = () => {
                                   {isAdmin ? 'UrbanSetu Team' : comment.user?.username || 'Anonymous'}
                                 </span>
                                 {isAdmin && <span className="text-[10px] bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide">Admin</span>}
-                                <span className="text-xs text-gray-400">• {new Date(comment.createdAt).toLocaleDateString()}</span>
+                                <span className="text-xs text-gray-400">• {formatDate(comment.createdAt)}</span>
                                 {comment.isEdited && (
                                   <span className="text-[10px] text-gray-400 italic bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                     <Check className="w-2.5 h-2.5" /> Edited
@@ -948,7 +966,7 @@ const AdminBlogDetail = () => {
                         {related.title}
                       </h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                        {new Date(related.publishedAt || related.createdAt).toLocaleDateString()}
+                        {formatDate(related.publishedAt || related.createdAt)}
                       </p>
                       <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{related.category}</span>
                     </div>
