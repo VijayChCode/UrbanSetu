@@ -542,13 +542,13 @@ const ActiveCallModal = ({
 
       {/* Secure & Encrypted Call Notification */}
       {showEncryptionNotice && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-[encryptionNotice_4.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-          <div className="bg-slate-900/90 backdrop-blur-xl border border-emerald-500/40 text-emerald-300 px-4 py-2 rounded-full shadow-2xl shadow-emerald-500/20 flex items-center gap-2.5 text-xs font-semibold tracking-wide">
-            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <FaLock className="text-[11px] animate-pulse" />
+        <div className="absolute top-20 sm:top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-[encryptionNotice_4.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+          <div className="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/40 text-emerald-300 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full shadow-2xl shadow-emerald-500/20 flex items-center gap-2 text-[11px] sm:text-xs font-semibold tracking-wide whitespace-nowrap max-w-[90vw]">
+            <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+              <FaLock className="text-[10px] sm:text-[11px] animate-pulse" />
             </div>
-            <span>Secure & Encrypted Call</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="truncate">Secure & Encrypted Call</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping flex-shrink-0" />
           </div>
         </div>
       )}

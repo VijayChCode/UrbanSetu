@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FaPhone, FaVideo, FaTimes, FaClock, FaCheckCircle, FaTimesCircle, FaUser, FaTrash, FaSync, FaFilter, FaInfoCircle, FaCopy, FaCheck, FaEnvelope } from 'react-icons/fa';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { authenticatedFetch } from '../utils/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -39,20 +39,22 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/calls/history/${appointmentId}`,
-        { withCredentials: true }
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/api/calls/history/${appointmentId}`
       );
-      if (response.data.calls) {
-        setCalls(response.data.calls);
+      const data = await response.json();
+      if (response.ok && data.calls) {
+        setCalls(data.calls);
         // Reset filters when data is refreshed
         setFilterType('all');
         setFilterStatus('all');
         setFilterMode('all');
+      } else {
+        setError(data.message || 'Failed to fetch call history');
       }
     } catch (err) {
       console.error('Error fetching call history:', err);
-      setError(err.response?.data?.message || 'Failed to fetch call history');
+      setError('Failed to fetch call history');
     } finally {
       setLoading(false);
     }
@@ -62,16 +64,21 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
     if (!appointmentId) return;
     try {
       setDeleting(true);
-      await axios.delete(
+      const response = await authenticatedFetch(
         `${API_BASE_URL}/api/calls/history/${appointmentId}`,
-        { withCredentials: true }
+        { method: 'DELETE' }
       );
-      setCalls([]);
-      toast.success('All call history deleted.');
-      setShowDeleteAllModal(false);
+      const data = await response.json();
+      if (response.ok) {
+        setCalls([]);
+        toast.success('All call history deleted.');
+        setShowDeleteAllModal(false);
+      } else {
+        toast.error(data.message || 'Failed to delete call history.');
+      }
     } catch (err) {
       console.error('Error deleting all call history:', err);
-      toast.error(err.response?.data?.message || 'Failed to delete call history.');
+      toast.error('Failed to delete call history.');
     } finally {
       setDeleting(false);
     }
@@ -83,19 +90,24 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
     if (!id) return;
     try {
       setDeleting(true);
-      await axios.delete(
+      const response = await authenticatedFetch(
         `${API_BASE_URL}/api/calls/history/${appointmentId}/${id}`,
-        { withCredentials: true }
+        { method: 'DELETE' }
       );
-      setCalls(prev => prev.filter(call =>
-        (call._id || call.callId) !== id
-      ));
-      toast.success('Call history entry deleted.');
-      setShowDeleteSingleModal(false);
-      setCallToDelete(null);
+      const data = await response.json();
+      if (response.ok) {
+        setCalls(prev => prev.filter(call =>
+          (call._id || call.callId) !== id
+        ));
+        toast.success('Call history entry deleted.');
+        setShowDeleteSingleModal(false);
+        setCallToDelete(null);
+      } else {
+        toast.error(data.message || 'Failed to delete call history entry.');
+      }
     } catch (err) {
       console.error('Error deleting call history entry:', err);
-      toast.error(err.response?.data?.message || 'Failed to delete call history entry.');
+      toast.error('Failed to delete call history entry.');
     } finally {
       setDeleting(false);
     }
