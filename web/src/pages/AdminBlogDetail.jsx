@@ -340,18 +340,28 @@ const AdminBlogDetail = () => {
     });
   };
 
-  const handleTogglePublish = async () => {
+  const handleTogglePublish = () => {
+    const isGuide = blog?.type === 'guide' || window.location.pathname.includes('/guide/');
+    const contentTypeLabel = isGuide ? 'Guide' : 'Blog';
+
     if (blog.published) {
       setConfirmModal({
         isOpen: true,
-        title: 'Unpublish Blog?',
+        title: `Unpublish ${contentTypeLabel}?`,
         message: `This will hide "${blog.title}" from the public. You can publish it again later.`,
         confirmText: 'Unpublish',
         isDestructive: false,
         onConfirm: () => updatePublishStatus(false)
       });
     } else {
-      await updatePublishStatus(!blog.published);
+      setConfirmModal({
+        isOpen: true,
+        title: `Publish ${contentTypeLabel}?`,
+        message: `Are you sure you want to publish "${blog.title}" immediately? It will become visible to all users on the platform.`,
+        confirmText: 'Publish Now',
+        isDestructive: false,
+        onConfirm: () => updatePublishStatus(true)
+      });
     }
   };
 
