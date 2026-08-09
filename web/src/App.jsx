@@ -561,8 +561,10 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
     location.pathname === '/user/guides' ||
     location.pathname.startsWith('/blog/') ||
     location.pathname.startsWith('/user/blog/') ||
+    location.pathname.startsWith('/admin/blog/') ||
     location.pathname.startsWith('/guide/') ||
     location.pathname.startsWith('/user/guide/') ||
+    location.pathname.startsWith('/admin/guide/') ||
     location.pathname.includes('/ai/share/') ||
     location.pathname.includes('/call/');
 
