@@ -142,8 +142,8 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
     if (previewCache.has(fetchUrl)) {
       const cached = previewCache.get(fetchUrl);
       setPreview(cached);
-      setImgSrc(cached.image || cached.fallbackFavicon || googleFavicon);
-      setImgFailed(false);
+      setImgSrc(cached.image || null);
+      setImgFailed(!cached.image);
       setLoading(false);
       return;
     }
@@ -160,7 +160,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       previewCache.set(fetchUrl, internalPreview);
       setPreview(internalPreview);
       setImgSrc(internalPreview.image);
-      setImgFailed(false);
+      setImgFailed(!internalPreview.image);
       setLoading(false);
       return;
     }
@@ -176,19 +176,18 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           const data = await response.json();
 
           if (data.status === 'success' && data.data) {
-            const bestImage = data.data.image?.url || data.data.logo?.url || googleFavicon;
+            const bestImage = data.data.image?.url || data.data.logo?.url || null;
             const result = {
               title: data.data.title || domain,
               description: data.data.description || fetchUrl,
               image: bestImage,
               siteName: data.data.publisher || domain,
-              url: fetchUrl,
-              fallbackFavicon: googleFavicon
+              url: fetchUrl
             };
             previewCache.set(fetchUrl, result);
             setPreview(result);
             setImgSrc(bestImage);
-            setImgFailed(false);
+            setImgFailed(!bestImage);
             setLoading(false);
             return;
           }
@@ -197,19 +196,18 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
         // Silently catch fetch errors (including 429 rate limits) to avoid red console errors
       }
 
-      // Fallback: Create preview using domain title and Google Favicon
+      // Fallback: Create preview using domain title
       const fallbackResult = {
         title: domain,
         description: fetchUrl,
-        image: googleFavicon,
+        image: null,
         siteName: domain,
-        url: fetchUrl,
-        fallbackFavicon: googleFavicon
+        url: fetchUrl
       };
       previewCache.set(fetchUrl, fallbackResult);
       setPreview(fallbackResult);
-      setImgSrc(googleFavicon);
-      setImgFailed(false);
+      setImgSrc(null);
+      setImgFailed(true);
       setLoading(false);
     };
 
@@ -217,11 +215,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
   }, [url]);
 
   const handleImageError = () => {
-    if (preview?.fallbackFavicon && imgSrc !== preview.fallbackFavicon) {
-      setImgSrc(preview.fallbackFavicon);
-    } else {
-      setImgFailed(true);
-    }
+    setImgFailed(true);
   };
 
   if (ignored) return null;
