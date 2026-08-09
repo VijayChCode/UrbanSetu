@@ -99,12 +99,25 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
     }
   };
 
+  const getEffectiveCallStatus = (call) => {
+    if (!call) return 'ended';
+    let status = call.status || 'ended';
+    const isExpired = call.expiresAt && new Date() >= new Date(call.expiresAt);
+    if (status === 'waiting') {
+      if (call.duration > 0 || call.endTime || isExpired) {
+        return 'ended';
+      }
+    }
+    return status;
+  };
+
   const filteredCalls = useMemo(() => {
     return calls.filter(call => {
+      const effectiveStatus = getEffectiveCallStatus(call);
       const matchesType = filterType === 'all' || call.callType === filterType;
       const matchesStatus = filterStatus === 'all' ||
-        (filterStatus === 'ended' && (call.status === 'ended' || call.status === 'accepted')) ||
-        (filterStatus === 'missed' && (call.status === 'missed' || call.status === 'rejected' || call.status === 'cancelled' || call.status === 'waiting'));
+        (filterStatus === 'ended' && (effectiveStatus === 'ended' || effectiveStatus === 'accepted')) ||
+        (filterStatus === 'missed' && (effectiveStatus === 'missed' || effectiveStatus === 'rejected' || effectiveStatus === 'cancelled'));
 
       const isLink = call.callMode === 'link' || !!call.linkToken;
       const matchesMode = filterMode === 'all' ||
@@ -151,6 +164,8 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
       case 'ringing':
       case 'initiated':
         return <FaClock className="text-yellow-500" />;
+      case 'waiting':
+        return <FaClock className="text-gray-500 dark:text-gray-400" />;
       default:
         return <FaClock className="text-gray-500 dark:text-gray-400" />;
     }
@@ -172,6 +187,8 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
         return 'Ringing';
       case 'initiated':
         return 'Initiated';
+      case 'waiting':
+        return 'Waiting';
       default:
         return status;
     }
@@ -369,15 +386,22 @@ const CallHistoryModal = ({ appointmentId, isOpen, onClose, currentUser, isAdmin
                               </div>
                             )}
                             <div className="flex items-center gap-1">
-                              {getStatusIcon(call.status)}
-                              <span className={`
-                                ${call.status === 'ended' || call.status === 'accepted' ? 'text-green-600 dark:text-green-400' : ''}
-                                ${call.status === 'rejected' || call.status === 'missed' || call.status === 'cancelled' ? 'text-red-600 dark:text-red-400' : ''}
-                                ${call.status === 'ringing' || call.status === 'initiated' ? 'text-yellow-600 dark:text-yellow-400' : ''}
-                                font-medium
-                              `}>
-                                {getStatusText(call.status)}
-                              </span>
+                              {(() => {
+                                const effectiveStatus = getEffectiveCallStatus(call);
+                                return (
+                                  <>
+                                    {getStatusIcon(effectiveStatus)}
+                                    <span className={`
+                                      ${effectiveStatus === 'ended' || effectiveStatus === 'accepted' ? 'text-green-600 dark:text-green-400' : ''}
+                                      ${effectiveStatus === 'rejected' || effectiveStatus === 'missed' || effectiveStatus === 'cancelled' ? 'text-red-600 dark:text-red-400' : ''}
+                                      ${effectiveStatus === 'ringing' || effectiveStatus === 'initiated' || effectiveStatus === 'waiting' ? 'text-yellow-600 dark:text-yellow-400' : ''}
+                                      font-medium
+                                    `}>
+                                      {getStatusText(effectiveStatus)}
+                                    </span>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>

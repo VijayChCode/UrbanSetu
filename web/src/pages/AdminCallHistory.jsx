@@ -67,6 +67,18 @@ const AdminCallHistory = () => {
     }
   };
 
+  const getEffectiveCallStatus = (call) => {
+    if (!call) return 'ended';
+    let status = call.status || 'ended';
+    const isExpired = call.expiresAt && new Date() >= new Date(call.expiresAt);
+    if (status === 'waiting') {
+      if (call.duration > 0 || call.endTime || isExpired) {
+        return 'ended';
+      }
+    }
+    return status;
+  };
+
   const applyFiltersAndPagination = () => {
     let filtered = allCalls;
 
@@ -81,7 +93,7 @@ const AdminCallHistory = () => {
     }
 
     if (status !== 'all') {
-      filtered = filtered.filter(call => call.status === status);
+      filtered = filtered.filter(call => getEffectiveCallStatus(call) === status);
     }
 
     if (search.trim()) {
@@ -334,12 +346,17 @@ const AdminCallHistory = () => {
                         {formatDuration(call.duration)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${call.status === 'ended' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                          call.status === 'missed' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
-                          {call.status}
-                        </span>
+                        {(() => {
+                          const effectiveStatus = getEffectiveCallStatus(call);
+                          return (
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${effectiveStatus === 'ended' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                              effectiveStatus === 'missed' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                              }`}>
+                              {effectiveStatus}
+                            </span>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );

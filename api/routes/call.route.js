@@ -193,6 +193,29 @@ const formatDuration = (seconds) => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
 
+// Helper to auto-expire or update link call statuses in DB
+const updateExpiredOrEndedLinkCalls = async (extraQuery = {}) => {
+  try {
+    const now = new Date();
+    await CallHistory.updateMany(
+      {
+        ...extraQuery,
+        status: 'waiting',
+        $or: [
+          { duration: { $gt: 0 } },
+          { endTime: { $ne: null } },
+          { expiresAt: { $lte: now } }
+        ]
+      },
+      {
+        $set: { status: 'ended' }
+      }
+    );
+  } catch (err) {
+    console.error('Error updating expired or ended link calls:', err);
+  }
+};
+
 // GET: Get call history for user
 router.get("/history", verifyToken, async (req, res) => {
   try {
@@ -206,6 +229,9 @@ router.get("/history", verifyToken, async (req, res) => {
     if (appointmentId) {
       query.appointmentId = appointmentId;
     }
+
+    // Auto-update expired or completed link calls before returning history
+    await updateExpiredOrEndedLinkCalls(query);
 
     const calls = await CallHistory.find(query)
       .populate('callerId', 'username email')
@@ -246,6 +272,9 @@ router.get("/history/:appointmentId", verifyToken, async (req, res) => {
       req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
       return res.status(403).json({ message: "Unauthorized" });
     }
+
+    // Auto-update expired or completed link calls for this appointment
+    await updateExpiredOrEndedLinkCalls({ appointmentId });
 
     const calls = await CallHistory.find({ appointmentId })
       .populate('callerId', 'username email')
@@ -344,6 +373,9 @@ router.get("/admin/history", verifyToken, async (req, res) => {
       query.status = status;
     }
 
+    // Auto-update expired or completed link calls in DB
+    await updateExpiredOrEndedLinkCalls();
+
     const calls = await CallHistory.find(query)
       .populate('callerId', 'username email')
       .populate('receiverId', 'username email')
@@ -407,15 +439,12 @@ router.post("/end", verifyToken, async (req, res) => {
     const endTime = new Date();
     const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
 
-    const isLinkCall = call.callMode === 'link';
-    const isNotExpired = call.expiresAt && new Date() < new Date(call.expiresAt);
-
-    // For link calls that haven't expired, reset status to 'waiting' so link remains reusable until expiresAt
-    call.status = (isLinkCall && isNotExpired) ? 'waiting' : 'ended';
+    // Set call history status to 'ended' when call ends
+    call.status = 'ended';
     call.endTime = endTime;
     call.duration = duration;
     call.endedBy = userId;
-    await call.save();
+    await call.save(); 
 
     // Emit call ended event to caller, receiver, and call room
     const io = req.app.get('io');

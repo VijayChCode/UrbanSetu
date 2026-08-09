@@ -78,6 +78,18 @@ const CallHistory = () => {
     }
   };
 
+  const getEffectiveCallStatus = (call) => {
+    if (!call) return 'ended';
+    let status = call.status || 'ended';
+    const isExpired = call.expiresAt && new Date() >= new Date(call.expiresAt);
+    if (status === 'waiting') {
+      if (call.duration > 0 || call.endTime || isExpired) {
+        return 'ended';
+      }
+    }
+    return status;
+  };
+
   const applyFiltersAndPagination = () => {
     let filtered = allCalls;
 
@@ -97,8 +109,7 @@ const CallHistory = () => {
 
     // Status Filter
     if (statusFilter !== 'all') {
-      // Group statuses if needed, or exact match
-      filtered = filtered.filter(call => call.status === statusFilter);
+      filtered = filtered.filter(call => getEffectiveCallStatus(call) === statusFilter);
     }
 
     // Search
@@ -410,10 +421,15 @@ const CallHistory = () => {
                         ) : '0s'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center w-fit gap-1.5 ${getStatusColor(call.status)}`}>
-                          {getStatusIcon(call.status)}
-                          <span className="capitalize">{call.status}</span>
-                        </span>
+                        {(() => {
+                          const effectiveStatus = getEffectiveCallStatus(call);
+                          return (
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center w-fit gap-1.5 ${getStatusColor(effectiveStatus)}`}>
+                              {getStatusIcon(effectiveStatus)}
+                              <span className="capitalize">{effectiveStatus}</span>
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
