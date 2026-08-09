@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
-import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaSync, FaExpand, FaCompress, FaDesktop, FaSignLanguage, FaWifi, FaVolumeUp, FaWaveSquare, FaVolumeMute, FaChevronDown, FaHistory, FaClock, FaCheckCircle, FaUser, FaTimes } from 'react-icons/fa';
+import { FaPhone, FaVideo, FaMicrophone, FaMicrophoneSlash, FaVideoSlash, FaSync, FaExpand, FaCompress, FaDesktop, FaSignLanguage, FaWifi, FaVolumeUp, FaWaveSquare, FaVolumeMute, FaChevronDown, FaHistory, FaClock, FaCheckCircle, FaUser, FaTimes, FaLock } from 'react-icons/fa';
 import UserAvatar from './UserAvatar';
 import { useAudioActivity } from '../hooks/useAudioActivity';
 
@@ -49,6 +49,15 @@ const ActiveCallModal = ({
 }) => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
+  const [showEncryptionNotice, setShowEncryptionNotice] = useState(true);
+
+  useEffect(() => {
+    setShowEncryptionNotice(true);
+    const timer = setTimeout(() => {
+      setShowEncryptionNotice(false);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [callState]);
 
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [isSwitchingCamera, setIsSwitchingCamera] = useState(false);
@@ -523,7 +532,26 @@ const ActiveCallModal = ({
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @keyframes encryptionNotice {
+          0% { transform: translate(-50%, -120%); opacity: 0; }
+          15% { transform: translate(-50%, 0); opacity: 1; }
+          82% { transform: translate(-50%, 0); opacity: 1; }
+          100% { transform: translate(-50%, -120%); opacity: 0; }
+        }
       `}</style>
+
+      {/* Secure & Encrypted Call Notification */}
+      {showEncryptionNotice && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-[encryptionNotice_4.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+          <div className="bg-slate-900/90 backdrop-blur-xl border border-emerald-500/40 text-emerald-300 px-4 py-2 rounded-full shadow-2xl shadow-emerald-500/20 flex items-center gap-2.5 text-xs font-semibold tracking-wide">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <FaLock className="text-[11px] animate-pulse" />
+            </div>
+            <span>Secure & Encrypted Call</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+          </div>
+        </div>
+      )}
 
       {/* Presentation Alert Overlay */}
       {presentationAlert && (
