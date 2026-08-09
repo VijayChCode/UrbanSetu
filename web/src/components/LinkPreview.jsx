@@ -194,7 +194,6 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       setLoading(true);
       setError(false);
 
-      // Attempt 1: Microlink API
       try {
         const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(fetchUrl)}&meta=true`);
 
@@ -202,7 +201,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           const data = await response.json();
 
           if (data.status === 'success' && data.data) {
-            const bestImage = data.data.image?.url || data.data.logo?.url || getGoogleFavicon(domain);
+            const bestImage = data.data.image?.url || data.data.logo?.url || null;
             const result = {
               title: data.data.title || domain,
               description: data.data.description || fetchUrl,
@@ -220,50 +219,22 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           }
         }
       } catch (err) {
-        // Silently continue to fallback API on 429 rate limit or network error
+        // Silently catch rate limit or network errors
       }
 
-      // Attempt 2: Dub.co Metatags API (Secondary free metadata API)
-      try {
-        const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(fetchUrl)}`);
-        if (dubRes.ok) {
-          const dubData = await dubRes.json();
-          if (dubData && (dubData.title || dubData.image)) {
-            const bestImage = dubData.image || getGoogleFavicon(domain);
-            const result = {
-              title: dubData.title || domain,
-              description: dubData.description || fetchUrl,
-              image: bestImage,
-              siteName: domain,
-              url: fetchUrl
-            };
-            previewCache.set(fetchUrl, result);
-            setStoredPreview(fetchUrl, result);
-            setPreview(result);
-            setImgSrc(bestImage);
-            setImgFailed(!bestImage);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (err) {
-        // Silently continue to Google Favicon fallback
-      }
-
-      // Attempt 3: Google Favicon API Fallback (Guaranteed to work without 429 rate limits)
-      const googleFavicon = getGoogleFavicon(domain);
+      // Fallback: Domain preview with FaGlobe icon (image: null, imgFailed: true)
       const fallbackResult = {
         title: domain,
         description: fetchUrl,
-        image: googleFavicon,
+        image: null,
         siteName: domain,
         url: fetchUrl
       };
       previewCache.set(fetchUrl, fallbackResult);
       setStoredPreview(fetchUrl, fallbackResult);
       setPreview(fallbackResult);
-      setImgSrc(googleFavicon);
-      setImgFailed(!googleFavicon);
+      setImgSrc(null);
+      setImgFailed(true);
       setLoading(false);
     }, 400);
 
