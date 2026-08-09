@@ -9,6 +9,7 @@ import { getThemeColors, getDarkModeContainerClass, getDarkModeInputClass, getDa
 import ImagePreview from '../components/ImagePreview';
 import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble';
 import ImageMessageBubble from '../components/ImageMessageBubble';
+import { MediaGalleryImageItem, MediaGalleryVideoItem } from '../components/MediaGalleryItem';
 
 import LinkPreview from '../components/LinkPreview';
 import { EmojiButton } from '../components/EmojiPicker';
@@ -8507,6 +8508,7 @@ function AdminAppointmentRow({
                                               setShowImagePreview(true);
                                             }}
                                             onError={(e) => {
+                                              if (e.target.src.includes('placeholder')) return;
                                               e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                               e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
                                             }}
@@ -11053,6 +11055,7 @@ function AdminAppointmentRow({
                                         setShowImagePreview(true);
                                       }}
                                       onError={(e) => {
+                                        if (e.target.src.includes('placeholder')) return;
                                         e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                         e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
                                       }}
@@ -11203,6 +11206,7 @@ function AdminAppointmentRow({
                                             setShowImagePreview(true);
                                           }}
                                           onError={(e) => {
+                                            if (e.target.src.includes('placeholder')) return;
                                             e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Found";
                                             e.target.className = "max-w-full max-h-64 rounded-lg opacity-50";
                                           }}
@@ -11542,34 +11546,19 @@ function AdminAppointmentRow({
                           {imageMessages.map((msg, idx) => {
                             const imgUrl = msg.originalImageUrl || msg.imageUrl;
                             return (
-                              <div
+                              <MediaGalleryImageItem
                                 key={msg._id || idx}
-                                className={`relative group aspect-square rounded-2xl overflow-hidden cursor-pointer bg-gray-100 dark:bg-gray-800 shadow-xs hover:shadow-md transition-all border border-gray-200/60 dark:border-gray-800 ${msg.deleted ? 'ring-2 ring-red-500/70' : ''}`}
+                                imageUrl={imgUrl}
+                                senderName={msg.senderName || msg.senderEmail || 'User'}
+                                timestamp={msg.timestamp}
+                                isDeleted={msg.deleted}
                                 onClick={() => {
                                   const allImageUrls = imageMessages.map(m => m.originalImageUrl || m.imageUrl);
                                   setPreviewImages(allImageUrls);
                                   setPreviewIndex(idx);
                                   setShowImagePreview(true);
                                 }}
-                              >
-                                <img
-                                  src={imgUrl}
-                                  alt=""
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                  loading="lazy"
-                                  onError={(e) => { e.target.src = "https://via.placeholder.com/300x300?text=Image"; }}
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors" />
-                                {msg.deleted && (
-                                  <div className="absolute top-2 left-2">
-                                    <span className="text-[9px] px-2 py-0.5 bg-red-600 text-white rounded-full font-bold shadow-xs">Deleted</span>
-                                  </div>
-                                )}
-                                <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <p className="text-white text-[11px] font-medium truncate">{msg.senderName || msg.senderEmail || 'User'}</p>
-                                  <p className="text-white/70 text-[9px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
-                                </div>
-                              </div>
+                              />
                             );
                           })}
                         </div>
@@ -11589,64 +11578,19 @@ function AdminAppointmentRow({
                       return (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
                           {videoMessages.map((msg, idx) => (
-                            <div
+                            <MediaGalleryVideoItem
                               key={msg._id || idx}
-                              className={`relative group aspect-square rounded-2xl overflow-hidden cursor-pointer bg-black shadow-xs hover:shadow-md transition-all border border-gray-800 ${msg.deleted ? 'ring-2 ring-red-500/70' : ''}`}
+                              videoUrl={msg.videoUrl}
+                              senderName={msg.senderName || msg.senderEmail || 'User'}
+                              timestamp={msg.timestamp}
+                              isDeleted={msg.deleted}
                               onClick={() => {
                                 const videoUrls = videoMessages.map(m => m.videoUrl);
                                 window.dispatchEvent(new CustomEvent('open-media-preview', {
                                   detail: { videos: videoUrls, index: idx }
                                 }));
                               }}
-                            >
-                              {getVideoPosterUrl(msg.videoUrl) ? (
-                                <img
-                                  src={getVideoPosterUrl(msg.videoUrl)}
-                                  alt="Video thumbnail"
-                                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                  onError={(e) => {
-                                    const el = e.currentTarget;
-                                    const originalSrc = getVideoPosterUrl(msg.videoUrl);
-                                    const handleOnline = () => {
-                                      if (el && originalSrc) {
-                                        el.src = `${originalSrc}${originalSrc.includes('?') ? '&' : '?'}retry=${Date.now()}`;
-                                      }
-                                    };
-                                    window.addEventListener('online', handleOnline, { once: true });
-                                  }}
-                                />
-                              ) : (
-                                <video
-                                  src={msg.videoUrl}
-                                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                  preload="metadata"
-                                  muted
-                                  onError={(e) => {
-                                    const el = e.currentTarget;
-                                    const handleOnline = () => {
-                                      if (el) {
-                                        el.src = `${msg.videoUrl}${msg.videoUrl.includes('?') ? '&' : '?'}retry=${Date.now()}`;
-                                      }
-                                    };
-                                    window.addEventListener('online', handleOnline, { once: true });
-                                  }}
-                                />
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="bg-black/60 rounded-full p-3 backdrop-blur-md group-hover:scale-110 transition-transform border border-white/20">
-                                  <FaPlay className="text-white text-sm ml-0.5" />
-                                </div>
-                              </div>
-                              {msg.deleted && (
-                                <div className="absolute top-2 left-2">
-                                  <span className="text-[9px] px-2 py-0.5 bg-red-600 text-white rounded-full font-bold shadow-xs">Deleted</span>
-                                </div>
-                              )}
-                              <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p className="text-white text-[11px] font-medium truncate">{msg.senderName || msg.senderEmail || 'User'}</p>
-                                <p className="text-white/70 text-[9px]">{msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
-                              </div>
-                            </div>
+                            />
                           ))}
                         </div>
                       );
