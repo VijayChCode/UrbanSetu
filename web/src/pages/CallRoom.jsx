@@ -230,25 +230,12 @@ export default function CallRoom() {
       if (data?.callId === callData?.callId) {
         console.log('[CallRoom] Call ended:', data);
         setCallerInRoom(false);
-        setParticipantJoined(false);
-        toast.info('Call ended.', { toastId: `call_ended_${data.callId}` });
-      }
-    };
-
-    const handleHeartbeat = (data) => {
-      if (data?.callId === callData?.callId) {
-        if (callData.isCaller) {
-          setParticipantJoined(true);
-        } else if (data?.isCaller) {
-          setCallerInRoom(true);
-        }
       }
     };
 
     socket.on('call-link-joined', handleParticipantJoined);
     socket.on('call-link-waiting', handleCallerWaiting);
     socket.on('call-link-presence', handlePresence);
-    socket.on('call-link-heartbeat', handleHeartbeat);
     socket.on('call-cancelled', handleCallCancelled);
     socket.on('call-ended', handleCallEnded);
 
@@ -256,30 +243,10 @@ export default function CallRoom() {
       socket.off('call-link-joined', handleParticipantJoined);
       socket.off('call-link-waiting', handleCallerWaiting);
       socket.off('call-link-presence', handlePresence);
-      socket.off('call-link-heartbeat', handleHeartbeat);
       socket.off('call-cancelled', handleCallCancelled);
       socket.off('call-ended', handleCallEnded);
     };
   }, [callData, token]);
-
-  // Periodic heartbeat emission every 5s to keep host/joiner presence in sync (Fix F)
-  useEffect(() => {
-    if (!socket || !callData?.callId) return;
-
-    socket.emit('call-link-heartbeat', {
-      callId: callData.callId,
-      isCaller: !!callData.isCaller
-    });
-
-    const interval = setInterval(() => {
-      socket.emit('call-link-heartbeat', {
-        callId: callData.callId,
-        isCaller: !!callData.isCaller
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [socket, callData?.callId, callData?.isCaller]);
 
   // Validate token on mount
   useEffect(() => {
@@ -600,10 +567,9 @@ export default function CallRoom() {
 
   // Format countdown helper
   const formatCountdown = (seconds) => {
-    const num = Number(seconds);
-    const safeSeconds = (!num || isNaN(num) || num < 0) ? 0 : Math.floor(num);
-    if (safeSeconds >= 3600) return `${Math.floor(safeSeconds / 3600)}h ${String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0')}m`;
-    return `${Math.floor(safeSeconds / 60)}:${String(safeSeconds % 60).padStart(2, '0')}`;
+    if (seconds === null || seconds === undefined) return '';
+    if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}m`;
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   };
 
   // =============================================
@@ -823,10 +789,10 @@ export default function CallRoom() {
               }`} />
               <span>
                 {isCallActive
-                  ? `${otherPartyName || 'Participant'} joined — Connected`
+                  ? 'Connected'
                   : isCaller
                     ? participantJoined
-                      ? `${callData?.receiverName || 'Participant'} is in room`
+                      ? `${callData?.receiverName || 'Participant'} joined — Connecting...`
                       : `Waiting for ${callData?.receiverName || 'participant'}...`
                     : joining || callState === 'link-joining'
                       ? `Connecting to ${callData?.callerName || 'caller'}...`
@@ -891,12 +857,12 @@ export default function CallRoom() {
                 {isCallActive ? (
                   <>
                     <FaCheckCircle className="text-emerald-400 flex-shrink-0" />
-                    <span>{callData?.receiverName || 'Participant'} has joined! Connected</span>
+                    <span>Connected! Call is active.</span>
                   </>
                 ) : participantJoined ? (
                   <>
                     <FaCheckCircle className="text-emerald-400 flex-shrink-0 animate-bounce" />
-                    <span>{callData?.receiverName || 'Participant'} has entered room — waiting for them to join</span>
+                    <span>{callData?.receiverName || 'Participant'} has joined! Establishing connection...</span>
                   </>
                 ) : (
                   <>

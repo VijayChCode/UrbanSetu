@@ -1246,8 +1246,8 @@ io.on('connection', (socket) => {
         const otherIsAlsoGone = !otherSocket || !otherSocket.connected;
 
         if (otherIsAlsoGone) {
-          // BOTH users are disconnected — clean up call
-          console.log(`[Call Cleanup] BOTH users disconnected for call ${callId}.`);
+          // BOTH users are disconnected — end call immediately
+          console.log(`[Call Cleanup] BOTH users disconnected for call ${callId}, ending immediately.`);
 
           // Clear any existing termination timeout
           if (activeCall.terminationTimeout) {
@@ -1255,30 +1255,19 @@ io.on('connection', (socket) => {
             activeCall.terminationTimeout = null;
           }
 
-          // Clean up in DB
+          // End call in DB
           (async () => {
             try {
               const call = await CallHistory.findOne({ callId });
-              if (call) {
-                const isLinkCall = call.callMode === 'link' || activeCall.callMode === 'link';
-                const isNotExpired = call.expiresAt && new Date() < new Date(call.expiresAt);
-
-                if (isLinkCall && isNotExpired) {
-                  // Link calls before expiry: reset status to 'waiting' so link remains reusable
-                  call.status = 'waiting';
-                  await call.save();
-                  console.log(`[Call Cleanup] Link call ${callId} both users disconnected — reset status to 'waiting' until expiry (${call.expiresAt})`);
-                } else if (call.status !== 'ended') {
-                  // Direct calls or expired link calls: end call in DB
-                  const endTime = new Date();
-                  const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
-                  call.status = 'ended';
-                  call.endTime = endTime;
-                  call.duration = duration;
-                  call.endedBy = 'system';
-                  await call.save();
-                  console.log(`[Call Cleanup] Direct call ${callId} ended by system (both disconnected). Duration: ${duration}s`);
-                }
+              if (call && call.status !== 'ended') {
+                const endTime = new Date();
+                const duration = call.startTime ? Math.floor((endTime - call.startTime) / 1000) : 0;
+                call.status = 'ended';
+                call.endTime = endTime;
+                call.duration = duration;
+                call.endedBy = 'system';
+                await call.save();
+                console.log(`[Call Cleanup] Call ${callId} ended by system (both disconnected). Duration: ${duration}s`);
               }
             } catch (err) {
               console.error('Error auto-ending call:', err);
@@ -1586,16 +1575,6 @@ io.on('connection', (socket) => {
         return socket.emit('call-link-expired', { callId });
       }
 
-      // If call status in DB is 'waiting' (fresh or reset after call end),
-      // clear any stale activeCalls entry so new session starts cleanly
-      if (call.status === 'waiting') {
-        const existingActive = activeCalls.get(callId);
-        if (existingActive && (existingActive.status === 'active' || existingActive.status === 'ended')) {
-          activeCalls.delete(callId);
-          console.log(`[Link Call] Cleared stale activeCalls entry for call ${callId}`);
-        }
-      }
-
       // Multi-device prevention: check if the host is already waiting from another socket
       const existingCallForHost = activeCalls.get(callId);
       if (existingCallForHost && existingCallForHost.callerSocketId && existingCallForHost.callerSocketId !== socket.id) {
@@ -1613,18 +1592,6 @@ io.on('connection', (socket) => {
       // re-join the room and immediately notify the host so they can create WebRTC peer
       if (call.status === 'accepted' || call.status === 'active') {
         const existingActive = activeCalls.get(callId);
-
-        // FIX B: If BOTH peers are currently connected, block re-entry entirely
-        // This prevents a second host device from hijacking the callerSocketId
-        if (existingActive && existingActive.callerSocketId && existingActive.receiverSocketId) {
-          const callerSocket = io.sockets.sockets.get(existingActive.callerSocketId);
-          const receiverSocket = io.sockets.sockets.get(existingActive.receiverSocketId);
-          if (callerSocket && callerSocket.connected && receiverSocket && receiverSocket.connected) {
-            console.log(`[Link Call] Host ${callerId} tried to re-enter call ${callId} but both peers are active — blocked`);
-            return socket.emit('call-error', { message: 'This call is already active with both participants on another device. Please close the other tab first.' });
-          }
-        }
-
         if (existingActive) {
           existingActive.callerSocketId = socket.id;
           activeCalls.set(callId, existingActive);
@@ -1719,18 +1686,6 @@ io.on('connection', (socket) => {
     }
 
     console.log(`[Link Call] Presence announced in call_${callId} by ${socket.user?.username} (isCaller: ${isCaller})`);
-  });
-
-  // FIX C: Heartbeat handler — periodic presence confirmation for reliable Join button
-  socket.on('call-link-heartbeat', ({ callId, isCaller }) => {
-    if (!callId) return;
-    // Relay heartbeat to other participants in the room
-    socket.to(`call_${callId}`).emit('call-link-heartbeat', {
-      callId,
-      isCaller: !!isCaller,
-      userId: socket.user?._id?.toString(),
-      username: socket.user?.username
-    });
   });
 
   // Receiver joins via the call link
@@ -2016,12 +1971,7 @@ io.on('connection', (socket) => {
           // LINK CALL in waiting state: Host is just leaving the waiting room.
           // DON'T cancel the DB record — the link stays valid until its expiry time.
           // Only clean up the in-memory activeCalls entry and broadcast to room.
-
-          // FIX A: Only delete activeCalls if this socket actually owns the entry
-          const activeCall = activeCalls.get(callId);
-          if (activeCall && activeCall.callerSocketId === socket.id) {
-            activeCalls.delete(callId);
-          }
+          activeCalls.delete(callId);
           socket.leave(`call_${callId}`);
 
           // Notify joiner (if in CallRoom) that the host left
@@ -2029,15 +1979,6 @@ io.on('connection', (socket) => {
           console.log(`[Call Cancel] Host left link call waiting room ${callId} — link still valid until expiry`);
 
         } else if (call.status === 'initiated' || call.status === 'ringing' || call.status === 'accepted') {
-          // FIX A: For active/accepted calls, verify this socket is the actual caller socket
-          // A second device from the same user must NOT be able to cancel an active call
-          const activeCall = activeCalls.get(callId);
-          if (activeCall && activeCall.callerSocketId && activeCall.callerSocketId !== socket.id) {
-            console.log(`[Call Cancel] Blocked cancel from unauthorized socket ${socket.id} (authorized: ${activeCall.callerSocketId}) for call ${callId}`);
-            socket.leave(`call_${callId}`);
-            return; // Silently ignore — don't touch the active call
-          }
-
           // Direct calls or active link calls: Cancel permanently
           call.status = 'cancelled';
           call.endTime = new Date();
