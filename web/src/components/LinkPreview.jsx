@@ -4,6 +4,20 @@ import { FaExternalLinkAlt, FaTimes, FaGlobe } from 'react-icons/fa';
 // Global cache for link previews to prevent redundant network requests and 429 rate limit issues
 const previewCache = new Map();
 
+const getStoredPreview = (url) => {
+  try {
+    const raw = localStorage.getItem(`urbansetu_link_prev_${url}`);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+};
+
+const setStoredPreview = (url, data) => {
+  try {
+    localStorage.setItem(`urbansetu_link_prev_${url}`, JSON.stringify(data));
+  } catch {}
+};
+
 const COMMON_TLDS = new Set([
   'com', 'org', 'net', 'edu', 'gov', 'mil', 'io', 'app', 'dev', 'co', 'in', 
   'uk', 'us', 'ca', 'de', 'fr', 'jp', 'cn', 'ru', 'br', 'au', 'info', 'biz', 
@@ -136,14 +150,23 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       return;
     }
 
-    const googleFavicon = getGoogleFavicon(domain);
-
     // Check in-memory cache first
     if (previewCache.has(fetchUrl)) {
       const cached = previewCache.get(fetchUrl);
       setPreview(cached);
       setImgSrc(cached.image || null);
       setImgFailed(!cached.image);
+      setLoading(false);
+      return;
+    }
+
+    // Check persistent localStorage cache next
+    const stored = getStoredPreview(fetchUrl);
+    if (stored) {
+      previewCache.set(fetchUrl, stored);
+      setPreview(stored);
+      setImgSrc(stored.image || null);
+      setImgFailed(!stored.image);
       setLoading(false);
       return;
     }
@@ -158,6 +181,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
     if (isInternal) {
       const internalPreview = getInternalAppPreview(fetchUrl, hostname);
       previewCache.set(fetchUrl, internalPreview);
+      setStoredPreview(fetchUrl, internalPreview);
       setPreview(internalPreview);
       setImgSrc(internalPreview.image);
       setImgFailed(!internalPreview.image);
@@ -165,10 +189,12 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       return;
     }
 
-    const fetchPreview = async () => {
+    // Debounce API requests by 400ms to prevent rapid keypress rate limit errors while typing
+    const timerId = setTimeout(async () => {
       setLoading(true);
       setError(false);
 
+      // Attempt 1: Microlink API
       try {
         const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(fetchUrl)}&meta=true`);
 
@@ -176,7 +202,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           const data = await response.json();
 
           if (data.status === 'success' && data.data) {
-            const bestImage = data.data.image?.url || data.data.logo?.url || null;
+            const bestImage = data.data.image?.url || data.data.logo?.url || getGoogleFavicon(domain);
             const result = {
               title: data.data.title || domain,
               description: data.data.description || fetchUrl,
@@ -185,6 +211,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
               url: fetchUrl
             };
             previewCache.set(fetchUrl, result);
+            setStoredPreview(fetchUrl, result);
             setPreview(result);
             setImgSrc(bestImage);
             setImgFailed(!bestImage);
@@ -193,25 +220,54 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
           }
         }
       } catch (err) {
-        // Silently catch fetch errors (including 429 rate limits) to avoid red console errors
+        // Silently continue to fallback API on 429 rate limit or network error
       }
 
-      // Fallback: Create preview using domain title
+      // Attempt 2: Dub.co Metatags API (Secondary free metadata API)
+      try {
+        const dubRes = await fetch(`https://api.dub.co/metatags?url=${encodeURIComponent(fetchUrl)}`);
+        if (dubRes.ok) {
+          const dubData = await dubRes.json();
+          if (dubData && (dubData.title || dubData.image)) {
+            const bestImage = dubData.image || getGoogleFavicon(domain);
+            const result = {
+              title: dubData.title || domain,
+              description: dubData.description || fetchUrl,
+              image: bestImage,
+              siteName: domain,
+              url: fetchUrl
+            };
+            previewCache.set(fetchUrl, result);
+            setStoredPreview(fetchUrl, result);
+            setPreview(result);
+            setImgSrc(bestImage);
+            setImgFailed(!bestImage);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        // Silently continue to Google Favicon fallback
+      }
+
+      // Attempt 3: Google Favicon API Fallback (Guaranteed to work without 429 rate limits)
+      const googleFavicon = getGoogleFavicon(domain);
       const fallbackResult = {
         title: domain,
         description: fetchUrl,
-        image: null,
+        image: googleFavicon,
         siteName: domain,
         url: fetchUrl
       };
       previewCache.set(fetchUrl, fallbackResult);
+      setStoredPreview(fetchUrl, fallbackResult);
       setPreview(fallbackResult);
-      setImgSrc(null);
-      setImgFailed(true);
+      setImgSrc(googleFavicon);
+      setImgFailed(!googleFavicon);
       setLoading(false);
-    };
+    }, 400);
 
-    fetchPreview();
+    return () => clearTimeout(timerId);
   }, [url]);
 
   const handleImageError = () => {
