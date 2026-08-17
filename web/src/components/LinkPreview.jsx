@@ -4,17 +4,31 @@ import { FaExternalLinkAlt, FaTimes, FaGlobe } from 'react-icons/fa';
 // Global cache for link previews to prevent redundant network requests and 429 rate limit issues
 const previewCache = new Map();
 
+// Cache TTL: successful previews = 7 days, failed previews = 1 hour (so they retry)
+const CACHE_TTL_SUCCESS = 7 * 24 * 60 * 60 * 1000;
+const CACHE_TTL_FAILED = 60 * 60 * 1000;
+
 const getStoredPreview = (url) => {
   try {
     const raw = localStorage.getItem(`urbansetu_link_prev_${url}`);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const now = Date.now();
+      const ttl = parsed.image ? CACHE_TTL_SUCCESS : CACHE_TTL_FAILED;
+      // Expire stale entries (failed previews retry after 1 hour)
+      if (parsed._cachedAt && (now - parsed._cachedAt) > ttl) {
+        localStorage.removeItem(`urbansetu_link_prev_${url}`);
+        return null;
+      }
+      return parsed;
+    }
   } catch {}
   return null;
 };
 
 const setStoredPreview = (url, data) => {
   try {
-    localStorage.setItem(`urbansetu_link_prev_${url}`, JSON.stringify(data));
+    localStorage.setItem(`urbansetu_link_prev_${url}`, JSON.stringify({ ...data, _cachedAt: Date.now() }));
   } catch {}
 };
 
@@ -58,21 +72,15 @@ const getDomain = (urlStr) => {
   }
 };
 
-const getGoogleFavicon = (domain) => {
-  if (!domain || !isValidDomain(domain)) return null;
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
-};
-
-const getInternalAppPreview = (fetchUrl, hostname) => {
+const getInternalAppPreview = (fetchUrl) => {
   const isVideoCall = fetchUrl.includes('/call/video/') || fetchUrl.includes('/call/');
   const domain = getDomain(fetchUrl);
-  const favicon = getGoogleFavicon(domain) || '/favicon.ico';
 
   if (isVideoCall) {
     return {
       title: "UrbanSetu Video Call Link",
       description: "Click to join the video consultation room",
-      image: favicon,
+      image: null,
       siteName: domain || "urbansetu.vercel.app",
       url: fetchUrl,
       isInternal: true
@@ -82,11 +90,41 @@ const getInternalAppPreview = (fetchUrl, hostname) => {
   return {
     title: domain || "UrbanSetu",
     description: fetchUrl,
-    image: favicon,
+    image: null,
     siteName: domain || "urbansetu.vercel.app",
     url: fetchUrl,
     isInternal: true
   };
+};
+
+// Parse metadata result from Microlink API response
+const parseMicrolinkResult = (data, domain, fetchUrl) => {
+  if (data?.status === 'success' && data?.data) {
+    const bestImage = data.data.image?.url || data.data.logo?.url || null;
+    return {
+      title: data.data.title || domain,
+      description: data.data.description || fetchUrl,
+      image: bestImage,
+      siteName: data.data.publisher || domain,
+      url: fetchUrl
+    };
+  }
+  return null;
+};
+
+// Parse metadata result from jsonlink.io API response
+const parseJsonlinkResult = (data, domain, fetchUrl) => {
+  if (data && (data.title || data.images?.length)) {
+    const bestImage = data.images?.[0] || null;
+    return {
+      title: data.title || domain,
+      description: data.description || fetchUrl,
+      image: bestImage,
+      siteName: data.domain || domain,
+      url: fetchUrl
+    };
+  }
+  return null;
 };
 
 const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, clickable = true, isSentMessage = false }) => {
@@ -134,7 +172,7 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
     const domain = getDomain(fetchUrl);
     const validDomain = isValidDomain(hostname);
 
-    // If domain is invalid / incomplete (e.g. "web.whatsapp" before ".com" is typed), skip API fetch & favicon image
+    // If domain is invalid / incomplete (e.g. "web.whatsapp" before ".com" is typed), skip API fetch
     if (!validDomain) {
       const basicPreview = {
         title: domain,
@@ -150,24 +188,25 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
       return;
     }
 
-    // Check in-memory cache first
-    if (previewCache.has(fetchUrl)) {
-      const cached = previewCache.get(fetchUrl);
+    // Apply cached result helper
+    const applyCached = (cached) => {
       setPreview(cached);
       setImgSrc(cached.image || null);
       setImgFailed(!cached.image);
       setLoading(false);
+    };
+
+    // Check in-memory cache first
+    if (previewCache.has(fetchUrl)) {
+      applyCached(previewCache.get(fetchUrl));
       return;
     }
 
-    // Check persistent localStorage cache next
+    // Check persistent localStorage cache next (with TTL expiry)
     const stored = getStoredPreview(fetchUrl);
     if (stored) {
       previewCache.set(fetchUrl, stored);
-      setPreview(stored);
-      setImgSrc(stored.image || null);
-      setImgFailed(!stored.image);
-      setLoading(false);
+      applyCached(stored);
       return;
     }
 
@@ -179,51 +218,62 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
                        hostname === '127.0.0.1';
 
     if (isInternal) {
-      const internalPreview = getInternalAppPreview(fetchUrl, hostname);
+      const internalPreview = getInternalAppPreview(fetchUrl);
       previewCache.set(fetchUrl, internalPreview);
       setStoredPreview(fetchUrl, internalPreview);
-      setPreview(internalPreview);
-      setImgSrc(internalPreview.image);
-      setImgFailed(!internalPreview.image);
-      setLoading(false);
+      applyCached(internalPreview);
       return;
     }
 
-    // Debounce API requests by 400ms to prevent rapid keypress rate limit errors while typing
+    // Debounce API requests by 500ms to prevent rapid keypress rate limit errors while typing
     const timerId = setTimeout(async () => {
       setLoading(true);
       setError(false);
 
-      // Microlink API
+      // Helper to apply and cache a successful result
+      const applyResult = (result) => {
+        previewCache.set(fetchUrl, result);
+        setStoredPreview(fetchUrl, result);
+        setPreview(result);
+        setImgSrc(result.image);
+        setImgFailed(!result.image);
+        setLoading(false);
+      };
+
+      // Attempt 1: Microlink API (primary, best metadata extraction)
       try {
         const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(fetchUrl)}&meta=true`);
 
         if (response.ok) {
           const data = await response.json();
+          const result = parseMicrolinkResult(data, domain, fetchUrl);
+          if (result) {
+            applyResult(result);
+            return;
+          }
+        }
+        // If 429 rate limited, fall through to secondary API
+      } catch (err) {
+        // Silently continue to fallback API on network error
+      }
 
-          if (data.status === 'success' && data.data) {
-            const bestImage = data.data.image?.url || data.data.logo?.url || null;
-            const result = {
-              title: data.data.title || domain,
-              description: data.data.description || fetchUrl,
-              image: bestImage,
-              siteName: data.data.publisher || domain,
-              url: fetchUrl
-            };
-            previewCache.set(fetchUrl, result);
-            setStoredPreview(fetchUrl, result);
-            setPreview(result);
-            setImgSrc(bestImage);
-            setImgFailed(!bestImage);
-            setLoading(false);
+      // Attempt 2: jsonlink.io API (secondary, CORS-safe, generous rate limits)
+      try {
+        const response = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(fetchUrl)}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          const result = parseJsonlinkResult(data, domain, fetchUrl);
+          if (result) {
+            applyResult(result);
             return;
           }
         }
       } catch (err) {
-        // Silently catch rate limit or network errors
+        // Silently continue to FaGlobe fallback
       }
 
-      // Fallback: Domain preview with FaGlobe icon (image: null, imgFailed: true)
+      // Final Fallback: Domain preview with FaGlobe icon
       const fallbackResult = {
         title: domain,
         description: fetchUrl,
@@ -231,13 +281,8 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
         siteName: domain,
         url: fetchUrl
       };
-      previewCache.set(fetchUrl, fallbackResult);
-      setStoredPreview(fetchUrl, fallbackResult);
-      setPreview(fallbackResult);
-      setImgSrc(null);
-      setImgFailed(true);
-      setLoading(false);
-    }, 400);
+      applyResult(fallbackResult);
+    }, 500);
 
     return () => clearTimeout(timerId);
   }, [url]);
