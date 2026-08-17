@@ -137,7 +137,8 @@ const LinkPreview = ({ url, onRemove, className = "", showRemoveButton = true, c
 
   const handlePreviewClick = () => {
     if (clickable && url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const openUrl = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+      window.open(openUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
