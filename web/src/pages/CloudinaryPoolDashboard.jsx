@@ -6,7 +6,8 @@ import {
   FaCloud, FaSync, FaCheckCircle, FaTimesCircle, FaExclamationTriangle,
   FaArrowLeft, FaDatabase, FaChartBar, FaToggleOn, FaToggleOff,
   FaServer, FaClock, FaUpload, FaHdd, FaBolt, FaEye,
-  FaHistory, FaChevronDown, FaChevronUp, FaCalendarAlt
+  FaHistory, FaChevronDown, FaChevronUp, FaCalendarAlt,
+  FaSearch, FaSortAmountDown, FaFilter, FaPercentage
 } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -111,6 +112,11 @@ export default function CloudinaryPoolDashboard() {
   const [togglingAccount, setTogglingAccount] = useState(null);
   const [resettingCounters, setResettingCounters] = useState(false);
 
+  // Filter & Search state
+  const [filterTab, setFilterTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('index');
+
   // Access guard
   useEffect(() => {
     if (!currentUser || currentUser.role !== 'rootadmin') {
@@ -140,6 +146,81 @@ export default function CloudinaryPoolDashboard() {
   useEffect(() => {
     fetchPoolStatus();
   }, [fetchPoolStatus]);
+
+  // ─── Filtered & Sorted Accounts ────────────────────────────
+  const filteredAccounts = React.useMemo(() => {
+    if (!poolData?.accounts) return [];
+    let list = [...poolData.accounts];
+
+    // Filter by tab
+    switch (filterTab) {
+      case 'active':
+        list = list.filter(a => a.isEnabled);
+        break;
+      case 'disabled':
+        list = list.filter(a => !a.isEnabled);
+        break;
+      case 'nearLimit':
+        list = list.filter(a => a.realCreditsUsedPercent >= 75);
+        break;
+      case 'errors':
+        list = list.filter(a => a.failureCount > 0 || a.realUsageFetchError);
+        break;
+      default:
+        break;
+    }
+
+    // Search by cloud name
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(a =>
+        a.cloudName?.toLowerCase().includes(q) ||
+        String(a.accountIndex).includes(q)
+      );
+    }
+
+    // Sort
+    switch (sortBy) {
+      case 'credits':
+        list.sort((a, b) => (b.realCreditsUsedPercent || 0) - (a.realCreditsUsedPercent || 0));
+        break;
+      case 'uploads':
+        list.sort((a, b) => b.monthlyUploadCount - a.monthlyUploadCount);
+        break;
+      case 'failures':
+        list.sort((a, b) => b.failureCount - a.failureCount);
+        break;
+      case 'index':
+      default:
+        list.sort((a, b) => a.accountIndex - b.accountIndex);
+        break;
+    }
+
+    return list;
+  }, [poolData, filterTab, searchQuery, sortBy]);
+
+  // ─── Additional Computed Stats ─────────────────────────────
+  const extraStats = React.useMemo(() => {
+    if (!poolData?.accounts || poolData.accounts.length === 0) return null;
+    const accounts = poolData.accounts;
+    const withRealData = accounts.filter(a => a.realUsageLastFetchedAt);
+    const avgCredits = withRealData.length > 0
+      ? withRealData.reduce((sum, a) => sum + (a.realCreditsUsedPercent || 0), 0) / withRealData.length
+      : 0;
+    const totalStorage = accounts.reduce((sum, a) => sum + (a.realStorageUsed || 0), 0);
+    const nearLimit = accounts.filter(a => a.realCreditsUsedPercent >= 75).length;
+    const totalFailures = accounts.reduce((sum, a) => sum + a.failureCount, 0);
+
+    return { avgCredits, totalStorage, nearLimit, totalFailures };
+  }, [poolData]);
+
+  const FILTER_TABS = [
+    { key: 'all', label: 'All', icon: FaServer },
+    { key: 'active', label: 'Active', icon: FaCheckCircle },
+    { key: 'disabled', label: 'Disabled', icon: FaTimesCircle },
+    { key: 'nearLimit', label: 'Near Limit', icon: FaExclamationTriangle },
+    { key: 'errors', label: 'Errors', icon: FaBolt },
+  ];
 
   // Fetch real usage for ALL accounts
   const handleFetchAllRealUsage = async () => {
@@ -346,6 +427,38 @@ export default function CloudinaryPoolDashboard() {
           </div>
         ) : null}
 
+        {/* ─── Extra Stats Row (Real Usage) ────────────────────── */}
+        {!loading && extraStats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <StatCard
+              title="Avg Credits Used"
+              value={`${extraStats.avgCredits.toFixed(1)}%`}
+              icon={FaPercentage}
+              color="purple"
+              isText
+            />
+            <StatCard
+              title="Total Storage"
+              value={formatBytes(extraStats.totalStorage)}
+              icon={FaHdd}
+              color="blue"
+              isText
+            />
+            <StatCard
+              title="Near Limit (75%+)"
+              value={extraStats.nearLimit}
+              icon={FaExclamationTriangle}
+              color={extraStats.nearLimit > 0 ? 'red' : 'emerald'}
+            />
+            <StatCard
+              title="Total Failures"
+              value={extraStats.totalFailures}
+              icon={FaBolt}
+              color={extraStats.totalFailures > 0 ? 'red' : 'emerald'}
+            />
+          </div>
+        )}
+
         {/* ─── Fetching Real Usage Overlay ─────────────────────── */}
         {fetchingRealUsage && (
           <div className="mb-6 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-center gap-3">
@@ -360,6 +473,74 @@ export default function CloudinaryPoolDashboard() {
           </div>
         )}
 
+        {/* ─── Filter Tabs + Search + Sort ─────────────────────── */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 mb-6">
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {FILTER_TABS.map(tab => {
+              const Icon = tab.icon;
+              const isActive = filterTab === tab.key;
+              const count = tab.key === 'all'
+                ? poolData?.accounts?.length || 0
+                : tab.key === 'active'
+                  ? poolData?.accounts?.filter(a => a.isEnabled).length || 0
+                  : tab.key === 'disabled'
+                    ? poolData?.accounts?.filter(a => !a.isEnabled).length || 0
+                    : tab.key === 'nearLimit'
+                      ? poolData?.accounts?.filter(a => a.realCreditsUsedPercent >= 75).length || 0
+                      : poolData?.accounts?.filter(a => a.failureCount > 0 || a.realUsageFetchError).length || 0;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilterTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 shadow-sm'
+                      : 'bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Icon className="w-3 h-3" />
+                  {tab.label}
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    isActive
+                      ? 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200'
+                      : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search + Sort Row */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-3.5 h-3.5" />
+              <input
+                type="text"
+                placeholder="Search by cloud name or account index..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <FaSortAmountDown className="text-gray-400 w-3.5 h-3.5" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="index">Sort by Index</option>
+                <option value="credits">Sort by Credits Used</option>
+                <option value="uploads">Sort by Monthly Uploads</option>
+                <option value="failures">Sort by Failures</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* ─── Account Cards ──────────────────────────────────── */}
         <div className="mb-4">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -367,7 +548,7 @@ export default function CloudinaryPoolDashboard() {
             Account Details
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {poolData?.accounts?.length || 0} account(s) in the rotation pool
+            Showing {filteredAccounts.length} of {poolData?.accounts?.length || 0} account(s)
           </p>
         </div>
 
@@ -375,9 +556,9 @@ export default function CloudinaryPoolDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {[...Array(4)].map((_, i) => <AccountCardSkeleton key={i} />)}
           </div>
-        ) : (
+        ) : filteredAccounts.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {poolData?.accounts?.map((account) => (
+            {filteredAccounts.map((account) => (
               <AccountCard
                 key={account.accountIndex}
                 account={account}
@@ -388,19 +569,36 @@ export default function CloudinaryPoolDashboard() {
               />
             ))}
           </div>
-        )}
-
-        {/* ─── Empty State ────────────────────────────────────── */}
-        {!loading && (!poolData?.accounts || poolData.accounts.length === 0) && (
+        ) : (
           <div className="text-center py-16">
-            <FaCloud className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-500 dark:text-gray-400 mb-2">
-              No Cloudinary Accounts Found
-            </h3>
-            <p className="text-gray-400 dark:text-gray-500 max-w-md mx-auto">
-              Add CLOUDINARY_POOL_0_CLOUD_NAME, CLOUDINARY_POOL_0_API_KEY, and CLOUDINARY_POOL_0_API_SECRET
-              environment variables to configure the pool.
-            </p>
+            {poolData?.accounts?.length > 0 ? (
+              <>
+                <FaFilter className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                  No accounts match your filters
+                </h3>
+                <p className="text-gray-400 dark:text-gray-500 mb-4">
+                  Try changing the filter or search query
+                </p>
+                <button
+                  onClick={() => { setFilterTab('all'); setSearchQuery(''); setSortBy('index'); }}
+                  className="px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </>
+            ) : (
+              <>
+                <FaCloud className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                  No Cloudinary Accounts Found
+                </h3>
+                <p className="text-gray-400 dark:text-gray-500 max-w-md mx-auto">
+                  Add CLOUDINARY_POOL_0_CLOUD_NAME, CLOUDINARY_POOL_0_API_KEY, and CLOUDINARY_POOL_0_API_SECRET
+                  environment variables to configure the pool.
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>
