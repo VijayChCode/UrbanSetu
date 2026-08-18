@@ -1672,6 +1672,16 @@ export default function Settings() {
                 </button>
               )}
 
+              {currentUser.role === 'rootadmin' && (
+                <button
+                  onClick={() => navigate('/admin/cloudinary-pool')}
+                  className={`w-full bg-cyan-600 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp}`}
+                >
+                  <FaDatabase className={`w-4 h-4 mr-2 transition-transform duration-300 group-hover:animate-pulse`} />
+                  Cloudinary Pool Dashboard
+                </button>
+              )}
+
               <button
                 onClick={() => navigate('/admin/session-audit-logs')}
                 className={`w-full bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center font-semibold group ${animationClasses.slideInUp}`}

@@ -7,6 +7,7 @@ import { verifyToken } from '../utils/verify.js';
 import Deployment from '../models/deployment.model.js';
 import cloudinary from 'cloudinary';
 import TrustDocument from '../models/trustDocument.model.js';
+import { getCloudinaryInstance } from '../utils/cloudinaryPool.js';
 
 const router = express.Router();
 
@@ -661,12 +662,8 @@ function extractVersionFromFilename(filename) {
   return versionMatch ? versionMatch[1] : '1.0.0';
 }
 
-// Configure Cloudinary
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Cloudinary is now configured dynamically via CloudinaryPool
+// (no static cloudinary.v2.config() needed here)
 
 // --- Trust Documents Endpoints ---
 
@@ -725,7 +722,10 @@ router.delete('/trust-docs/:id', verifyToken, async (req, res) => {
 
     if (doc.fileKey) {
       try {
-        await cloudinary.v2.uploader.destroy(doc.fileKey, { resource_type: 'raw' });
+        const s3DelPool = await getCloudinaryInstance();
+        if (s3DelPool) {
+          await s3DelPool.instance.uploader.destroy(doc.fileKey, { resource_type: 'raw' });
+        }
       } catch (err) {
         console.warn('Failed to delete raw document from Cloudinary:', err.message);
       }

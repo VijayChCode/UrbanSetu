@@ -78,8 +78,8 @@ router.get('/', (req, res) => {
         clientId: process.env.PAYPAL_CLIENT_ID
       },
       cloudinary: {
-        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-        apiKey: process.env.CLOUDINARY_API_KEY
+        cloudName: process.env.CLOUDINARY_POOL_0_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME || 'not-configured',
+        poolEnabled: !!(process.env.CLOUDINARY_POOL_0_CLOUD_NAME),
       }
     };
 

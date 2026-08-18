@@ -27,13 +27,14 @@ import Route from "../models/Route.js";
 import CallHistory from "../models/callHistory.model.js";
 
 import cloudinary from 'cloudinary';
+import {
+  getCloudinaryInstance,
+  recordUpload,
+  recordFailure,
+} from '../utils/cloudinaryPool.js';
 
-// Configure Cloudinary for base64 uploads
-cloudinary.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Cloudinary is now configured dynamically via CloudinaryPool
+// (no static cloudinary.v2.config() needed here)
 
 
 // Helper to determine personality
@@ -699,12 +700,18 @@ export const uploadYearInReviewImage = async (req, res, next) => {
             return res.status(400).json({ message: "No image data provided" });
         }
 
-        // Upload to Cloudinary
-        const uploadResponse = await cloudinary.v2.uploader.upload(image, {
+        // Upload to Cloudinary via pool
+        const pool = await getCloudinaryInstance();
+        if (!pool) {
+            return res.status(500).json({ message: 'No Cloudinary accounts available in pool' });
+        }
+        const uploadResponse = await pool.instance.uploader.upload(image, {
             folder: `urbansetu/flashbacks/${year}`,
             public_id: `flashback_${userId}_${Date.now()}`,
             resource_type: 'image'
         });
+        await recordUpload(pool.account.accountIndex, 0);
+        console.log(`[CloudinaryPool] Flashback upload on account ${pool.account.cloudName}`);
 
         res.status(200).json({
             imageUrl: uploadResponse.secure_url,

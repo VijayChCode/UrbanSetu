@@ -175,6 +175,7 @@ const AdminRentWallet = lazy(() => import('./pages/AdminRentWallet'));
 const SecurityIntelligence = lazy(() => import('./pages/SecurityIntelligence'));
 const AdminAuditTrail = lazy(() => import('./pages/AdminAuditTrail'));
 const AdminSentinelDashboard = lazy(() => import('./pages/AdminSentinelDashboard'));
+const CloudinaryPoolDashboard = lazy(() => import('./pages/CloudinaryPoolDashboard'));
 
 
 
@@ -1547,6 +1548,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/coin-stats" element={<AdminCoinStats />} />
               <Route path="/admin/audit-trail" element={<AdminAuditTrail />} />
               <Route path="/admin/sentinel" element={<AdminSentinelDashboard />} />
+              <Route path="/admin/cloudinary-pool" element={<CloudinaryPoolDashboard />} />
               <Route path="/admin/year/:year" element={<YearInReview isAdmin={true} />} />
               <Route path="/admin/settings" element={<Settings />} />
               <Route path="/admin/reminders" element={<RemindersPage />} />

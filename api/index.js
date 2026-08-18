@@ -69,6 +69,7 @@ import securityIntelligenceRouter from "./routes/securityIntelligence.route.js";
 import videoShareRouter from "./routes/videoShare.route.js";
 import imageShareRouter from "./routes/imageShare.route.js";
 import sentinelRouter from "./routes/sentinel.route.js";
+import cloudinaryAdminRouter from "./routes/cloudinaryAdmin.route.js";
 
 // Use S3 deployment route if AWS is configured, otherwise fallback to Cloudinary
 let deploymentRouter;
@@ -96,6 +97,8 @@ import { initializeYearInReviewScheduler } from "./utils/yearInReviewScheduler.j
 import { startCoinExpiryScheduler } from "./schedulers/coinExpiryScheduler.js";
 import { startFestivalGreetingScheduler } from "./schedulers/festivalGreetingScheduler.js";
 import { startMonthlyLeaderboardScheduler } from "./schedulers/monthlyLeaderboardScheduler.js";
+import startCloudinaryResetScheduler from "./schedulers/cloudinaryResetScheduler.js";
+import { initializePool as initializeCloudinaryPool } from "./utils/cloudinaryPool.js";
 
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -292,6 +295,13 @@ connectToMongoDB().then(() => {
   startCoinExpiryScheduler();
   startFestivalGreetingScheduler();
   startMonthlyLeaderboardScheduler();
+  // Initialize Cloudinary multi-account pool and start monthly reset scheduler
+  initializeCloudinaryPool().then(() => {
+    console.log('[CloudinaryPool] Pool initialized after DB connection');
+  }).catch(err => {
+    console.error('[CloudinaryPool] Pool initialization error:', err.message);
+  });
+  startCloudinaryResetScheduler();
 });
 
 const __dirname = path.resolve();
@@ -698,6 +708,7 @@ app.use('/api/video', videoShareRouter);
 app.use('/api/image', imageShareRouter);
 app.use('/api/admin/sentinel', sentinelRouter);
 app.use('/api/sentinel', sentinelRouter); // User-facing Sentinel preference sync/restore
+app.use('/api/admin/cloudinary', cloudinaryAdminRouter); // Cloudinary pool admin dashboard
 app.use("/", sitemapRouter);
 
 let onlineUsers = new Set();

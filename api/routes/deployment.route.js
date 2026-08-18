@@ -6,6 +6,13 @@ import { verifyToken } from '../utils/verify.js';
 import Deployment from '../models/deployment.model.js';
 import TrustDocument from '../models/trustDocument.model.js';
 import { sendBroadcastPushNotification } from '../utils/pushNotification.js';
+import {
+  getCloudinaryInstance,
+  getCloudinaryInstanceByCloudName,
+  extractCloudNameFromUrl,
+  recordUpload,
+  recordFailure,
+} from '../utils/cloudinaryPool.js';
 
 const router = express.Router();
 
@@ -13,7 +20,11 @@ const router = express.Router();
 router.get('/test-cloudinary', async (req, res) => {
   try {
     console.log('Testing Cloudinary connection...');
-    const result = await cloudinary.v2.api.ping();
+    const pool = await getCloudinaryInstance();
+    if (!pool) {
+      return res.status(500).json({ success: false, message: 'No Cloudinary accounts available in pool' });
+    }
+    const result = await pool.instance.api.ping();
     res.json({
       success: true,
       message: 'Cloudinary connection successful',
@@ -55,18 +66,8 @@ const handleMulterError = (error, req, res, next) => {
   next(error);
 };
 
-// Configure Cloudinary
-console.log('Cloudinary Config:', {
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not Set',
-  api_secret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not Set'
-});
-
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Cloudinary is now configured dynamically via CloudinaryPool
+// (no static cloudinary.v2.config() needed here)
 
 // Configure multer with memory storage for better control
 const upload = multer({
@@ -252,8 +253,12 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
 
     let uploadResult;
     try {
-      // Use regular upload for files under 10MB
-      uploadResult = await cloudinary.v2.uploader.upload(
+      // Use pool-based upload with automatic account rotation
+      const pool = await getCloudinaryInstance();
+      if (!pool) {
+        return res.status(500).json({ success: false, message: 'No Cloudinary accounts available in pool' });
+      }
+      uploadResult = await pool.instance.uploader.upload(
         `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         {
           public_id: publicId,
@@ -262,7 +267,8 @@ router.post('/upload', verifyToken, upload.single('file'), handleMulterError, as
           overwrite: true,
         }
       );
-      console.log('Cloudinary upload successful:', uploadResult.public_id);
+      await recordUpload(pool.account.accountIndex, file.size);
+      console.log(`[CloudinaryPool] Deployment upload successful on account ${pool.account.cloudName}:`, uploadResult.public_id);
     } catch (cloudinaryError) {
       console.error('Cloudinary upload error:', cloudinaryError);
       return res.status(500).json({
@@ -424,8 +430,11 @@ router.delete('/:id', verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Deployment not found' });
     }
 
-    // Delete from Cloudinary
-    await cloudinary.v2.uploader.destroy(deployment.fileKey, { resource_type: 'raw' });
+    // Delete from Cloudinary using the correct pool account
+    const delPool = await getCloudinaryInstance();
+    if (delPool) {
+      await delPool.instance.uploader.destroy(deployment.fileKey, { resource_type: 'raw' });
+    }
 
     // Delete from DB
     await Deployment.findByIdAndDelete(id);
@@ -518,7 +527,10 @@ router.delete('/trust-docs/:id', verifyToken, async (req, res) => {
 
     if (doc.fileKey) {
       try {
-        await cloudinary.v2.uploader.destroy(doc.fileKey, { resource_type: 'raw' });
+        const trustDelPool = await getCloudinaryInstance();
+        if (trustDelPool) {
+          await trustDelPool.instance.uploader.destroy(doc.fileKey, { resource_type: 'raw' });
+        }
       } catch (err) {
         console.warn('Failed to delete raw document from Cloudinary:', err.message);
       }
