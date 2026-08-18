@@ -735,18 +735,22 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
               <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium uppercase tracking-wider">Bandwidth (Month)</p>
               <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
                 {formatBytes(account.realBandwidthUsed)}
-                <span className="text-[10px] text-blue-400 dark:text-blue-500 ml-1">
-                  / {formatBytes(account.realBandwidthLimit)}
-                </span>
+                {account.realBandwidthLimit > 0 && (
+                  <span className="text-[10px] text-blue-400 dark:text-blue-500 ml-1">
+                    / {formatBytes(account.realBandwidthLimit)}
+                  </span>
+                )}
               </p>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2.5">
               <p className="text-[10px] text-purple-500 dark:text-purple-400 font-medium uppercase tracking-wider">Storage (Total)</p>
               <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">
                 {formatBytes(account.realStorageUsed)}
-                <span className="text-[10px] text-purple-400 dark:text-purple-500 ml-1">
-                  / {formatBytes(account.realStorageLimit)}
-                </span>
+                {account.realStorageLimit > 0 && (
+                  <span className="text-[10px] text-purple-400 dark:text-purple-500 ml-1">
+                    / {formatBytes(account.realStorageLimit)}
+                  </span>
+                )}
               </p>
             </div>
           </div>
