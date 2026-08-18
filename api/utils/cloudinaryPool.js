@@ -72,8 +72,6 @@ export async function initializePool() {
         { accountIndex: acc.index },
         {
           $setOnInsert: {
-            cloudName: acc.cloudName,
-            accountIndex: acc.index,
             isEnabled: true,
             uploadCount: 0,
             totalBytesUploaded: 0,
@@ -83,7 +81,8 @@ export async function initializePool() {
             failureCount: 0,
           },
           $set: {
-            cloudName: acc.cloudName, // Update cloud name if changed
+            cloudName: acc.cloudName,
+            accountIndex: acc.index,
           }
         },
         { upsert: true, new: true }
