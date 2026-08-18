@@ -98,6 +98,66 @@ const CreditBar = ({ used, limit, percent }) => {
   );
 };
 
+// ─── Confirmation Modal ──────────────────────────────────────────
+function ConfirmModal({ isOpen, title, message, confirmText, cancelText = 'Cancel', type = 'danger', onConfirm, onCancel }) {
+  if (!isOpen) return null;
+
+  const typeStyles = {
+    danger: {
+      icon: '⚠️',
+      btn: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white',
+      border: 'border-red-200 dark:border-red-800',
+      bg: 'bg-red-50 dark:bg-red-900/20',
+    },
+    warning: {
+      icon: '🔄',
+      btn: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white',
+      border: 'border-orange-200 dark:border-orange-800',
+      bg: 'bg-orange-50 dark:bg-orange-900/20',
+    },
+    info: {
+      icon: '✅',
+      btn: 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white',
+      border: 'border-emerald-200 dark:border-emerald-800',
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    },
+  };
+
+  const style = typeStyles[type] || typeStyles.danger;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onCancel}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      {/* Modal */}
+      <div
+        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-md w-full p-6 transform transition-all animate-[fadeIn_0.2s_ease-out]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={`w-12 h-12 rounded-full ${style.bg} ${style.border} border flex items-center justify-center text-2xl mb-4 mx-auto`}>
+          {style.icon}
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white text-center mb-2">{title}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6 leading-relaxed">{message}</p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md hover:shadow-lg ${style.btn}`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────
 export default function CloudinaryPoolDashboard() {
   usePageTitle("Cloudinary Pool Dashboard - Infrastructure Monitor");
@@ -116,6 +176,12 @@ export default function CloudinaryPoolDashboard() {
   const [filterTab, setFilterTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('index');
+
+  // Confirmation Modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false, title: '', message: '', confirmText: '', type: 'danger', onConfirm: () => {},
+  });
+  const closeModal = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
   // Access guard
   useEffect(() => {
@@ -265,52 +331,76 @@ export default function CloudinaryPoolDashboard() {
     }
   };
 
-  // Toggle account enabled/disabled
-  const handleToggleAccount = async (accountIndex, currentEnabled) => {
-    setTogglingAccount(accountIndex);
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/cloudinary/${accountIndex}/toggle`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          enabled: !currentEnabled,
-          note: `Manually ${!currentEnabled ? 'enabled' : 'disabled'} by ${currentUser.username}`,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(data.message);
-        await fetchPoolStatus();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (err) {
-      toast.error('Error toggling account');
-    } finally {
-      setTogglingAccount(null);
-    }
+  // Toggle account enabled/disabled (with confirmation)
+  const handleToggleAccount = (accountIndex, currentEnabled) => {
+    const account = poolData?.accounts?.find(a => a.accountIndex === accountIndex);
+    const cloudName = account?.cloudName || `Account #${accountIndex}`;
+
+    setConfirmModal({
+      isOpen: true,
+      title: currentEnabled ? 'Disable Account?' : 'Enable Account?',
+      message: currentEnabled
+        ? `This will remove "${cloudName}" from the upload rotation pool. No new uploads will use this account. Existing uploaded files will still be accessible.`
+        : `This will add "${cloudName}" back to the upload rotation pool. New uploads may be routed to this account.`,
+      confirmText: currentEnabled ? 'Yes, Disable' : 'Yes, Enable',
+      type: currentEnabled ? 'danger' : 'info',
+      onConfirm: async () => {
+        closeModal();
+        setTogglingAccount(accountIndex);
+        try {
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/cloudinary/${accountIndex}/toggle`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              enabled: !currentEnabled,
+              note: `Manually ${!currentEnabled ? 'enabled' : 'disabled'} by ${currentUser.username}`,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success(data.message);
+            await fetchPoolStatus();
+          } else {
+            toast.error(data.message);
+          }
+        } catch (err) {
+          toast.error('Error toggling account');
+        } finally {
+          setTogglingAccount(null);
+        }
+      },
+    });
   };
 
-  // Reset monthly counters
-  const handleResetMonthly = async () => {
-    if (!window.confirm('Are you sure you want to reset monthly counters for all accounts?')) return;
-    setResettingCounters(true);
-    try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/cloudinary/reset-monthly`, {
-        method: 'POST',
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(data.message);
-        await fetchPoolStatus();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (err) {
-      toast.error('Error resetting counters');
-    } finally {
-      setResettingCounters(false);
-    }
+  // Reset monthly counters (with confirmation)
+  const handleResetMonthly = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Reset Monthly Counters?',
+      message: 'This will archive current month stats to history, reset all monthly upload counters to zero, and re-enable any auto-disabled accounts. This action cannot be undone.',
+      confirmText: 'Yes, Reset All',
+      type: 'warning',
+      onConfirm: async () => {
+        closeModal();
+        setResettingCounters(true);
+        try {
+          const res = await authenticatedFetch(`${API_BASE_URL}/api/admin/cloudinary/reset-monthly`, {
+            method: 'POST',
+          });
+          const data = await res.json();
+          if (data.success) {
+            toast.success(data.message);
+            await fetchPoolStatus();
+          } else {
+            toast.error(data.message);
+          }
+        } catch (err) {
+          toast.error('Error resetting counters');
+        } finally {
+          setResettingCounters(false);
+        }
+      },
+    });
   };
 
   if (currentUser?.role !== 'rootadmin') return null;
@@ -602,6 +692,17 @@ export default function CloudinaryPoolDashboard() {
           </div>
         )}
       </div>
+
+      {/* ─── Confirmation Modal ─────────────────────────────── */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        type={confirmModal.type}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={closeModal}
+      />
     </div>
   );
 }
