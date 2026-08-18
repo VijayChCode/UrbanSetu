@@ -5,7 +5,8 @@ import { toast } from 'react-toastify';
 import {
   FaCloud, FaSync, FaCheckCircle, FaTimesCircle, FaExclamationTriangle,
   FaArrowLeft, FaDatabase, FaChartBar, FaToggleOn, FaToggleOff,
-  FaServer, FaClock, FaUpload, FaHdd, FaBolt, FaEye
+  FaServer, FaClock, FaUpload, FaHdd, FaBolt, FaEye,
+  FaHistory, FaChevronDown, FaChevronUp, FaCalendarAlt
 } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -442,9 +443,11 @@ function StatCard({ title, value, icon: Icon, color, isText = false }) {
 
 // ─── Account Card Component ──────────────────────────────────────
 function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUsage }) {
+  const [showHistory, setShowHistory] = useState(false);
   const hasRealData = !!account.realUsageLastFetchedAt;
   const isNearLimit = account.realCreditsUsedPercent >= 75;
   const isOverLimit = account.realCreditsUsedPercent >= 90;
+  const historyList = account.monthlyHistory || [];
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg border transition-all duration-300 hover:shadow-xl ${
@@ -516,8 +519,8 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
             <p className="text-lg font-bold text-gray-900 dark:text-white">{account.monthlyUploadCount}</p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Uploads</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{account.uploadCount}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">All-Time Uploads</p>
+            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{account.uploadCount}</p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Failures</p>
@@ -531,7 +534,7 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
         {hasRealData && (
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2.5">
-              <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium uppercase tracking-wider">Bandwidth</p>
+              <p className="text-[10px] text-blue-500 dark:text-blue-400 font-medium uppercase tracking-wider">Bandwidth (Month)</p>
               <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
                 {formatBytes(account.realBandwidthUsed)}
                 <span className="text-[10px] text-blue-400 dark:text-blue-500 ml-1">
@@ -540,7 +543,7 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
               </p>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2.5">
-              <p className="text-[10px] text-purple-500 dark:text-purple-400 font-medium uppercase tracking-wider">Storage</p>
+              <p className="text-[10px] text-purple-500 dark:text-purple-400 font-medium uppercase tracking-wider">Storage (Total)</p>
               <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">
                 {formatBytes(account.realStorageUsed)}
                 <span className="text-[10px] text-purple-400 dark:text-purple-500 ml-1">
@@ -555,11 +558,11 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400 dark:text-gray-500 mb-4">
           <span className="flex items-center gap-1">
             <FaUpload className="w-2.5 h-2.5" />
-            Last: {formatTimeAgo(account.lastUploadAt)}
+            Last Upload: {formatTimeAgo(account.lastUploadAt)}
           </span>
           <span className="flex items-center gap-1">
             <FaHdd className="w-2.5 h-2.5" />
-            Month: {formatBytes(account.monthlyBytesUploaded)}
+            All-Time Data: {formatBytes(account.totalBytesUploaded)}
           </span>
           {hasRealData && (
             <span className="flex items-center gap-1">
@@ -572,6 +575,56 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
               <FaExclamationTriangle className="w-2.5 h-2.5" />
               Fetch error: {account.realUsageFetchError}
             </span>
+          )}
+        </div>
+
+        {/* Monthly History Collapsible Toggle */}
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowHistory(!showHistory)}
+            className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <FaHistory className="text-blue-500" />
+              Monthly History Records ({historyList.length})
+            </span>
+            {showHistory ? <FaChevronUp className="w-3 h-3" /> : <FaChevronDown className="w-3 h-3" />}
+          </button>
+
+          {showHistory && (
+            <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700/50 rounded-lg">
+              {historyList.length === 0 ? (
+                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-2">
+                  No past months archived yet. Records will be saved automatically upon each monthly reset.
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {historyList.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700 text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400">
+                          <FaCalendarAlt className="w-2.5 h-2.5" />
+                          {item.month}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                        <span><strong>{item.uploadCount}</strong> uploads</span>
+                        <span><strong>{formatBytes(item.bytesUploaded)}</strong></span>
+                        {typeof item.realCreditsUsed === 'number' && item.realCreditsUsed > 0 && (
+                          <span className="text-purple-600 dark:text-purple-400">
+                            {item.realCreditsUsed.toFixed(1)} credits
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
 

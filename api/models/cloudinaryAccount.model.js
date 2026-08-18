@@ -105,6 +105,16 @@ const cloudinaryAccountSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  // ─── Monthly Historical Records ───
+  monthlyHistory: [
+    {
+      month: { type: String, required: true }, // e.g. "2026-08"
+      uploadCount: { type: Number, default: 0 },
+      bytesUploaded: { type: Number, default: 0 },
+      realCreditsUsed: { type: Number, default: 0 },
+      archivedAt: { type: Date, default: () => new Date() },
+    }
+  ],
 }, { timestamps: true });
 
 // Index for fast lookup of least-used enabled account

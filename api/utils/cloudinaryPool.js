@@ -356,17 +356,44 @@ export async function recordFailure(accountIndex, errorMessage = '') {
  */
 export async function resetMonthlyCounters() {
   try {
+    const allAccounts = await CloudinaryAccount.find({});
+    const now = new Date();
+    // Use the month identifier (e.g. 2026-08)
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const monthKey = `${year}-${month}`;
+
+    // Archive current month stats to history for each account
+    for (const acc of allAccounts) {
+      if (acc.monthlyUploadCount > 0 || acc.monthlyBytesUploaded > 0) {
+        await CloudinaryAccount.updateOne(
+          { _id: acc._id },
+          {
+            $push: {
+              monthlyHistory: {
+                month: monthKey,
+                uploadCount: acc.monthlyUploadCount,
+                bytesUploaded: acc.monthlyBytesUploaded,
+                realCreditsUsed: acc.realCreditsUsed || 0,
+                archivedAt: now,
+              }
+            }
+          }
+        );
+      }
+    }
+
     const result = await CloudinaryAccount.updateMany(
       {},
       {
         $set: {
           monthlyUploadCount: 0,
           monthlyBytesUploaded: 0,
-          monthlyResetAt: new Date(),
+          monthlyResetAt: now,
         },
       }
     );
-    console.log(`[CloudinaryPool] 🔄 Monthly counters reset for ${result.modifiedCount} account(s)`);
+    console.log(`[CloudinaryPool] 🔄 Monthly counters reset and archived for ${result.modifiedCount} account(s)`);
 
     // Re-enable auto-disabled accounts (new month = fresh credits)
     const reEnabled = await CloudinaryAccount.updateMany(
@@ -523,6 +550,8 @@ export async function getPoolStatus() {
       realTransformationsLimit: acc.realTransformationsLimit,
       realUsageLastFetchedAt: acc.realUsageLastFetchedAt,
       realUsageFetchError: acc.realUsageFetchError,
+      // Monthly History records
+      monthlyHistory: acc.monthlyHistory || [],
     }));
   } catch (err) {
     console.error('[CloudinaryPool] Error getting pool status:', err.message);
