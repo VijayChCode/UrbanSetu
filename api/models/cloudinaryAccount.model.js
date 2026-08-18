@@ -4,13 +4,16 @@ const cloudinaryAccountSchema = new mongoose.Schema({
   cloudName: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
   },
   accountIndex: {
     type: Number,
     required: true,
     unique: true,
+  },
+  isFallback: {
+    type: Boolean,
+    default: false,
   },
   isEnabled: {
     type: Boolean,

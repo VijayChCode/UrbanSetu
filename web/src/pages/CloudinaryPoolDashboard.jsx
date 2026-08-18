@@ -765,20 +765,24 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
               !account.isEnabled
                 ? 'bg-gray-400 dark:bg-gray-600'
-                : isOverLimit
-                  ? 'bg-gradient-to-br from-red-500 to-red-600'
-                  : isNearLimit
-                    ? 'bg-gradient-to-br from-orange-500 to-orange-600'
-                    : 'bg-gradient-to-br from-blue-500 to-purple-600'
+                : account.isFallback || account.accountIndex === -1
+                  ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                  : isOverLimit
+                    ? 'bg-gradient-to-br from-red-500 to-red-600'
+                    : isNearLimit
+                      ? 'bg-gradient-to-br from-orange-500 to-orange-600'
+                      : 'bg-gradient-to-br from-blue-500 to-purple-600'
             }`}>
-              {account.accountIndex}
+              {account.isFallback || account.accountIndex === -1 ? 'F' : account.accountIndex}
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                 {account.cloudName}
               </h3>
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Account #{account.accountIndex}
+                {account.isFallback || account.accountIndex === -1
+                  ? '⭐ Fallback Account'
+                  : `Account #${account.accountIndex}`}
               </p>
             </div>
           </div>

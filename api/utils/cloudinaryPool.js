@@ -18,7 +18,9 @@ let initialized = false;
 
 /**
  * Load all CLOUDINARY_POOL_* env vars into memory.
- * Also supports legacy single-account vars as fallback (index 0).
+ * Legacy single-account vars (CLOUDINARY_CLOUD_NAME etc.) are always
+ * included as the "Fallback" account with index -1, provided their
+ * cloudName doesn't duplicate a pool account.
  */
 function loadAccountsFromEnv() {
   const accounts = [];
@@ -30,20 +32,27 @@ function loadAccountsFromEnv() {
     const apiSecret = process.env[`CLOUDINARY_POOL_${i}_API_SECRET`];
 
     if (cloudName && apiKey && apiSecret) {
-      accounts.push({ index: i, cloudName, apiKey, apiSecret });
+      accounts.push({ index: i, cloudName, apiKey, apiSecret, isFallback: false });
     }
   }
 
-  // Fallback: if no pool vars found, use legacy single-account vars
-  if (accounts.length === 0) {
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  // Always include legacy vars as "Fallback" (index -1) if they exist
+  const legacyCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const legacyApiKey = process.env.CLOUDINARY_API_KEY;
+  const legacyApiSecret = process.env.CLOUDINARY_API_SECRET;
 
-    if (cloudName && apiKey && apiSecret) {
-      accounts.push({ index: 0, cloudName, apiKey, apiSecret });
-      console.log('[CloudinaryPool] No pool vars found, using legacy single-account config');
+  if (legacyCloudName && legacyApiKey && legacyApiSecret) {
+    const isDuplicate = accounts.some(a => a.cloudName === legacyCloudName);
+    if (!isDuplicate) {
+      accounts.unshift({ index: -1, cloudName: legacyCloudName, apiKey: legacyApiKey, apiSecret: legacyApiSecret, isFallback: true });
+      console.log('[CloudinaryPool] ✅ Legacy fallback account included (index -1)');
+    } else {
+      console.log('[CloudinaryPool] Legacy vars found but cloudName already in pool — skipping fallback');
     }
+  }
+
+  if (accounts.length === 0) {
+    console.log('[CloudinaryPool] ⚠️ No Cloudinary accounts found in env');
   }
 
   return accounts;
@@ -55,6 +64,19 @@ function loadAccountsFromEnv() {
  */
 export async function initializePool() {
   if (initialized) return;
+
+  // Drop any stale unique index on cloudName that may cause E11000 errors
+  try {
+    const collection = CloudinaryAccount.collection;
+    const indexes = await collection.indexes();
+    const cloudNameIndex = indexes.find(idx => idx.name === 'cloudName_1' && idx.unique);
+    if (cloudNameIndex) {
+      await collection.dropIndex('cloudName_1');
+      console.log('[CloudinaryPool] 🗑️ Dropped stale unique index on cloudName');
+    }
+  } catch (err) {
+    // Index may not exist, that's fine
+  }
 
   accountPool = loadAccountsFromEnv();
 
@@ -83,6 +105,7 @@ export async function initializePool() {
           $set: {
             cloudName: acc.cloudName,
             accountIndex: acc.index,
+            isFallback: acc.isFallback || false,
           }
         },
         { upsert: true, new: true }
