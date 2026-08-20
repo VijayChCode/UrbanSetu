@@ -8,6 +8,7 @@ import {
 import {
   sendCloudinaryAccountDownEmail,
   sendCloudinaryLowCreditsEmail,
+  sendCloudinaryMonthlyDigestEmail,
 } from '../utils/emailService.js';
 
 /**
@@ -155,7 +156,33 @@ const startCloudinaryResetScheduler = () => {
       console.log(`  - Enabled accounts: ${enabledCount}`);
       console.log(`  - Lifetime uploads across all accounts: ${totalUploads}`);
 
-      // Check alerts after reset
+      // ─── Send Monthly Digest Email to all Root Admins ──────────
+      const recipients = await getRootAdminRecipients();
+      const monthName = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+      
+      console.log(`[CloudinaryPool Scheduler] 📧 Dispatching monthly digest report for ${monthName} to ${recipients.length} rootadmin(s)...`);
+      for (const recipient of recipients) {
+        try {
+          await sendCloudinaryMonthlyDigestEmail({
+            to: recipient.email,
+            recipientName: recipient.username,
+            summary: {
+              totalAccounts: status.length,
+              enabledAccounts: enabledCount,
+              disabledAccounts: status.length - enabledCount,
+              totalUploadsAllTime: totalUploads,
+            },
+            accounts: status,
+            monthName,
+            dashboardUrl: 'https://urbansetu.vercel.app/admin/cloudinary-pool'
+          });
+          console.log(`[CloudinaryPool Scheduler] ✅ Monthly digest email sent to ${recipient.email}`);
+        } catch (digestErr) {
+          console.error(`[CloudinaryPool Scheduler] ❌ Failed to send monthly digest email to ${recipient.email}:`, digestErr.message);
+        }
+      }
+
+      // Check alerts after reset (down accounts / low credits)
       await checkAndSendCloudinaryAlerts(status);
 
       console.log('[CloudinaryPool Scheduler] ✅ Monthly reset complete\n');

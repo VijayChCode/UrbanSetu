@@ -18524,3 +18524,192 @@ export const sendCloudinaryLowCreditsEmail = async ({
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Send automated Monthly Digest & Health Report email to Root Admin with status of all Cloudinary accounts
+ */
+export const sendCloudinaryMonthlyDigestEmail = async ({
+  to,
+  recipientName = 'Root Admin',
+  summary = {},
+  accounts = [],
+  monthName = new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
+  dashboardUrl = 'https://urbansetu.vercel.app/admin/cloudinary-pool'
+}) => {
+  const totalAccounts = accounts.length || summary.totalAccounts || 0;
+  const enabledCount = accounts.filter(a => a.isEnabled).length;
+  const disabledCount = accounts.filter(a => !a.isEnabled).length;
+  const totalUploadsThisMonth = summary.totalUploadsThisMonth ?? accounts.reduce((sum, a) => sum + (a.monthlyUploadCount || 0), 0);
+  const totalUploadsAllTime = summary.totalUploadsAllTime ?? accounts.reduce((sum, a) => sum + (a.uploadCount || 0), 0);
+  const totalStorage = accounts.reduce((sum, a) => sum + (a.realStorageUsed || 0), 0);
+  const totalStorageGB = (totalStorage / (1024 * 1024 * 1024)).toFixed(2);
+  const totalBandwidth = accounts.reduce((sum, a) => sum + (a.realBandwidthUsed || 0), 0);
+  const totalBandwidthGB = (totalBandwidth / (1024 * 1024 * 1024)).toFixed(2);
+
+  const subject = `📊 Monthly Infrastructure Report: Cloudinary Pool Status (${monthName}) - UrbanSetu`;
+
+  const accountsRowsHtml = accounts.map(acc => {
+    const isFallback = acc.isFallback || acc.accountIndex === -1;
+    const indexLabel = isFallback ? '⭐ Fallback' : `#${acc.accountIndex}`;
+    const limit = acc.realCreditsLimit || 25;
+    const used = typeof acc.realCreditsUsed === 'number' ? acc.realCreditsUsed : 0;
+    const remaining = Math.max(0, limit - used);
+    const usedPercent = typeof acc.realCreditsUsedPercent === 'number' ? acc.realCreditsUsedPercent : (used / limit) * 100;
+    const storageGB = acc.realStorageUsed ? (acc.realStorageUsed / (1024 * 1024 * 1024)).toFixed(2) + ' GB' : (acc.realStorageUsed === 0 ? '0 B' : '--');
+    const bandwidthGB = acc.realBandwidthUsed ? (acc.realBandwidthUsed / (1024 * 1024 * 1024)).toFixed(2) + ' GB' : (acc.realBandwidthUsed === 0 ? '0 B' : '--');
+    
+    const isNearLimit = usedPercent >= 75;
+    const isOverLimit = usedPercent >= 90;
+    const creditBadgeColor = isOverLimit ? '#dc2626' : isNearLimit ? '#f59e0b' : '#10b981';
+
+    return `
+      <tr style="border-bottom: 1px solid #334155;">
+        <td style="padding: 12px 8px; color: #f8fafc; font-weight: 600; font-size: 13px;">
+          <span style="background: ${isFallback ? '#f59e0b' : '#3b82f6'}; color: ${isFallback ? '#0f172a' : '#ffffff'}; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-right: 6px;">
+            ${indexLabel}
+          </span>
+          ${acc.cloudName}
+        </td>
+        <td style="padding: 12px 8px; font-size: 12px;">
+          <span style="display: inline-block; padding: 2px 8px; border-radius: 9999px; font-weight: 600; font-size: 11px; ${
+            acc.isEnabled ? 'background-color: rgba(16, 185, 129, 0.2); color: #34d399;' : 'background-color: rgba(239, 68, 68, 0.2); color: #f87171;'
+          }">
+            ${acc.isEnabled ? '● Active' : '● Disabled'}
+          </span>
+        </td>
+        <td style="padding: 12px 8px; font-size: 12px; color: #cbd5e1;">
+          <span style="color: ${creditBadgeColor}; font-weight: 700;">${used.toFixed(1)} / ${limit}</span>
+          <span style="color: #94a3b8; font-size: 11px;"> (${usedPercent.toFixed(1)}%)</span><br/>
+          <span style="color: #64748b; font-size: 11px;">${remaining.toFixed(1)} left</span>
+        </td>
+        <td style="padding: 12px 8px; font-size: 12px; color: #cbd5e1;">
+          <strong>${acc.monthlyUploadCount || 0}</strong>
+          <span style="color: #64748b; font-size: 11px;"> (${acc.uploadCount || 0} total)</span>
+        </td>
+        <td style="padding: 12px 8px; font-size: 12px; color: #94a3b8;">
+          S: ${storageGB}<br/>
+          B: ${bandwidthGB}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 680px; margin: 0 auto; padding: 20px; background-color: #0f172a; color: #f8fafc;">
+      <div style="background-color: #1e293b; padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); border: 1px solid #334155;">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 12px 20px; border-radius: 12px; margin-bottom: 12px;">
+            <span style="font-size: 28px;">📊</span>
+          </div>
+          <h1 style="color: #f8fafc; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Cloudinary Pool Monthly Report</h1>
+          <p style="color: #94a3b8; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">Comprehensive Infrastructure & Usage Digest • <strong>${monthName}</strong></p>
+        </div>
+
+        <!-- Greeting -->
+        <div style="background-color: #0f172a; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+          <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin: 0;">
+            Hello <strong>${recipientName || 'Root Admin'}</strong>,<br/>
+            Here is your automated monthly performance and credit usage digest for all <strong>${totalAccounts} configured Cloudinary accounts</strong> in the UrbanSetu rotation pool.
+          </p>
+        </div>
+
+        <!-- KPI Grid -->
+        <div style="margin-bottom: 28px;">
+          <table style="width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 0 -8px;">
+            <tr>
+              <td style="width: 25%; background-color: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Total Accounts</div>
+                <div style="color: #38bdf8; font-size: 20px; font-weight: 800;">${totalAccounts}</div>
+                <div style="color: #34d399; font-size: 10px; margin-top: 2px;">${enabledCount} Active • ${disabledCount} Off</div>
+              </td>
+              <td style="width: 25%; background-color: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Month Uploads</div>
+                <div style="color: #a855f7; font-size: 20px; font-weight: 800;">${totalUploadsThisMonth}</div>
+                <div style="color: #64748b; font-size: 10px; margin-top: 2px;">${totalUploadsAllTime} All-Time</div>
+              </td>
+              <td style="width: 25%; background-color: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Total Storage</div>
+                <div style="color: #3b82f6; font-size: 20px; font-weight: 800;">${totalStorageGB} GB</div>
+                <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Across pool</div>
+              </td>
+              <td style="width: 25%; background-color: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; text-align: center;">
+                <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Bandwidth (Mo)</div>
+                <div style="color: #10b981; font-size: 20px; font-weight: 800;">${totalBandwidthGB} GB</div>
+                <div style="color: #64748b; font-size: 10px; margin-top: 2px;">Delivered CDN</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Accounts Table -->
+        <div style="margin-bottom: 28px;">
+          <h2 style="color: #f8fafc; font-size: 16px; margin: 0 0 12px 0; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <span>☁️</span> Individual Account Breakdown
+          </h2>
+          <div style="overflow-x: auto; background-color: #0f172a; border: 1px solid #334155; border-radius: 12px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr style="background-color: #1e293b; border-bottom: 1px solid #334155; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 10px 8px;">Account</th>
+                  <th style="padding: 10px 8px;">Status</th>
+                  <th style="padding: 10px 8px;">Credits Used</th>
+                  <th style="padding: 10px 8px;">Uploads</th>
+                  <th style="padding: 10px 8px;">Storage/Bandwidth</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${accountsRowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Notes / Info Box -->
+        <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 28px;">
+          <p style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0;">
+            💡 <strong>System Note:</strong> Monthly counters for upload counts and bytes have been archived to history and reset for the fresh billing cycle. All auto-disabled accounts have been re-enabled for the new month.
+          </p>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 28px 0 20px 0;">
+          <a href="${dashboardUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: #ffffff; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+            👉 Open Cloudinary Pool Dashboard
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; word-break: break-all; margin: 16px 0 0 0; text-align: center;">
+          Or navigate directly to: <a href="${dashboardUrl}" style="color: #38bdf8; text-decoration: underline;">${dashboardUrl}</a>
+        </p>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #334155; margin-top: 24px;">
+          <p style="color: #64748b; margin: 0; font-size: 12px;">
+            Monthly Digest Generated: ${new Date().toUTCString()} • UrbanSetu Engine
+          </p>
+          <p style="color: #475569; margin: 6px 0 0 0; font-size: 11px;">
+            © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: to,
+    subject: subject,
+    html: html
+  };
+
+  try {
+    return await sendEmailWithRetry(mailOptions);
+  } catch (error) {
+    console.error('Error sending Cloudinary monthly digest email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
