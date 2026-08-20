@@ -17,6 +17,7 @@ import {
 } from './engagementService.js';
 import { cleanupAllStaleSessions } from '../utils/sessionManager.js';
 import { publishScheduledBlogs } from '../controllers/blog.controller.js';
+import { publishScheduledUpdates } from '../routes/platformUpdate.route.js';
 import { initializeCreatorFeedbackScheduler } from '../schedulers/creatorFeedbackScheduler.js';
 
 // Schedule appointment reminders to run every day at 9:00 AM
@@ -266,6 +267,28 @@ const scheduleBlogPublication = () => {
   console.log('📋 Schedule: Every 15 minutes');
 };
 
+// Schedule platform update publication to run every 15 minutes
+const scheduleUpdatePublication = () => {
+  console.log('🚀 Setting up platform update publication scheduler...');
+
+  // Run every 15 minutes
+  cron.schedule('*/15 * * * *', async () => {
+    console.log('⏰ Running scheduled platform update publication check...');
+    try {
+      await publishScheduledUpdates();
+      console.log('✅ Scheduled platform update publication check completed');
+    } catch (error) {
+      console.error('❌ Error in scheduled platform update publication check:', error);
+    }
+  }, {
+    scheduled: true,
+    timezone: "Asia/Kolkata"
+  });
+
+  console.log('✅ Platform update publication scheduler set up successfully');
+  console.log('📋 Schedule: Every 15 minutes');
+};
+
 // Schedule user-defined task reminders to run every minute
 const scheduleUserTaskReminders = (app) => {
   console.log('📅 Setting up user task reminder scheduler (every minute)...');
@@ -376,6 +399,7 @@ export const startScheduler = (app) => {
   scheduleEngagementJobs();
   scheduleSessionCleanup();
   scheduleBlogPublication();
+  scheduleUpdatePublication();
   initializeCreatorFeedbackScheduler();
   scheduleUserTaskReminders(app);
   console.log('✅ Scheduler service started successfully');

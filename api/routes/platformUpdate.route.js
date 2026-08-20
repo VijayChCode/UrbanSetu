@@ -2,53 +2,12 @@ import express from 'express';
 import PlatformUpdate from '../models/platformUpdate.model.js';
 import User from '../models/user.model.js';
 import { sendUpdateAnnouncementEmail } from '../utils/emailService.js';
-import { verifyToken } from '../utils/verify.js'; // Assuming you have verifyToken middleware
+import { verifyToken } from '../utils/verify.js';
 
 const router = express.Router();
 
-// Get all public updates
-router.get('/public', async (req, res, next) => {
-    try {
-        const { limit = 10, page = 1, category, search } = req.query;
-        const query = { isActive: true };
-
-        if (category) {
-            query.category = category;
-        }
-
-        if (search) {
-            const searchRegex = new RegExp(search, 'i');
-            query.$or = [
-                { title: searchRegex },
-                { version: searchRegex },
-                { description: searchRegex },
-                { tags: { $in: [searchRegex] } }
-            ];
-        }
-
-        const updates = await PlatformUpdate.find(query)
-            .sort({ releaseDate: -1 }) // Newest first
-            .limit(limit * 1)
-            .skip((page - 1) * limit);
-
-        const total = await PlatformUpdate.countDocuments(query);
-
-        res.status(200).json({
-            success: true,
-            data: updates,
-            pagination: {
-                current: parseInt(page),
-                total: Math.ceil(total / limit),
-                count: total
-            }
-        });
-    } catch (error) {
-        next(error);
-    }
-});
-
-// Helper function for broadcasting updates
-const broadcastUpdate = (update) => {
+// Helper function for broadcasting updates to all active users
+export const broadcastUpdate = (update) => {
     (async () => {
         try {
             console.log(`Starting update broadcast for: ${update.title}`);
@@ -92,6 +51,87 @@ const broadcastUpdate = (update) => {
     })();
 };
 
+// Helper function to auto-publish scheduled platform updates
+export const publishScheduledUpdates = async () => {
+    try {
+        const now = new Date();
+        // Find updates that are due for publication
+        const scheduledUpdates = await PlatformUpdate.find({
+            isActive: false,
+            scheduledAt: { $lte: now, $ne: null }
+        });
+
+        if (scheduledUpdates.length > 0) {
+            console.log(`Auto-publishing ${scheduledUpdates.length} scheduled platform updates...`);
+            for (const update of scheduledUpdates) {
+                // Atomic check to prevent race conditions
+                const freshUpdate = await PlatformUpdate.findOneAndUpdate(
+                    { _id: update._id, isActive: false },
+                    {
+                        $set: {
+                            isActive: true,
+                            publishedAt: update.scheduledAt || now,
+                            scheduledAt: null
+                        }
+                    },
+                    { new: true }
+                );
+
+                if (freshUpdate) {
+                    console.log(`- Published platform update: "${freshUpdate.title}" (ID: ${freshUpdate._id})`);
+                    broadcastUpdate(freshUpdate);
+                }
+            }
+            console.log('Auto-publishing platform updates task completed.');
+        }
+    } catch (error) {
+        console.error('Error in publishScheduledUpdates:', error);
+    }
+};
+
+// Get all public updates
+router.get('/public', async (req, res, next) => {
+    try {
+        // Auto-publish any due scheduled updates
+        await publishScheduledUpdates();
+
+        const { limit = 10, page = 1, category, search } = req.query;
+        const query = { isActive: true };
+
+        if (category) {
+            query.category = category;
+        }
+
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            query.$or = [
+                { title: searchRegex },
+                { version: searchRegex },
+                { description: searchRegex },
+                { tags: { $in: [searchRegex] } }
+            ];
+        }
+
+        const updates = await PlatformUpdate.find(query)
+            .sort({ releaseDate: -1, publishedAt: -1, createdAt: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+
+        const total = await PlatformUpdate.countDocuments(query);
+
+        res.status(200).json({
+            success: true,
+            data: updates,
+            pagination: {
+                current: parseInt(page),
+                total: Math.ceil(total / limit),
+                count: total
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
 
 // Create a new update (Admin only)
 router.post('/', verifyToken, async (req, res, next) => {
@@ -100,14 +140,43 @@ router.post('/', verifyToken, async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Access denied' });
         }
 
+        const {
+            title,
+            version,
+            description,
+            category,
+            tags,
+            imageUrls,
+            videoUrls,
+            actionUrl,
+            isActive,
+            scheduledAt,
+            releaseDate
+        } = req.body;
+
+        const isAct = isActive === true;
+        const schedAt = (!isAct && scheduledAt) ? new Date(scheduledAt) : null;
+        const pubAt = isAct ? new Date() : null;
+
         const newUpdate = new PlatformUpdate({
-            ...req.body,
+            title,
+            version,
+            description,
+            category: category || 'new_feature',
+            tags: tags || [],
+            imageUrls: imageUrls || [],
+            videoUrls: videoUrls || [],
+            actionUrl: actionUrl || '',
+            isActive: isAct,
+            scheduledAt: schedAt,
+            publishedAt: pubAt,
+            releaseDate: releaseDate ? new Date(releaseDate) : (schedAt || new Date()),
             author: req.user.id
         });
 
         const savedUpdate = await newUpdate.save();
 
-        // Send email broadcast if active
+        // Send email broadcast immediately if active
         if (savedUpdate.isActive) {
             broadcastUpdate(savedUpdate);
         }
@@ -125,8 +194,11 @@ router.get('/', verifyToken, async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Access denied' });
         }
 
+        // Auto-publish any due scheduled updates
+        await publishScheduledUpdates();
+
         const updates = await PlatformUpdate.find()
-            .sort({ releaseDate: -1 })
+            .sort({ releaseDate: -1, createdAt: -1 })
             .populate('author', 'username email role');
 
         res.status(200).json({ success: true, data: updates });
@@ -148,10 +220,28 @@ router.put('/:id', verifyToken, async (req, res, next) => {
         }
 
         const wasActive = existingUpdate.isActive;
+        const updateData = { ...req.body };
+
+        if (updateData.isActive !== undefined) {
+            if (updateData.isActive) {
+                if (!existingUpdate.publishedAt && !updateData.publishedAt) {
+                    updateData.publishedAt = new Date();
+                }
+                updateData.scheduledAt = null; // Clear scheduling if manually activated
+            }
+        }
+
+        if (updateData.scheduledAt !== undefined) {
+            updateData.scheduledAt = updateData.scheduledAt ? new Date(updateData.scheduledAt) : null;
+            if (updateData.scheduledAt && updateData.isActive) {
+                updateData.isActive = false; // Unpublish / set inactive if scheduled for future
+                updateData.publishedAt = null;
+            }
+        }
 
         const updatedUpdate = await PlatformUpdate.findByIdAndUpdate(
             req.params.id,
-            { ...req.body },
+            updateData,
             { new: true }
         );
 

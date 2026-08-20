@@ -5,7 +5,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import {
     Plus, Edit, Trash2, Search, Filter,
     Calendar, Tag, Image as ImageIcon, CheckCircle, XCircle, Video, Loader, Upload, Play,
-    ArrowLeft, ArrowRight
+    ArrowLeft, ArrowRight, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImagePreview from "../components/ImagePreview";
@@ -48,7 +48,8 @@ export default function AdminUpdates() {
         actionUrl: '',
         imageUrls: [],
         videoUrls: [],
-        isActive: true
+        isActive: true,
+        scheduledAt: null
     });
     const [submitting, setSubmitting] = useState(false);
     const [imageErrors, setImageErrors] = useState({});
@@ -111,7 +112,8 @@ export default function AdminUpdates() {
             actionUrl: '',
             imageUrls: [],
             videoUrls: [],
-            isActive: true
+            isActive: true,
+            scheduledAt: null
         });
         setEditingUpdate(null);
     };
@@ -128,11 +130,12 @@ export default function AdminUpdates() {
             version: update.version,
             description: update.description,
             category: update.category,
-            tags: update.tags.join(', '),
+            tags: (update.tags || []).join(', '),
             actionUrl: update.actionUrl || '',
             imageUrls: (update.imageUrls && update.imageUrls.length > 0) ? update.imageUrls : (update.imageUrl ? [update.imageUrl] : []),
             videoUrls: (update.videoUrls && update.videoUrls.length > 0) ? update.videoUrls : (update.videoUrl ? [update.videoUrl] : []),
-            isActive: update.isActive
+            isActive: update.isActive,
+            scheduledAt: update.scheduledAt || null
         });
         setShowModal(true);
     };
@@ -310,7 +313,8 @@ export default function AdminUpdates() {
         try {
             const payload = {
                 ...formData,
-                tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
+                tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+                scheduledAt: (!formData.isActive && formData.scheduledAt) ? formData.scheduledAt : null
             };
 
             let url = `${API_BASE_URL}/api/updates`;
@@ -477,6 +481,10 @@ export default function AdminUpdates() {
                                             {update.isActive ? (
                                                 <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full w-fit">
                                                     <CheckCircle size={12} /> Active
+                                                </span>
+                                            ) : update.scheduledAt && new Date(update.scheduledAt) > new Date() ? (
+                                                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-medium bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full w-fit" title={`Scheduled for ${new Date(update.scheduledAt).toLocaleString()}`}>
+                                                    <Clock size={12} /> Scheduled: {new Date(update.scheduledAt).toLocaleDateString()}
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full w-fit">
@@ -774,17 +782,52 @@ export default function AdminUpdates() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 pt-2">
-                                <input
-                                    type="checkbox"
-                                    id="isActive"
-                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 disabled:opacity-50"
-                                    checked={formData.isActive}
-                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                />
-                                <label htmlFor="isActive" className="text-gray-700 dark:text-gray-300 font-medium cursor-pointer">
-                                    Immediately publish this update
+                            {/* Status & Scheduling Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-gradient-to-r from-blue-50/60 to-indigo-50/60 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-100 dark:border-blue-800 shadow-sm transition-all duration-300">
+                                {/* Manual Publish */}
+                                <label className="flex items-center group cursor-pointer select-none">
+                                    <div className="relative">
+                                        <input
+                                            type="checkbox"
+                                            id="isActive"
+                                            checked={formData.isActive}
+                                            onChange={(e) => {
+                                                const isChecked = e.target.checked;
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    isActive: isChecked,
+                                                    scheduledAt: isChecked ? null : prev.scheduledAt
+                                                }));
+                                            }}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-12 h-7 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:bg-blue-600 transition-all duration-300"></div>
+                                        <div className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-all duration-300 peer-checked:translate-x-5 shadow-sm"></div>
+                                    </div>
+                                    <div className="ml-3">
+                                        <span className="block text-sm font-bold text-gray-800 dark:text-white">🚀 Publish Now</span>
+                                        <span className="block text-xs text-gray-500 dark:text-gray-400 font-medium">Broadcasts to all users immediately</span>
+                                    </div>
                                 </label>
+
+                                {/* Scheduling */}
+                                <div className={`transition-all duration-300 ${formData.isActive ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wider">📅 Or Schedule Publication</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={formData.scheduledAt ? new Date(new Date(formData.scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
+                                        onChange={(e) => {
+                                            const localValue = e.target.value;
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                scheduledAt: localValue ? new Date(localValue).toISOString() : null
+                                            }));
+                                        }}
+                                        min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                                        disabled={formData.isActive}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all text-xs font-medium"
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
@@ -798,10 +841,20 @@ export default function AdminUpdates() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-lg shadow-blue-200"
+                                    className={`flex-1 py-3 ${
+                                        formData.isActive
+                                            ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-none'
+                                            : formData.scheduledAt
+                                                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200 dark:shadow-none'
+                                                : 'bg-gray-600 hover:bg-gray-700 shadow-gray-200 dark:shadow-none'
+                                    } text-white rounded-xl font-medium transition-colors shadow-lg`}
                                     disabled={submitting}
                                 >
-                                    {submitting ? 'Saving...' : (editingUpdate ? 'Update Changes' : (formData.isActive ? 'Publish Update' : 'Draft Update'))}
+                                    {submitting
+                                        ? 'Saving...'
+                                        : editingUpdate
+                                            ? (formData.isActive ? 'Update & Publish' : (formData.scheduledAt ? 'Update Schedule' : 'Save Draft'))
+                                            : (formData.isActive ? 'Publish Update' : (formData.scheduledAt ? 'Schedule Update' : 'Draft Update'))}
                                 </button>
                             </div>
                         </form>

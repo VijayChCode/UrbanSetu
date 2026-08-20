@@ -45,6 +45,14 @@ const platformUpdateSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    scheduledAt: {
+        type: Date,
+        default: null
+    },
+    publishedAt: {
+        type: Date,
+        default: null
+    },
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
@@ -55,6 +63,8 @@ const platformUpdateSchema = new mongoose.Schema({
 
 // Index for efficient querying by date
 platformUpdateSchema.index({ releaseDate: -1 });
+// Index for efficient scheduled update queries (used by cron job)
+platformUpdateSchema.index({ isActive: 1, scheduledAt: 1 });
 
 const PlatformUpdate = mongoose.model('PlatformUpdate', platformUpdateSchema);
 
