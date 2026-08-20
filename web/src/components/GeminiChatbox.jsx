@@ -14906,28 +14906,28 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Inference</div>
                                                     <div className="text-xl font-bold font-mono text-orange-500">Groq LPU™</div>
                                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                        Ultra-low latency for instant chat responses.
+                                                        Ultra-low latency LPUs for near-instant AI responses.
                                                     </p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Intelligence</div>
-                                                    <div className="text-xl font-bold font-mono text-blue-500">Sentinel v2.0</div>
+                                                    <div className="text-xl font-bold font-mono text-blue-500">GPT-OSS & Sentinel</div>
                                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                        Neural engine & ESG scoring models.
+                                                        OpenAI GPT-OSS 120B & Sentinel v2.0 neural engine.
                                                     </p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Real-time</div>
                                                     <div className="text-xl font-bold font-mono text-green-500">TensorFlow.js</div>
                                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                        On-device recommendations & image auditing.
+                                                        On-device property recommendations & image auditor.
                                                     </p>
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Processing</div>
-                                                    <div className="text-xl font-bold font-mono text-purple-500">Gemini OCR & Media</div>
+                                                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Multimodal</div>
+                                                    <div className="text-xl font-bold font-mono text-purple-500">Qwen 3.6 & OCR</div>
                                                     <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                        Advanced image OCR, document extraction, and video analysis.
+                                                        Vision analysis, document extraction, and OCR.
                                                     </p>
                                                 </div>
                                             </div>
@@ -15033,7 +15033,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             SetuAI can make mistakes. Check important info.
                                         </p>
                                         <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                            SetuAI v2.5.0 • Build 2024.12 • Powered by Sentinel UrbanSetu Tech Labs
+                                            SetuAI v2.6.0 • Build 2026.08 • Powered by Sentinel UrbanSetu Tech Labs
                                         </p>
                                     </div>
                                 </div>
