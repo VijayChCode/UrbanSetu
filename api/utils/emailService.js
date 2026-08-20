@@ -18234,3 +18234,293 @@ export const sendCallLinkEmail = async ({
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Send automated alert email to Root Admin when a Cloudinary account is down / failed API health check
+ */
+export const sendCloudinaryAccountDownEmail = async ({
+  to,
+  recipientName = 'Root Admin',
+  downAccounts = [],
+  dashboardUrl = 'https://urbansetu.vercel.app/admin/cloudinary-pool'
+}) => {
+  if (!downAccounts || downAccounts.length === 0) return { success: false, reason: 'No down accounts' };
+  
+  const count = downAccounts.length;
+  const isMultiple = count > 1;
+  const subject = `🚨 [URGENT] Cloudinary Account ${isMultiple ? `(${count} Clouds)` : downAccounts[0].cloudName} Down / Unreachable - UrbanSetu`;
+  
+  const accountsHtml = downAccounts.map(acc => {
+    const isFallback = acc.isFallback || acc.accountIndex === -1;
+    const indexLabel = isFallback ? '⭐ Fallback Account' : `Account #${acc.accountIndex}`;
+    const errorMsg = acc.lastFailureMessage || acc.realUsageFetchError || acc.notes || 'Cloudinary API returned error or was unreachable during health check';
+    const failureCount = acc.failureCount || 0;
+    
+    return `
+      <div style="background-color: #1e293b; border: 1px solid #dc2626; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+          <div>
+            <span style="background: #dc2626; color: #ffffff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+              ${indexLabel}
+            </span>
+            <span style="color: #f8fafc; font-weight: 700; font-size: 16px; margin-left: 8px;">
+              ${acc.cloudName}
+            </span>
+          </div>
+          <span style="color: #f87171; font-size: 12px; font-weight: 600;">
+            Status: ${acc.isEnabled ? '⚠️ Error Detected' : '🛑 Disabled'}
+          </span>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #cbd5e1;">
+          <tr>
+            <td style="padding: 4px 0; color: #94a3b8; width: 140px;"><strong>Error Details:</strong></td>
+            <td style="padding: 4px 0; color: #fca5a5; font-family: monospace; word-break: break-word;">${errorMsg}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #94a3b8;"><strong>Consecutive Failures:</strong></td>
+            <td style="padding: 4px 0; color: #f8fafc;">${failureCount} failure(s)</td>
+          </tr>
+          ${acc.lastFailureAt ? `
+          <tr>
+            <td style="padding: 4px 0; color: #94a3b8;"><strong>Last Failed At:</strong></td>
+            <td style="padding: 4px 0; color: #f8fafc;">${new Date(acc.lastFailureAt).toLocaleString()}</td>
+          </tr>` : ''}
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 20px; background-color: #0f172a; color: #f8fafc;">
+      <div style="background-color: #1e293b; padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); border: 1px solid #334155;">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 12px 20px; border-radius: 12px; margin-bottom: 12px;">
+            <span style="font-size: 28px;">🚨</span>
+          </div>
+          <h1 style="color: #f8fafc; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Cloudinary Outage / Failure Alert</h1>
+          <p style="color: #94a3b8; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">Automated Multi-Account Infrastructure Monitoring</p>
+        </div>
+
+        <!-- Alert Banner -->
+        <div style="background-color: rgba(220, 38, 38, 0.15); border-left: 4px solid #dc2626; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+          <p style="color: #fca5a5; font-size: 14px; line-height: 1.6; margin: 0;">
+            Hello <strong>${recipientName || 'Root Admin'}</strong>,<br/>
+            The automated scheduler detected that <strong>${count} Cloudinary account${isMultiple ? 's are' : ' is'} currently down, unreachable, or throwing API errors</strong> during health check.
+          </p>
+        </div>
+
+        <!-- Accounts List -->
+        <div style="margin-bottom: 24px;">
+          <h2 style="color: #f8fafc; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+            Affected Cloudinary Account(s)
+          </h2>
+          ${accountsHtml}
+        </div>
+
+        <!-- Instructions Box -->
+        <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+          <h3 style="color: #38bdf8; font-size: 14px; margin: 0 0 10px 0; font-weight: 700;">
+            🛠️ Recommended Troubleshooting Steps:
+          </h3>
+          <ol style="color: #cbd5e1; font-size: 13px; line-height: 1.7; margin: 0; padding-left: 20px;">
+            <li>Verify Cloudinary API credentials in your Render environment variables or <code>.env</code> file.</li>
+            <li>Visit the Cloudinary Pool Dashboard to test and inspect account connectivity.</li>
+            <li>If credentials were changed, re-test connection or temporarily disable the account from rotation.</li>
+          </ol>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 30px 0 20px 0;">
+          <a href="${dashboardUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; padding: 15px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+            👉 Open Cloudinary Pool Dashboard
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; word-break: break-all; margin: 16px 0 0 0; text-align: center;">
+          Or navigate directly to: <a href="${dashboardUrl}" style="color: #38bdf8; text-decoration: underline;">${dashboardUrl}</a>
+        </p>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #334155; margin-top: 24px;">
+          <p style="color: #64748b; margin: 0; font-size: 12px;">
+            Timestamp: ${new Date().toUTCString()} • Automated alert from UrbanSetu Engine
+          </p>
+          <p style="color: #475569; margin: 6px 0 0 0; font-size: 11px;">
+            © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: to,
+    subject: subject,
+    html: html
+  };
+
+  try {
+    return await sendEmailWithRetry(mailOptions);
+  } catch (error) {
+    console.error('Error sending Cloudinary account down email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Send automated alert email to Root Admin when Cloudinary accounts have low credits (< 15 remaining)
+ */
+export const sendCloudinaryLowCreditsEmail = async ({
+  to,
+  recipientName = 'Root Admin',
+  lowCreditAccounts = [],
+  dashboardUrl = 'https://urbansetu.vercel.app/admin/cloudinary-pool'
+}) => {
+  if (!lowCreditAccounts || lowCreditAccounts.length === 0) return { success: false, reason: 'No low credit accounts' };
+
+  const count = lowCreditAccounts.length;
+  const isMultiple = count > 1;
+  const subject = `⚠️ [ACTION REQUIRED] Cloudinary Account${isMultiple ? 's' : ''} Low on Credits (< 15 Left) - UrbanSetu`;
+
+  const accountsHtml = lowCreditAccounts.map(acc => {
+    const isFallback = acc.isFallback || acc.accountIndex === -1;
+    const indexLabel = isFallback ? '⭐ Fallback Account' : `Account #${acc.accountIndex}`;
+    const limit = acc.realCreditsLimit || 25;
+    const used = typeof acc.realCreditsUsed === 'number' ? acc.realCreditsUsed : 0;
+    const remaining = Math.max(0, limit - used);
+    const usedPercent = typeof acc.realCreditsUsedPercent === 'number' ? acc.realCreditsUsedPercent : (used / limit) * 100;
+    const isOver90 = usedPercent >= 90;
+    const progressColor = isOver90 ? '#dc2626' : '#ea580c';
+
+    return `
+      <div style="background-color: #1e293b; border: 1px solid #f59e0b; border-radius: 12px; padding: 18px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+          <div>
+            <span style="background: #f59e0b; color: #0f172a; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase;">
+              ${indexLabel}
+            </span>
+            <span style="color: #f8fafc; font-weight: 700; font-size: 16px; margin-left: 8px;">
+              ${acc.cloudName}
+            </span>
+          </div>
+          <span style="color: ${isOver90 ? '#f87171' : '#fbbf24'}; font-size: 12px; font-weight: 700;">
+            ${isOver90 ? '🛑 Auto-Disabled (90%+)' : '⚠️ Low Credits'}
+          </span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #cbd5e1; margin-bottom: 6px;">
+            <span><strong>${used.toFixed(1)} / ${limit}</strong> credits used</span>
+            <span style="color: ${progressColor}; font-weight: 700;">${usedPercent.toFixed(1)}% Used</span>
+          </div>
+          <div style="background-color: #334155; border-radius: 8px; height: 10px; overflow: hidden;">
+            <div style="background: linear-gradient(90deg, #f59e0b, ${progressColor}); height: 10px; width: ${Math.min(100, Math.max(5, usedPercent))}%; border-radius: 8px;"></div>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #cbd5e1;">
+          <tr>
+            <td style="padding: 4px 0; color: #94a3b8; width: 150px;"><strong>Remaining Credits:</strong></td>
+            <td style="padding: 4px 0; color: #fbbf24; font-weight: 700; font-size: 14px;">${remaining.toFixed(1)} credits left</td>
+          </tr>
+          ${acc.realBandwidthUsed !== undefined ? `
+          <tr>
+            <td style="padding: 4px 0; color: #94a3b8;"><strong>Monthly Bandwidth:</strong></td>
+            <td style="padding: 4px 0; color: #f8fafc;">${(acc.realBandwidthUsed / (1024*1024*1024)).toFixed(2)} GB</td>
+          </tr>` : ''}
+          ${acc.realStorageUsed !== undefined ? `
+          <tr>
+            <td style="padding: 4px 0; color: #94a3b8;"><strong>Total Storage:</strong></td>
+            <td style="padding: 4px 0; color: #f8fafc;">${(acc.realStorageUsed / (1024*1024*1024)).toFixed(2)} GB</td>
+          </tr>` : ''}
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 20px; background-color: #0f172a; color: #f8fafc;">
+      <div style="background-color: #1e293b; padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); border: 1px solid #334155;">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 12px 20px; border-radius: 12px; margin-bottom: 12px;">
+            <span style="font-size: 28px;">⚠️</span>
+          </div>
+          <h1 style="color: #f8fafc; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Cloudinary Low Credits Alert</h1>
+          <p style="color: #94a3b8; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">Multi-Account Credit Depletion Warning</p>
+        </div>
+
+        <!-- Alert Banner -->
+        <div style="background-color: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+          <p style="color: #fde68a; font-size: 14px; line-height: 1.6; margin: 0;">
+            Hello <strong>${recipientName || 'Root Admin'}</strong>,<br/>
+            The automated scheduler detected that <strong>${count} Cloudinary account${isMultiple ? 's have' : ' has'} less than 15 credits remaining</strong> (or &gt; 85% credit usage).
+          </p>
+        </div>
+
+        <!-- Accounts List -->
+        <div style="margin-bottom: 24px;">
+          <h2 style="color: #f8fafc; font-size: 16px; margin: 0 0 12px 0; font-weight: 700;">
+            Accounts Requiring Attention
+          </h2>
+          ${accountsHtml}
+        </div>
+
+        <!-- Instructions Box -->
+        <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+          <h3 style="color: #38bdf8; font-size: 14px; margin: 0 0 10px 0; font-weight: 700;">
+            💡 Recommended Instructions:
+          </h3>
+          <ul style="color: #cbd5e1; font-size: 13px; line-height: 1.7; margin: 0; padding-left: 20px;">
+            <li><strong>Add more accounts to the pool:</strong> Add <code>CLOUDINARY_POOL_N_CLOUD_NAME</code>, <code>API_KEY</code>, and <code>API_SECRET</code> in Render environment variables.</li>
+            <li><strong>Automatic Safety:</strong> The system automatically rotates uploads to other available accounts with lower usage, and auto-disables accounts reaching 90%+ to prevent overages.</li>
+            <li><strong>Monthly Reset:</strong> All monthly credits reset on the 1st of each month.</li>
+          </ul>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 30px 0 20px 0;">
+          <a href="${dashboardUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: #ffffff; padding: 15px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(234, 88, 12, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+            👉 Open Cloudinary Pool Dashboard
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; word-break: break-all; margin: 16px 0 0 0; text-align: center;">
+          Or navigate directly to: <a href="${dashboardUrl}" style="color: #38bdf8; text-decoration: underline;">${dashboardUrl}</a>
+        </p>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #334155; margin-top: 24px;">
+          <p style="color: #64748b; margin: 0; font-size: 12px;">
+            Timestamp: ${new Date().toUTCString()} • Automated alert from UrbanSetu Engine
+          </p>
+          <p style="color: #475569; margin: 6px 0 0 0; font-size: 11px;">
+            © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: to,
+    subject: subject,
+    html: html
+  };
+
+  try {
+    return await sendEmailWithRetry(mailOptions);
+  } catch (error) {
+    console.error('Error sending Cloudinary low credits email:', error);
+    return { success: false, error: error.message };
+  }
+};

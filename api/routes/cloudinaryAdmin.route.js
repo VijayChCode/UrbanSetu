@@ -7,6 +7,7 @@ import {
   fetchAllRealUsage,
   fetchRealUsageForAccount,
 } from '../utils/cloudinaryPool.js';
+import { checkAndSendCloudinaryAlerts } from '../schedulers/cloudinaryResetScheduler.js';
 
 const router = express.Router();
 
@@ -123,6 +124,9 @@ router.post('/fetch-real-usage', verifyToken, requireAdmin, async (req, res) => 
   try {
     const results = await fetchAllRealUsage();
     const successful = results.filter(r => r !== null);
+
+    // Also check and send alerts if any account is down or low on credits
+    getPoolStatus().then(status => checkAndSendCloudinaryAlerts(status)).catch(e => console.error('Alert check error:', e));
 
     res.json({
       success: true,
