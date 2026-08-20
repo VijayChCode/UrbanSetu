@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
+import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -438,11 +439,15 @@ export default function CloudinaryPoolDashboard() {
                 disabled={fetchingRealUsage}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 ${
                   fetchingRealUsage
-                    ? 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed text-gray-500'
+                    ? 'bg-blue-600/80 cursor-not-allowed text-white'
                     : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
                 }`}
               >
-                <FaSync className={`w-3.5 h-3.5 ${fetchingRealUsage ? 'animate-spin' : ''}`} />
+                {fetchingRealUsage ? (
+                  <UrbanSetuSpinner size="xs" isBright={true} />
+                ) : (
+                  <FaSync className="w-3.5 h-3.5" />
+                )}
                 {fetchingRealUsage ? 'Fetching...' : 'Check All Accounts'}
               </button>
 
@@ -551,14 +556,15 @@ export default function CloudinaryPoolDashboard() {
 
         {/* ─── Fetching Real Usage Overlay ─────────────────────── */}
         {fetchingRealUsage && (
-          <div className="mb-6 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 border-4 border-blue-200 dark:border-blue-800 rounded-full" />
-              <div className="absolute top-0 left-0 w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            </div>
+          <div className="mb-6 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-center gap-4 backdrop-blur-sm shadow-md transition-all">
+            <UrbanSetuSpinner size="md" isBright={true} />
             <div>
-              <p className="font-semibold text-blue-800 dark:text-blue-200">Fetching real usage from Cloudinary API...</p>
-              <p className="text-sm text-blue-600 dark:text-blue-400">Checking credit usage, bandwidth, and storage for all accounts. This may take a moment.</p>
+              <p className="font-semibold text-blue-900 dark:text-blue-200 text-sm sm:text-base">
+                Fetching real usage from Cloudinary API...
+              </p>
+              <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-400">
+                Checking credit usage, bandwidth, and storage for all accounts. This may take a moment.
+              </p>
             </div>
           </div>
         )}
@@ -966,11 +972,15 @@ function AccountCard({ account, onToggle, onFetchUsage, isToggling, isFetchingUs
             disabled={isFetchingUsage}
             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
               isFetchingUsage
-                ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 cursor-not-allowed border border-blue-200 dark:border-blue-800'
                 : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50'
             }`}
           >
-            <FaSync className={`w-3 h-3 ${isFetchingUsage ? 'animate-spin' : ''}`} />
+            {isFetchingUsage ? (
+              <UrbanSetuSpinner size="xs" isBright={true} />
+            ) : (
+              <FaSync className="w-3 h-3" />
+            )}
             {isFetchingUsage ? 'Checking...' : 'Check Status'}
           </button>
 
