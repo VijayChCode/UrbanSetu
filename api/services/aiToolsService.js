@@ -1,6 +1,7 @@
 import Listing from "../models/listing.model.js";
 import Blog from "../models/blog.model.js";
 import Reminder from "../models/reminder.model.js";
+import ReportMessage from "../models/reportMessage.model.js";
 
 /**
  * AI Tool: Search Properties
@@ -652,6 +653,105 @@ export const cancelReminderTool = async ({
 };
 
 /**
+ * Valid report categories and their sub-categories (matches frontend REPORT_OPTIONS)
+ */
+const REPORT_CATEGORIES = {
+    "Violence & self-harm": ["Threats or incitement to violence", "Gender-based violence", "Sexual violence", "Weapons", "Suicide & self-harm", "Eating disorders", "Human trafficking", "Terrorism"],
+    "Sexual exploitation & abuse": ["Sexual content involving children", "Non-consensual sexual content", "Sexual solicitation", "Sextortion", "Promotion of sexual violence"],
+    "Child exploitation": ["Child sexual abuse material", "Grooming", "Harmful content for minors", "Cyberbullying of minors"],
+    "Bullying & harassment": ["Personal attacks", "Encouraging harassment", "Defamation", "Hate speech", "Threats"],
+    "Spam, fraud & deception": ["Scams", "Phishing", "Fake engagement", "False information", "Impersonation"],
+    "Privacy violation": ["Sharing private information (Doxxing)", "Non-consensual intimate images", "Identity theft"],
+    "Intellectual property": ["Copyright infringement", "Trademark violation", "Counterfeit goods"],
+    "Age-inappropriate content": ["Adult content", "Graphic violence", "Drugs and controlled substances"],
+    "Something else": ["Other illegal acts", "Policy violations", "Technical issue"]
+};
+
+/**
+ * AI Tool: Report Message
+ * Purpose: Allows the AI to automatically report a message on behalf of the user.
+ */
+export const reportMessageTool = async ({
+    category,
+    subCategory,
+    description = '',
+    messageContent,
+    prompt = '',
+    userId
+}) => {
+    try {
+        if (!userId) {
+            return JSON.stringify({
+                success: false,
+                message: "User is not logged in. Reports cannot be submitted for guests. Please sign in first."
+            });
+        }
+
+        if (!messageContent) {
+            return JSON.stringify({
+                success: false,
+                message: "No message content provided to report."
+            });
+        }
+
+        if (!category || !REPORT_CATEGORIES[category]) {
+            return JSON.stringify({
+                success: false,
+                message: `Invalid category. Valid categories: ${Object.keys(REPORT_CATEGORIES).join(', ')}`
+            });
+        }
+
+        if (!subCategory || !REPORT_CATEGORIES[category].includes(subCategory)) {
+            return JSON.stringify({
+                success: false,
+                message: `Invalid sub-category for "${category}". Valid options: ${REPORT_CATEGORIES[category].join(', ')}`
+            });
+        }
+
+        // Rate limit: max 5 AI-reports per 24 hours per user
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const dailyCount = await ReportMessage.countDocuments({
+            reportedBy: userId,
+            createdAt: { $gte: oneDayAgo }
+        });
+
+        if (dailyCount >= 5) {
+            return JSON.stringify({
+                success: false,
+                message: "Daily report limit reached (5 reports/day). You can also report manually using the flag icon on any message."
+            });
+        }
+
+        const messageId = `ai_report_${Date.now()}`;
+
+        const newReport = new ReportMessage({
+            messageId,
+            messageContent: messageContent.substring(0, 2000),
+            prompt: prompt.substring(0, 1000),
+            reportedBy: userId,
+            category,
+            subCategory,
+            description: description ? `[AI-Assisted Report] ${description}` : '[AI-Assisted Report]',
+            priority: 'high'
+        });
+
+        await newReport.save();
+
+        return JSON.stringify({
+            success: true,
+            message: `Report submitted successfully under "${category} > ${subCategory}". Our admin team will review it shortly.`,
+            reportId: newReport._id.toString(),
+            category,
+            subCategory
+        });
+
+    } catch (error) {
+        console.error("Tool Error (reportMessageTool):", error);
+        return JSON.stringify({ success: false, error: "Failed to submit report. Please try again or use the manual report button." });
+    }
+};
+
+/**
  * Registry of all available tools
  */
 export const toolRegistry = {
@@ -663,7 +763,8 @@ export const toolRegistry = {
     schedule_reminder: scheduleReminder,
     get_user_reminders: getUserRemindersTool,
     reschedule_reminder: rescheduleReminderTool,
-    cancel_reminder: cancelReminderTool
+    cancel_reminder: cancelReminderTool,
+    report_message: reportMessageTool
 };
 
 /**
@@ -862,6 +963,40 @@ export const toolDefinitions = [
                     }
                 },
                 required: ["reminderId"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "report_message",
+            description: "Report an AI response for policy violations. Use when the user asks to report/flag/complain about a previous AI response. Auto-detect category and subCategory from user's description. Use the most recent AI response if unspecified.",
+            parameters: {
+                type: "object",
+                properties: {
+                    category: {
+                        type: "string",
+                        enum: ["Violence & self-harm", "Sexual exploitation & abuse", "Child exploitation", "Bullying & harassment", "Spam, fraud & deception", "Privacy violation", "Intellectual property", "Age-inappropriate content", "Something else"],
+                        description: "Main violation category."
+                    },
+                    subCategory: {
+                        type: "string",
+                        description: "Specific sub-category within the category."
+                    },
+                    description: {
+                        type: "string",
+                        description: "User's reason for reporting."
+                    },
+                    messageContent: {
+                        type: "string",
+                        description: "The AI response content being reported (from conversation history)."
+                    },
+                    prompt: {
+                        type: "string",
+                        description: "The user prompt that generated the reported response."
+                    }
+                },
+                required: ["category", "subCategory", "messageContent"]
             }
         }
     }

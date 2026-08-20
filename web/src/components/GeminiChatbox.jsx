@@ -278,7 +278,7 @@ const THINKING_TAGS = [
     "Ensuring accuracy..."
 ];
 
-const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, schedulerType = 'create', isDeepThinking = false, isWebSearch = false, mediaType = null }) => {
+const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isScheduler = false, schedulerType = 'create', isReport = false, isDeepThinking = false, isWebSearch = false, mediaType = null }) => {
     const [index, setIndex] = useState(0);
 
     const schedulerTags = schedulerType === 'reschedule' ? [
@@ -374,8 +374,18 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
         "Formulating response..."
     ];
 
+    const reportTags = [
+        "Analyzing report request...",
+        "Identifying reported content...",
+        "Classifying violation category...",
+        "Submitting report to admin...",
+        "Finalizing report submission..."
+    ];
+
     let tagsToUse = THINKING_TAGS;
-    if (isScheduler) {
+    if (isReport) {
+        tagsToUse = reportTags;
+    } else if (isScheduler) {
         tagsToUse = schedulerTags;
     } else if (isDeepThinking) {
         tagsToUse = deepThinkingTags;
@@ -395,7 +405,7 @@ const ScrollingThinkingTags = ({ isHeader = false, isDarkMode = false, isSchedul
 
     useEffect(() => {
         setIndex(0);
-    }, [isScheduler, schedulerType, isDeepThinking, isWebSearch, mediaType]);
+    }, [isScheduler, schedulerType, isReport, isDeepThinking, isWebSearch, mediaType]);
 
     useEffect(() => {
         let timer;
@@ -700,6 +710,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isCurrentRequestScheduler, setIsCurrentRequestScheduler] = useState(false);
     const [currentSchedulerType, setCurrentSchedulerType] = useState('create'); // 'create', 'reschedule', 'cancel'
+    const [isCurrentRequestReport, setIsCurrentRequestReport] = useState(false);
     const [activeRetryMenu, setActiveRetryMenu] = useState(null);
     const [retryInstruction, setRetryInstruction] = useState('');
     const [isCurrentRequestDeepThinking, setIsCurrentRequestDeepThinking] = useState(false);
@@ -4602,6 +4613,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 setCurrentSchedulerType('create');
             }
         }
+        const isReportRequest = /\b(report|flag|complain|complaint)\b.*\b(message|response|reply|answer|that|this|previous|last|above)\b/i.test(userMessage) || /\b(report|flag)\b.*\b(it|spam|inappropriate|offensive|harmful)\b/i.test(userMessage);
+        if (isReportRequest) {
+            setIsCurrentRequestReport(true);
+        }
         const currentTone = currentUser ? tone : 'neutral'; // Use default tone for public users
         if (currentTone && currentTone !== 'neutral') {
             userMessage = `[Tone: ${currentTone}] ${userMessage}`;
@@ -4971,6 +4986,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 setCurrentSchedulerType('create');
                                             }
                                         }
+                                        if (streamData.name === 'report_message') {
+                                            setIsCurrentRequestReport(true);
+                                        }
                                     } else if (streamData.type === 'done') {
                                         isStreamingComplete = true;
                                         streamingResponse = streamData.content;
@@ -5318,6 +5336,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setCurrentRequestMediaType(null);
             setIsCurrentRequestDeepThinking(false);
             setIsCurrentRequestWebSearch(false);
+            setIsCurrentRequestReport(false);
 
             // Auto-sync session title if it's a new conversation
             if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
@@ -5450,6 +5469,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             } else {
                 setCurrentSchedulerType('create');
             }
+        }
+        const isReportRetry = /\b(report|flag|complain|complaint)\b.*\b(message|response|reply|answer|that|this|previous|last|above)\b/i.test(originalMessage) || /\b(report|flag)\b.*\b(it|spam|inappropriate|offensive|harmful)\b/i.test(originalMessage);
+        if (isReportRetry) {
+            setIsCurrentRequestReport(true);
         }
 
         // Branching implementation:
@@ -5673,6 +5696,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setCurrentSchedulerType('create');
             setIsCurrentRequestDeepThinking(false);
             setIsCurrentRequestWebSearch(false);
+            setIsCurrentRequestReport(false);
         }
     };
 
@@ -6236,6 +6260,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 setCurrentSchedulerType('create');
             }
         }
+        const isReportRequest = /\b(report|flag|complain|complaint)\b.*\b(message|response|reply|answer|that|this|previous|last|above)\b/i.test(messageContent) || /\b(report|flag)\b.*\b(it|spam|inappropriate|offensive|harmful)\b/i.test(messageContent);
+        if (isReportRequest) {
+            setIsCurrentRequestReport(true);
+        }
 
         try {
             const currentSessionId = getOrCreateSessionId();
@@ -6348,6 +6376,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsLoading(false);
             setIsCurrentRequestScheduler(false);
             setCurrentSchedulerType('create');
+            setIsCurrentRequestReport(false);
             abortControllerRef.current = null;
         }
     };
@@ -9611,7 +9640,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         {hasChatError ? (
                                             <span>Chat Error Detected</span>
                                         ) : isLoading ? (
-                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} mediaType={currentRequestMediaType} />
+                                            <ScrollingThinkingTags isHeader={true} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isReport={isCurrentRequestReport} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} mediaType={currentRequestMediaType} />
                                         ) : showTypingIndicator ? (
                                             <span>Answering...</span>
                                         ) : (
@@ -11054,7 +11083,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-300' : 'bg-gray-400'} rounded-full animate-bounce`} style={{ animationDelay: '0.2s' }}></div>
                                             </div>
                                             <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium flex items-center gap-2`}>
-                                                <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} mediaType={currentRequestMediaType} />
+                                                <ScrollingThinkingTags isDarkMode={isDarkMode} isScheduler={isCurrentRequestScheduler} schedulerType={currentSchedulerType} isReport={isCurrentRequestReport} isDeepThinking={isCurrentRequestDeepThinking} isWebSearch={isCurrentRequestWebSearch} mediaType={currentRequestMediaType} />
                                             </span>
                                         </div>
                                     </div>
