@@ -14,7 +14,9 @@ import {
     Search,
     ArrowRight,
     Filter,
-    Link as LinkIcon
+    Link as LinkIcon,
+    Sparkles,
+    Clock
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -30,6 +32,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const Updates = () => {
     usePageTitle("Platform Updates - What's New");
     const [updates, setUpdates] = useState([]);
+    const [upcoming, setUpcoming] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState('all');
@@ -64,6 +67,9 @@ const Updates = () => {
             const data = await res.json();
 
             if (data.success) {
+                if (data.upcoming) {
+                    setUpcoming(data.upcoming);
+                }
                 if (page === 1) {
                     setUpdates(data.data);
                 } else {
@@ -114,7 +120,7 @@ const Updates = () => {
                 keywords="UrbanSetu updates, real estate platform news, new feature announcements, product changelog"
             />
             {/* Header Section */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
                 <div className="text-center max-w-3xl mx-auto">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -142,6 +148,50 @@ const Updates = () => {
                     </motion.p>
                 </div>
             </div>
+
+            {/* Upcoming Release Teaser Advertisement Banner */}
+            {upcoming && upcoming.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mb-10"
+                >
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-purple-500/10 dark:from-amber-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 border border-amber-300/40 dark:border-amber-600/40 p-4 sm:p-5 shadow-lg shadow-amber-500/5 backdrop-blur-sm">
+                        {/* Ambient glow */}
+                        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl pointer-events-none"></div>
+                        
+                        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-white flex items-center justify-center shadow-md shadow-amber-500/20 animate-pulse">
+                                    <Sparkles className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm">
+                                            🚀 Upcoming Release
+                                        </span>
+                                        {upcoming[0].version && (
+                                            <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded-full border border-amber-300/40 dark:border-amber-700/40">
+                                                {upcoming[0].version}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                                        Something exciting is brewing! <span className="font-bold text-indigo-600 dark:text-indigo-400">"{upcoming[0].title}"</span> is scheduled to go live on <span className="font-bold text-amber-600 dark:text-amber-400">{new Date(upcoming[0].scheduledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>.
+                                    </p>
+                                </div>
+                            </div>
+                            {upcoming.length > 1 && (
+                                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-gray-800/80 px-3 py-1.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm whitespace-nowrap self-end sm:self-center">
+                                    +{upcoming.length - 1} more scheduled
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Search Section */}
             <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">

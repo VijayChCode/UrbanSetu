@@ -119,6 +119,16 @@ router.get('/public', async (req, res, next) => {
 
         const total = await PlatformUpdate.countDocuments(query);
 
+        // Check for any upcoming scheduled updates
+        const now = new Date();
+        const upcomingUpdates = await PlatformUpdate.find({
+            isActive: false,
+            scheduledAt: { $gt: now }
+        })
+            .sort({ scheduledAt: 1 })
+            .select('title version category scheduledAt')
+            .lean();
+
         res.status(200).json({
             success: true,
             data: updates,
@@ -126,7 +136,8 @@ router.get('/public', async (req, res, next) => {
                 current: parseInt(page),
                 total: Math.ceil(total / limit),
                 count: total
-            }
+            },
+            upcoming: upcomingUpdates
         });
     } catch (error) {
         next(error);
