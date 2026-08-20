@@ -9,16 +9,16 @@ import Reminder from '../models/reminder.model.js';
 import { getRelevantCachedData, needsReindexing, indexAllWebsiteData } from '../services/dataSyncService.js';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-// Using Llama 3.3 70B Versatile as the primary model
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-// Vision model for multimodal image understanding (FREE on Groq)
-const GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+// Using OpenAI GPT-OSS 120B as the primary model (Groq recommended replacement)
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+// Vision model for multimodal image understanding (Qwen3.6 27B supports vision on Groq)
+const GROQ_VISION_MODEL = "qwen/qwen3.6-27b";
 
 const groq = new Groq({
     apiKey: GROQ_API_KEY
 });
 
-// Helper: Analyze image(s) using Groq Vision model (Llama 4 Scout - multimodal)
+// Helper: Analyze image(s) using Groq Vision model (Qwen3.6 27B - multimodal)
 const analyzeImageWithVision = async (imageUrls, userQuestion) => {
     try {
         if (!imageUrls || imageUrls.length === 0) return null;
@@ -746,7 +746,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             finalUserMessage += `\n\n[SENTINEL AUDIT RESULTS - DO NOT call sentinel_image_auditor, these images are already analyzed]:\n${auditSummaries}`;
         }
 
-        // Vision Analysis: If images are present, analyze them with Groq Vision (Llama 4 Scout)
+        // Vision Analysis: If images are present, analyze them with Groq Vision (Qwen3.6 27B)
         // This gives the LLM actual visual understanding of the image content
         const allImageUrls = [...(images || []), ...(imageUrl ? [imageUrl] : [])].filter(Boolean);
         let visionAnalysisResult = cachedVision;
