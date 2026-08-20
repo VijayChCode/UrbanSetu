@@ -18713,3 +18713,177 @@ export const sendCloudinaryMonthlyDigestEmail = async ({
   }
 };
 
+/**
+ * Send automated security & audit alert email to Root Admin when a Cloudinary account is enabled or disabled
+ */
+export const sendCloudinaryToggleStatusEmail = async ({
+  to,
+  recipientName = 'Root Admin',
+  actionType = 'disabled', // 'disabled' | 'enabled'
+  account = {},
+  triggeredBy = {},
+  ip = 'Unknown',
+  location = 'Unknown',
+  device = 'Unknown Device',
+  timestamp = new Date(),
+  note = '',
+  dashboardUrl = 'https://urbansetu.vercel.app/admin/cloudinary-pool'
+}) => {
+  const isDisabled = actionType === 'disabled';
+  const actionLabel = isDisabled ? 'Disabled' : 'Enabled';
+  const actionColor = isDisabled ? '#dc2626' : '#10b981';
+  const actionBg = isDisabled ? 'rgba(220, 38, 38, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+  const actionIcon = isDisabled ? '🛑' : '✅';
+  const isFallback = account.isFallback || account.accountIndex === -1;
+  const indexLabel = isFallback ? '⭐ Fallback Account' : `Account #${account.accountIndex ?? '?'}`;
+  const cloudName = account.cloudName || 'Cloudinary Cloud';
+
+  const subject = `${actionIcon} Cloudinary Account "${cloudName}" ${actionLabel} - UrbanSetu Security & Audit`;
+
+  const limit = account.realCreditsLimit || 25;
+  const used = typeof account.realCreditsUsed === 'number' ? account.realCreditsUsed : 0;
+  const remaining = Math.max(0, limit - used);
+
+  const formattedTime = typeof formatLocalizedTime === 'function'
+    ? formatLocalizedTime(timestamp, ip)
+    : new Date(timestamp).toLocaleString();
+
+  const html = `
+    <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 20px; background-color: #0f172a; color: #f8fafc;">
+      <div style="background-color: #1e293b; padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); border: 1px solid #334155;">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, ${actionColor} 0%, ${isDisabled ? '#991b1b' : '#059669'} 100%); padding: 12px 20px; border-radius: 12px; margin-bottom: 12px;">
+            <span style="font-size: 28px;">${actionIcon}</span>
+          </div>
+          <h1 style="color: #f8fafc; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Cloudinary Pool Account Status Change</h1>
+          <p style="color: #94a3b8; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">Real-Time Administrative Action Alert</p>
+        </div>
+
+        <!-- Banner -->
+        <div style="background-color: ${actionBg}; border-left: 4px solid ${actionColor}; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+          <p style="color: #f8fafc; font-size: 14px; line-height: 1.6; margin: 0;">
+            Hello <strong>${recipientName || 'Root Admin'}</strong>,<br/>
+            The Cloudinary account <strong>${cloudName}</strong> was <strong>${actionLabel.toUpperCase()}</strong> in the upload rotation pool.
+            ${isDisabled 
+              ? '<br/><span style="color: #fca5a5; font-size: 13px;">No new listing or user uploads will be routed to this account while it remains disabled.</span>' 
+              : '<br/><span style="color: #6ee7b7; font-size: 13px;">This account is now active and will receive new uploads according to the rotation algorithm.</span>'
+            }
+          </p>
+        </div>
+
+        <!-- Cloud Account Details Box -->
+        <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+          <h2 style="color: #38bdf8; font-size: 14px; margin: 0 0 12px 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            ☁️ Target Cloud Details
+          </h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #cbd5e1;">
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8; width: 140px;"><strong>Cloud Name:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc; font-weight: 700;">${cloudName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Account Index:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc;">
+                <span style="background: ${isFallback ? '#f59e0b' : '#3b82f6'}; color: ${isFallback ? '#0f172a' : '#ffffff'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800;">
+                  ${indexLabel}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>New Status:</strong></td>
+              <td style="padding: 6px 0;">
+                <span style="color: ${actionColor}; font-weight: 700; font-size: 13px;">● ${actionLabel}</span>
+              </td>
+            </tr>
+            ${note ? `
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Action Note:</strong></td>
+              <td style="padding: 6px 0; color: #e2e8f0; font-style: italic;">"${note}"</td>
+            </tr>` : ''}
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Credits Status:</strong></td>
+              <td style="padding: 6px 0; color: #cbd5e1;">${used.toFixed(1)} / ${limit} used (${remaining.toFixed(1)} remaining)</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Security & Audit Info Box -->
+        <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <h2 style="color: #38bdf8; font-size: 14px; margin: 0 0 12px 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+            🛡️ Performed By & Security Audit
+          </h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #cbd5e1;">
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8; width: 140px;"><strong>User:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc; font-weight: 600;">${triggeredBy.username || 'Admin'} (${triggeredBy.email || 'N/A'})</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Role:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc;">
+                <span style="background: rgba(139, 92, 246, 0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700;">
+                  ${triggeredBy.role || 'rootadmin'}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>IP Address:</strong></td>
+              <td style="padding: 6px 0; color: #38bdf8; font-family: monospace;">${ip}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Location:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc;">${location || 'Unknown Location'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Device / Browser:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc;">${device}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #94a3b8;"><strong>Action Time:</strong></td>
+              <td style="padding: 6px 0; color: #f8fafc;">${formattedTime}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 28px 0 20px 0;">
+          <a href="${dashboardUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: #ffffff; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+            👉 Open Cloudinary Pool Dashboard
+          </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; word-break: break-all; margin: 16px 0 0 0; text-align: center;">
+          Or navigate directly to: <a href="${dashboardUrl}" style="color: #38bdf8; text-decoration: underline;">${dashboardUrl}</a>
+        </p>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #334155; margin-top: 24px;">
+          <p style="color: #64748b; margin: 0; font-size: 12px;">
+            Audit Timestamp: ${new Date().toUTCString()} • UrbanSetu Security Monitoring
+          </p>
+          <p style="color: #475569; margin: 6px 0 0 0; font-size: 11px;">
+            © ${new Date().getFullYear()} UrbanSetu Real Estate Platform. All rights reserved.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: to,
+    subject: subject,
+    html: html
+  };
+
+  try {
+    return await sendEmailWithRetry(mailOptions);
+  } catch (error) {
+    console.error('Error sending Cloudinary toggle status email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+

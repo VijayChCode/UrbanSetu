@@ -1,5 +1,7 @@
 import express from 'express';
 import { verifyToken } from '../utils/verify.js';
+import User from '../models/user.model.js';
+import CloudinaryAccount from '../models/cloudinaryAccount.model.js';
 import {
   getPoolStatus,
   toggleAccount,
@@ -7,7 +9,12 @@ import {
   fetchAllRealUsage,
   fetchRealUsageForAccount,
 } from '../utils/cloudinaryPool.js';
-import { checkAndSendCloudinaryAlerts } from '../schedulers/cloudinaryResetScheduler.js';
+import {
+  checkAndSendCloudinaryAlerts,
+  getRootAdminRecipients,
+} from '../schedulers/cloudinaryResetScheduler.js';
+import { sendCloudinaryToggleStatusEmail } from '../utils/emailService.js';
+import { getLocationFromIP, getDeviceInfo } from '../utils/sessionManager.js';
 
 const router = express.Router();
 
@@ -66,6 +73,7 @@ router.patch('/:accountIndex/toggle', verifyToken, requireAdmin, async (req, res
   try {
     const { accountIndex } = req.params;
     const { enabled, note } = req.body;
+    const parsedIndex = parseInt(accountIndex);
 
     if (typeof enabled !== 'boolean') {
       return res.status(400).json({
@@ -74,15 +82,64 @@ router.patch('/:accountIndex/toggle', verifyToken, requireAdmin, async (req, res
       });
     }
 
+    // Fetch account details prior to toggle for audit reporting
+    const accountDoc = await CloudinaryAccount.findOne({ accountIndex: parsedIndex }).lean();
+    const cloudName = accountDoc?.cloudName || `Account #${accountIndex}`;
+
+    // Perform database toggle
+    const actionNote = note || `Manually ${enabled ? 'enabled' : 'disabled'} by ${req.user?.username || 'admin'}`;
     await toggleAccount(
-      parseInt(accountIndex),
+      parsedIndex,
       enabled,
-      note || `Manually ${enabled ? 'enabled' : 'disabled'} by admin`
+      actionNote
     );
+
+    // Extract client IP, Geo Location, and Device Info
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || 'Unknown';
+    const userAgent = req.get('User-Agent');
+    const device = getDeviceInfo(userAgent, req.headers);
+    const location = getLocationFromIP(clientIp);
+
+    // Trigger immediate audit email to rootadmin(s) in background
+    (async () => {
+      try {
+        const recipients = await getRootAdminRecipients();
+        const actionType = enabled ? 'enabled' : 'disabled';
+        
+        for (const recipient of recipients) {
+          await sendCloudinaryToggleStatusEmail({
+            to: recipient.email,
+            recipientName: recipient.username,
+            actionType,
+            account: {
+              accountIndex: parsedIndex,
+              cloudName,
+              isFallback: accountDoc?.isFallback || parsedIndex === -1,
+              realCreditsUsed: accountDoc?.realCreditsUsed || 0,
+              realCreditsLimit: accountDoc?.realCreditsLimit || 25,
+            },
+            triggeredBy: {
+              username: req.user?.username || 'Root Admin',
+              email: req.user?.email || req.user?.username || 'N/A',
+              role: req.user?.role || 'rootadmin'
+            },
+            ip: clientIp,
+            location,
+            device,
+            timestamp: new Date(),
+            note: actionNote,
+            dashboardUrl: 'https://urbansetu.vercel.app/admin/cloudinary-pool'
+          });
+        }
+        console.log(`[CloudinaryPool] 📧 Status toggle (${actionType}) email sent to ${recipients.length} rootadmin(s)`);
+      } catch (emailErr) {
+        console.error('[CloudinaryPool] Failed to dispatch toggle status email:', emailErr.message);
+      }
+    })();
 
     res.json({
       success: true,
-      message: `Account ${accountIndex} ${enabled ? 'enabled' : 'disabled'} successfully`
+      message: `Account ${accountIndex} (${cloudName}) ${enabled ? 'enabled' : 'disabled'} successfully`
     });
   } catch (error) {
     console.error('Error toggling account:', error);
