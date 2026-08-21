@@ -16446,9 +16446,14 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                 </div>
                                                 {visionModalData.faceTags.map((face, fIdx) => (
                                                     <div key={fIdx} className="space-y-0.5">
-                                                        <p className="font-bold text-xs text-purple-300 dark:text-purple-200">{face.name}</p>
+                                                        <p className="font-bold text-xs text-purple-300 dark:text-purple-200 truncate" title={face.name}>{face.name}</p>
                                                         {face.details && (
-                                                            <p className="text-[10px] opacity-80 leading-snug">{face.details}</p>
+                                                            <p 
+                                                                className="text-[10px] opacity-80 leading-snug truncate cursor-default" 
+                                                                title={face.details}
+                                                            >
+                                                                {face.details}
+                                                            </p>
                                                         )}
                                                     </div>
                                                 ))}
