@@ -16414,7 +16414,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         navigator.clipboard.writeText(visionModalData.ocrText.trim());
                                                         toast.success('OCR text copied to clipboard');
                                                     }}
-                                                    className="text-[9px] text-indigo-400 hover:text-indigo-300 opacity-0 group-hover/ocr:opacity-100 transition-opacity font-sans flex items-center gap-1 hover:underline"
+                                                    className="text-[9px] text-indigo-400 hover:text-indigo-300 opacity-100 sm:opacity-0 sm:group-hover/ocr:opacity-100 transition-opacity font-sans flex items-center gap-1 hover:underline"
                                                     title="Copy OCR text"
                                                 >
                                                     <FaCopy size={9} /> Copy
@@ -16431,18 +16431,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                     {/* Identified Face / Person (Face AI) */}
                                     {visionModalData.faceTags && visionModalData.faceTags.length > 0 && (
-                                        <div className={`p-2.5 rounded-xl border text-[11px] flex items-start gap-2.5 ${
+                                        <div className={`group/face p-2.5 rounded-xl border text-[11px] flex items-start gap-2.5 ${
                                             isDarkMode ? 'bg-purple-950/30 border-purple-800/40 text-purple-200' : 'bg-purple-50 border-purple-200 text-purple-900'
                                         }`}>
                                             <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 flex-shrink-0 mt-0.5">
                                                 <FaUser size={12} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-1.5 mb-1">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Identified Person</span>
-                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300">
-                                                        Face AI
-                                                    </span>
+                                                <div className="flex items-center justify-between gap-1.5 mb-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Identified Person</span>
+                                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300">
+                                                            Face AI
+                                                        </span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const textToCopy = visionModalData.faceTags.map(f => f.name + (f.details ? ` (${f.details})` : '')).join(', ');
+                                                            navigator.clipboard.writeText(textToCopy);
+                                                            toast.success('Person details copied to clipboard');
+                                                        }}
+                                                        className="text-[9px] text-purple-400 hover:text-purple-300 opacity-100 sm:opacity-0 sm:group-hover/face:opacity-100 transition-opacity font-sans flex items-center gap-1 hover:underline"
+                                                        title="Copy person details"
+                                                    >
+                                                        <FaCopy size={9} /> Copy
+                                                    </button>
                                                 </div>
                                                 {visionModalData.faceTags.map((face, fIdx) => (
                                                     <div key={fIdx} className="space-y-0.5">
