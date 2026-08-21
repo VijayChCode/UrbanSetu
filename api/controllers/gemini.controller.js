@@ -188,6 +188,7 @@ export const chatWithGemini = async (req, res) => {
         }
 
         const userDisplayContent = userTypedMessage;
+        let visionAnalysisResult = cachedVision || null;
         const media = {
             images,
             imageUrl,
@@ -196,7 +197,8 @@ export const chatWithGemini = async (req, res) => {
             documentUrl,
             documentName,
             imageAudits,
-            ocrText
+            ocrText,
+            visionAnalysis: visionAnalysisResult
         };
 
 
@@ -670,7 +672,6 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         // Vision Analysis: If images are present, analyze them with Groq Vision (Qwen3.6 27B)
         // This gives the LLM actual visual understanding of the image content
         const allImageUrls = [...(images || []), ...(imageUrl ? [imageUrl] : [])].filter(Boolean);
-        let visionAnalysisResult = cachedVision;
         if (allImageUrls.length > 0) {
             try {
                 const visionDescription = await analyzeImageWithVision(allImageUrls, userTypedMessage);
@@ -739,21 +740,64 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
         try {
             completion = await groq.chat.completions.create(requestPayload);
         } catch (toolError) {
-            // Handle tool_use_failed errors by retrying without tools
-            if (toolError.status === 400 && toolError.error?.error?.code === 'tool_use_failed') {
-                console.warn('⚠️ Tool use failed, retrying without tools...');
-                const retryPayload = {
-                    messages: messages,
-                    model: GROQ_MODEL,
-                    temperature: getTemperature(creativity, tone, temperature),
-                    max_completion_tokens: getMaxTokens(responseLength, messages),
-                    top_p: getTopP(topP),
-                    stream: false
-                    // No tools - let the AI respond directly
-                };
-                completion = await groq.chat.completions.create(retryPayload);
-            } else {
-                throw toolError; // Re-throw non-tool errors
+            console.warn('⚠️ Groq request error:', toolError?.message || toolError);
+
+            const isToolUseFailed = (toolError.status === 400 || toolError.statusCode === 400) &&
+                (toolError.error?.code === 'tool_use_failed' || toolError.code === 'tool_use_failed' ||
+                 (typeof toolError.message === 'string' && toolError.message.includes('tool_use_failed')));
+
+            const failedGen = toolError.error?.failed_generation || toolError.failed_generation;
+
+            // RECOVERY: If Groq failed with tool_use_failed, it often provides the full intended tool call in failed_generation
+            if (isToolUseFailed && failedGen) {
+                try {
+                    console.log('🔄 Attempting recovery from failed_generation:', failedGen);
+                    const parsedTool = typeof failedGen === 'string' ? JSON.parse(failedGen) : failedGen;
+                    if (parsedTool && parsedTool.name) {
+                        const rawArgs = parsedTool.arguments;
+                        const formattedArgs = typeof rawArgs === 'string' ? rawArgs : JSON.stringify(rawArgs || {});
+
+                        // Synthesize a valid tool_calls response so execution continues normally
+                        completion = {
+                            choices: [{
+                                message: {
+                                    role: 'assistant',
+                                    content: null,
+                                    tool_calls: [{
+                                        id: `call_rec_${Date.now()}`,
+                                        type: 'function',
+                                        function: {
+                                            name: parsedTool.name,
+                                            arguments: formattedArgs
+                                        }
+                                    }]
+                                }
+                            }]
+                        };
+                        console.log('✅ Successfully synthesized tool call from failed_generation for:', parsedTool.name);
+                    }
+                } catch (recParseErr) {
+                    console.warn('⚠️ Failed to recover tool from failed_generation:', recParseErr.message);
+                }
+            }
+
+            // If recovery wasn't possible, retry without tools
+            if (!completion) {
+                if (isToolUseFailed || toolError.status === 400) {
+                    console.warn('⚠️ Tool use failed, retrying without tools...');
+                    const retryPayload = {
+                        messages: messages,
+                        model: GROQ_MODEL,
+                        temperature: getTemperature(creativity, tone, temperature),
+                        max_completion_tokens: getMaxTokens(responseLength, messages),
+                        top_p: getTopP(topP),
+                        stream: false
+                        // No tools - let the AI respond directly
+                    };
+                    completion = await groq.chat.completions.create(retryPayload);
+                } else {
+                    throw toolError; // Re-throw non-tool errors
+                }
             }
         }
         let responseMessage = completion.choices[0].message;
@@ -1192,7 +1236,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                      documentUrl, 
                      documentName,
                      ocrText,
-                     visionAnalysis: visionAnalysisResult
+                     visionAnalysis: (typeof visionAnalysisResult !== 'undefined' ? visionAnalysisResult : null)
                  };
                 const userDisplayContent = displayMessage !== undefined ? displayMessage : (message ? message.substring(0, 500) : "Media Attachment");
 

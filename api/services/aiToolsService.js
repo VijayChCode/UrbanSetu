@@ -2,6 +2,7 @@ import Listing from "../models/listing.model.js";
 import Blog from "../models/blog.model.js";
 import Reminder from "../models/reminder.model.js";
 import ReportMessage from "../models/reportMessage.model.js";
+import User from "../models/user.model.js";
 
 /**
  * AI Tool: Search Properties
@@ -694,18 +695,39 @@ export const reportMessageTool = async ({
             });
         }
 
-        if (!category || !REPORT_CATEGORIES[category]) {
-            return JSON.stringify({
-                success: false,
-                message: `Invalid category. Valid categories: ${Object.keys(REPORT_CATEGORIES).join(', ')}`
-            });
+        // Normalize and fuzzy-match category (handle HTML/Unicode entities like &amp;, \u0026, or casing)
+        let normalizedCategory = String(category || '')
+            .replace(/&amp;/gi, '&')
+            .replace(/\\u0026/gi, '&')
+            .replace(/\s+and\s+/gi, ' & ')
+            .trim();
+
+        let matchedCategory = Object.keys(REPORT_CATEGORIES).find(
+            cat => cat.toLowerCase() === normalizedCategory.toLowerCase()
+        );
+
+        if (!matchedCategory) {
+            // Fallback fuzzy search by keyword
+            matchedCategory = Object.keys(REPORT_CATEGORIES).find(
+                cat => normalizedCategory.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(normalizedCategory.toLowerCase())
+            ) || "Something else";
         }
 
-        if (!subCategory || !REPORT_CATEGORIES[category].includes(subCategory)) {
-            return JSON.stringify({
-                success: false,
-                message: `Invalid sub-category for "${category}". Valid options: ${REPORT_CATEGORIES[category].join(', ')}`
-            });
+        const validSubCategories = REPORT_CATEGORIES[matchedCategory] || REPORT_CATEGORIES["Something else"];
+        
+        let normalizedSubCategory = String(subCategory || '')
+            .replace(/&amp;/gi, '&')
+            .replace(/\\u0026/gi, '&')
+            .trim();
+
+        let matchedSubCategory = validSubCategories.find(
+            sub => sub.toLowerCase() === normalizedSubCategory.toLowerCase()
+        );
+
+        if (!matchedSubCategory) {
+            matchedSubCategory = validSubCategories.find(
+                sub => normalizedSubCategory.toLowerCase().includes(sub.toLowerCase()) || sub.toLowerCase().includes(normalizedSubCategory.toLowerCase())
+            ) || validSubCategories[0] || "Policy violations";
         }
 
         // Rate limit: max 5 AI-reports per 24 hours per user
@@ -729,20 +751,37 @@ export const reportMessageTool = async ({
             messageContent: messageContent.substring(0, 2000),
             prompt: prompt.substring(0, 1000),
             reportedBy: userId,
-            category,
-            subCategory,
+            category: matchedCategory,
+            subCategory: matchedSubCategory,
             description: description ? `[AI-Assisted Report] ${description}` : '[AI-Assisted Report]',
             priority: 'high'
         });
 
         await newReport.save();
 
+        // Dispatch automated acknowledgment email to user
+        try {
+            const user = await User.findById(userId).select('email');
+            if (user && user.email) {
+                const { sendReportAcknowledgementEmail } = await import('../utils/emailService.js');
+                sendReportAcknowledgementEmail(user.email, {
+                    messageId,
+                    category: matchedCategory,
+                    subCategory: matchedSubCategory,
+                    createdAt: newReport.createdAt
+                }).catch(emailErr => console.error('Failed to send automated report acknowledgement email:', emailErr));
+                console.log(`✉️ Automated report acknowledgement email dispatched to ${user.email}`);
+            }
+        } catch (emailDispatchErr) {
+            console.error('Error fetching user for report email dispatch:', emailDispatchErr);
+        }
+
         return JSON.stringify({
             success: true,
-            message: `Report submitted successfully under "${category} > ${subCategory}". Our admin team will review it shortly.`,
+            message: `Report submitted successfully under "${matchedCategory} > ${matchedSubCategory}". Our admin team will review it shortly.`,
             reportId: newReport._id.toString(),
-            category,
-            subCategory
+            category: matchedCategory,
+            subCategory: matchedSubCategory
         });
 
     } catch (error) {
