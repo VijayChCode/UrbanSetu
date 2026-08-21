@@ -4858,6 +4858,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         documentUrl,
                         documentName,
                         ocrText: ocrTextToSend || undefined,
+                        faceTags: messageFaceTags.length > 0 ? messageFaceTags : undefined,
                         isOnlyAttachment: !userMessage.trim(),
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
@@ -5094,6 +5095,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                         documentUrl,
                         documentName,
                         ocrText: ocrTextToSend || undefined,
+                        faceTags: messageFaceTags.length > 0 ? messageFaceTags : undefined,
                         isOnlyAttachment: !userMessage.trim(),
                         history: enableContextMemory ? messages.slice(-parseInt(contextWindow)) : messages.slice(-10),
                         sessionId: currentSessionId,
@@ -5926,10 +5928,56 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
     // Vision Analysis Intelligence Modal Handlers
     const openVisionModal = (message, imgUrl, imgIdx, msgIdx) => {
-        const audit = (message?.imageAudits && message.imageAudits[imgUrl]) || (auditResults && (auditResults[`chat_${imgUrl}`] || auditResults[imgUrl]));
+        const rawAudit = (message?.imageAudits && (message.imageAudits[imgUrl] || Object.values(message.imageAudits)[0])) 
+            || (auditResults && (auditResults[`chat_${imgUrl}`] || auditResults[imgUrl]));
+        
         const visionText = message?.visionAnalysis || '';
         const ocr = message?.ocrText || '';
         const isAnalyzing = !visionText && (isLoading || (isAuditing && (isAuditing[`chat_${imgUrl}`] || isAuditing[imgUrl])));
+
+        // Fallback parse audit info from OCR text if not present in message object
+        let parsedAudit = null;
+        if (ocr) {
+            const scoreMatch = ocr.match(/Quality Score\s*[:=]?\s*(\d+)/i);
+            const classMatch = ocr.match(/Classification\s*[:=]?\s*([^,\n\]]+)/i);
+            const sharpnessMatch = ocr.match(/Sharpness\s*[:=]?\s*([^,\n\]]+)/i);
+            if (scoreMatch || classMatch) {
+                parsedAudit = {
+                    sentinelScore: scoreMatch ? parseInt(scoreMatch[1], 10) : undefined,
+                    quality: {
+                        score: scoreMatch ? parseInt(scoreMatch[1], 10) : undefined,
+                        sharpness: sharpnessMatch ? sharpnessMatch[1].trim() : 'Standard'
+                    },
+                    classification: {
+                        type: classMatch ? classMatch[1].trim() : 'Real Estate Photo'
+                    }
+                };
+            }
+        }
+
+        const finalAudit = rawAudit || parsedAudit;
+        const resolvedScore = finalAudit?.sentinelScore ?? finalAudit?.quality?.score ?? finalAudit?.qualityScore ?? finalAudit?.score;
+
+        // Resolve face recognition tags from structured message, or fallback parse from OCR
+        let faceTags = message?.faceTags || [];
+        if ((!faceTags || faceTags.length === 0) && ocr) {
+            const faceMatch = ocr.match(/Identified Face\(s\)\/Person\(s\) in Image:\s*\n"""\s*\n([\s\S]*?)\n"""/i);
+            if (faceMatch && faceMatch[1]) {
+                const rawNames = faceMatch[1].split(',').map(n => n.trim()).filter(Boolean);
+                faceTags = rawNames
+                    .filter(n => !n.includes('Face AI detected a face') && !n.includes('vision intelligence') && !n.startsWith('Unknown') && n !== 'Unknown')
+                    .map(nameStr => {
+                        const detailsIdx = nameStr.indexOf(' (Details:');
+                        if (detailsIdx !== -1) {
+                            return {
+                                name: nameStr.substring(0, detailsIdx).trim(),
+                                details: nameStr.substring(detailsIdx + 10).replace(/\)$/, '').trim()
+                            };
+                        }
+                        return { name: nameStr, details: '' };
+                    });
+            }
+        }
 
         setVisionModalData({
             imageUrl: imgUrl,
@@ -5938,7 +5986,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             message: message,
             visionAnalysis: visionText,
             ocrText: ocr,
-            audit: audit,
+            audit: finalAudit,
+            qualityScore: (typeof resolvedScore === 'number' && !isNaN(resolvedScore)) ? resolvedScore : undefined,
+            faceTags: faceTags,
             isAnalyzing: isAnalyzing
         });
         setVisionEditText(visionText);
@@ -5952,6 +6002,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         const isAnalyzing = (isAuditing && (isAuditing[auditKey] || isAuditing[pendingImg.id])) || (isOcrExtracting && isOcrExtracting[pendingImg.id]);
         const ocr = (ocrResults && ocrResults[pendingImg.id]) || '';
 
+        const resolvedScore = audit?.sentinelScore ?? audit?.quality?.score ?? audit?.qualityScore ?? audit?.score;
+        let faceTags = (detectedFaces && detectedFaces[pendingImg.id]) 
+            ? detectedFaces[pendingImg.id].filter(f => f.name && f.name !== 'Unknown') 
+            : [];
+
         setVisionModalData({
             imageUrl: pendingImg.url,
             imageIndex: 0,
@@ -5961,6 +6016,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             visionAnalysis: pendingImg.visionAnalysis || '',
             ocrText: ocr,
             audit: audit,
+            qualityScore: (typeof resolvedScore === 'number' && !isNaN(resolvedScore)) ? resolvedScore : undefined,
+            faceTags: faceTags,
             isAnalyzing: isAnalyzing
         });
         setVisionEditText(pendingImg.visionAnalysis || '');
@@ -16298,12 +16355,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-indigo-500">
                                                 <FaShieldAlt size={12} /> Sentinel Audit
                                             </span>
-                                            {visionModalData.audit?.quality ? (
+                                            {visionModalData.qualityScore !== undefined && visionModalData.qualityScore !== null && !isNaN(visionModalData.qualityScore) ? (
                                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm ${
-                                                    visionModalData.audit.quality.score >= 80 ? 'bg-emerald-500' :
-                                                    visionModalData.audit.quality.score >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                                    visionModalData.qualityScore >= 80 ? 'bg-emerald-500' :
+                                                    visionModalData.qualityScore >= 50 ? 'bg-amber-500' : 'bg-red-500'
                                                 }`}>
-                                                    Quality: {visionModalData.audit.quality.score}/100
+                                                    Quality: {visionModalData.qualityScore}/100
                                                 </span>
                                             ) : (
                                                 <span className="text-[10px] text-gray-400">Score Pending</span>
@@ -16347,6 +16404,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                         }`}>
                                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Extracted Text (OCR)</span>
                                             <p className="font-mono text-[10px] truncate max-h-10 overflow-hidden">{visionModalData.ocrText.trim()}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Identified Face / Person (Face AI) */}
+                                    {visionModalData.faceTags && visionModalData.faceTags.length > 0 && (
+                                        <div className={`p-2.5 rounded-xl border text-[11px] flex items-start gap-2.5 ${
+                                            isDarkMode ? 'bg-purple-950/30 border-purple-800/40 text-purple-200' : 'bg-purple-50 border-purple-200 text-purple-900'
+                                        }`}>
+                                            <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400 flex-shrink-0 mt-0.5">
+                                                <FaUser size={12} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Identified Person</span>
+                                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/20 text-purple-300">
+                                                        Face AI
+                                                    </span>
+                                                </div>
+                                                {visionModalData.faceTags.map((face, fIdx) => (
+                                                    <div key={fIdx} className="space-y-0.5">
+                                                        <p className="font-bold text-xs text-purple-300 dark:text-purple-200">{face.name}</p>
+                                                        {face.details && (
+                                                            <p className="text-[10px] opacity-80 leading-snug">{face.details}</p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

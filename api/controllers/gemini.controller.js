@@ -95,6 +95,7 @@ export const chatWithGemini = async (req, res) => {
         documentUrl,
         documentName,
         ocrText,           // Extracted OCR text from the frontend
+        faceTags,          // Array of { name, details, descriptor } from facial recognition
         history = [],
         imageAudits = {},  // Audit results from the frontend (URLs mapped to analysis)
         sessionId,
@@ -198,7 +199,8 @@ export const chatWithGemini = async (req, res) => {
             documentName,
             imageAudits,
             ocrText,
-            visionAnalysis: visionAnalysisResult
+            visionAnalysis: visionAnalysisResult,
+            faceTags: Array.isArray(faceTags) && faceTags.length > 0 ? faceTags : undefined
         };
 
 
@@ -1876,6 +1878,7 @@ export const updateSessionHistory = async (req, res) => {
             imageAudits: msg.imageAudits,
             ocrText: msg.ocrText,
             visionAnalysis: msg.visionAnalysis,
+            faceTags: msg.faceTags,
             variants: (msg.variants || []).map(v => ({
                 role: v.role || msg.role,
                 content: v.content,
@@ -1892,6 +1895,7 @@ export const updateSessionHistory = async (req, res) => {
                 imageAudits: v.imageAudits,
                 ocrText: v.ocrText,
                 visionAnalysis: v.visionAnalysis,
+                faceTags: v.faceTags,
                 tail: v.tail || []
             }))
         }));
