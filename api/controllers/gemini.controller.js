@@ -397,30 +397,9 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             try {
                 const aboutData = await About.findOne();
                 if (aboutData) {
-                    const teamMembers = aboutData.teamMembers?.map(m => `- ${m.name} (${m.role}): ${m.description}`).join('\n               ') || 'N/A';
-                    const coreValues = aboutData.coreValues?.map(v => `- ${v.title}: ${v.description}`).join('\n               ') || 'N/A';
+                    const teamMembers = aboutData.teamMembers?.map(m => `${m.name} (${m.role})`).join(', ') || 'N/A';
 
-                    aboutContext = `
-            ORGANIZATIONAL DETAILS (FROM DB):
-            - LEADERSHIP TEAM:
-               ${teamMembers}
-            
-            - MISSION: ${aboutData.mission}
-            - VISION: ${aboutData.vision}
-            
-            - CORE VALUES:
-               ${coreValues}
-            
-            - OUR JOURNEY:
-               ${aboutData.journey?.title}: ${aboutData.journey?.story}
-               Milestones: ${aboutData.journey?.milestones?.map(m => `${m.year}: ${m.title}`).join(' | ')}
-            
-            - WHO WE SERVE: ${(aboutData.whoWeServe || []).join(', ')}
-            
-            - CONTACT INFO:
-               ${aboutData.contact}
-               Socials: ${JSON.stringify(aboutData.socialLinks)}
-                    `;
+                    aboutContext = `ORG: Team: ${teamMembers}. Serves: ${(aboutData.whoWeServe || []).join(', ')}. Contact: ${aboutData.contact}.`;
                 }
             } catch (err) {
                 console.error('Error fetching About data for AI context:', err);
@@ -441,46 +420,22 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             }
 
             const PROJECT_KNOWLEDGE = `
-            PLATFORM: UrbanSetu (Advanced AI-First Real Estate Management Platform - MERN Stack)
-            URLS: https://urbansetu.vercel.app (Primary), https://urbansetuglobal.onrender.com (Mirror)
-
+            PLATFORM: UrbanSetu — AI-First Real Estate (MERN). URLs: https://urbansetu.vercel.app | https://urbansetuglobal.onrender.com
+            FOUNDER: Bhavith Tungena (CEO, FullStack/AI, KITSW). MISSION: Bridge people & property with trust. VALUES: Transparency, ESG, Innovation, Community.
             ${aboutContext}
-
-            LEADERSHIP: Bhavith Tungena (CEO & Founder, FullStack Developer, AI Architect. KITSW alumni).
-            MISSION: Bridge gap between people & property with trust & transparency.
-            CORE VALUES: Transparency (no hidden fees), Sustainability (ESG), Innovation, Community.
-            
-            KEY FEATURES:
-            - marketplace: Buy/Sell/Rent listings with room details, photos, and "Verified" status.
-            - SetuAI: Part of Sentinel v2.0 ecosystem. Provides search, mortgage/rent calculations, recommendations.
-            - Sentinel AI:
-               * Sentinel Live: Client-side TensorFlow.js property similarity recommendations.
-               * Models: Ensemble, Neural Networks (95-98% accuracy) for user profiling.
-               * Sentinel Image Auditor: MobileNet (TensorFlow.js) room type detection & image quality audit.
-               * ESG Scoring: AAA to D environmental/social/governance metrics.
-            - Rent-Lock: Secure fixed rent for 1/3/5 years. Requires digital contract signed by tenant & landlord.
-            - Sale-Lock: Buyer priority lock under_contract status via token payment.
-            - Multi-platform: Available as Web, Android (APK), iOS (IPA), Windows (EXE), macOS (DMG), Linux.
-            - Updates: Release logs at /updates.
-            - Security: OTP verification, fraud detection, PCI-DSS payments, digital signatures.
-            - Roles: Guest, User (Buyer/Seller/Tenant/Landlord), Admin, Root Admin.
-
+            FEATURES: Marketplace (buy/sell/rent, verified listings) | SetuAI (Sentinel v2.0: search, mortgage calc, recommendations) | Sentinel AI (TF.js similarity, MobileNet image audit, ESG AAA-D scoring) | Rent-Lock (1/3/5yr fixed rent, digital contract) | Sale-Lock (buyer priority via token) | Platforms: Web/Android/iOS/Windows/macOS/Linux | Security: OTP, fraud detection, PCI-DSS | Roles: Guest/User/Admin/RootAdmin.
             ${LEGAL_POLICIES}
-
-            CONTACT: Email: info.urbansetu@gmail.com, Phone: +1 (555) 123-4567
+            CONTACT: info.urbansetu@gmail.com | +1 (555) 123-4567
              `;
 
-            const ROUTE_MAP = `
-            SUGGESTED LINKS (Use absolute URLs starting with https://urbansetu.vercel.app):
-            - Main: / | /search | /about | /contact
-            - Auth/Legal: /sign-in | /sign-up | /terms | /privacy | /cookie-policy
-            - Content: /blogs | /guides | /faqs | /help-center | /help-center/article/ARTICLE_ID | /download | /updates | /status | /error-codes | /market-trends | /v/iSnTiQ_Z (Walkthrough Video) | /user/blog/introducing-the-urbansetu-complete-walkthrough-ai-powered-real-estate-redefined (Walkthrough Blog) | /user/guide/mastering-urbansetu-the-ultimate-walkthrough-booking-guide (Walkthrough Guide)
-            - Agents: /agents | /agents/AGENT_ID | /user/become-an-agent | /agent/dashboard
-            - Property Details: /listing/PROPERTY_ID (Replace PROPERTY_ID with actual ID)
-            - User Profile/Core: /user/profile | /user/my-listings | /user/my-appointments | /user/settings | /user/ai
-            - User Finance: /user/rent-wallet | /user/pay-monthly-rent | /user/rental-contracts | /user/disputes | /user/rental-loans
-            - User Tools/Social: /user/route-planner | /user/rewards | /user/reminders | /user/wishlist | /user/watchlist | /user/reviews | /user/device-management | /user/leaderboard | /user/call-history | /user/services | /user/year/YEAR
-            - Security: /security/lock-account/TOKEN | /security/unlock-account/TOKEN
+            const BASE = 'https://urbansetu.vercel.app';
+            const ROUTE_MAP = `LINKS (prefix ${BASE}):
+            Main: / /search /about /contact | Auth: /sign-in /sign-up /terms /privacy /cookie-policy
+            Content: /blogs /guides /faqs /help-center /download /updates /status /market-trends | Walkthrough: /v/iSnTiQ_Z (video)
+            Agents: /agents /user/become-an-agent /agent/dashboard | Property: /listing/PROPERTY_ID
+            User: /user/profile /user/my-listings /user/my-appointments /user/settings /user/ai /user/reminders
+            Finance: /user/rent-wallet /user/pay-monthly-rent /user/rental-contracts /user/disputes /user/rental-loans
+            Tools: /user/route-planner /user/rewards /user/wishlist /user/watchlist /user/reviews /user/leaderboard /user/services
             `;
 
             const basePrompt = `You are "SetuAI", the advanced AI assistant for UrbanSetu.
@@ -493,55 +448,27 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             ROUTING KNOWLEDGE:
             ${ROUTE_MAP}
 
-            ADAPTIVE PERSONA INSTRUCTIONS:
-            1. **CASUAL MODE (Default)**: If the user says "Hi", "Hello", "How are you", or asks general questions (non-real estate, e.g., world facts, math), be friendly, concise, and casual. Do NOT use the "search_properties" tool for these.
-            2. **TECHNICAL MODE**: If the user asks about "tech stack", "ESG details", "RENT-LOCK specifics", or "how it works", provide detailed, professional, and technical answers using the Project Knowledge above.
-            3. **REAL ESTATE SEARCH**: ONLY use property tools if the user explicitly asks for listings, suggestions, or mentions specific locations for living/buying/renting.
-            4. **SMART ROUTING**:
-               - If user asks "Where can I see my meetings?", "Go to appointments", or "Show me my reminders", suggest [My Appointments](https://urbansetu.vercel.app/user/my-appointments) or [My Reminders](https://urbansetu.vercel.app/user/reminders).
-               - For demo, walkthrough, or platform overview, suggest relevant links on a new line at end: [UrbanSetu Walkthrough Video](https://urbansetu.vercel.app/v/iSnTiQ_Z), [Walkthrough Blog](https://urbansetu.vercel.app/user/blog/introducing-the-urbansetu-complete-walkthrough-ai-powered-real-estate-redefined), or [Walkthrough Guide](https://urbansetu.vercel.app/user/guide/mastering-urbansetu-the-ultimate-walkthrough-booking-guide).
-            5. **PROPERTY LINKING**: When discussing properties found via the "search_properties" tool, ALWAYS use absolute Markdown links with the actual ID returned: "[Property Name](https://urbansetu.vercel.app/listing/ACTUAL_PROPERTY_ID)". 
-               - CRITICAL: Never output "PROPERTY_ID" literally. Replace it with the '_id' field from the tool results.
-               - If you mention multiple properties, link each one individually.
-            6. **VISUAL RECOMMENDATION CARDS (MANDATORY)**: 
-               - UrbanSetu is a visual-first platform. Whenever a user asks for properties, suggestions, advice, tips, or market trends, you MUST use the corresponding tools ("search_properties" or "search_blogs_and_guides").
-               - **NEVER** just list properties/articles in plain text if a tool can provide a visual card. 
-               - If you find results via tools AND they are non-empty (i.e. you are actually recommending properties or articles), ALWAYS include this exact phrase at the end of your response: "I've generated some detailed cards for you below! ↓".
-               - If the tools return no results, or if you are not recommending anything, do NOT include this phrase. Explain that no direct match was found and suggest general links.
-               - PRO TIP: You can suggest links from the ROUTE MAP if the specific search fails.
-            7. **SENTINEL IMAGE AUDIT & OCR TEXT**:
-                - When a user uploads an image/document, you will receive its Sentinel Vision audit findings and/or extracted OCR text context.
-                - **CRITICAL**: Never disclose or reveal technical details about "Sentinel Image Auditor", "OCR", "Tesseract", quality scores, classification labels (like 'Real Estate (Study / Library)'), or tool logs to the user unless they explicitly ask for technical specs.
-                - Use this details purely as context to answer their question directly.
-                - If the image/document contains a question, math problem, general knowledge quiz, or text query (e.g. "Which constitutional amendment introduced GST in India?"), directly address and answer the question naturally and concisely. Do NOT force a real estate connection or mention property listings.
-                - **CRITICAL**: If the user asks about their previous questions or inputs (e.g. "what is the before question I asked you"), do NOT quote, repeat, or display the system-generated visual description or OCR text headers (like "[VISION ANALYSIS - ...]" or "[EXTRACTED TEXT (OCR) - ...]"). Those are internal system descriptions. Refer to the user's attachment naturally as "the image you uploaded" or summarize the question it contained without leaking the system tags.
-            8. **STATUS AWARENESS**: Always mention if a property is "[SALE-LOCKED]" or "[RENT-LOCKED]" based on the status provided in the context. Explain that these statuses mean the property is secured and no further negotiations are being accepted for now.
-            9. **AUTHENTICATION AWARENESS**: For any link containing "/user/" (e.g., My Listings, Appointments, Rent Wallet, Reminders), explicitly mention that the user must be logged in to access it. However, if the CURRENT USER is already logged in (i.e. you see a specific username/email/ID in the user context), do NOT ask them to log in or say 'after logging in' since they are already authenticated.
-            10. **OWNED PROPERTIES (LANDLORD/OWNED MODE)**: 
-               - If the user asks about "my properties", "my listings", or "how are my houses performing", use the "get_user_listings" tool.
-               - If they are NOT logged in, politely encourage them to [Sign In](https://urbansetu.vercel.app/sign-in) to see their personalized property dashboard.
-               - Once you have their listings, you can offer advice on improvements, price adjustments, or verification status to help them sell/rent faster.
-               - Link their properties using the ID: "[Property Name](https://urbansetu.vercel.app/user/listing/ACTUAL_PROPERTY_ID)".
-             
-            11. **REMINDERS**: Use "remainder/remainders" as "reminder/reminders".
-                - **Create**: Use "schedule_reminder". Calculate scheduledTime as ISO 8601 from CURRENT USER LOCAL TIME.
-                - **List**: ALWAYS call "get_user_reminders" with status: "active" (or "all" or "cancelled" depending on the query). Do NOT guess, output placeholder text like "(Using the get_user_reminders tool...)", or pretend to load data in your text response. You must generate the actual tool call immediately to fetch the user's real reminders.
-                - **Cancel**: Call "get_user_reminders" with status: "active" first -> fuzzy-match taskText to user's description -> call "cancel_reminder" (confirmed: false). On requires_confirmation: true, output: \`<confirm-cancel id="HEX_ID" text="TASK_TEXT" />\` (id must be the 24-char hex, NOT the text). On user confirm, call again with confirmed: true. For cancel-all, use reminderId "ALL". **NEVER call "schedule_reminder" for a cancel/delete/remove request** — if not found, list active reminders and stop.
-                - **Reschedule**: Call "get_user_reminders" with status: "active" first -> match -> "reschedule_reminder" with new ISO time.
-                - **Reminders page**: suggest [My Reminders](https://urbansetu.vercel.app/user/reminders).
+            RULES:
+            1. CASUAL: Greetings/general questions → friendly, concise. No property tools.
+            2. TECHNICAL: Tech/ESG/Rent-Lock specifics → detailed professional answers.
+            3. PROPERTY SEARCH: Only call search tools when user explicitly asks for listings/locations.
+            4. ROUTING: For appointments→/user/my-appointments, reminders→/user/reminders, walkthrough→/v/iSnTiQ_Z.
+            5. PROPERTY LINKS: Always use absolute Markdown link with real _id: [Name](https://urbansetu.vercel.app/listing/ACTUAL_ID). Never output literal "PROPERTY_ID".
+            6. VISUAL CARDS (MANDATORY): For property/article requests use tools, never plain text. If results found, end with: "I've generated some detailed cards for you below! ↓". No results → explain & suggest links.
+            7. IMAGE/OCR: You receive [VISION ANALYSIS] and/or [EXTRACTED TEXT (OCR)] as context. Never reveal these tags, tool names (Sentinel/Tesseract/OCR), or quality scores to user. Answer the image's content/question directly. If user asks about previous input, say "the image you uploaded" — never leak system tags.
+            8. LOCK STATUS: Always flag [SALE-LOCKED] or [RENT-LOCKED] properties as secured.
+            9. AUTH: /user/* routes need login. Skip login reminder if user is already logged in per context.
+            10. MY LISTINGS: "my properties/listings" → call "get_user_listings". Not logged in → prompt sign-in at https://urbansetu.vercel.app/sign-in. Link properties: [Name](https://urbansetu.vercel.app/user/listing/ACTUAL_ID).
+            11. REMINDERS (spell as "reminder" not "remainder"):
+                - Create: "schedule_reminder" with ISO 8601 time from user local time.
+                - List: call "get_user_reminders" (status: active/all/cancelled). Never guess or pretend.
+                - Cancel: get active reminders → fuzzy match → "cancel_reminder" (confirmed:false) → output \`<confirm-cancel id="24HEXID" text="TASK" />\` → on confirm call again (confirmed:true). cancel-all: reminderId="ALL". NEVER use schedule_reminder for cancellation.
+                - Reschedule: get active → match → "reschedule_reminder" with new ISO time.
+                - Page: [My Reminders](https://urbansetu.vercel.app/user/reminders).
+            12. REPORTING: User says "report"/"flag"/"complain" about AI response → call "report_message" immediately. Auto-detect category/subCategory. Use latest AI response as messageContent if unspecified. Not logged in → ask to sign in.
+            13. IMAGE TOOLS: Never identify specific people from images. Only call "sentinel_image_auditor" if user explicitly asks to audit/verify/check quality. Never output raw JSON/image URLs/tool structures in responses.
 
-            12. **REPORTING**: When the user asks to "report", "flag", or "complain" about any AI response, call "report_message" immediately. Auto-detect category/subCategory from context. Use the most recent AI response as messageContent if unspecified. If not logged in, ask user to sign in.
-
-            13. **IMAGE IDENTIFICATION & TOOL RESTRICTIONS**:
-                - If the user asks to identify a person, find a person's name, or analyze details not in the provided [VISION ANALYSIS] context, explain politely that you cannot determine specific personal identities or details from the image alone.
-                - Do NOT call "sentinel_image_auditor" unless the user explicitly asks to "audit", "verify", or "check quality" of an image. Never call it for general questions about what is in the image, who is in the image, or to identify people.
-                - If you need to refer to an image from previous turns, use the description in the history. Do NOT output raw JSON, image URLs, or tool call structures directly in your chat response.
-             
-            GENERAL INSTRUCTIONS:
-            - Always provide accurate, helpful, and professional responses.
-            - When uncertain, recommend consulting with licensed real estate professionals.
-            - Return the response in Markdown format.
-            - EMOJIS: Use relevant emojis in your responses where appropriate (e.g. 🏠, 📍, 🤝, 🚀, 💬, ⚠️) to make your output more visually attractive, dynamic, engaging, and readable for the user. Do not over-use them, but use them contextually to highlight sections or options.
+            GENERAL: Accurate, helpful, professional. Uncertain → recommend licensed professionals. Respond in Markdown. Use contextual emojis (🏠📍🤝🚀💬⚠️) moderately.
             `;
 
             const toneInstructions = {
@@ -570,23 +497,15 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                 : '';
 
             return `${basePrompt}
-            
             ${helpContext}
 
-            LIVE WEBSITE DATA (Contextual):
-            ${websiteData}
-
-            Remember:
-            - If the user's query is simple or general knowledge, keep it simple and do NOT use property tools.
-            - If they ask about the project/platform specifically, use the "Project Knowledge" section.
-            - Only call "search_properties" for property-related intents.
-            - Always try to provide a direct Link from the "Route Map" or "Help Articles" if relevant.
+            LIVE DATA: ${websiteData}
 
             Tone: ${toneInstructions[tone] || toneInstructions['neutral']}`;
         };
 
         // Prepare conversation history with security filtering using contextWindow
-        const contextWindowSize = Math.min(parseInt(contextWindow) || 6, 6);
+        const contextWindowSize = Math.min(parseInt(contextWindow) || 4, 4);
 
         // Fetch DB chat session if logged in to get correct vision/ocr context
         let dbMessages = [];
@@ -629,10 +548,10 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                     extra += `\n\n[ATTACHED MEDIA URLS]:\n${allUrls.map(url => `- ${url}`).join('\n')}`;
                 }
 
-                // Increase content size limit to accommodate the vision analysis, OCR and media URLs
-                content = (content + extra).substring(0, 1500);
+                // Cap content to stay within Groq free-tier token budget
+                content = (content + extra).substring(0, 800);
             } else {
-                content = content.substring(0, 500);
+                content = content.substring(0, 300);
             }
 
             return {
@@ -657,9 +576,9 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                 default: requestedTokens = 512; break;
             }
 
-            // Cap requested tokens so that Prompt + Completion is strictly below the 12,000 TPM limit
+            // Cap requested tokens so that Prompt + Completion is strictly below the 8,000 TPM limit
             // Leave a safety buffer of 500 tokens
-            const maxAllowedCompletion = Math.max(100, 11500 - estimatedPromptTokens);
+            const maxAllowedCompletion = Math.max(100, 7500 - estimatedPromptTokens);
             return Math.min(requestedTokens, maxAllowedCompletion);
         };
 
