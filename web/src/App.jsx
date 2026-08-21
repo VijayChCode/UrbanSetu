@@ -260,6 +260,7 @@ const LoadingSpinner = () => (
         <a href="/community-guidelines">Community Guidelines</a>
         <a href="/agents">Find Agents</a>
         <a href="/error-codes">Error Codes Reference</a>
+        <a href="/reminders">Reminders</a>
       </nav>
     </div>
 
@@ -309,7 +310,7 @@ function normalizeRoute(path, role) {
     "year", "profile", "settings", "investment-tools", "create-listing", "update-listing",
     "community", "change-password", "view", "view-chat", "reviews", "disputes",
     "property-verification", "rental-ratings", "rental-contracts", "rental-loans",
-    "services", "route-planner", "device-management"
+    "services", "route-planner", "device-management", "reminders"
   ];
 
   // Helper to extract base and subpath
@@ -332,13 +333,17 @@ function normalizeRoute(path, role) {
     if ((prefix === "user" || prefix === "admin") && !publicBases.includes(base)) {
       return null;
     }
+    // If public tries to access un-prefixed parallel route, return null (redirects to sign-in)
+    if (!prefix && parallelBases.includes(base)) {
+      return null;
+    }
     // Otherwise, stay on public
     return path;
   }
 
   if (role === "user") {
-    // If user tries to access a public path that should be prefixed, redirect to /user/*
-    if (!prefix && publicBases.includes(base)) {
+    // If user tries to access a public path or parallel path that should be prefixed, redirect to /user/*
+    if (!prefix && (publicBases.includes(base) || parallelBases.includes(base))) {
       return `/user/${base}${rest}`;
     }
     // If user tries to access /admin/*, redirect to /user/* if it's a parallel or public route, else 404
@@ -355,8 +360,8 @@ function normalizeRoute(path, role) {
   }
 
   if (role === "admin") {
-    // If admin tries to access a public path that should be prefixed, redirect to /admin/*
-    if (!prefix && publicBases.includes(base)) {
+    // If admin tries to access a public path or parallel path that should be prefixed, redirect to /admin/*
+    if (!prefix && (publicBases.includes(base) || parallelBases.includes(base))) {
       return `/admin/${base}${rest}`;
     }
     // If admin tries to access /user/*, redirect to /admin/* if it's a parallel or public route, else 404
@@ -1370,6 +1375,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
             {/* Let's use a wrapper component for the redirect to extract params correctly */}
             <Route path="/help-center/article/:slug" element={<ArticleViewRedirect />} />
             <Route path="/error-codes" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/error-codes" : "/user/error-codes"} /> : <ErrorCodes />} />
+            <Route path="/reminders" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/reminders" : "/user/reminders"} /> : <Navigate to="/sign-in?redirect=/reminders" />} />
             <Route path="/" element={<PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/home" element={<PublicHome bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/about" element={currentUser ? <Navigate to="/user/about" /> : <PublicAbout bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
@@ -1481,6 +1487,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/agent/dashboard" element={<AgentDashboard />} />
               <Route path="/user/become-an-agent" element={<BecomeAgent />} />
 
+              <Route path="/reminders" element={<Navigate to="/user/reminders" />} />
+              <Route path="/admin/reminders" element={<Navigate to="/user/reminders" />} />
               <Route path="/contact" element={<Navigate to="/user/contact" />} />
               <Route path="/admin/contact" element={<Navigate to="/user/contact" />} />
               <Route path="/ai" element={<Navigate to="/user/ai" />} />
@@ -1559,6 +1567,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/community/post/:postId" element={<AdminCommunity />} />
               <Route path="/admin/setu-coins" element={<AdminCoinStats />} />
               <Route path="/admin/leaderboard" element={<Leaderboard isAdmin={true} />} />
+              <Route path="/reminders" element={<Navigate to="/admin/reminders" />} />
+              <Route path="/user/reminders" element={<Navigate to="/admin/reminders" />} />
               <Route path="/contact" element={<Navigate to="/admin/support" />} />
               <Route path="/support" element={<Navigate to="/admin/support" />} />
               <Route path="/user/contact" element={<Navigate to="/admin/support" />} />
