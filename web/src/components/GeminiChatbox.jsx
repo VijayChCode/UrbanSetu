@@ -2189,6 +2189,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     const [playingAudioId, setPlayingAudioId] = useState(null);
     const activeAudioRef = useRef(null);
 
+    // Vision Analysis Intelligence Modal State
+    const [isVisionModalOpen, setIsVisionModalOpen] = useState(false);
+    const [visionModalData, setVisionModalData] = useState(null);
+    const [visionEditText, setVisionEditText] = useState('');
+    const [isEditingVision, setIsEditingVision] = useState(false);
+    const [isSavingVision, setIsSavingVision] = useState(false);
+
     useEffect(() => {
         return () => {
             if (activeAudioRef.current) {
@@ -5914,6 +5921,98 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             toast.error('Failed to submit report');
         } finally {
             setIsReporting(false);
+        }
+    };
+
+    // Vision Analysis Intelligence Modal Handlers
+    const openVisionModal = (message, imgUrl, imgIdx, msgIdx) => {
+        const audit = (message?.imageAudits && message.imageAudits[imgUrl]) || (auditResults && (auditResults[`chat_${imgUrl}`] || auditResults[imgUrl]));
+        const visionText = message?.visionAnalysis || '';
+        const ocr = message?.ocrText || '';
+        const isAnalyzing = !visionText && (isLoading || (isAuditing && (isAuditing[`chat_${imgUrl}`] || isAuditing[imgUrl])));
+
+        setVisionModalData({
+            imageUrl: imgUrl,
+            imageIndex: imgIdx,
+            messageIndex: msgIdx,
+            message: message,
+            visionAnalysis: visionText,
+            ocrText: ocr,
+            audit: audit,
+            isAnalyzing: isAnalyzing
+        });
+        setVisionEditText(visionText);
+        setIsEditingVision(false);
+        setIsVisionModalOpen(true);
+    };
+
+    const openPendingImageVisionModal = (pendingImg) => {
+        const auditKey = `chat_${pendingImg.id}`;
+        const audit = (auditResults && (auditResults[auditKey] || auditResults[pendingImg.id])) || null;
+        const isAnalyzing = (isAuditing && (isAuditing[auditKey] || isAuditing[pendingImg.id])) || (isOcrExtracting && isOcrExtracting[pendingImg.id]);
+        const ocr = (ocrResults && ocrResults[pendingImg.id]) || '';
+
+        setVisionModalData({
+            imageUrl: pendingImg.url,
+            imageIndex: 0,
+            messageIndex: null,
+            message: null,
+            pendingImage: pendingImg,
+            visionAnalysis: pendingImg.visionAnalysis || '',
+            ocrText: ocr,
+            audit: audit,
+            isAnalyzing: isAnalyzing
+        });
+        setVisionEditText(pendingImg.visionAnalysis || '');
+        setIsEditingVision(false);
+        setIsVisionModalOpen(true);
+    };
+
+    const handleSaveVisionAnalysis = async () => {
+        if (!visionModalData) return;
+        setIsSavingVision(true);
+        try {
+            const updatedText = (visionEditText || '').trim().slice(0, 1000); // 1000 chars safety cap (~250 tokens)
+
+            // If it's for a sent message in chat
+            if (visionModalData.messageIndex !== null && visionModalData.messageIndex !== undefined) {
+                const msgIdx = visionModalData.messageIndex;
+                const updatedMessages = [...messages];
+                if (updatedMessages[msgIdx]) {
+                    updatedMessages[msgIdx] = {
+                        ...updatedMessages[msgIdx],
+                        visionAnalysis: updatedText
+                    };
+                    setMessages(updatedMessages);
+
+                    // Sync to MongoDB backend session history if logged in
+                    const currentSessionId = getOrCreateSessionId();
+                    if (currentUser && currentSessionId) {
+                        try {
+                            await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions/${currentSessionId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ messages: updatedMessages })
+                            });
+                        } catch (syncErr) {
+                            console.warn('Failed to sync updated vision to DB:', syncErr);
+                        }
+                    }
+                }
+            } else if (visionModalData.pendingImage) {
+                // If it's for a pending image before sending
+                const imgId = visionModalData.pendingImage.id;
+                setPendingImages(prev => prev.map(img => img.id === imgId ? { ...img, visionAnalysis: updatedText } : img));
+            }
+
+            setVisionModalData(prev => prev ? { ...prev, visionAnalysis: updatedText } : null);
+            setIsEditingVision(false);
+            toast.success('Vision context updated successfully');
+        } catch (err) {
+            console.error('Error saving vision analysis:', err);
+            toast.error('Failed to save vision context');
+        } finally {
+            setIsSavingVision(false);
         }
     };
 
@@ -10308,31 +10407,46 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                         <FaTimes size={12} />
                                                                     </button>
                                                                 ) : (
-                                                                    <button
-                                                                        className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block"
-                                                                        onClick={async (e) => {
-                                                                            e.stopPropagation();
-                                                                            try {
-                                                                                const response = await fetch(img, { mode: 'cors' });
-                                                                                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                                                                                const blob = await response.blob();
-                                                                                const blobUrl = window.URL.createObjectURL(blob);
-                                                                                const a = document.createElement('a');
-                                                                                a.href = blobUrl;
-                                                                                a.download = `image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
-                                                                                document.body.appendChild(a);
-                                                                                a.click();
-                                                                                document.body.removeChild(a);
-                                                                                window.URL.revokeObjectURL(blobUrl);
-                                                                            } catch (err) {
-                                                                                console.error('Download error:', err);
-                                                                                toast.error('Failed to download image');
-                                                                            }
-                                                                        }}
-                                                                        title="Download image"
-                                                                    >
-                                                                        <FaDownload size={14} />
-                                                                    </button>
+                                                                    <>
+                                                                        {/* Info & Vision Intelligence button on Top-Left */}
+                                                                        <button
+                                                                            className="absolute top-1 left-1 bg-indigo-600/90 hover:bg-indigo-600 text-white p-1.5 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 z-10 flex items-center justify-center"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                openVisionModal(message, img, imgIdx, index);
+                                                                            }}
+                                                                            title="Vision Analysis & Image Intelligence"
+                                                                        >
+                                                                            <FaInfoCircle size={11} />
+                                                                        </button>
+
+                                                                        {/* Download button on Top-Right */}
+                                                                        <button
+                                                                            className="absolute top-1 right-1 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 hidden sm:block z-10"
+                                                                            onClick={async (e) => {
+                                                                                e.stopPropagation();
+                                                                                try {
+                                                                                    const response = await fetch(img, { mode: 'cors' });
+                                                                                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                                                    const blob = await response.blob();
+                                                                                    const blobUrl = window.URL.createObjectURL(blob);
+                                                                                    const a = document.createElement('a');
+                                                                                    a.href = blobUrl;
+                                                                                    a.download = `image-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                                                                                    document.body.appendChild(a);
+                                                                                    a.click();
+                                                                                    document.body.removeChild(a);
+                                                                                    window.URL.revokeObjectURL(blobUrl);
+                                                                                } catch (err) {
+                                                                                    console.error('Download error:', err);
+                                                                                    toast.error('Failed to download image');
+                                                                                }
+                                                                            }}
+                                                                            title="Download image"
+                                                                        >
+                                                                            <FaDownload size={14} />
+                                                                        </button>
+                                                                    </>
                                                                 )}
 
                                                                 {/* Face Recognition Tag Overlay for Sent Images */}
@@ -11718,6 +11832,21 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                                                     {detectedFaces[img.id][0].name === 'Unknown' ? 'Tag Face' : detectedFaces[img.id][0].name}
                                                                                 </span>
                                                                             </div>
+                                                                        )}
+
+                                                                        {/* Info & Vision Intelligence button on Top-Left */}
+                                                                        {img.type === 'image' && !isAuditing[`chat_${img.id}`] && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    openPendingImageVisionModal(img);
+                                                                                }}
+                                                                                className="absolute top-1 left-1 p-1.5 bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-full transition-all duration-200 border border-white/20 shadow-md z-20 opacity-0 group-hover:opacity-100 hover:scale-110 flex items-center justify-center"
+                                                                                title="Vision Analysis & Image Intelligence"
+                                                                            >
+                                                                                <FaInfoCircle size={9} />
+                                                                            </button>
                                                                         )}
 
                                                                         <button
@@ -16085,6 +16214,254 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     registerFace(name, descriptor, details);
                 }}
             />
+
+            {/* SetuAI Vision Intelligence & Image Audit Modal */}
+            {isVisionModalOpen && visionModalData && (
+                <div 
+                    className="fixed inset-0 z-[170] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-fadeIn"
+                    onClick={() => {
+                        if (!isSavingVision) setIsVisionModalOpen(false);
+                    }}
+                >
+                    <div 
+                        className={`w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border transform transition-all duration-300 scale-100 ${
+                            isDarkMode 
+                                ? 'bg-gray-900/95 border-indigo-900/40 text-white' 
+                                : 'bg-white/95 border-indigo-100 text-gray-900'
+                        } backdrop-blur-xl`}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className={`px-5 py-4 border-b flex items-center justify-between ${
+                            isDarkMode ? 'border-gray-800 bg-gray-900/60' : 'border-gray-100 bg-gray-50/80'
+                        }`}>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
+                                    <FaBrain size={18} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-base sm:text-lg font-bold">Vision Intelligence</h3>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                                            Qwen 27B + Sentinel
+                                        </span>
+                                    </div>
+                                    <p className={`text-[11px] ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        AI Visual Scene Understanding & Real Estate Property Audit
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsVisionModalOpen(false)}
+                                disabled={isSavingVision}
+                                className={`p-2 rounded-xl transition-all ${
+                                    isDarkMode ? 'hover:bg-gray-800 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-800'
+                                }`}
+                            >
+                                <FaTimes size={16} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-5 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
+                            {/* Top: Image Preview & Audit Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
+                                {/* Image Thumbnail */}
+                                <div className="sm:col-span-5 relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md aspect-video sm:aspect-square bg-black/10 flex items-center justify-center group">
+                                    <img 
+                                        src={visionModalData.imageUrl} 
+                                        alt="Audited Visual"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.src = "https://via.placeholder.com/400x300?text=Image+Unavailable";
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            setPreviewImages([visionModalData.imageUrl]);
+                                            setPreviewImageIndex(0);
+                                            setIsImagePreviewOpen(true);
+                                        }}
+                                        className="absolute bottom-2 right-2 px-2 py-1 rounded-lg bg-black/60 hover:bg-black/80 text-white text-[10px] font-medium flex items-center gap-1 backdrop-blur-sm transition-all"
+                                        title="Expand Image"
+                                    >
+                                        <FaExpand size={10} /> Fullscreen
+                                    </button>
+                                </div>
+
+                                {/* Sentinel Audit Metrics */}
+                                <div className="sm:col-span-7 space-y-2.5">
+                                    <div className={`p-3 rounded-xl border ${
+                                        isDarkMode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-gray-50 border-gray-200'
+                                    }`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-indigo-500">
+                                                <FaShieldAlt size={12} /> Sentinel Audit
+                                            </span>
+                                            {visionModalData.audit?.quality ? (
+                                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white shadow-sm ${
+                                                    visionModalData.audit.quality.score >= 80 ? 'bg-emerald-500' :
+                                                    visionModalData.audit.quality.score >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                                }`}>
+                                                    Quality: {visionModalData.audit.quality.score}/100
+                                                </span>
+                                            ) : (
+                                                <span className="text-[10px] text-gray-400">Score Pending</span>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                            <div>
+                                                <span className="text-gray-400 block text-[10px]">Classification</span>
+                                                <span className="font-semibold truncate block">
+                                                    {visionModalData.audit?.classification?.type || 'Real Estate Photo'}
+                                                    {visionModalData.audit?.classification?.category ? ` (${visionModalData.audit.classification.category})` : ''}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-400 block text-[10px]">Sharpness</span>
+                                                <span className="font-semibold block">
+                                                    {visionModalData.audit?.quality?.sharpness || 'Standard'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {visionModalData.audit?.suggestions && visionModalData.audit.suggestions.length > 0 && (
+                                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700/50">
+                                                <span className="text-gray-400 block text-[10px] mb-1">Detected Elements</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {visionModalData.audit.suggestions.map((sug, sIdx) => (
+                                                        <span key={sIdx} className="px-1.5 py-0.5 rounded text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                                            {sug}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* OCR Text snippet if present */}
+                                    {visionModalData.ocrText && (
+                                        <div className={`p-2.5 rounded-xl border text-[11px] ${
+                                            isDarkMode ? 'bg-gray-800/40 border-gray-700/40 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-600'
+                                        }`}>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Extracted Text (OCR)</span>
+                                            <p className="font-mono text-[10px] truncate max-h-10 overflow-hidden">{visionModalData.ocrText.trim()}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Bottom: Vision Analysis (AI Scene Description) */}
+                            <div className={`p-4 rounded-xl border transition-all ${
+                                isDarkMode ? 'bg-gray-800/40 border-gray-700/60' : 'bg-indigo-50/40 border-indigo-100'
+                            }`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <FaEye className="text-indigo-500" size={14} />
+                                        <h4 className="text-xs font-bold uppercase tracking-wider">AI Visual Scene Description</h4>
+                                    </div>
+                                    {!visionModalData.isAnalyzing && (
+                                        <button
+                                            onClick={() => setIsEditingVision(!isEditingVision)}
+                                            className="px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 border border-indigo-500/20 flex items-center gap-1.5 transition-all"
+                                        >
+                                            <FaEdit size={11} /> {isEditingVision ? 'Preview' : 'Edit Context'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {visionModalData.isAnalyzing ? (
+                                    <div className="space-y-2 py-2">
+                                        <div className="h-3.5 bg-indigo-500/20 rounded animate-pulse w-full"></div>
+                                        <div className="h-3.5 bg-indigo-500/20 rounded animate-pulse w-5/6"></div>
+                                        <div className="h-3.5 bg-indigo-500/20 rounded animate-pulse w-3/4"></div>
+                                        <p className="text-[11px] text-indigo-400 italic pt-1 animate-pulse flex items-center gap-2">
+                                            <UrbanSetuSpinner size="sm" /> Groq Qwen 27B Vision is analyzing visual features...
+                                        </p>
+                                    </div>
+                                ) : isEditingVision ? (
+                                    <div className="space-y-2">
+                                        <textarea
+                                            value={visionEditText}
+                                            onChange={(e) => setVisionEditText(e.target.value.slice(0, 1000))}
+                                            rows={5}
+                                            placeholder="Add or edit the AI's visual scene understanding description..."
+                                            className={`w-full p-3 rounded-xl text-xs font-sans border outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none transition-all ${
+                                                isDarkMode 
+                                                    ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500' 
+                                                    : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                                            }`}
+                                        />
+                                        <div className="flex items-center justify-between text-[10px]">
+                                            <span className={`${
+                                                visionEditText.length > 800 ? 'text-amber-500 font-bold' : 'text-gray-400'
+                                            }`}>
+                                                {visionEditText.length} / 1000 characters (~{Math.round(visionEditText.length / 4)} tokens)
+                                            </span>
+                                            <span className="text-gray-400">
+                                                🔒 Safe within Groq 8k TPM limit
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className={`text-xs leading-relaxed max-h-48 overflow-y-auto custom-scrollbar ${
+                                        isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                                    }`}>
+                                        {visionModalData.visionAnalysis ? (
+                                            <p className="whitespace-pre-wrap">{visionModalData.visionAnalysis}</p>
+                                        ) : (
+                                            <p className="text-gray-400 italic">No visual text description generated yet for this media.</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className={`px-5 py-3.5 border-t flex items-center justify-between ${
+                            isDarkMode ? 'border-gray-800 bg-gray-900/80' : 'border-gray-100 bg-gray-50/90'
+                        }`}>
+                            <span className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                                <FaInfoCircle size={12} className="text-indigo-400" />
+                                Passed automatically to SetuAI prompt context
+                            </span>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setIsVisionModalOpen(false)}
+                                    disabled={isSavingVision}
+                                    className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+                                        isDarkMode 
+                                            ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' 
+                                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                    }`}
+                                >
+                                    Close
+                                </button>
+                                {isEditingVision && (
+                                    <button
+                                        onClick={handleSaveVisionAnalysis}
+                                        disabled={isSavingVision}
+                                        className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20 flex items-center gap-1.5 transition-all disabled:opacity-50"
+                                    >
+                                        {isSavingVision ? (
+                                            <>
+                                                <UrbanSetuSpinner size="sm" isBright={true} /> Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaSave size={12} /> Save & Update
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Durandhar Video Player Modal */}
             <VideoPreview

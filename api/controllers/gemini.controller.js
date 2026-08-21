@@ -1874,6 +1874,8 @@ export const updateSessionHistory = async (req, res) => {
             documentUrl: msg.documentUrl,
             documentName: msg.documentName,
             imageAudits: msg.imageAudits,
+            ocrText: msg.ocrText,
+            visionAnalysis: msg.visionAnalysis,
             variants: (msg.variants || []).map(v => ({
                 role: v.role || msg.role,
                 content: v.content,
@@ -1888,6 +1890,8 @@ export const updateSessionHistory = async (req, res) => {
                 documentUrl: v.documentUrl,
                 documentName: v.documentName,
                 imageAudits: v.imageAudits,
+                ocrText: v.ocrText,
+                visionAnalysis: v.visionAnalysis,
                 tail: v.tail || []
             }))
         }));
