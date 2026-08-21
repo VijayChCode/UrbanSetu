@@ -16399,11 +16399,33 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
 
                                     {/* OCR Text snippet if present */}
                                     {visionModalData.ocrText && (
-                                        <div className={`p-2.5 rounded-xl border text-[11px] ${
-                                            isDarkMode ? 'bg-gray-800/40 border-gray-700/40 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-600'
-                                        }`}>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">Extracted Text (OCR)</span>
-                                            <p className="font-mono text-[10px] truncate max-h-10 overflow-hidden">{visionModalData.ocrText.trim()}</p>
+                                        <div 
+                                            className={`group/ocr relative p-2.5 rounded-xl border text-[11px] transition-all duration-300 ${
+                                                isDarkMode ? 'bg-gray-800/40 hover:bg-gray-800/80 border-gray-700/40 text-gray-300' : 'bg-gray-50 hover:bg-gray-100/90 border-gray-200 text-gray-600'
+                                            }`}
+                                            title={visionModalData.ocrText.trim()}
+                                        >
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Extracted Text (OCR)</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigator.clipboard.writeText(visionModalData.ocrText.trim());
+                                                        toast.success('OCR text copied to clipboard');
+                                                    }}
+                                                    className="text-[9px] text-indigo-400 hover:text-indigo-300 opacity-0 group-hover/ocr:opacity-100 transition-opacity font-sans flex items-center gap-1 hover:underline"
+                                                    title="Copy OCR text"
+                                                >
+                                                    <FaCopy size={9} /> Copy Full Text
+                                                </button>
+                                            </div>
+                                            <p 
+                                                className="font-mono text-[10px] whitespace-pre-wrap line-clamp-2 group-hover/ocr:line-clamp-none max-h-12 group-hover/ocr:max-h-44 overflow-y-auto transition-all duration-300 custom-scrollbar select-text"
+                                                title={visionModalData.ocrText.trim()}
+                                            >
+                                                {visionModalData.ocrText.trim()}
+                                            </p>
                                         </div>
                                     )}
 
