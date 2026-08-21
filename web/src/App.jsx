@@ -1486,12 +1486,6 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/user/market-trends" element={<MarketTrends />} />
               <Route path="/agent/dashboard" element={<AgentDashboard />} />
               <Route path="/user/become-an-agent" element={<BecomeAgent />} />
-
-              <Route path="/reminders" element={<Navigate to="/user/reminders" />} />
-              <Route path="/admin/reminders" element={<Navigate to="/user/reminders" />} />
-              <Route path="/contact" element={<Navigate to="/user/contact" />} />
-              <Route path="/admin/contact" element={<Navigate to="/user/contact" />} />
-              <Route path="/ai" element={<Navigate to="/user/ai" />} />
             </Route>
 
             {/* Admin Routes */}
@@ -1567,14 +1561,6 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/community/post/:postId" element={<AdminCommunity />} />
               <Route path="/admin/setu-coins" element={<AdminCoinStats />} />
               <Route path="/admin/leaderboard" element={<Leaderboard isAdmin={true} />} />
-              <Route path="/reminders" element={<Navigate to="/admin/reminders" />} />
-              <Route path="/user/reminders" element={<Navigate to="/admin/reminders" />} />
-              <Route path="/contact" element={<Navigate to="/admin/support" />} />
-              <Route path="/support" element={<Navigate to="/admin/support" />} />
-              <Route path="/user/contact" element={<Navigate to="/admin/support" />} />
-              <Route path="/user/support" element={<Navigate to="/admin/support" />} />
-              <Route path="/ai" element={<Navigate to="/admin/ai" />} />
-              <Route path="/user/ai" element={<Navigate to="/admin/ai" />} />
               <Route path="/admin/help-center" element={<AdminHelpCenter />} />
               <Route path="/admin/error-codes" element={<ErrorCodes />} />
               <Route path="/admin/market-trends" element={<MarketTrends />} />
