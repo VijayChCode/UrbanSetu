@@ -16986,7 +16986,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     disabled={isFaceTagRefreshing}
                                     value={faceTaggingModal.name}
                                     onChange={(e) => setFaceTaggingModal(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="e.g. Mahesh Babu"
+                                    placeholder="e.g. MS Dhoni"
                                     className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all outline-none ${
                                         isDarkMode
                                             ? 'bg-gray-900 border-gray-800 focus:border-purple-500/80 text-white focus:bg-gray-900'
