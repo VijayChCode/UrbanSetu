@@ -188,7 +188,7 @@ export const chatWithGemini = async (req, res) => {
         }
 
         const userDisplayContent = userTypedMessage;
-        let visionAnalysisResult = cachedVision || null;
+        let visionAnalysisResult = null;
         const media = {
             images,
             imageUrl,
@@ -651,6 +651,10 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                     if (lastMsg && lastMsg.role === 'user' && lastMsg.content === userDisplayContent) {
                         cachedOcr = lastMsg.ocrText;
                         cachedVision = lastMsg.visionAnalysis;
+                        if (cachedVision) {
+                            visionAnalysisResult = cachedVision;
+                            media.visionAnalysis = cachedVision;
+                        }
                     }
                 }
             } catch (err) {
