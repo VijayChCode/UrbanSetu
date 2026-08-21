@@ -15323,7 +15323,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <h3 className="font-bold text-lg mb-2 text-blue-500">1. Introduction</h3>
                                             <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
                                                 Welcome to SetuAI. By accessing or using this AI chatbot service, you agree to be bound by these Terms and Conditions.
-                                                This service utilizes advanced artificial intelligence technology powered by Groq and Meta Llama 3 models.
+                                                This service utilizes advanced artificial intelligence technology powered by Groq and GPT-OSS and Qwen 3.6 models.
                                             </p>
                                         </section>
 
