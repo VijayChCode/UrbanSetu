@@ -16403,6 +16403,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             className={`group/ocr relative p-2.5 rounded-xl border text-[11px] ${
                                                 isDarkMode ? 'bg-gray-800/40 border-gray-700/40 text-gray-300' : 'bg-gray-50 border-gray-200 text-gray-600'
                                             }`}
+                                            title={visionModalData.ocrText.trim()}
                                         >
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Extracted Text (OCR)</span>
@@ -16419,20 +16420,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <FaCopy size={9} /> Copy
                                                 </button>
                                             </div>
-                                            <p className="font-mono text-[10px] truncate select-none text-gray-400">
+                                            <p 
+                                                className="font-mono text-[10px] truncate select-none text-gray-400 cursor-default"
+                                                title={visionModalData.ocrText.trim()}
+                                            >
                                                 {visionModalData.ocrText.trim()}
                                             </p>
-
-                                            {/* Floating Black Window / Tooltip on Hover */}
-                                            <div className="hidden group-hover/ocr:block absolute bottom-full left-0 right-0 mb-2 z-50 p-3 rounded-xl bg-gray-950/95 text-gray-100 border border-gray-700/80 shadow-2xl backdrop-blur-xl max-h-48 overflow-y-auto custom-scrollbar animate-fadeIn">
-                                                <div className="flex items-center justify-between border-b border-gray-800 pb-1 mb-1.5">
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Full Extracted Text (OCR)</span>
-                                                    <span className="text-[8px] text-gray-500 font-mono">{visionModalData.ocrText.trim().length} chars</span>
-                                                </div>
-                                                <p className="font-mono text-[10px] whitespace-pre-wrap select-text leading-relaxed text-gray-200">
-                                                    {visionModalData.ocrText.trim()}
-                                                </p>
-                                            </div>
                                         </div>
                                     )}
 
