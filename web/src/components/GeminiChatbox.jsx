@@ -16372,13 +16372,31 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                 </div>
 
                                 {visionModalData.isAnalyzing ? (
-                                    <div className="space-y-2 py-2">
-                                        <div className="h-3.5 bg-indigo-500/20 rounded animate-pulse w-full"></div>
-                                        <div className="h-3.5 bg-indigo-500/20 rounded animate-pulse w-5/6"></div>
-                                        <div className="h-3.5 bg-indigo-500/20 rounded animate-pulse w-3/4"></div>
-                                        <p className="text-[11px] text-indigo-400 italic pt-1 animate-pulse flex items-center gap-2">
-                                            <UrbanSetuSpinner size="sm" /> Groq Qwen 27B Vision is analyzing visual features...
-                                        </p>
+                                    <div className="relative overflow-hidden space-y-2.5 py-3.5 px-4 rounded-xl bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent border border-indigo-500/20 backdrop-blur-md">
+                                        {/* Shimmer sweep light effect */}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 animate-pulse">
+                                                    Neural Vision Analysis in Progress
+                                                </span>
+                                            </div>
+                                            <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                                Qwen 27B Vision
+                                            </span>
+                                        </div>
+
+                                        {/* Glassmorphic Animated Skeleton Bars */}
+                                        <div className="h-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/30 to-indigo-500/20 rounded-full animate-pulse w-full shadow-inner"></div>
+                                        <div className="h-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/30 to-indigo-500/20 rounded-full animate-pulse w-11/12"></div>
+                                        <div className="h-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/30 to-indigo-500/20 rounded-full animate-pulse w-4/5"></div>
+                                        <div className="h-3 bg-gradient-to-r from-indigo-500/20 via-purple-500/30 to-indigo-500/20 rounded-full animate-pulse w-3/5"></div>
+
+                                        <div className="pt-2 border-t border-indigo-500/10 flex items-center justify-between">
+                                            <p className="text-[11px] text-indigo-400 font-medium italic flex items-center gap-2">
+                                                <UrbanSetuSpinner size="sm" isBright={true} /> Extracting visual features, objects & layout...
+                                            </p>
+                                        </div>
                                     </div>
                                 ) : isEditingVision ? (
                                     <div className="space-y-2">
