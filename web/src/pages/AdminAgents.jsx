@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaCheck, FaTimes, FaSearch, FaUserTie, FaArrowLeft, FaArrowRight, FaExclamationTriangle, FaEye, FaBuilding, FaIdCard, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaInfoCircle, FaFileAlt } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
+import { FaCheck, FaTimes, FaSearch, FaUserTie, FaArrowLeft, FaArrowRight, FaExclamationTriangle, FaEye, FaBuilding, FaIdCard, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaInfoCircle, FaFileAlt, FaUserShield } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 import { authenticatedFetch } from '../utils/auth';
@@ -9,6 +10,9 @@ import AdminAgentsSkeleton from '../components/skeletons/AdminAgentsSkeleton';
 
 const AdminAgents = () => {
     usePageTitle('Manage Agents - UrbanSetu');
+    const { currentUser } = useSelector(state => state.user);
+    const isRootAdmin = currentUser?.role === 'rootadmin' || currentUser?.isDefaultAdmin;
+
     const [agents, setAgents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all'); // all, pending, approved, rejected, revoked
@@ -513,8 +517,8 @@ const AdminAgents = () => {
                                 </p>
                             </div>
 
-                            {/* Rejection Reason if any */}
-                            {selectedAgent.rejectionReason && (
+                            {/* Rejection Reason for Non-Root Admins */}
+                            {!isRootAdmin && selectedAgent.rejectionReason && (
                                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl space-y-1">
                                     <span className="text-xs text-red-600 dark:text-red-400 font-semibold flex items-center gap-1">
                                         <FaExclamationTriangle /> Rejection Reason
@@ -522,6 +526,76 @@ const AdminAgents = () => {
                                     <p className="text-xs text-red-700 dark:text-red-300">
                                         {selectedAgent.rejectionReason}
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Root Admin Only — Verification Audit Log */}
+                            {isRootAdmin && (selectedAgent.status === 'approved' || selectedAgent.status === 'rejected') && (
+                                <div className="p-4 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-950/30 dark:via-indigo-950/30 dark:to-blue-950/30 border-2 border-purple-200 dark:border-purple-800/60 rounded-xl space-y-3 shadow-sm">
+                                    <div className="flex items-center justify-between border-b border-purple-200/60 dark:border-purple-800/40 pb-2">
+                                        <span className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                                            <FaUserShield className="text-sm text-purple-600 dark:text-purple-400" /> Admin Action Audit (RootAdmin Only)
+                                        </span>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                            selectedAgent.status === 'approved' 
+                                                ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800' 
+                                                : (selectedAgent.revokedAt 
+                                                    ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800'
+                                                    : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800')
+                                        }`}>
+                                            {selectedAgent.status === 'approved' ? 'Approved' : (selectedAgent.revokedAt ? 'Revoked' : 'Rejected')}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                        <div>
+                                            <span className="text-gray-500 dark:text-gray-400 block font-medium mb-1">
+                                                {selectedAgent.status === 'approved' ? 'Approved By Admin:' : (selectedAgent.revokedAt ? 'Revoked By Admin:' : 'Rejected By Admin:')}
+                                            </span>
+                                            {selectedAgent.processedBy ? (
+                                                <div className="flex items-center gap-2">
+                                                    <img 
+                                                        src={selectedAgent.processedBy.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"} 
+                                                        alt="" 
+                                                        className="w-7 h-7 rounded-full object-cover border border-purple-300 dark:border-purple-700 shrink-0" 
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="font-bold text-gray-900 dark:text-white truncate">
+                                                                {selectedAgent.processedBy.username || selectedAgent.processedBy.email}
+                                                            </span>
+                                                            <span className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold shrink-0">
+                                                                {selectedAgent.processedBy.role || 'Admin'}
+                                                            </span>
+                                                        </div>
+                                                        {selectedAgent.processedBy.email && (
+                                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                                                                {selectedAgent.processedBy.email}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-600 dark:text-gray-300 font-medium italic block">
+                                                    System / Default Admin Action
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <span className="text-gray-500 dark:text-gray-400 block font-medium mb-1">Action Date & Time:</span>
+                                            <p className="font-semibold text-gray-900 dark:text-white">
+                                                {selectedAgent.processedAt 
+                                                    ? new Date(selectedAgent.processedAt).toLocaleString() 
+                                                    : (selectedAgent.updatedAt ? new Date(selectedAgent.updatedAt).toLocaleString() : 'N/A')}
+                                            </p>
+                                            {selectedAgent.rejectionReason && (
+                                                <p className="text-[11px] text-red-600 dark:text-red-400 mt-1 font-medium line-clamp-2" title={selectedAgent.rejectionReason}>
+                                                    Reason: "{selectedAgent.rejectionReason}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

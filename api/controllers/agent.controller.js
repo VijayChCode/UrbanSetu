@@ -61,7 +61,9 @@ export const getAgent = async (req, res, next) => {
     try {
         const { id } = req.params;
         // We might accept ID or UserID, but usually _id of Agent doc
-        const agent = await Agent.findById(id).populate('userId', 'username email avatar gender');
+        const agent = await Agent.findById(id)
+            .populate('userId', 'username email avatar gender')
+            .populate('processedBy', 'username email role avatar');
 
         if (!agent) return next(errorHandler(404, "Agent not found"));
 
@@ -176,7 +178,10 @@ export const checkMyAgentStatus = async (req, res, next) => {
 export const getAllAgentsAdmin = async (req, res, next) => {
     try {
         // Admin wants to see all: pending, approved, rejected
-        const agents = await Agent.find().populate('userId', 'username email').sort({ createdAt: -1 });
+        const agents = await Agent.find()
+            .populate('userId', 'username email')
+            .populate('processedBy', 'username email role avatar')
+            .sort({ createdAt: -1 });
         res.status(200).json(agents);
     } catch (error) {
         next(error);
@@ -230,6 +235,9 @@ export const updateAgentStatus = async (req, res, next) => {
         const previousStatus = agent.status;
 
         agent.status = status;
+        agent.processedBy = req.user._id || req.user.id;
+        agent.processedAt = new Date();
+
         if (status === 'rejected') {
             if (rejectionReason) agent.rejectionReason = rejectionReason;
             // Set revokedAt if specifically revoked (previously approved), else null
@@ -260,7 +268,11 @@ export const updateAgentStatus = async (req, res, next) => {
             // Don't fail the request if email fails
         }
 
-        res.status(200).json(agent);
+        const populatedAgent = await Agent.findById(agent._id)
+            .populate('userId', 'username email')
+            .populate('processedBy', 'username email role avatar');
+
+        res.status(200).json(populatedAgent);
     } catch (error) {
         next(error);
     }
