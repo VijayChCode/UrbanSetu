@@ -37,10 +37,28 @@ const BecomeAgent = () => {
             if (res.ok && data.isAgent) {
                 setAgentStatus(data.status);
                 setAgentId(data.agentId);
-                // Fetch full profile for revocation check
-                const profileRes = await authenticatedFetch(`${API_BASE_URL}/api/agent/profile/${data.agentId}`);
-                const profileData = await profileRes.json();
-                setExistingAgent(profileData);
+                let agentDoc = data.agent;
+                if (!agentDoc && data.agentId) {
+                    const profileRes = await authenticatedFetch(`${API_BASE_URL}/api/agent/profile/${data.agentId}`);
+                    if (profileRes.ok) {
+                        agentDoc = await profileRes.json();
+                    }
+                }
+                setExistingAgent(agentDoc);
+
+                // If rejected and can reapply, prefill previous form values
+                if (data.status === 'rejected' && agentDoc) {
+                    setFormData({
+                        name: agentDoc.name || (currentUser ? currentUser.username : ''),
+                        mobileNumber: agentDoc.mobileNumber || (currentUser ? currentUser.mobileNumber : ''),
+                        city: agentDoc.city || (currentUser ? currentUser.address || '' : ''),
+                        experience: agentDoc.experience !== undefined && agentDoc.experience !== null ? agentDoc.experience.toString() : '',
+                        about: agentDoc.about || '',
+                        areas: Array.isArray(agentDoc.areas) ? agentDoc.areas.join(', ') : (agentDoc.areas || ''),
+                        reraId: agentDoc.reraId || '',
+                        agencyName: agentDoc.agencyName || '',
+                    });
+                }
             }
         } catch (error) {
             console.error("Error checking status:", error);
@@ -369,13 +387,38 @@ const BecomeAgent = () => {
 
                 {/* Re-application notice */}
                 {canReapply && (
-                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center">
-                        <p className="text-blue-700 dark:text-blue-300 font-medium mb-1">
-                            Your previous application was rejected. You can now submit a new application below.
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Need clarification? <Link to={contactUrl} className="text-blue-600 hover:underline font-semibold">Contact Support</Link>
-                        </p>
+                    <div className="mb-8 p-5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-2 border-amber-300 dark:border-amber-700/60 rounded-2xl shadow-sm animate-fade-in-up">
+                        <div className="flex items-start gap-3.5">
+                            <div className="p-2.5 bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 rounded-xl text-lg shrink-0 mt-0.5">
+                                <FaExclamationTriangle />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-200/70 dark:bg-amber-900/60 px-2.5 py-0.5 rounded-full">
+                                        Previous Application Not Approved
+                                    </span>
+                                    <span className="text-[11px] text-green-700 dark:text-green-400 font-semibold bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded-full">
+                                        ✓ Instant Re-application Available
+                                    </span>
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+                                    Update Your Details & Re-Submit
+                                </h3>
+                                {existingAgent?.rejectionReason ? (
+                                    <div className="p-3 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-amber-200 dark:border-amber-800/50 mb-2 text-sm text-gray-700 dark:text-gray-300">
+                                        <span className="font-bold text-amber-800 dark:text-amber-300">Admin Feedback: </span>
+                                        <span className="italic">"{existingAgent.rejectionReason}"</span>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                        Your previous submission was not approved. Your existing details have been pre-filled below so you can update them easily.
+                                    </p>
+                                )}
+                                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    Need assistance with verification requirements? <Link to={contactUrl} className="text-blue-600 dark:text-blue-400 hover:underline font-bold">Contact Support Team</Link>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 )}
 

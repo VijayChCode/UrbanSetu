@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaSearch, FaMapMarkerAlt, FaUserPlus, FaUserTie, FaInfoCircle, FaSortAmountDown, FaFilter, FaCheckCircle, FaStar, FaTimes, FaChevronDown, FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaUserPlus, FaUserTie, FaInfoCircle, FaSortAmountDown, FaFilter, FaCheckCircle, FaStar, FaTimes, FaChevronDown, FaClock, FaExclamationTriangle, FaTimesCircle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -291,6 +291,38 @@ const FindAgent = () => {
                                     </div>
                                     <span className="text-red-600 dark:text-red-400 font-semibold text-sm hidden sm:inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform shrink-0">
                                         View Details →
+                                    </span>
+                                </div>
+                            </Link>
+                        )}
+
+                        {/* 4. Normal Application Rejection View (No cooldown, can re-apply immediately) */}
+                        {myAgentProfile.status === 'rejected' && !myAgentProfile.revokedAt && (
+                            <Link
+                                to="/user/become-an-agent"
+                                className="block bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/30 dark:to-red-950/30 rounded-2xl border-2 border-rose-300 dark:border-rose-700/60 p-5 hover:shadow-lg transition-all group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-xl bg-rose-100 dark:bg-rose-900/40 border-2 border-rose-300 dark:border-rose-700 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                                        <FaTimesCircle className="text-2xl" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                                <FaTimesCircle className="text-[10px]" /> Application Not Approved
+                                            </span>
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate">
+                                            {myAgentProfile.name || currentUser.username} — Application Needs Updates
+                                        </h3>
+                                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+                                            {myAgentProfile.rejectionReason 
+                                                ? `Feedback: "${myAgentProfile.rejectionReason}". You can update your details and re-apply immediately.` 
+                                                : 'Your previous application was not approved. You can review your details and re-apply anytime.'}
+                                        </p>
+                                    </div>
+                                    <span className="text-rose-600 dark:text-rose-400 font-semibold text-sm hidden sm:inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform shrink-0">
+                                        Re-apply Now →
                                     </span>
                                 </div>
                             </Link>
