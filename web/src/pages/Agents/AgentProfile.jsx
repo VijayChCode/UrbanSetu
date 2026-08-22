@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ListingItem from '../../components/ListingItem';
-import { FaMapMarkerAlt, FaStar, FaBuilding, FaUserTie, FaCheckCircle, FaCommentDots, FaCalendarCheck, FaIdCard, FaArrowLeft, FaEdit, FaEnvelope, FaTimes, FaTrash, FaCheck, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaBuilding, FaUserTie, FaCheckCircle, FaCommentDots, FaCalendarCheck, FaIdCard, FaArrowLeft, FaEdit, FaEnvelope, FaTimes, FaTrash, FaCheck, FaExclamationTriangle, FaInfoCircle, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
 import { useSelector } from 'react-redux';
 import { API_BASE_URL } from '../../config/api';
@@ -75,6 +75,92 @@ const AgentProfile = () => {
     // Chat State
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [showInfoModal, setShowInfoModal] = useState(false);
+
+    // === Listings Slider State (same pattern as Home.jsx Recently Viewed) ===
+    const listingsScrollRef = useRef(null);
+    const [showListingsLeftArrow, setShowListingsLeftArrow] = useState(false);
+    const [showListingsRightArrow, setShowListingsRightArrow] = useState(true);
+    const [listingsNumDots, setListingsNumDots] = useState(0);
+    const [listingsActiveDot, setListingsActiveDot] = useState(0);
+
+    const updateListingsDots = () => {
+        if (!listingsScrollRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = listingsScrollRef.current;
+        
+        setShowListingsLeftArrow(scrollLeft > 10);
+        setShowListingsRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+
+        const cards = listingsScrollRef.current.children;
+        if (cards && cards.length > 0) {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 24; // gap-6 is 24px
+            const step = cardWidth + gap;
+            
+            const maxScroll = scrollWidth - clientWidth;
+            if (maxScroll <= 0) {
+                setListingsNumDots(0);
+                setListingsActiveDot(0);
+                return;
+            }
+
+            const stepsCount = Math.round(maxScroll / step);
+            const totalDots = stepsCount + 1;
+            setListingsNumDots(totalDots > 1 ? totalDots : 0);
+
+            const currentStep = Math.round(scrollLeft / step);
+            setListingsActiveDot(Math.min(currentStep, stepsCount));
+        }
+    };
+
+    const handleListingsScroll = () => {
+        updateListingsDots();
+    };
+
+    const scrollListingsDirection = (direction) => {
+        if (!listingsScrollRef.current) return;
+        const cards = listingsScrollRef.current.children;
+        if (cards && cards.length > 0) {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 24;
+            const step = cardWidth + gap;
+            const currentScroll = listingsScrollRef.current.scrollLeft;
+            
+            const targetScroll = direction === 'left' 
+                ? currentScroll - step 
+                : currentScroll + step;
+                
+            listingsScrollRef.current.scrollTo({
+                left: targetScroll,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    const scrollListingsToDot = (index) => {
+        if (!listingsScrollRef.current) return;
+        const cards = listingsScrollRef.current.children;
+        if (cards && cards.length > 0) {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = 24;
+            const step = cardWidth + gap;
+            listingsScrollRef.current.scrollTo({
+                left: index * step,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            updateListingsDots();
+        }, 100);
+
+        window.addEventListener('resize', updateListingsDots);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', updateListingsDots);
+        };
+    }, [listings]);
 
     useEffect(() => {
         fetchAgent();
@@ -366,8 +452,8 @@ const AgentProfile = () => {
                 schema={agentSchema}
             />
             {/* Header / Cover */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-gray-800 dark:to-gray-900 h-48 md:h-60 relative transition-colors duration-300">
-                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/city-fields.png')]"></div>
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 dark:from-gray-800 dark:via-gray-850 dark:to-gray-900 h-48 md:h-56 relative transition-colors duration-300">
+                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
                 {/* Header Content & Buttons */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 h-full">
@@ -382,24 +468,21 @@ const AgentProfile = () => {
                         {isOwner && (
                             <button
                                 onClick={openEditModal}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105"
+                                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold shadow-lg transition-all transform hover:scale-105 border border-white/20"
                             >
                                 <FaEdit /> Edit Profile
                             </button>
                         )}
                     </div>
-
-
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-30">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-28 relative z-30">
 
-
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
                     <div className="md:flex">
                         {/* Sidebar / Left Info */}
-                        <div className="md:w-1/3 bg-gray-50 dark:bg-gray-800/50 p-6 md:p-8 text-center md:text-left border-r border-gray-100 dark:border-gray-700 relative">
+                        <div className="md:w-1/3 lg:w-[320px] bg-gray-50 dark:bg-gray-800/50 p-6 md:p-8 text-center md:text-left border-r border-gray-100 dark:border-gray-700 relative flex-shrink-0">
                             <button
                                 onClick={() => setShowInfoModal(true)}
                                 className="absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors z-10"
@@ -407,30 +490,30 @@ const AgentProfile = () => {
                             >
                                 <FaInfoCircle className="text-xl" />
                             </button>
+
+                            {/* Avatar */}
                             <div className="relative inline-block md:block mb-4">
                                 <img
                                     src={agent.photo}
                                     alt={agent.name}
-                                    className="w-40 h-40 md:w-56 md:h-56 rounded-full md:rounded-2xl object-cover border-4 border-white dark:border-gray-700 shadow-lg mx-auto md:mx-0"
+                                    className="w-36 h-36 md:w-48 md:h-48 rounded-2xl object-cover border-4 border-white dark:border-gray-700 shadow-lg mx-auto md:mx-0"
                                 />
                                 {agent.isVerified && (
-                                    <div className="absolute bottom-2 right-2 md:-bottom-2 md:-right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-gray-800" title="Verified Agent">
-                                        <FaUserTie />
+                                    <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2.5 rounded-full shadow-lg border-3 border-white dark:border-gray-800" title="Verified Agent">
+                                        <FaUserTie className="text-sm" />
                                     </div>
                                 )}
                             </div>
 
-                            {/* Name logic moved to header, but we can keep subtle branding here or remove H1 */}
-                            {/* Let's keep a smaller version or just agency info */}
-
+                            {/* Agency Name */}
                             {agent.agencyName && (
-                                <p className="text-gray-600 dark:text-gray-400 flex items-center justify-center md:justify-start gap-2 mb-4 mt-2">
-                                    <FaBuilding /> {agent.agencyName}
+                                <p className="text-gray-600 dark:text-gray-400 flex items-center justify-center md:justify-start gap-2 mb-4 mt-2 text-sm">
+                                    <FaBuilding className="text-blue-500" /> {agent.agencyName}
                                 </p>
                             )}
 
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-3 mb-6">
                                 <div className="bg-white dark:bg-gray-700 p-3 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600 text-center">
                                     <span className="block text-2xl font-bold text-blue-600 dark:text-blue-400">{agent.experience}+</span>
                                     <span className="text-xs text-gray-500 dark:text-gray-300">Years Exp.</span>
@@ -446,9 +529,18 @@ const AgentProfile = () => {
                             {/* Action Buttons: Show contact ONLY if NOT owner */}
                             {!isOwner && currentUser && (
                                 <div className="space-y-3">
-                                    <button className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold shadow-md transition-all hover:scale-105">
-                                        <FaCalendarCheck /> Book Appointment Coming Soon... Use Chat to Contact
+                                    {/* Chat Button - Primary Action */}
+                                    <button 
+                                        onClick={handleMessageAgent}
+                                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
+                                    >
+                                        <FaCommentDots /> Chat with Agent
                                     </button>
+                                    {/* Coming Soon - Appointment */}
+                                    <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-gray-400 dark:text-gray-500 text-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50">
+                                        <FaCalendarCheck className="text-xs" />
+                                        <span>Book Appointment — Coming Soon</span>
+                                    </div>
                                 </div>
                             )}
 
@@ -461,7 +553,7 @@ const AgentProfile = () => {
                                 </div>
                             )}
 
-                            {/* Owner Info: Maybe show some status or simple text */}
+                            {/* Owner Info */}
                             {isOwner && (
                                 <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-center">
                                     <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">This is your public profile view.</p>
@@ -471,14 +563,17 @@ const AgentProfile = () => {
                         </div>
 
                         {/* Main Content */}
-                        <div className="md:w-2/3 p-6 md:p-10">
+                        <div className="md:w-2/3 lg:flex-1 p-6 md:p-10">
                             {/* Agent Header Info */}
                             <div className="mb-8 animate-fade-in-up">
                                 <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400 text-xs font-semibold tracking-wider uppercase mb-2">
                                     Professional Agent
                                 </span>
                                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">{agent.name}</h1>
-                                <p className="text-gray-500 dark:text-gray-400 max-w-xl">{agent.city} • {agent.experience} Years Experience</p>
+                                <p className="text-gray-500 dark:text-gray-400 max-w-xl flex items-center gap-2">
+                                    <FaMapMarkerAlt className="text-red-500 text-sm" />
+                                    {agent.city} • {agent.experience} Years Experience
+                                </p>
                             </div>
 
                             {/* Admin Management Panel */}
@@ -591,8 +686,7 @@ const AgentProfile = () => {
                                 </div>
                             </section>
 
-                            {/* Listings Section (Placeholder for now) */}
-                            {/* Listings Section */}
+                            {/* === Active Listings Section — Horizontal Slider === */}
                             {currentUser && (
                                 <section className="mb-10">
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 border-b dark:border-gray-700 pb-2 flex justify-between items-center">
@@ -600,10 +694,62 @@ const AgentProfile = () => {
                                         {listings.length > 0 && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">{listings.length}</span>}
                                     </h3>
                                     {listings.length > 0 ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-                                            {listings.map((listing) => (
-                                                <ListingItem key={listing._id} listing={listing} />
-                                            ))}
+                                        <div className="relative group/slider select-none">
+                                            {/* Left Arrow */}
+                                            {showListingsLeftArrow && (
+                                                <button
+                                                    onClick={() => scrollListingsDirection('left')}
+                                                    className="absolute left-0 top-[40%] -translate-y-1/2 -ml-4 z-20 hidden md:flex items-center justify-center w-11 h-11 rounded-full bg-white/95 dark:bg-gray-800/95 text-gray-800 dark:text-white shadow-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 hover:scale-105 transition-all duration-300 cursor-pointer"
+                                                    aria-label="Previous listings"
+                                                >
+                                                    <FaChevronLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                </button>
+                                            )}
+
+                                            {/* Scroll Container */}
+                                            <div
+                                                ref={listingsScrollRef}
+                                                onScroll={handleListingsScroll}
+                                                className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                                            >
+                                                {listings.map((listing) => (
+                                                    <div 
+                                                        key={listing._id} 
+                                                        className="w-[280px] sm:w-[300px] md:w-[280px] lg:w-[270px] shrink-0 snap-start"
+                                                    >
+                                                        <ListingItem listing={listing} />
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Right Arrow */}
+                                            {showListingsRightArrow && (
+                                                <button
+                                                    onClick={() => scrollListingsDirection('right')}
+                                                    className="absolute right-0 top-[40%] -translate-y-1/2 -mr-4 z-20 hidden md:flex items-center justify-center w-11 h-11 rounded-full bg-white/95 dark:bg-gray-800/95 text-gray-800 dark:text-white shadow-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 hover:scale-105 transition-all duration-300 cursor-pointer"
+                                                    aria-label="Next listings"
+                                                >
+                                                    <FaChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                                </button>
+                                            )}
+
+                                            {/* Dots Pagination */}
+                                            {listingsNumDots > 1 && (
+                                                <div className="flex justify-center items-center gap-2 mt-4">
+                                                    {Array.from({ length: listingsNumDots }).map((_, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => scrollListingsToDot(idx)}
+                                                            className={`h-2.5 rounded-full transition-all duration-300 ${
+                                                                listingsActiveDot === idx
+                                                                    ? 'w-6 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 shadow-md shadow-blue-500/20'
+                                                                    : 'w-2.5 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+                                                            }`}
+                                                            aria-label={`Go to listing group ${idx + 1}`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-xl text-center border border-dashed border-gray-300 dark:border-gray-600">
@@ -1048,4 +1194,3 @@ const AgentProfile = () => {
 };
 
 export default AgentProfile;
-

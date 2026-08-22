@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaArrowLeft } from 'react-icons/fa';
+import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaArrowLeft, FaUserTie, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
 import { API_BASE_URL } from '../../config/api';
 import { authenticatedFetch } from '../../utils/auth';
@@ -13,34 +13,45 @@ const BecomeAgent = () => {
     const { currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [checkingStatus, setCheckingStatus] = useState(true);
     const [existingAgent, setExistingAgent] = useState(null);
+    const [agentStatus, setAgentStatus] = useState(null);
+    const [agentId, setAgentId] = useState(null);
 
     useEffect(() => {
         if (currentUser) {
             checkAgentStatus();
+        } else {
+            setCheckingStatus(false);
         }
     }, [currentUser]);
 
     const checkAgentStatus = async () => {
         try {
+            setCheckingStatus(true);
             const res = await authenticatedFetch(`${API_BASE_URL}/api/agent/status/me`);
             const data = await res.json();
             if (res.ok && data.isAgent) {
-                // Fetch full profile to get updatedAt
+                setAgentStatus(data.status);
+                setAgentId(data.agentId);
+                // Fetch full profile for revocation check
                 const profileRes = await authenticatedFetch(`${API_BASE_URL}/api/agent/profile/${data.agentId}`);
                 const profileData = await profileRes.json();
                 setExistingAgent(profileData);
             }
         } catch (error) {
             console.error("Error checking status:", error);
+        } finally {
+            setCheckingStatus(false);
         }
     };
 
+    // FIX: Changed from 'yearsOfExperience' to 'experience' to match backend field name
     const [formData, setFormData] = useState({
         name: currentUser ? currentUser.username : '',
         mobileNumber: currentUser ? currentUser.mobileNumber : '',
         city: currentUser ? currentUser.address || '' : '',
-        yearsOfExperience: '',
+        experience: '',
         about: '',
         areas: '',
         reraId: '',
@@ -83,7 +94,8 @@ const BecomeAgent = () => {
 
             const payload = {
                 ...formData,
-                areas: areasArray
+                areas: areasArray,
+                experience: parseInt(formData.experience) || 0
             };
 
             const res = await authenticatedFetch(`${API_BASE_URL}/api/agent/apply`, {
@@ -110,13 +122,187 @@ const BecomeAgent = () => {
         }
     };
 
+    // Check if agent can re-apply (only rejected without active freeze)
+    const canReapply = agentStatus === 'rejected' && existingAgent && (
+        !existingAgent.revokedAt ||
+        Math.ceil(Math.abs(new Date() - new Date(existingAgent.revokedAt)) / (1000 * 60 * 60 * 24)) >= 30
+    );
+
+    // Show loading while checking status
+    if (checkingStatus) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12 flex items-center justify-center">
+                <UrbanSetuSpinner size="md" />
+            </div>
+        );
+    }
+
+    // === BLOCK: Already Approved Agent ===
+    if (agentStatus === 'approved' && agentId) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12 transition-colors duration-300">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="mb-6">
+                        <button onClick={() => navigate('/user/agents')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+                            <FaArrowLeft /> Back to Agents
+                        </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-fade-in-up">
+                        <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-center">
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaUserTie className="text-4xl text-white" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white">You're Already an Agent! 🎉</h2>
+                        </div>
+
+                        <div className="p-8 text-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-semibold mb-6">
+                                <FaCheckCircle /> Approved & Active
+                            </div>
+
+                            <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">
+                                You are already a registered agent on UrbanSetu.
+                            </p>
+                            <p className="text-gray-500 dark:text-gray-400 mb-8">
+                                If you need to make changes, update your profile from your agent page.
+                            </p>
+
+                            <Link
+                                to={`/user/agents/${agentId}`}
+                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                            >
+                                <FaUserTie /> View & Edit Your Agent Profile
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <style>{`
+                    @keyframes fadeInUp {
+                        from { opacity: 0; transform: translateY(20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in-up {
+                        animation: fadeInUp 0.6s ease-out;
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    // === BLOCK: Pending Application ===
+    if (agentStatus === 'pending') {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12 transition-colors duration-300">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="mb-6">
+                        <button onClick={() => navigate('/user/agents')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+                            <FaArrowLeft /> Back to Agents
+                        </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-fade-in-up">
+                        <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-center">
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaClock className="text-4xl text-white" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white">Application Under Review</h2>
+                        </div>
+
+                        <div className="p-8 text-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-sm font-semibold mb-6">
+                                <FaClock /> Pending Review
+                            </div>
+
+                            <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">
+                                Your agent application is currently being reviewed by our team.
+                            </p>
+                            <p className="text-gray-500 dark:text-gray-400 mb-8">
+                                You'll be notified once a decision is made. This usually takes 1-3 business days.
+                            </p>
+
+                            <button
+                                onClick={() => navigate('/user/agents')}
+                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                            >
+                                Browse Agents
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <style>{`
+                    @keyframes fadeInUp {
+                        from { opacity: 0; transform: translateY(20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in-up {
+                        animation: fadeInUp 0.6s ease-out;
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    // === BLOCK: Revoked and within freeze period ===
+    if (agentStatus === 'rejected' && existingAgent?.revokedAt && !canReapply) {
+        const daysPassed = Math.ceil(Math.abs(new Date() - new Date(existingAgent.revokedAt)) / (1000 * 60 * 60 * 24));
+        const daysLeft = 30 - daysPassed;
+
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12 transition-colors duration-300">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="mb-6">
+                        <button onClick={() => navigate('/user/agents')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+                            <FaArrowLeft /> Back to Agents
+                        </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-fade-in-up">
+                        <div className="bg-gradient-to-r from-red-500 to-rose-600 p-6 text-center">
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaExclamationTriangle className="text-4xl text-white" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white">Account Revoked</h2>
+                        </div>
+
+                        <div className="p-8 text-center">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm font-semibold mb-6">
+                                <FaExclamationTriangle /> {daysLeft} days remaining in cool-off period
+                            </div>
+
+                            <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">
+                                Your agent account was revoked.
+                            </p>
+                            <p className="text-gray-500 dark:text-gray-400 mb-8">
+                                You can re-apply after the 30-day cool-off period ends. Please wait {daysLeft} more day{daysLeft !== 1 ? 's' : ''}.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <style>{`
+                    @keyframes fadeInUp {
+                        from { opacity: 0; transform: translateY(20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in-up {
+                        animation: fadeInUp 0.6s ease-out;
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    // === NORMAL: Show Application Form (new applicants or rejected agents who can reapply) ===
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12 transition-colors duration-300">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Back Link */}
                 <div className="mb-6">
-                    <button onClick={() => navigate('/agents')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+                    <button onClick={() => navigate('/user/agents')} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
                         <FaArrowLeft /> Back to Agents
                     </button>
                 </div>
@@ -130,6 +316,15 @@ const BecomeAgent = () => {
                         Join the UrbanSetu network and connect with thousands of potential buyers and renters.
                     </p>
                 </div>
+
+                {/* Re-application notice */}
+                {canReapply && (
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center">
+                        <p className="text-blue-700 dark:text-blue-300 font-medium">
+                            Your previous application was rejected. You can now submit a new application below.
+                        </p>
+                    </div>
+                )}
 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                     <div className="grid grid-cols-1 lg:grid-cols-3">
@@ -181,8 +376,9 @@ const BecomeAgent = () => {
                                         <input id="city" type="text" required placeholder="e.g. Hyderabad" className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.city} />
                                     </div>
                                     <div>
-                                        <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Years of Experience *</label>
-                                        <input id="yearsOfExperience" type="number" required min="0" className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.yearsOfExperience} />
+                                        {/* FIX: Changed id from 'yearsOfExperience' to 'experience' to match backend */}
+                                        <label htmlFor="experience" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Years of Experience *</label>
+                                        <input id="experience" type="number" required min="0" className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.experience} />
                                     </div>
                                 </div>
 
