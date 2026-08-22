@@ -33,9 +33,9 @@ const AdminAgents = () => {
         fetchAgents();
     }, []);
 
-    const fetchAgents = async () => {
+    const fetchAgents = async (showLoading = true) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const res = await authenticatedFetch(`${API_BASE_URL}/api/agent/admin/all`);
             const data = await res.json();
             if (res.ok) {
@@ -46,7 +46,7 @@ const AdminAgents = () => {
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
@@ -59,13 +59,20 @@ const AdminAgents = () => {
                 },
                 body: JSON.stringify({ status, rejectionReason: reason })
             });
+            const data = await res.json();
 
             if (res.ok) {
                 toast.success(`Agent ${status} successfully`);
-                fetchAgents(); // Refresh list
+                // Directly update local agents array without triggering skeleton loading
+                setAgents(prev => prev.map(a => a._id === id ? data : a));
+                if (selectedAgent && selectedAgent._id === id) {
+                    setSelectedAgent(data);
+                }
                 setShowDetailsModal(false);
+                setShowApproveModal(false);
+                setShowRejectModal(false);
             } else {
-                toast.error("Failed to update status");
+                toast.error(data.message || "Failed to update status");
             }
         } catch (error) {
             console.error(error);
@@ -90,16 +97,14 @@ const AdminAgents = () => {
     };
 
     const submitRejection = () => {
+        if (!selectedAgent) return;
         if (!rejectReason.trim()) return toast.warning("Please provide a reason");
         handleUpdateStatus(selectedAgent._id, 'rejected', rejectReason);
-        setShowRejectModal(false);
-        setSelectedAgent(null);
     };
 
     const submitApproval = () => {
+        if (!selectedAgent) return;
         handleUpdateStatus(selectedAgent._id, 'approved');
-        setShowApproveModal(false);
-        setSelectedAgent(null);
     };
 
     const filteredAgents = agents.filter(agent => {
@@ -187,7 +192,7 @@ const AdminAgents = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {loading ? (
+                            {loading && agents.length === 0 ? (
                                 [...Array(5)].map((_, i) => (
                                     <tr key={i} className="animate-pulse">
                                         <td className="p-4">
