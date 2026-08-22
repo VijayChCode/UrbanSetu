@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaArrowLeft, FaUserTie, FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaArrowLeft, FaUserTie, FaClock, FaExclamationTriangle, FaHeadset, FaEnvelope } from 'react-icons/fa';
 import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
 import BecomeAgentSkeleton from '../../components/skeletons/BecomeAgentSkeleton';
 import { API_BASE_URL } from '../../config/api';
@@ -18,6 +18,8 @@ const BecomeAgent = () => {
     const [existingAgent, setExistingAgent] = useState(null);
     const [agentStatus, setAgentStatus] = useState(null);
     const [agentId, setAgentId] = useState(null);
+
+    const contactUrl = currentUser ? '/user/contact' : '/contact';
 
     useEffect(() => {
         if (currentUser) {
@@ -47,7 +49,7 @@ const BecomeAgent = () => {
         }
     };
 
-    // FIX: Changed from 'yearsOfExperience' to 'experience' to match backend field name
+    // Form data state
     const [formData, setFormData] = useState({
         name: currentUser ? currentUser.username : '',
         mobileNumber: currentUser ? currentUser.mobileNumber : '',
@@ -165,12 +167,20 @@ const BecomeAgent = () => {
                                 If you need to make changes, update your profile from your agent page.
                             </p>
 
-                            <Link
-                                to={`/user/agents/${agentId}`}
-                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                            >
-                                <FaUserTie /> View & Edit Your Agent Profile
-                            </Link>
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                                <Link
+                                    to={`/user/agents/${agentId}`}
+                                    className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+                                >
+                                    <FaUserTie /> View & Edit Profile
+                                </Link>
+                                <Link
+                                    to={contactUrl}
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition-all duration-300 w-full sm:w-auto"
+                                >
+                                    <FaHeadset /> Contact Support
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -215,16 +225,34 @@ const BecomeAgent = () => {
                             <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">
                                 Your agent application is currently being reviewed by our team.
                             </p>
-                            <p className="text-gray-500 dark:text-gray-400 mb-8">
+                            <p className="text-gray-500 dark:text-gray-400 mb-6">
                                 You'll be notified once a decision is made. This usually takes 1-3 business days.
                             </p>
 
-                            <button
-                                onClick={() => navigate('/user/agents')}
-                                className="inline-flex items-center gap-2 px-8 py-3.5 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                            >
-                                Browse Agents
-                            </button>
+                            {/* Contact Support info box */}
+                            <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-xl mb-8 text-sm text-gray-600 dark:text-gray-300">
+                                <p className="font-medium text-amber-800 dark:text-amber-300 mb-1 flex items-center justify-center gap-1.5">
+                                    <FaHeadset className="text-amber-600 dark:text-amber-400" /> Need Help or Have Questions?
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    If you have any questions about your application or need expedited verification, please feel free to reach out to our support team.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                                <button
+                                    onClick={() => navigate('/user/agents')}
+                                    className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+                                >
+                                    Browse Agents
+                                </button>
+                                <Link
+                                    to={contactUrl}
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+                                >
+                                    <FaHeadset /> Contact Support
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -272,9 +300,34 @@ const BecomeAgent = () => {
                             <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">
                                 Your agent account was revoked.
                             </p>
-                            <p className="text-gray-500 dark:text-gray-400 mb-8">
+                            <p className="text-gray-500 dark:text-gray-400 mb-6">
                                 You can re-apply after the 30-day cool-off period ends. Please wait {daysLeft} more day{daysLeft !== 1 ? 's' : ''}.
                             </p>
+
+                            {/* Contact Support info box */}
+                            <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 rounded-xl mb-8 text-sm text-gray-600 dark:text-gray-300">
+                                <p className="font-medium text-red-800 dark:text-red-300 mb-1 flex items-center justify-center gap-1.5">
+                                    <FaHeadset className="text-red-600 dark:text-red-400" /> Have Questions Regarding Your Account?
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    If you believe this revocation was made in error or would like further information, please contact our support team.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                                <button
+                                    onClick={() => navigate('/user/agents')}
+                                    className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+                                >
+                                    Browse Agents
+                                </button>
+                                <Link
+                                    to={contactUrl}
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto"
+                                >
+                                    <FaHeadset /> Contact Support
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -317,8 +370,11 @@ const BecomeAgent = () => {
                 {/* Re-application notice */}
                 {canReapply && (
                     <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center">
-                        <p className="text-blue-700 dark:text-blue-300 font-medium">
+                        <p className="text-blue-700 dark:text-blue-300 font-medium mb-1">
                             Your previous application was rejected. You can now submit a new application below.
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Need clarification? <Link to={contactUrl} className="text-blue-600 hover:underline font-semibold">Contact Support</Link>
                         </p>
                     </div>
                 )}
@@ -373,7 +429,6 @@ const BecomeAgent = () => {
                                         <input id="city" type="text" required placeholder="e.g. Hyderabad" className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.city} />
                                     </div>
                                     <div>
-                                        {/* FIX: Changed id from 'yearsOfExperience' to 'experience' to match backend */}
                                         <label htmlFor="experience" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Years of Experience *</label>
                                         <input id="experience" type="number" required min="0" className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors" onChange={handleChange} value={formData.experience} />
                                     </div>
