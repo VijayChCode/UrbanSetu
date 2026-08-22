@@ -63,7 +63,8 @@ export const getAgent = async (req, res, next) => {
         // We might accept ID or UserID, but usually _id of Agent doc
         const agent = await Agent.findById(id)
             .populate('userId', 'username email avatar gender')
-            .populate('processedBy', 'username email role avatar');
+            .populate('processedBy', 'username email role avatar')
+            .populate('applicationHistory.processedBy', 'username email role avatar');
 
         if (!agent) return next(errorHandler(404, "Agent not found"));
 
@@ -95,7 +96,7 @@ export const applyAgent = async (req, res, next) => {
             if (existing.status === 'pending') return next(errorHandler(400, "You already have a pending application"));
             if (existing.status === 'approved') return next(errorHandler(400, "You are already a registered agent"));
 
-            // If rejected, update existing application
+            // If rejected, handle re-application with history preservation
             if (existing.status === 'rejected') {
                 // Server-side Freeze Check
                 if (existing.revokedAt) {
@@ -105,7 +106,63 @@ export const applyAgent = async (req, res, next) => {
                     }
                 }
 
-                // Update fields
+                if (!existing.applicationHistory) {
+                    existing.applicationHistory = [];
+                }
+
+                // If history is empty, archive the previous rejected state as Attempt #1
+                if (existing.applicationHistory.length === 0) {
+                    existing.applicationHistory.push({
+                        attemptNumber: 1,
+                        status: 'rejected',
+                        action: existing.revokedAt ? 'revoked' : 'rejected',
+                        appliedAt: existing.createdAt || new Date(),
+                        processedAt: existing.processedAt || existing.updatedAt || new Date(),
+                        processedBy: existing.processedBy || null,
+                        rejectionReason: existing.rejectionReason || 'Application rejected',
+                        snapshot: {
+                            name: existing.name,
+                            email: existing.email,
+                            mobileNumber: existing.mobileNumber,
+                            city: existing.city,
+                            areas: existing.areas,
+                            experience: existing.experience,
+                            about: existing.about,
+                            reraId: existing.reraId,
+                            agencyName: existing.agencyName,
+                            photo: existing.photo,
+                            idProof: existing.idProof
+                        }
+                    });
+                }
+
+                const nextAttemptNumber = existing.applicationHistory.length + 1;
+
+                // Push new re-application attempt to history
+                existing.applicationHistory.push({
+                    attemptNumber: nextAttemptNumber,
+                    status: 'pending',
+                    action: 'reapplied',
+                    appliedAt: new Date(),
+                    processedAt: null,
+                    processedBy: null,
+                    rejectionReason: null,
+                    snapshot: {
+                        name,
+                        email: req.user.email || existing.email,
+                        mobileNumber,
+                        city,
+                        areas: areas || [],
+                        experience: parseInt(experience) || 0,
+                        about,
+                        reraId,
+                        agencyName,
+                        photo: photo || existing.photo,
+                        idProof: idProof || existing.idProof
+                    }
+                });
+
+                // Update active fields
                 existing.name = name;
                 existing.mobileNumber = mobileNumber;
                 existing.city = city;
@@ -119,17 +176,37 @@ export const applyAgent = async (req, res, next) => {
 
                 existing.status = 'pending';
                 existing.rejectionReason = undefined;
-                existing.revokedAt = undefined; // Clear revocation history on new application? Or keep it?
-                // Usually clear it so they aren't marked as revoked in pending state. 
-                // However, history is good. But 'revokedAt' is used for Freeze check. If I clear it, freeze check passes next time. 
-                // But status is now 'pending', so freeze check condition 'status===rejected && revokedAt' won't trigger anyway.
-                // Keeping it might be confusing if they get rejected again (normal rejection) but revokedAt persists?
-                // So I SHOULD clear it.
+                existing.processedBy = null;
+                existing.processedAt = null;
+                existing.revokedAt = undefined;
 
                 await existing.save();
                 return res.status(200).json(existing);
             }
         }
+
+        const initialHistory = [{
+            attemptNumber: 1,
+            status: 'pending',
+            action: 'applied',
+            appliedAt: new Date(),
+            processedAt: null,
+            processedBy: null,
+            rejectionReason: null,
+            snapshot: {
+                name,
+                email: req.user.email,
+                mobileNumber,
+                city,
+                areas: areas || [],
+                experience: parseInt(experience) || 0,
+                about,
+                reraId,
+                agencyName,
+                photo,
+                idProof
+            }
+        }];
 
         const newAgent = new Agent({
             userId: req.user.id,
@@ -144,7 +221,8 @@ export const applyAgent = async (req, res, next) => {
             agencyName,
             photo,
             idProof,
-            status: 'pending'
+            status: 'pending',
+            applicationHistory: initialHistory
         });
 
         await newAgent.save();
@@ -181,6 +259,7 @@ export const getAllAgentsAdmin = async (req, res, next) => {
         const agents = await Agent.find()
             .populate('userId', 'username email')
             .populate('processedBy', 'username email role avatar')
+            .populate('applicationHistory.processedBy', 'username email role avatar')
             .sort({ createdAt: -1 });
         res.status(200).json(agents);
     } catch (error) {
@@ -248,6 +327,49 @@ export const updateAgentStatus = async (req, res, next) => {
             agent.revokedAt = null; // Clear if approved
         }
 
+        // Update / sync with applicationHistory
+        if (!agent.applicationHistory) {
+            agent.applicationHistory = [];
+        }
+
+        if (agent.applicationHistory.length === 0) {
+            agent.applicationHistory.push({
+                attemptNumber: 1,
+                status: status,
+                action: status === 'rejected' ? (previousStatus === 'approved' ? 'revoked' : 'rejected') : status,
+                appliedAt: agent.createdAt || new Date(),
+                processedAt: new Date(),
+                processedBy: req.user._id || req.user.id,
+                rejectionReason: status === 'rejected' ? (rejectionReason || agent.rejectionReason || 'Application rejected') : null,
+                snapshot: {
+                    name: agent.name,
+                    email: agent.email,
+                    mobileNumber: agent.mobileNumber,
+                    city: agent.city,
+                    areas: agent.areas,
+                    experience: agent.experience,
+                    about: agent.about,
+                    reraId: agent.reraId,
+                    agencyName: agent.agencyName,
+                    photo: agent.photo,
+                    idProof: agent.idProof
+                }
+            });
+        } else {
+            const latestAttempt = agent.applicationHistory[agent.applicationHistory.length - 1];
+            if (latestAttempt) {
+                latestAttempt.status = status;
+                latestAttempt.action = status === 'rejected' ? (previousStatus === 'approved' ? 'revoked' : 'rejected') : status;
+                latestAttempt.processedAt = new Date();
+                latestAttempt.processedBy = req.user._id || req.user.id;
+                if (status === 'rejected') {
+                    latestAttempt.rejectionReason = rejectionReason || agent.rejectionReason || 'Application rejected';
+                } else {
+                    latestAttempt.rejectionReason = null;
+                }
+            }
+        }
+
         await agent.save();
 
         // Send automated emails
@@ -270,7 +392,8 @@ export const updateAgentStatus = async (req, res, next) => {
 
         const populatedAgent = await Agent.findById(agent._id)
             .populate('userId', 'username email')
-            .populate('processedBy', 'username email role avatar');
+            .populate('processedBy', 'username email role avatar')
+            .populate('applicationHistory.processedBy', 'username email role avatar');
 
         res.status(200).json(populatedAgent);
     } catch (error) {

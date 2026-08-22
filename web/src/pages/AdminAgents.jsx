@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaCheck, FaTimes, FaSearch, FaUserTie, FaArrowLeft, FaArrowRight, FaExclamationTriangle, FaEye, FaBuilding, FaIdCard, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaInfoCircle, FaFileAlt, FaUserShield } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaSearch, FaUserTie, FaArrowLeft, FaArrowRight, FaExclamationTriangle, FaEye, FaBuilding, FaIdCard, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarAlt, FaInfoCircle, FaFileAlt, FaUserShield, FaHistory, FaChevronDown, FaChevronUp, FaClock } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 import { authenticatedFetch } from '../utils/auth';
@@ -28,6 +28,7 @@ const AdminAgents = () => {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
     const [selectedAgent, setSelectedAgent] = useState(null);
+    const [expandedHistoryIndex, setExpandedHistoryIndex] = useState(null);
 
     useEffect(() => {
         fetchAgents();
@@ -236,6 +237,11 @@ const AdminAgents = () => {
                                                         <p className="text-xs text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1 mt-0.5 truncate">
                                                             <FaBuilding className="text-[10px] shrink-0" /> {agent.agencyName}
                                                         </p>
+                                                    )}
+                                                    {agent.applicationHistory && agent.applicationHistory.length > 1 && (
+                                                        <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-semibold px-1.5 py-0.2 rounded mt-0.5" title={`Candidate applied ${agent.applicationHistory.length} times`}>
+                                                            <FaHistory className="text-[9px]" /> Attempt #{agent.applicationHistory.length}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -600,6 +606,93 @@ const AdminAgents = () => {
                                                 </p>
                                             )}
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Application History & Lifecycle Timeline */}
+                            {selectedAgent.applicationHistory && selectedAgent.applicationHistory.length > 0 && (
+                                <div className="p-4 bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600 rounded-xl space-y-3">
+                                    <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-600 pb-2">
+                                        <span className="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                            <FaHistory className="text-blue-500" /> Application History ({selectedAgent.applicationHistory.length} Attempt{selectedAgent.applicationHistory.length !== 1 ? 's' : ''})
+                                        </span>
+                                        <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                                            Lifecycle Audit Log
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-3 mt-2">
+                                        {selectedAgent.applicationHistory.map((item, idx) => {
+                                            const isExpanded = expandedHistoryIndex === idx;
+                                            const statusColor = 
+                                                item.status === 'approved' ? 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
+                                                item.status === 'pending' ? 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
+                                                'text-red-600 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+
+                                            return (
+                                                <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 shadow-sm text-xs space-y-2">
+                                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-[11px]">
+                                                                Attempt #{item.attemptNumber || (idx + 1)}
+                                                            </span>
+                                                            <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[10px] border ${statusColor}`}>
+                                                                {item.action || item.status}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[11px] text-gray-400">
+                                                            Applied: {item.appliedAt ? new Date(item.appliedAt).toLocaleString() : 'N/A'}
+                                                        </span>
+                                                    </div>
+
+                                                    {item.processedAt && (
+                                                        <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between flex-wrap gap-1">
+                                                            <span>
+                                                                Decision Date: {new Date(item.processedAt).toLocaleString()}
+                                                            </span>
+                                                            {isRootAdmin && item.processedBy && (
+                                                                <span className="text-purple-600 dark:text-purple-400 font-medium">
+                                                                    Reviewer: {item.processedBy.username || item.processedBy.email} ({item.processedBy.role || 'Admin'})
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {item.rejectionReason && (
+                                                        <div className="p-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded text-red-700 dark:text-red-300 text-[11px]">
+                                                            <span className="font-semibold">Rejection Reason:</span> "{item.rejectionReason}"
+                                                        </div>
+                                                    )}
+
+                                                    {/* Snapshot Toggle */}
+                                                    {item.snapshot && (
+                                                        <div className="pt-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpandedHistoryIndex(isExpanded ? null : idx)}
+                                                                className="text-blue-600 dark:text-blue-400 text-[11px] font-medium flex items-center gap-1 hover:underline"
+                                                            >
+                                                                {isExpanded ? <FaChevronUp className="text-[9px]" /> : <FaChevronDown className="text-[9px]" />}
+                                                                {isExpanded ? "Hide Application Snapshot" : "View Submitted Snapshot"}
+                                                            </button>
+
+                                                            {isExpanded && (
+                                                                <div className="mt-2 p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-200 dark:border-gray-600 grid grid-cols-2 gap-2 text-[11px] text-gray-700 dark:text-gray-300">
+                                                                    <div><span className="text-gray-400">Name:</span> {item.snapshot.name || 'N/A'}</div>
+                                                                    <div><span className="text-gray-400">City:</span> {item.snapshot.city || 'N/A'}</div>
+                                                                    <div><span className="text-gray-400">Experience:</span> {item.snapshot.experience ?? 0} Years</div>
+                                                                    <div><span className="text-gray-400">RERA ID:</span> {item.snapshot.reraId || 'None'}</div>
+                                                                    {item.snapshot.agencyName && <div className="col-span-2"><span className="text-gray-400">Agency:</span> {item.snapshot.agencyName}</div>}
+                                                                    {item.snapshot.areas?.length > 0 && <div className="col-span-2"><span className="text-gray-400">Areas:</span> {item.snapshot.areas.join(', ')}</div>}
+                                                                    {item.snapshot.about && <div className="col-span-2"><span className="text-gray-400">Bio:</span> {item.snapshot.about}</div>}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}

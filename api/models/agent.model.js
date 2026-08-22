@@ -98,6 +98,54 @@ const agentSchema = new mongoose.Schema({
         default: null
     },
 
+    // Application Lifecycle & History Tracking
+    applicationHistory: [{
+        attemptNumber: {
+            type: Number,
+            required: true
+        },
+        status: {
+            type: String,
+            enum: ["pending", "approved", "rejected"],
+            required: true
+        },
+        action: {
+            type: String,
+            enum: ["applied", "reapplied", "approved", "rejected", "revoked"],
+            required: true
+        },
+        appliedAt: {
+            type: Date,
+            default: Date.now
+        },
+        processedAt: {
+            type: Date,
+            default: null
+        },
+        processedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
+        rejectionReason: {
+            type: String,
+            default: null
+        },
+        snapshot: {
+            name: String,
+            email: String,
+            mobileNumber: String,
+            city: String,
+            areas: [String],
+            experience: Number,
+            about: String,
+            reraId: String,
+            agencyName: String,
+            photo: String,
+            idProof: String
+        }
+    }],
+
     // Performance (Admin internal)
     leadsReceived: {
         type: Number,
