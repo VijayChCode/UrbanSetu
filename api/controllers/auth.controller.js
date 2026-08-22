@@ -577,8 +577,28 @@ export const Google = async (req, res, next) => {
             });
         }
 
-        const { name, email, photo } = req.body
+        const { name, email, photo, mode } = req.body
         const validUser = await User.findOne({ email })
+
+        // Intent enforcement: if frontend specifies a mode, validate it
+        // mode === "signup" means the user clicked "Sign Up with Google" — block if account already exists
+        // mode === "signin" means the user clicked "Sign In with Google" or One Tap — block if no account
+        // mode === undefined means standalone /oauth page or legacy — allow dual behavior
+        if (mode === 'signup' && validUser) {
+            return res.status(200).json({
+                success: false,
+                accountExists: true,
+                message: 'An account already exists with this email. Please sign in instead.'
+            });
+        }
+        if (mode === 'signin' && !validUser) {
+            return res.status(200).json({
+                success: false,
+                noAccount: true,
+                message: 'No account found with this email. Please sign up first.'
+            });
+        }
+
         if (validUser) {
             // Suspension check
             if (validUser.status === 'suspended') {

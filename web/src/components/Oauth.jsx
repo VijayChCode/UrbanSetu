@@ -2,7 +2,7 @@ import { GoogleAuthProvider, getAuth, signInWithRedirect, getRedirectResult, sig
 import { app } from '../firebase';
 import { signInSuccess } from '../redux/user/userSlice.js';
 import { useDispatch } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { Link2 } from 'lucide-react';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
@@ -46,6 +46,11 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             const refParam = new URLSearchParams(location.search).get('ref') || localStorage.getItem('urbansetu_ref');
             const isObjectId = refParam && /^[0-9a-fA-F]{24}$/.test(refParam);
             const apiUrl = "/api/auth/google";
+
+            // Determine mode based on pageType (standalone /oauth page sends no mode for dual behavior)
+            const isStandalone = !onAuthSuccess && !onAuthStart && location.pathname === '/oauth';
+            const mode = isStandalone ? undefined : (pageType === 'signIn' ? 'signin' : 'signup');
+
             const res = await authenticatedFetch(`${API_BASE_URL}${apiUrl}`, {
                 method: "POST",
                 headers: {
@@ -56,7 +61,8 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
                     email: result.user.email,
                     photo: result.user.photoURL,
                     referredBy: isObjectId ? refParam : undefined,
-                    referralCode: (!isObjectId && refParam) ? refParam : undefined
+                    referralCode: (!isObjectId && refParam) ? refParam : undefined,
+                    ...(mode && { mode })
                 })
             });
 
@@ -81,6 +87,29 @@ export default function Oauth({ pageType, disabled = false, onAuthStart = null, 
             }
 
             if (data.success === false) {
+                // Intent enforcement: show contextual error with navigation link
+                if (data.noAccount) {
+                    setError(
+                        <span>
+                            {data.message}{' '}
+                            <Link to={`/sign-up${location.search}`} className="font-semibold underline hover:text-red-800 dark:hover:text-red-200 transition-colors">Sign up here →</Link>
+                        </span>
+                    );
+                    setIsLoading(false);
+                    if (onAuthStart) onAuthStart(null);
+                    return;
+                }
+                if (data.accountExists) {
+                    setError(
+                        <span>
+                            {data.message}{' '}
+                            <Link to={`/sign-in${location.search}`} className="font-semibold underline hover:text-red-800 dark:hover:text-red-200 transition-colors">Sign in here →</Link>
+                        </span>
+                    );
+                    setIsLoading(false);
+                    if (onAuthStart) onAuthStart(null);
+                    return;
+                }
                 throw new Error(data.message || 'Authentication failed');
             }
 

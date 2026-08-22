@@ -7,6 +7,7 @@ import { authenticatedFetch } from '../utils/csrf';
 import { API_BASE_URL } from '../config/api';
 import { reconnectSocket } from "../utils/socket";
 import { syncSettingsFromUser } from "../utils/settingsSync";
+import { toast } from 'react-toastify';
 
 
 import { app } from '../firebase'; // Import initialized Firebase app
@@ -70,7 +71,8 @@ const GoogleOneTap = () => {
                         name: user.displayName,
                         email: user.email,
                         photo: user.photoURL,
-                        referredBy: new URLSearchParams(location.search).get('ref') || localStorage.getItem('urbansetu_ref')
+                        referredBy: new URLSearchParams(location.search).get('ref') || localStorage.getItem('urbansetu_ref'),
+                        mode: 'signin'
                     })
                 });
 
@@ -95,6 +97,19 @@ const GoogleOneTap = () => {
                 }
 
                 if (data.success === false) {
+                    // Intent enforcement: no account found for this Google email
+                    if (data.noAccount) {
+                        toast.info(
+                            'No account found with this email. Please sign up first.',
+                            {
+                                toastId: 'onetap-no-account',
+                                autoClose: 5000,
+                                onClick: () => navigate('/sign-up')
+                            }
+                        );
+                        setIsProcessing(false);
+                        return;
+                    }
                     console.error('Backend auth failed:', data.message);
                     setIsProcessing(false);
                     return;
