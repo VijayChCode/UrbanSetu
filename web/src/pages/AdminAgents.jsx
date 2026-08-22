@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
+import AdminAgentsSkeleton from '../components/skeletons/AdminAgentsSkeleton';
 
 const AdminAgents = () => {
     usePageTitle('Manage Agents - UrbanSetu');
@@ -113,6 +114,10 @@ const AdminAgents = () => {
     const totalPages = Math.ceil(filteredAgents.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedAgents = filteredAgents.slice(startIndex, startIndex + itemsPerPage);
+
+    if (loading && agents.length === 0) {
+        return <AdminAgentsSkeleton />;
+    }
 
     return (
         <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">

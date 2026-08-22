@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaUserShield, FaCheckCircle, FaBuilding, FaIdCard, FaArrowLeft, FaUserTie, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import UrbanSetuSpinner from '../../components/UrbanSetuSpinner';
+import BecomeAgentSkeleton from '../../components/skeletons/BecomeAgentSkeleton';
 import { API_BASE_URL } from '../../config/api';
 import { authenticatedFetch } from '../../utils/auth';
 import { usePageTitle } from '../../hooks/usePageTitle';
@@ -130,11 +131,7 @@ const BecomeAgent = () => {
 
     // Show loading while checking status
     if (checkingStatus) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-24 pb-12 flex items-center justify-center">
-                <UrbanSetuSpinner size="md" />
-            </div>
-        );
+        return <BecomeAgentSkeleton />;
     }
 
     // === BLOCK: Already Approved Agent ===

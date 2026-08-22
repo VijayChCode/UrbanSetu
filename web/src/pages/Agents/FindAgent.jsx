@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import AgentCard from '../../components/AgentCard';
+import { AgentCardSkeleton } from '../../components/skeletons/FindAgentSkeleton';
 import AgentInfoModal from '../../components/AgentInfoModal';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
@@ -311,7 +312,7 @@ const FindAgent = () => {
                 {loading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} className="bg-white dark:bg-gray-800 h-80 rounded-xl shadow-lg animate-pulse"></div>
+                            <AgentCardSkeleton key={i} />
                         ))}
                     </div>
                 ) : displayAgents.length > 0 ? (
