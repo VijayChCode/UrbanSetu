@@ -9,7 +9,7 @@ export const AgentCardSkeleton = () => {
             <div className="px-5 pt-0 pb-5 relative flex-grow flex flex-col">
                 {/* Avatar & Rating Header */}
                 <div className="relative -mt-12 mb-3 flex justify-between items-end">
-                    <div className="w-22 h-22 rounded-2xl bg-gray-300 dark:bg-gray-600 border-4 border-white dark:border-gray-800 shadow-md"></div>
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gray-300 dark:bg-gray-600 border-4 border-white dark:border-gray-800 shadow-md"></div>
                     <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
                 </div>
 

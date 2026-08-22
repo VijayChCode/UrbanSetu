@@ -28,7 +28,7 @@ const AgentCard = ({ agent }) => {
                         <img
                             src={agent.photo || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
                             alt={agent.name}
-                            className="w-22 h-22 rounded-2xl object-cover border-4 border-white dark:border-gray-800 shadow-md bg-white dark:bg-gray-700 group-hover:scale-105 transition-transform duration-300"
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white dark:border-gray-800 shadow-md bg-white dark:bg-gray-700 group-hover:scale-105 transition-transform duration-300"
                         />
                     </div>
                     <div className="mb-1 flex flex-col items-end">
