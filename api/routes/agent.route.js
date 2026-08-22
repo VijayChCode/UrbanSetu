@@ -13,13 +13,13 @@ import {
     deleteAgentReview,
     updateAgentReview
 } from '../controllers/agent.controller.js';
-import { verifyToken, verifyAdmin } from '../utils/verify.js';
+import { verifyToken, verifyAdmin, optionalAuth } from '../utils/verify.js';
 
 const router = express.Router();
 
 // Public Routes
 router.get('/', getAgents);
-router.get('/profile/:id', getAgent); // Public profile view
+router.get('/profile/:id', optionalAuth, getAgent); // Public profile view with optional user context
 
 // User Routes
 router.get('/status/me', verifyToken, checkMyAgentStatus);

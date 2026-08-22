@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaSearch, FaMapMarkerAlt, FaUserPlus, FaUserTie, FaInfoCircle, FaSortAmountDown, FaFilter, FaCheckCircle, FaStar, FaTimes, FaChevronDown } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaUserPlus, FaUserTie, FaInfoCircle, FaSortAmountDown, FaFilter, FaCheckCircle, FaStar, FaTimes, FaChevronDown, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -53,12 +53,19 @@ const FindAgent = () => {
         try {
             const res = await authenticatedFetch(`${API_BASE_URL}/api/agent/status/me`);
             const data = await res.json();
-            if (res.ok && data.isAgent && data.status === 'approved') {
-                // Fetch full profile
-                const profileRes = await authenticatedFetch(`${API_BASE_URL}/api/agent/profile/${data.agentId}`);
-                const profileData = await profileRes.json();
-                if (profileRes.ok) {
-                    setMyAgentProfile(profileData);
+            if (res.ok && data.isAgent) {
+                let agentData = data.agent;
+                if (!agentData && data.agentId) {
+                    const profileRes = await authenticatedFetch(`${API_BASE_URL}/api/agent/profile/${data.agentId}`);
+                    if (profileRes.ok) {
+                        agentData = await profileRes.json();
+                    }
+                }
+
+                if (agentData) {
+                    setMyAgentProfile({ ...agentData, status: data.status, _id: data.agentId || agentData._id });
+                } else {
+                    setMyAgentProfile({ _id: data.agentId, status: data.status, name: currentUser.username });
                 }
             }
         } catch (error) {
@@ -89,8 +96,8 @@ const FindAgent = () => {
     const getFilteredAndSortedAgents = () => {
         let filtered = [...agents];
 
-        // Exclude own profile from the main list (shown separately)
-        if (myAgentProfile) {
+        // Exclude own profile from the main list if approved (shown separately in top card)
+        if (myAgentProfile && myAgentProfile.status === 'approved') {
             filtered = filtered.filter(a => a._id !== myAgentProfile._id);
         }
 
@@ -189,38 +196,105 @@ const FindAgent = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
 
-                {/* Your Agent Profile Card */}
+                {/* === Dynamic User Agent Status Card === */}
                 {myAgentProfile && (
                     <div className="mb-8 animate-fade-in-up">
-                        <Link
-                            to={`/user/agents/${myAgentProfile._id}`}
-                            className="block bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-5 hover:shadow-lg transition-all group"
-                        >
-                            <div className="flex items-center gap-4">
-                                <img
-                                    src={myAgentProfile.photo || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                    alt={myAgentProfile.name}
-                                    className="w-16 h-16 rounded-xl object-cover border-2 border-white dark:border-gray-700 shadow-md"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">Your Profile</span>
-                                        {myAgentProfile.isVerified && (
-                                            <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1"><FaCheckCircle /> Verified</span>
-                                        )}
+                        {/* 1. Approved Agent View */}
+                        {myAgentProfile.status === 'approved' && (
+                            <Link
+                                to={`/user/agents/${myAgentProfile._id}`}
+                                className="block bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-5 hover:shadow-lg transition-all group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <img
+                                        src={myAgentProfile.photo || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
+                                        alt={myAgentProfile.name}
+                                        className="w-16 h-16 rounded-xl object-cover border-2 border-white dark:border-gray-700 shadow-md"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">Your Profile</span>
+                                            {myAgentProfile.isVerified && (
+                                                <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1"><FaCheckCircle /> Verified</span>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{myAgentProfile.name}</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                            <FaMapMarkerAlt className="text-red-500 text-xs" /> {myAgentProfile.city}
+                                            {myAgentProfile.experience > 0 && <span> • {myAgentProfile.experience} yrs exp</span>}
+                                            {myAgentProfile.rating > 0 && <span className="flex items-center gap-1 ml-2"><FaStar className="text-yellow-500 text-xs" />{myAgentProfile.rating.toFixed(1)}</span>}
+                                        </p>
                                     </div>
-                                    <h3 className="font-bold text-gray-900 dark:text-white text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{myAgentProfile.name}</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                        <FaMapMarkerAlt className="text-red-500 text-xs" /> {myAgentProfile.city}
-                                        {myAgentProfile.experience > 0 && <span> • {myAgentProfile.experience} yrs exp</span>}
-                                        {myAgentProfile.rating > 0 && <span className="flex items-center gap-1 ml-2"><FaStar className="text-yellow-500 text-xs" />{myAgentProfile.rating.toFixed(1)}</span>}
-                                    </p>
+                                    <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm hidden sm:inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                        View & Edit →
+                                    </span>
                                 </div>
-                                <span className="text-blue-600 dark:text-blue-400 font-semibold text-sm hidden sm:inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                                    View & Edit →
-                                </span>
-                            </div>
-                        </Link>
+                            </Link>
+                        )}
+
+                        {/* 2. Pending Application View */}
+                        {myAgentProfile.status === 'pending' && (
+                            <Link
+                                to="/user/become-an-agent"
+                                className="block bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 rounded-2xl border-2 border-amber-300 dark:border-amber-700/60 p-5 hover:shadow-lg transition-all group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-xl bg-amber-100 dark:bg-amber-900/40 border-2 border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                                        <FaClock className="text-2xl animate-pulse" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                                <FaClock className="text-[10px]" /> Application Pending Review
+                                            </span>
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                                            {myAgentProfile.name || currentUser.username} — Partner Application
+                                        </h3>
+                                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+                                            Your agent application has been submitted and is currently under verification. Once approved, your profile will be publicly listed.
+                                        </p>
+                                    </div>
+                                    <span className="text-amber-600 dark:text-amber-400 font-semibold text-sm hidden sm:inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform shrink-0">
+                                        Check Status →
+                                    </span>
+                                </div>
+                            </Link>
+                        )}
+
+                        {/* 3. Revoked / Cool-off View */}
+                        {myAgentProfile.status === 'rejected' && myAgentProfile.revokedAt && (
+                            <Link
+                                to="/user/become-an-agent"
+                                className="block bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 rounded-2xl border-2 border-red-200 dark:border-red-800 p-5 hover:shadow-lg transition-all group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-xl bg-red-100 dark:bg-red-900/40 border-2 border-red-300 dark:border-red-700 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+                                        <FaExclamationTriangle className="text-2xl" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                                <FaExclamationTriangle className="text-[10px]" /> Account Revoked
+                                            </span>
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                                            Agent Access Revoked
+                                        </h3>
+                                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                                            {(() => {
+                                                const daysPassed = Math.ceil(Math.abs(new Date() - new Date(myAgentProfile.revokedAt)) / (1000 * 60 * 60 * 24));
+                                                const daysLeft = 30 - daysPassed;
+                                                return daysLeft > 0 ? `You can re-apply in ${daysLeft} days.` : 'Cool-off period completed. You can re-apply now.';
+                                            })()}
+                                        </p>
+                                    </div>
+                                    <span className="text-red-600 dark:text-red-400 font-semibold text-sm hidden sm:inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform shrink-0">
+                                        View Details →
+                                    </span>
+                                </div>
+                            </Link>
+                        )}
                     </div>
                 )}
 

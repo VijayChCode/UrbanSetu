@@ -159,7 +159,12 @@ export const checkMyAgentStatus = async (req, res, next) => {
         if (!agent) {
             return res.status(200).json({ isAgent: false, status: null });
         }
-        res.status(200).json({ isAgent: true, status: agent.status, agentId: agent._id });
+        res.status(200).json({
+            isAgent: true,
+            status: agent.status,
+            agentId: agent._id,
+            agent
+        });
     } catch (error) {
         next(error);
     }
