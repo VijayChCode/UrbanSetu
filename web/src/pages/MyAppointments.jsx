@@ -25,6 +25,7 @@ import MediaPermissionModal from '../components/MediaPermissionModal';
 import VideoMessageBubble, { getVideoPosterUrl } from '../components/VideoMessageBubble.jsx';
 import ImageMessageBubble from '../components/ImageMessageBubble';
 import { MediaGalleryImageItem, MediaGalleryVideoItem } from '../components/MediaGalleryItem';
+import ConfirmationModal from '../components/ConfirmationModal';
 import LinkPreview from '../components/LinkPreview';
 import UserAvatar from '../components/UserAvatar';
 import { FormattedTextWithLinks, FormattedTextWithLinksAndSearch, FormattedTextWithReadMore } from '../utils/linkFormatter.jsx';
@@ -3721,6 +3722,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [audioCaption, setAudioCaption] = useState('');
   const [audioObjectURL, setAudioObjectURL] = useState(null);
   const audioCaptionRef = useRef(null);
+  const [cancelUploadConfirmModal, setCancelUploadConfirmModal] = useState({ open: false, mediaType: null });
   // Audio Recording states
   const [showRecordAudioModal, setShowRecordAudioModal] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -4331,12 +4333,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       }
       return;
     }
+    const controller = new AbortController();
+    currentUploadControllerRef.current = controller;
     try {
       setUploadingFile(true);
       setUploadProgress(0);
       const form = new FormData();
       form.append('video', selectedVideo);
       const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/video`, form, {
+        signal: controller.signal,
         onProgress: (percent) => setUploadProgress(percent)
       });
       await sendVideoMessage(data.videoUrl, selectedVideo.name, videoCaption);
@@ -4344,10 +4349,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setShowVideoPreviewModal(false);
       setVideoCaption('');
     } catch (e) {
+      if (e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+        return;
+      }
       toast.error(e.response?.data?.message || 'Video upload failed');
     } finally {
       setUploadingFile(false);
       setUploadProgress(0);
+      if (currentUploadControllerRef.current === controller) {
+        currentUploadControllerRef.current = null;
+      }
     }
   };
 
@@ -4404,12 +4415,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const handleSendSelectedAudio = async () => {
     if (!selectedAudio) return;
+    const controller = new AbortController();
+    currentUploadControllerRef.current = controller;
     try {
       setUploadingFile(true);
       setUploadProgress(0);
       const form = new FormData();
       form.append('audio', selectedAudio);
       const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/audio`, form, {
+        signal: controller.signal,
         onProgress: (percent) => setUploadProgress(percent)
       });
       await sendAudioMessage(data.audioUrl, selectedAudio, audioCaption);
@@ -4417,10 +4431,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setShowAudioPreviewModal(false);
       setAudioCaption('');
     } catch (e) {
+      if (e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+        return;
+      }
       toast.error(e.response?.data?.message || 'Audio upload failed');
     } finally {
       setUploadingFile(false);
       setUploadProgress(0);
+      if (currentUploadControllerRef.current === controller) {
+        currentUploadControllerRef.current = null;
+      }
     }
   };
 
@@ -4477,12 +4497,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const handleSendSelectedDocument = async () => {
     if (!selectedDocument) return;
+    const controller = new AbortController();
+    currentUploadControllerRef.current = controller;
     try {
       setUploadingFile(true);
       setUploadProgress(0);
       const form = new FormData();
       form.append('document', selectedDocument);
       const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/document`, form, {
+        signal: controller.signal,
         onProgress: (percent) => setUploadProgress(percent)
       });
       await sendDocumentMessage(data.documentUrl, selectedDocument, documentCaption);
@@ -4490,10 +4513,16 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       setShowDocumentPreviewModal(false);
       setDocumentCaption('');
     } catch (e) {
+      if (e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+        return;
+      }
       toast.error(e.response?.data?.message || 'Document upload failed');
     } finally {
       setUploadingFile(false);
       setUploadProgress(0);
+      if (currentUploadControllerRef.current === controller) {
+        currentUploadControllerRef.current = null;
+      }
     }
   };
 
@@ -4741,6 +4770,88 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     setCurrentFileIndex(-1);
     setCurrentFileProgress(0);
     // Keep already selected files; allow retry of any partially attempted file
+  };
+
+  // Preview modal close handlers with confirmation when upload is in flight
+  const handleCloseImagePreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'image'
+      });
+    } else {
+      setSelectedFiles([]);
+      setImageCaptions({});
+      setPreviewIndex(0);
+      setShowImagePreviewModal(false);
+      setShowAddImageChooser(false);
+      setImageErrorMap({});
+    }
+  };
+
+  const handleCloseVideoPreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'video'
+      });
+    } else {
+      setSelectedVideo(null);
+      setShowVideoPreviewModal(false);
+      setVideoCaption('');
+    }
+  };
+
+  const handleCloseAudioPreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'audio'
+      });
+    } else {
+      setSelectedAudio(null);
+      setShowAudioPreviewModal(false);
+      setAudioCaption('');
+    }
+  };
+
+  const handleCloseDocumentPreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'document'
+      });
+    } else {
+      setSelectedDocument(null);
+      setShowDocumentPreviewModal(false);
+      setDocumentCaption('');
+    }
+  };
+
+  const handleConfirmCancelUploadAndClose = () => {
+    handleCancelInFlightUpload();
+    const type = cancelUploadConfirmModal.mediaType;
+    if (type === 'image') {
+      setSelectedFiles([]);
+      setImageCaptions({});
+      setPreviewIndex(0);
+      setShowImagePreviewModal(false);
+      setShowAddImageChooser(false);
+      setImageErrorMap({});
+    } else if (type === 'video') {
+      setSelectedVideo(null);
+      setShowVideoPreviewModal(false);
+      setVideoCaption('');
+    } else if (type === 'audio') {
+      setSelectedAudio(null);
+      setShowAudioPreviewModal(false);
+      setAudioCaption('');
+    } else if (type === 'document') {
+      setSelectedDocument(null);
+      setShowDocumentPreviewModal(false);
+      setDocumentCaption('');
+    }
+    setCancelUploadConfirmModal({ open: false, mediaType: null });
   };
 
   // Retry failed uploads
@@ -12035,13 +12146,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         Image Preview ({selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''})
                       </span>
                       <button
-                        onClick={() => {
-                          setSelectedFiles([]);
-                          setImageCaptions({});
-                          setPreviewIndex(0);
-                          setShowImagePreviewModal(false);
-                          setShowAddImageChooser(false);
-                        }}
+                        onClick={handleCloseImagePreview}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                       >
                         <FaTimes className="w-5 h-5" />
@@ -12445,7 +12550,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-lg font-medium text-gray-700 dark:text-white">Video Preview</span>
                       <button
-                        onClick={() => { setSelectedVideo(null); setShowVideoPreviewModal(false); }}
+                        onClick={handleCloseVideoPreview}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                       >
                         <FaTimes className="w-5 h-5" />
@@ -12546,7 +12651,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-lg font-medium text-gray-700 dark:text-white">Audio Preview</span>
                       <button
-                        onClick={() => { setSelectedAudio(null); setShowAudioPreviewModal(false); }}
+                        onClick={handleCloseAudioPreview}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                       >
                         <FaTimes className="w-5 h-5" />
@@ -12592,26 +12697,37 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-gray-600 dark:text-gray-300 truncate flex-1 mr-4">{selectedAudio.name}</div>
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => { setSelectedAudio(null); setShowAudioPreviewModal(false); }}
-                          className="py-2 px-4 rounded-lg text-sm font-medium border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                        >Cancel</button>
-                        <button
-                          onClick={handleSendSelectedAudio}
-                          disabled={isChatSendBlocked}
-                          className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${isChatSendBlocked ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
-                            }`}
-                        >Send Audio</button>
+                        {uploadingFile ? (
+                          <>
+                            <button
+                              onClick={handleCancelInFlightUpload}
+                              className="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30"
+                            >
+                              Cancel
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-2 bg-blue-600 rounded-full transition-all" style={{ width: `${uploadProgress}%` }}></div>
+                              </div>
+                              <span className="text-sm text-gray-700 dark:text-gray-300 w-10 text-right">{uploadProgress}%</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => { setSelectedAudio(null); setShowAudioPreviewModal(false); setAudioCaption(''); }}
+                              className="py-2 px-4 rounded-lg text-sm font-medium border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                            >Cancel</button>
+                            <button
+                              onClick={handleSendSelectedAudio}
+                              disabled={isChatSendBlocked}
+                              className={`py-2 px-4 rounded-lg text-sm font-medium transition-colors ${isChatSendBlocked ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
+                            >Send Audio</button>
+                          </>
+                        )}
                       </div>
                     </div>
-                    {uploadingFile && (
-                      <div className="mt-3">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${uploadProgress}%` }} />
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">{uploadProgress}%</div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -12974,7 +13090,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-lg font-medium text-gray-700 dark:text-white">Document Preview</span>
                       <button
-                        onClick={() => { setSelectedDocument(null); setShowDocumentPreviewModal(false); }}
+                        onClick={handleCloseDocumentPreview}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                       >
                         <FaTimes className="w-5 h-5" />
@@ -13050,6 +13166,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   </div>
                 </div>
               )}
+
+              {/* Cancel Upload Confirmation Modal */}
+              <ConfirmationModal
+                isOpen={cancelUploadConfirmModal.open}
+                onClose={() => setCancelUploadConfirmModal({ open: false, mediaType: null })}
+                onConfirm={handleConfirmCancelUploadAndClose}
+                title="Cancel Upload?"
+                message="An upload is currently in progress. Are you sure you want to cancel the upload and close the preview?"
+                confirmText="Yes, Cancel Upload"
+                cancelText="Continue Upload"
+                isDestructive={true}
+                confirmIcon={FaTimes}
+              />
 
               {/* Animations for chat bubbles */}
               <style jsx>{`

@@ -22,6 +22,7 @@ import SimplePeer from 'simple-peer';
 import { useSoundEffects } from "../components/SoundEffects";
 import { exportEnhancedChatToPDF } from '../utils/pdfExport';
 import ExportChatModal from '../components/ExportChatModal';
+import ConfirmationModal from '../components/ConfirmationModal';
 import CallHistoryModal from '../components/CallHistoryModal';
 import { authenticatedFetch } from '../utils/csrf';
 import ChatSettingsModal from '../components/ChatSettingsModal';
@@ -3737,6 +3738,7 @@ function AdminAppointmentRow({
   const [audioCaption, setAudioCaption] = useLocalState('');
   const [audioObjectURL, setAudioObjectURL] = useLocalState(null);
   const audioCaptionRef = React.useRef(null);
+  const [cancelUploadConfirmModal, setCancelUploadConfirmModal] = useLocalState({ open: false, mediaType: null });
 
   // Audio Recording states (parity with MyAppointments)
   const [showRecordAudioModal, setShowRecordAudioModal] = useLocalState(false);
@@ -5288,6 +5290,84 @@ function AdminAppointmentRow({
     setCurrentFileProgress(0);
   };
 
+  // Preview modal close handlers with confirmation when upload is in flight
+  const handleCloseImagePreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'image'
+      });
+    } else {
+      setSelectedFiles([]);
+      setImageCaptions({});
+      setPreviewIndex(0);
+      setShowImagePreviewModal(false);
+    }
+  };
+
+  const handleCloseVideoPreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'video'
+      });
+    } else {
+      setSelectedVideo(null);
+      setShowVideoPreviewModal(false);
+      setVideoCaption('');
+    }
+  };
+
+  const handleCloseAudioPreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'audio'
+      });
+    } else {
+      setSelectedAudio(null);
+      setShowAudioPreviewModal(false);
+      setAudioCaption('');
+    }
+  };
+
+  const handleCloseDocumentPreview = () => {
+    if (uploadingFile) {
+      setCancelUploadConfirmModal({
+        open: true,
+        mediaType: 'document'
+      });
+    } else {
+      setSelectedDocument(null);
+      setShowDocumentPreviewModal(false);
+      setDocumentCaption('');
+    }
+  };
+
+  const handleConfirmCancelUploadAndClose = () => {
+    handleCancelInFlightUpload();
+    const type = cancelUploadConfirmModal.mediaType;
+    if (type === 'image') {
+      setSelectedFiles([]);
+      setImageCaptions({});
+      setPreviewIndex(0);
+      setShowImagePreviewModal(false);
+    } else if (type === 'video') {
+      setSelectedVideo(null);
+      setShowVideoPreviewModal(false);
+      setVideoCaption('');
+    } else if (type === 'audio') {
+      setSelectedAudio(null);
+      setShowAudioPreviewModal(false);
+      setAudioCaption('');
+    } else if (type === 'document') {
+      setSelectedDocument(null);
+      setShowDocumentPreviewModal(false);
+      setDocumentCaption('');
+    }
+    setCancelUploadConfirmModal({ open: false, mediaType: null });
+  };
+
   // Retry failed uploads
   const handleRetryFailedUploads = async () => {
     if (!failedFiles.length) return;
@@ -5353,13 +5433,16 @@ function AdminAppointmentRow({
 
   const handleSendSelectedVideo = async () => {
     if (!selectedVideo) return;
+    const controller = new AbortController();
+    currentUploadControllerRef.current = controller;
     try {
       setUploadingFile(true);
       const form = new FormData();
       form.append('video', selectedVideo);
       const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/video`, {
         method: 'POST',
-        body: form
+        body: form,
+        signal: controller.signal
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -5372,9 +5455,15 @@ function AdminAppointmentRow({
       setVideoCaption('');
       setUploadProgress(0);
     } catch (e) {
+      if (e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+        return;
+      }
       toast.error(e.response?.data?.message || 'Video upload failed');
     } finally {
       setUploadingFile(false);
+      if (currentUploadControllerRef.current === controller) {
+        currentUploadControllerRef.current = null;
+      }
     }
   };
 
@@ -5536,13 +5625,16 @@ function AdminAppointmentRow({
 
   const handleSendSelectedDocument = async () => {
     if (!selectedDocument) return;
+    const controller = new AbortController();
+    currentUploadControllerRef.current = controller;
     try {
       setUploadingFile(true);
       const form = new FormData();
       form.append('document', selectedDocument);
       const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/document`, {
         method: 'POST',
-        body: form
+        body: form,
+        signal: controller.signal
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -5555,9 +5647,15 @@ function AdminAppointmentRow({
       setDocumentCaption('');
       setUploadProgress(0);
     } catch (e) {
+      if (e.name === 'AbortError' || e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+        return;
+      }
       toast.error(e.response?.data?.message || 'Document upload failed');
     } finally {
       setUploadingFile(false);
+      if (currentUploadControllerRef.current === controller) {
+        currentUploadControllerRef.current = null;
+      }
     }
   };
 
@@ -10095,12 +10193,7 @@ function AdminAppointmentRow({
                         Image Preview ({selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''})
                       </span>
                       <button
-                        onClick={() => {
-                          setSelectedFiles([]);
-                          setImageCaptions({});
-                          setPreviewIndex(0);
-                          setShowImagePreviewModal(false);
-                        }}
+                        onClick={handleCloseImagePreview}
                         className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                       >
                         <FaTimes className="w-5 h-5" />
@@ -10548,7 +10641,7 @@ function AdminAppointmentRow({
               <div className="flex items-center justify-between mb-3">
                 <span className="text-lg font-medium text-gray-700 dark:text-white">Audio Preview</span>
                 <button
-                  onClick={() => { setSelectedAudio(null); setShowAudioPreviewModal(false); }}
+                  onClick={handleCloseAudioPreview}
                   className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                 >
                   <FaTimes className="w-5 h-5" />
@@ -12753,7 +12846,7 @@ function AdminAppointmentRow({
               <div className="flex items-center justify-between mb-3">
                 <span className="text-lg font-medium text-gray-700 dark:text-white">Video Preview</span>
                 <button
-                  onClick={() => { setSelectedVideo(null); setShowVideoPreviewModal(false); }}
+                  onClick={handleCloseVideoPreview}
                   className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                 >
                   <FaTimes className="w-5 h-5" />
@@ -12836,7 +12929,7 @@ function AdminAppointmentRow({
               <div className="flex items-center justify-between mb-3">
                 <span className="text-lg font-medium text-gray-700 dark:text-white">Document Preview</span>
                 <button
-                  onClick={() => { setSelectedDocument(null); setShowDocumentPreviewModal(false); }}
+                  onClick={handleCloseDocumentPreview}
                   className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2 transition-colors"
                 >
                   <FaTimes className="w-5 h-5" />
@@ -12912,6 +13005,19 @@ function AdminAppointmentRow({
             </div>
           </div>
         )}
+
+        {/* Cancel Upload Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={cancelUploadConfirmModal.open}
+          onClose={() => setCancelUploadConfirmModal({ open: false, mediaType: null })}
+          onConfirm={handleConfirmCancelUploadAndClose}
+          title="Cancel Upload?"
+          message="An upload is currently in progress. Are you sure you want to cancel the upload and close the preview?"
+          confirmText="Yes, Cancel Upload"
+          cancelText="Continue Upload"
+          isDestructive={true}
+          confirmIcon={FaTimes}
+        />
 
         {/* Record Audio Modal */}
         {showRecordAudioModal && (
