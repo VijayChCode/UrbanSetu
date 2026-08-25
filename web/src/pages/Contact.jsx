@@ -4,6 +4,8 @@ import ContactSupport from '../components/ContactSupport';
 import PublicHome from './PublicHome';
 
 import { usePageTitle } from '../hooks/usePageTitle';
+import SEO from '../components/SEO';
+
 export default function Contact() {
   // Set page title
   usePageTitle("Contact Us - Get in Touch");
@@ -32,6 +34,11 @@ export default function Contact() {
 
   return (
     <div>
+      <SEO
+        title="Contact Us - Support & Inquiries | UrbanSetu"
+        description="Get in touch with the UrbanSetu support team for property inquiries, customer assistance, partnerships, and verified real estate queries across India."
+        keywords="contact urbansetu, real estate support, property helpdesk, customer care India, property inquiry"
+      />
       {/* Render the previous page content behind the modal */}
       <PublicHome />
       

@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
 import { getErrorCode } from '../../utils/errorRegistry';
+import SEO from '../../components/SEO';
 
 const ArticleView = () => {
     const { currentUser } = useSelector((state) => state.user);
@@ -148,6 +149,11 @@ const ArticleView = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+            <SEO
+                title={article?.title ? `${article.title} - UrbanSetu Help Center` : "Help Center Article - UrbanSetu"}
+                description={article?.content ? article.content.substring(0, 160).replace(/[#*`_]/g, '') : "Read detailed guides and help articles on UrbanSetu."}
+                keywords={`UrbanSetu help, ${article?.title || 'support article'}, property guide, help center`}
+            />
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6">
                     <Link to={!currentUser ? '/help-center' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/help-center' : '/user/help-center')} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">

@@ -4,9 +4,11 @@ import GeminiChatbox from '../components/GeminiChatbox';
 import PublicHome from './PublicHome';
 
 import { usePageTitle } from '../hooks/usePageTitle';
+import SEO from '../components/SEO';
+
 export default function PublicAI() {
   // Set page title
-  usePageTitle("AI Assistant - Smart Property Search");
+  usePageTitle("SetuAI - Smart AI Real Estate Assistant");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +34,11 @@ export default function PublicAI() {
 
   return (
     <div>
+      <SEO
+        title="SetuAI - Smart AI Real Estate Assistant | UrbanSetu"
+        description="Interact with SetuAI, UrbanSetu's intelligent real estate assistant. Get instant AI property recommendations, rental price insights, smart neighborhood comparisons, and market trend forecasts."
+        keywords="SetuAI, real estate AI, AI property search, AI real estate assistant India, smart property recommendation, Gemini real estate"
+      />
       {/* Render the previous page content behind the modal */}
       <PublicHome />
       

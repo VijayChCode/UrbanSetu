@@ -845,6 +845,11 @@ export default function ForgotPassword({ bootstrapped, sessionChecked }) {
     <AuthFormLayout
       leftSlot={(
         <>
+          <SEO
+            title="Create New Password - Reset Password | UrbanSetu"
+            description="Enter and confirm your new UrbanSetu account password securely."
+            keywords="create new password, reset password, account security, urbansetu"
+          />
           <style>
             {`
                 @keyframes blob {

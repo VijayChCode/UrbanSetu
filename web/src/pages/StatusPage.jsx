@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { FaCheckCircle, FaSpinner, FaTimes, FaServer } from 'react-icons/fa';
 import { usePageTitle } from '../hooks/usePageTitle';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+import SEO from '../components/SEO';
 
 export default function StatusPage() {
     usePageTitle("UrbanSetu Status");
@@ -276,6 +277,11 @@ export default function StatusPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+            <SEO
+                title="System Status & Service Uptime | UrbanSetu"
+                description="Live system uptime, scheduled maintenance notices, and operational status for UrbanSetu real estate platform, APIs, and services."
+                keywords="UrbanSetu status, server uptime, API status, maintenance schedule, system health"
+            />
             {/* Header / Nav */}
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-6 mb-8">

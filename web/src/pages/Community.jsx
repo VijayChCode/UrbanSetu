@@ -1193,7 +1193,19 @@ export default function Community() {
     }, [postId, posts]);
 
     if (loading) {
-        return <CommunitySkeleton />;
+        return (
+            <>
+                <SEO
+                    title={seoTitle}
+                    description={seoDescription}
+                    keywords={seoKeywords}
+                    image={seoImage}
+                    type={activePost ? "article" : "website"}
+                    schema={activePostSchema}
+                />
+                <CommunitySkeleton />
+            </>
+        );
     }
 
     return (
