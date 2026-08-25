@@ -8953,8 +8953,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
         // Process markdown tables (before processing other markdown elements)
         // Pattern: | Header | Header |\n|--------|--------|\n| Cell   | Cell   |
-        processedText = processedText.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)+)/g, (match) => {
-            const lines = match.trim().split('\n');
+        processedText = processedText.replace(/(\|[^\r\n]+\|\r?\n\|[-\s|:]+\|\r?\n(?:\|[^\r\n]+\|\r?\n?)+)/g, (match) => {
+            const lines = match.trim().split(/\r?\n/);
             if (lines.length < 2) return match; // Need at least header and separator
 
             const formatTableCell = (cell) => {
@@ -8963,7 +8963,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     .trim()
                     .replace(/&lt;br\s*[\/\\]?&gt;/gi, '<br>')
                     .replace(/<br\s*[\/\\]?>/gi, '<br>')
-                    .replace(/\\n/g, '<br>');
+                    .replace(/\\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
             };
 
             // Extract header row
@@ -8981,13 +8983,13 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             });
 
             // Build HTML table
-            let tableHtml = '<div class="table-wrapper my-4 overflow-x-auto"><table class="markdown-table border-collapse w-full text-sm">';
+            let tableHtml = '<div class="table-wrapper my-4 overflow-x-auto whitespace-normal"><table class="markdown-table border-collapse w-full text-sm">';
 
             // Header row
             tableHtml += '<thead><tr>';
             headerRow.forEach(cell => {
                 const cellContent = formatTableCell(cell);
-                tableHtml += `<th class="markdown-table-th border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">${cellContent}</th>`;
+                tableHtml += `<th class="markdown-table-th border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 align-top">${cellContent}</th>`;
             });
             tableHtml += '</tr></thead>';
 
@@ -8999,7 +9001,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     // Handle rows with fewer cells than headers
                     headerRow.forEach((_, index) => {
                         const cellContent = formatTableCell(row[index] || '');
-                        tableHtml += `<td class="markdown-table-td border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-800 dark:text-gray-200">${cellContent}</td>`;
+                        tableHtml += `<td class="markdown-table-td border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-800 dark:text-gray-200 align-top">${cellContent}</td>`;
                     });
                     tableHtml += '</tr>';
                 }
@@ -15083,6 +15085,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         .table-wrapper {
             max-width: 100%;
             word-wrap: break-word;
+            white-space: normal;
         }
         
         /* Responsive table scrolling on mobile */

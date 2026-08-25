@@ -250,8 +250,8 @@ export default function SharedChatView() {
             .replace(/<br\s*[\/\\]?>/gi, '<br>');
 
         // Process markdown tables
-        processedText = processedText.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)+)/g, (match) => {
-            const lines = match.trim().split('\n');
+        processedText = processedText.replace(/(\|[^\r\n]+\|\r?\n\|[-\s|:]+\|\r?\n(?:\|[^\r\n]+\|\r?\n?)+)/g, (match) => {
+            const lines = match.trim().split(/\r?\n/);
             if (lines.length < 2) return match;
 
             const formatTableCell = (cell) => {
@@ -260,7 +260,9 @@ export default function SharedChatView() {
                     .trim()
                     .replace(/&lt;br\s*[\/\\]?&gt;/gi, '<br>')
                     .replace(/<br\s*[\/\\]?>/gi, '<br>')
-                    .replace(/\\n/g, '<br>');
+                    .replace(/\\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
             };
 
             let headerParts = lines[0].split('|').map(cell => cell.trim());
@@ -275,7 +277,7 @@ export default function SharedChatView() {
                 return parts;
             });
 
-            let tableHtml = '<div class="table-wrapper my-4 overflow-x-auto"><table class="markdown-table border-collapse w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">';
+            let tableHtml = '<div class="table-wrapper my-4 overflow-x-auto whitespace-normal"><table class="markdown-table border-collapse w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">';
             tableHtml += '<thead><tr>';
             headerRow.forEach(cell => {
                 const cellContent = formatTableCell(cell);
