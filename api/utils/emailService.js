@@ -13121,7 +13121,7 @@ export const sendReportAcknowledgementEmail = async (email, reportDetails) => {
              </div>
             
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${clientBaseUrl}/user/ai" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);">Return to AI Assistant</a>
+              <a href="${clientBaseUrl}/user/setuai" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);">Return to AI Assistant</a>
             </div>
 
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -13219,7 +13219,7 @@ export const sendSharedChatLinkEmail = async (email, sharedLink, title, expiryDa
           <div style="text-align: center; margin-top: 10px;">
             <a href="${sharedLink}" style="display: block; width: 100%; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: bold; font-size: 16px; margin-bottom: 15px; box-sizing: border-box;">View Shared Chat</a>
             
-            <a href="${clientBaseUrl}/user/ai" style="display: block; width: 100%; background-color: transparent; color: #2563eb; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: bold; font-size: 16px; border: 1px solid #2563eb; box-sizing: border-box;">Return to SetuAI</a>
+            <a href="${clientBaseUrl}/user/setuai" style="display: block; width: 100%; background-color: transparent; color: #2563eb; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: bold; font-size: 16px; border: 1px solid #2563eb; box-sizing: border-box;">Return to SetuAI</a>
           </div>
           
           <!-- Footer -->
@@ -13302,7 +13302,7 @@ export const sendSharedChatRevokedEmail = async (email, title, revokedDate) => {
 
           <!-- Action Buttons -->
           <div style="text-align: center; margin-top: 10px;">
-             <a href="${clientBaseUrl}/user/ai" style="display: block; width: 100%; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: bold; font-size: 16px; box-sizing: border-box;">Return to SetuAI</a>
+             <a href="${clientBaseUrl}/user/setuai" style="display: block; width: 100%; background-color: #2563eb; color: white; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: bold; font-size: 16px; box-sizing: border-box;">Return to SetuAI</a>
           </div>
           
           <!-- Footer -->
@@ -14395,7 +14395,7 @@ export const sendReEngagementEmail = async (email, username) => {
             <div style="margin-top: 25px; border-top: 1px dashed #bfdbfe; padding-top: 20px;">
               <h3 style="color: #1e40af; text-align: center; margin: 0 0 15px 0; font-size: 16px;">✨ Explore More</h3>
               <div style="text-align: center; font-size: 0;">
-                  <a href="${clientBaseUrl}/user/ai" style="display: inline-block; width: 70px; margin: 0 5px 10px; text-decoration: none; color: #4b5563; vertical-align: top;">
+                  <a href="${clientBaseUrl}/user/setuai" style="display: inline-block; width: 70px; margin: 0 5px 10px; text-decoration: none; color: #4b5563; vertical-align: top;">
                       <div style="background-color: white; border-radius: 12px; width: 45px; height: 45px; line-height: 45px; margin: 0 auto 5px; font-size: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">🤖</div>
                       <div style="font-size: 11px; font-weight: 600;">AI Guide</div>
                   </a>
@@ -14508,7 +14508,7 @@ export const sendTrendingUpdateEmail = async (email, username, newProperties, tr
           <div style="margin-top: 30px; border-top: 2px solid #f3f4f6; padding-top: 25px; margin-bottom: 10px;">
               <h3 style="color: #1f2937; text-align: center; margin: 0 0 20px 0; font-size: 18px;">✨ Explore More on UrbanSetu</h3>
               <div style="text-align: center; font-size: 0;">
-                  <a href="${clientBaseUrl}/user/ai" style="display: inline-block; width: 80px; margin: 0 10px 20px; text-decoration: none; color: #4b5563; vertical-align: top;">
+                  <a href="${clientBaseUrl}/user/setuai" style="display: inline-block; width: 80px; margin: 0 10px 20px; text-decoration: none; color: #4b5563; vertical-align: top;">
                       <div style="background-color: #eff6ff; border-radius: 16px; width: 56px; height: 56px; line-height: 56px; margin: 0 auto 8px; font-size: 24px;">🤖</div>
                       <div style="font-size: 13px; font-weight: 600;">AI Guide</div>
                   </a>
@@ -17853,7 +17853,7 @@ export const sendReminderNotificationEmail = async (email, { taskText, time, use
             </p>
             
             <div style="text-align: center; margin: 25px 0;">
-              <a href="${clientBaseUrl}/user/ai" style="display: inline-block; background-color: #6366f1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">Open SetuAI Assistant</a>
+              <a href="${clientBaseUrl}/user/setuai" style="display: inline-block; background-color: #6366f1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">Open SetuAI Assistant</a>
               <a href="${clientBaseUrl}/user/reminders" style="display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 15px; margin: 5px;">Manage My Reminders</a>
             </div>
           </div>

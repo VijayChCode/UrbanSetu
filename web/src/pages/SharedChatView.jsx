@@ -353,7 +353,7 @@ export default function SharedChatView() {
                         <button onClick={handleManualSubmit} className="absolute right-3 top-3 p-2 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-colors"><FaArrowRight size={18} /></button>
                     </div>
                     <div className="flex flex-col gap-3">
-                        <a href="/ai" className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all">Start Your Own AI Journey</a>
+                        <a href="/setuai" className="w-full py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all">Start Your Own AI Journey</a>
                         <a href="/" className="w-full py-3 rounded-2xl bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold text-sm">Return Home</a>
                     </div>
                 </div>
@@ -388,7 +388,7 @@ export default function SharedChatView() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         {importedSessionId ? (
-                            <button onClick={() => navigate(currentUser?.role?.includes('admin') ? `/admin/ai?session=${importedSessionId}` : `/user/ai?session=${importedSessionId}`)} className="h-10 flex items-center gap-2 px-4 rounded-xl bg-green-500 text-white font-black text-[10px] uppercase shadow-lg shadow-green-500/30 active:scale-95 transition-all">
+                            <button onClick={() => navigate(currentUser?.role?.includes('admin') ? `/admin/setuai?session=${importedSessionId}` : `/user/setuai?session=${importedSessionId}`)} className="h-10 flex items-center gap-2 px-4 rounded-xl bg-green-500 text-white font-black text-[10px] uppercase shadow-lg shadow-green-500/30 active:scale-95 transition-all">
                                 <FaExternalLinkAlt size={10} /> Open
                             </button>
                         ) : (
@@ -519,7 +519,7 @@ export default function SharedChatView() {
                     </div>
                     <h3 className="text-3xl font-black dark:text-white mb-4 tracking-tight leading-none uppercase">Fuel Your Curiosity</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-10 text-lg font-medium leading-relaxed">This conversation belongs to the future. Start your own personalized AI session now and get instant market clarity.</p>
-                    <a href="/ai" className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-5 rounded-[2.5rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/40 hover:scale-[1.05] active:scale-95 transition-all">Launch Full Assistant <FaArrowRight size={12} /></a>
+                    <a href="/setuai" className="inline-flex items-center gap-3 bg-indigo-600 text-white px-10 py-5 rounded-[2.5rem] font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-600/40 hover:scale-[1.05] active:scale-95 transition-all">Launch Full Assistant <FaArrowRight size={12} /></a>
                 </div>
             </footer>
 

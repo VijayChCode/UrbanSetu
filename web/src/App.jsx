@@ -303,7 +303,7 @@ function normalizeRoute(path, role) {
   }
 
   // List of base routes that have public-facing versions
-  const publicBases = ["about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", "cookie-policy", "listing", "home", "contact", "ai", "community-guidelines", "community", "help-center", "agents", "market-trends", "error-codes"];
+  const publicBases = ["about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", "cookie-policy", "listing", "home", "contact", "setuai", "ai", "community-guidelines", "community", "help-center", "agents", "market-trends", "error-codes"];
 
   // List of base routes that exist for both user and admin but are NOT public
   const parallelBases = [
@@ -574,6 +574,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
     location.pathname.startsWith('/user/my-appointments') ||
     location.pathname.startsWith('/admin/appointments') ||
     location.pathname === '/admin/updates' ||
+    location.pathname.includes('/setuai/share/') ||
     location.pathname.includes('/ai/share/') ||
     location.pathname.includes('/call/');
 
@@ -1394,7 +1395,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
             <Route path="/privacy" element={currentUser ? <NotFound /> : <Privacy bootstrapped={bootstrapped} sessionChecked={sessionChecked} />} />
             <Route path="/cookie-policy" element={currentUser ? <NotFound /> : <CookiePolicy />} />
             <Route path="/contact" element={currentUser ? <Navigate to="/user/contact" /> : <Contact />} />
-            <Route path="/ai" element={currentUser ? <Navigate to="/user/ai" /> : <PublicAI />} />
+            <Route path="/setuai" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/setuai" : "/user/setuai"} /> : <PublicAI />} />
+            <Route path="/ai" element={<Navigate to="/setuai" replace />} />
             <Route path="/community" element={currentUser ? <Navigate to="/user/community" /> : <Community />} />
             <Route path="/community/post/:postId" element={currentUser ? <Navigate to="/user/community" /> : <Community />} />
             <Route path="/community-guidelines" element={currentUser ? <NotFound /> : <CommunityGuidelines />} />
@@ -1405,6 +1407,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/updates" element={<Updates />} />
             <Route path="/status" element={<StatusPage />} />
+            <Route path="/setuai/share/:shareToken" element={<SharedChatView />} />
             <Route path="/ai/share/:shareToken" element={<SharedChatView />} />
             <Route path="/v/:token" element={<VideoEmbed />} />
             <Route path="/i/:token" element={<ImageEmbed />} />
@@ -1464,8 +1467,10 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/user/reviews" element={<UserReviews />} />
               <Route path="/user/device-management" element={<DeviceManagement />} />
               <Route path="/user/contact" element={<UserContact />} />
-              <Route path="/user/ai" element={<UserAI />} />
-              <Route path="/user/ai/share/:shareToken" element={<SharedChatView />} />
+              <Route path="/user/setuai" element={<UserAI />} />
+              <Route path="/user/setuai/share/:shareToken" element={<SharedChatView />} />
+              <Route path="/user/ai" element={<Navigate to="/user/setuai" replace />} />
+              <Route path="/user/ai/share/:shareToken" element={<Navigate to="/user/setuai/share/:shareToken" replace />} />
               <Route path="/user/investment-tools" element={<InvestmentTools />} />
               <Route path="/user/settings" element={<Settings />} />
               <Route path="/user/view/:documentId" element={<ViewDocument />} />
@@ -1538,8 +1543,10 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/marketing-intelligence" element={<AdminSponsorIntelligence />} />
               <Route path="/admin/security-intelligence" element={<SecurityIntelligence />} />
               <Route path="/admin/support" element={<AdminSupport />} />
-              <Route path="/admin/ai" element={<AdminAI />} />
-              <Route path="/admin/ai/share/:shareToken" element={<SharedChatView />} />
+              <Route path="/admin/setuai" element={<AdminAI />} />
+              <Route path="/admin/setuai/share/:shareToken" element={<SharedChatView />} />
+              <Route path="/admin/ai" element={<Navigate to="/admin/setuai" replace />} />
+              <Route path="/admin/ai/share/:shareToken" element={<Navigate to="/admin/setuai/share/:shareToken" replace />} />
               <Route path="/admin/investment-tools" element={<InvestmentTools />} />
               <Route path="/admin/property-verification" element={<AdminPropertyVerification />} />
               <Route path="/admin/rental-ratings" element={<AdminRentalRatings />} />

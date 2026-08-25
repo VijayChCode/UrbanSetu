@@ -4056,11 +4056,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     // Get appropriate AI URL based on user role
     const getAIUrl = () => {
         if (!currentUser) {
-            return '/ai';
+            return '/setuai';
         } else if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') {
-            return '/admin/ai';
+            return '/admin/setuai';
         } else {
-            return '/user/ai';
+            return '/user/setuai';
         }
     };
 
@@ -6104,9 +6104,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
     };
 
     const shareMessage = async (message, index) => {
-        let sharePath = '/ai';
+        let sharePath = '/setuai';
         if (currentUser) {
-            sharePath = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/ai' : '/user/ai';
+            sharePath = (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? '/admin/setuai' : '/user/setuai';
         }
 
         let promptText = 'Hello';
@@ -13206,7 +13206,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                     <button
                                                         onClick={() => {
                                                             setIsOpen(false);
-                                                            navigate('/sign-in?redirect=/ai');
+                                                            navigate('/sign-in?redirect=/setuai');
                                                         }}
                                                         className="px-6 py-3 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-lg hover:scale-105"
                                                     >

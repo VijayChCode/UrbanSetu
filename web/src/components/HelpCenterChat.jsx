@@ -26,11 +26,11 @@ const HelpCenterChat = () => {
 
     // Determine AI Link
     const getAiLink = () => {
-        if (!currentUser) return '/ai';
+        if (!currentUser) return '/setuai';
         if (currentUser.role === 'admin' || currentUser.role === 'rootadmin' || currentUser.isDefaultAdmin) {
-            return '/admin/ai';
+            return '/admin/setuai';
         }
-        return '/user/ai';
+        return '/user/setuai';
     };
 
     const scrollToBottom = () => {

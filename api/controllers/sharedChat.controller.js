@@ -257,7 +257,7 @@ export const createSharedChat = async (req, res) => {
                 const user = await User.findById(userId).select('email');
                 if (user && user.email) {
                     const clientBaseUrl = 'https://urbansetu.vercel.app'; // Or process.env.CLIENT_URL
-                    const sharedLink = `${clientBaseUrl}/ai/share/${sharedChat.shareToken}`;
+                    const sharedLink = `${clientBaseUrl}/setuai/share/${sharedChat.shareToken}`;
 
                     await sendSharedChatLinkEmail(
                         user.email,
@@ -283,7 +283,7 @@ export const createSharedChat = async (req, res) => {
                 expiresAt: sharedChat.expiresAt,
                 isActive: sharedChat.isActive,
                 createdAt: sharedChat.createdAt,
-                url: `/ai/share/${sharedChat.shareToken}`
+                url: `/setuai/share/${sharedChat.shareToken}`
             }
         });
 
@@ -359,7 +359,7 @@ export const getShareInfo = async (req, res) => {
                 expiresAt: sharedChat.expiresAt,
                 views: sharedChat.views,
                 createdAt: sharedChat.createdAt,
-                url: `/ai/share/${sharedChat.shareToken}`
+                url: `/setuai/share/${sharedChat.shareToken}`
             }
         });
 

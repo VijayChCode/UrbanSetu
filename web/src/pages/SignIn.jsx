@@ -82,7 +82,7 @@ export default function SignIn({ bootstrapped, sessionChecked }) {
         let redirectUrl = searchParams.get('redirect');
 
         if (redirectUrl && redirectUrl.startsWith('/')) {
-            if (redirectUrl.startsWith('/ai/share/')) {
+            if (redirectUrl.startsWith('/ai/share/') || redirectUrl.startsWith('/setuai/share/')) {
                 const prefix = (data.role === "admin" || data.role === "rootadmin") ? "/admin" : "/user";
                 searchParams.set('redirect', `${prefix}${redirectUrl}`);
             } else {

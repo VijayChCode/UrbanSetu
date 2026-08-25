@@ -437,7 +437,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
             Main: / /search /about /contact | Auth: /sign-in /sign-up /terms /privacy /cookie-policy
             Content: /blogs /guides /faqs /help-center /download /updates /status /market-trends | Walkthrough: /v/iSnTiQ_Z (video)
             Agents: /agents /user/become-an-agent /agent/dashboard | Property: /listing/PROPERTY_ID
-            User: /user/profile /user/my-listings /user/my-appointments /user/settings /user/ai /user/reminders
+            User: /user/profile /user/my-listings /user/my-appointments /user/settings /user/setuai /user/reminders
             Finance: /user/rent-wallet /user/pay-monthly-rent /user/rental-contracts /user/disputes /user/rental-loans
             Tools: /user/route-planner /user/rewards /user/wishlist /user/watchlist /user/reviews /user/leaderboard /user/services
             `;
