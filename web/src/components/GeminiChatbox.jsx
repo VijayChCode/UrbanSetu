@@ -8837,6 +8837,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             return `[${linkText || url}](${url})`;
         });
 
+        // Normalize any raw or escaped line breaks from AI output (<br>, <br/>, <br />, <br\>, &lt;br&gt;, &lt;br/&gt;)
+        processedText = processedText
+            .replace(/&lt;br\s*[\/\\]?&gt;/gi, '<br>')
+            .replace(/<br\s*[\/\\]?>/gi, '<br>');
+
         // Strip any remaining raw HTML tags (except our own generated ones) to prevent attribute leakage
         // Preserve <br>, <strong>, <em> etc. that we generate, but remove unknown tags
         processedText = processedText.replace(/<(?!\/?(br|strong|em|h[1-6]|li|ul|ol|table|thead|tbody|tr|th|td|div|span|pre|code|svg|path|rect|button|img)\b)[^>]+>/gi, '');
@@ -8952,13 +8957,28 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             const lines = match.trim().split('\n');
             if (lines.length < 2) return match; // Need at least header and separator
 
+            const formatTableCell = (cell) => {
+                if (!cell) return '';
+                return cell
+                    .trim()
+                    .replace(/&lt;br\s*[\/\\]?&gt;/gi, '<br>')
+                    .replace(/<br\s*[\/\\]?>/gi, '<br>')
+                    .replace(/\\n/g, '<br>');
+            };
+
             // Extract header row
-            const headerRow = lines[0].split('|').map(cell => cell.trim()).filter(cell => cell);
+            let headerParts = lines[0].split('|').map(cell => cell.trim());
+            if (headerParts.length > 0 && headerParts[0] === '') headerParts.shift();
+            if (headerParts.length > 0 && headerParts[headerParts.length - 1] === '') headerParts.pop();
+            const headerRow = headerParts.length > 0 ? headerParts : lines[0].split('|').map(c => c.trim()).filter(Boolean);
 
             // Extract data rows (skip separator line at index 1)
-            const dataRows = lines.slice(2).map(line =>
-                line.split('|').map(cell => cell.trim()).filter(cell => cell)
-            );
+            const dataRows = lines.slice(2).map(line => {
+                const parts = line.split('|').map(cell => cell.trim());
+                if (parts.length > 0 && parts[0] === '') parts.shift();
+                if (parts.length > 0 && parts[parts.length - 1] === '') parts.pop();
+                return parts;
+            });
 
             // Build HTML table
             let tableHtml = '<div class="table-wrapper my-4 overflow-x-auto"><table class="markdown-table border-collapse w-full text-sm">';
@@ -8966,7 +8986,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             // Header row
             tableHtml += '<thead><tr>';
             headerRow.forEach(cell => {
-                const cellContent = cell.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const cellContent = formatTableCell(cell);
                 tableHtml += `<th class="markdown-table-th border border-gray-300 dark:border-gray-600 px-3 py-2 text-left font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100">${cellContent}</th>`;
             });
             tableHtml += '</tr></thead>';
@@ -8978,7 +8998,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                     tableHtml += '<tr>';
                     // Handle rows with fewer cells than headers
                     headerRow.forEach((_, index) => {
-                        const cellContent = (row[index] || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const cellContent = formatTableCell(row[index] || '');
                         tableHtml += `<td class="markdown-table-td border border-gray-300 dark:border-gray-600 px-3 py-2 text-gray-800 dark:text-gray-200">${cellContent}</td>`;
                     });
                     tableHtml += '</tr>';
@@ -15021,6 +15041,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             font-weight: 600;
             background-color: rgba(243, 244, 246, 1); /* bg-gray-100 */
             color: rgba(17, 24, 39, 1); /* text-gray-900 */
+            vertical-align: top;
         }
         
         .dark .markdown-table-th {
@@ -15033,6 +15054,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             border: 1px solid rgba(209, 213, 219, 1); /* border-gray-300 */
             padding: 0.5rem 0.75rem;
             color: rgba(31, 41, 55, 1); /* text-gray-800 */
+            vertical-align: top;
+            line-height: 1.5;
         }
         
         .dark .markdown-table-td {

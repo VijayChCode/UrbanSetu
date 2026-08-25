@@ -243,6 +243,59 @@ export default function SharedChatView() {
         if (!text) return null;
 
         let processedText = text;
+
+        // Normalize <br> tags
+        processedText = processedText
+            .replace(/&lt;br\s*[\/\\]?&gt;/gi, '<br>')
+            .replace(/<br\s*[\/\\]?>/gi, '<br>');
+
+        // Process markdown tables
+        processedText = processedText.replace(/(\|[^\n]+\|\n\|[-\s|:]+\|\n(?:\|[^\n]+\|\n?)+)/g, (match) => {
+            const lines = match.trim().split('\n');
+            if (lines.length < 2) return match;
+
+            const formatTableCell = (cell) => {
+                if (!cell) return '';
+                return cell
+                    .trim()
+                    .replace(/&lt;br\s*[\/\\]?&gt;/gi, '<br>')
+                    .replace(/<br\s*[\/\\]?>/gi, '<br>')
+                    .replace(/\\n/g, '<br>');
+            };
+
+            let headerParts = lines[0].split('|').map(cell => cell.trim());
+            if (headerParts.length > 0 && headerParts[0] === '') headerParts.shift();
+            if (headerParts.length > 0 && headerParts[headerParts.length - 1] === '') headerParts.pop();
+            const headerRow = headerParts.length > 0 ? headerParts : lines[0].split('|').map(c => c.trim()).filter(Boolean);
+
+            const dataRows = lines.slice(2).map(line => {
+                const parts = line.split('|').map(cell => cell.trim());
+                if (parts.length > 0 && parts[0] === '') parts.shift();
+                if (parts.length > 0 && parts[parts.length - 1] === '') parts.pop();
+                return parts;
+            });
+
+            let tableHtml = '<div class="table-wrapper my-4 overflow-x-auto"><table class="markdown-table border-collapse w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">';
+            tableHtml += '<thead><tr>';
+            headerRow.forEach(cell => {
+                const cellContent = formatTableCell(cell);
+                tableHtml += `<th class="border border-gray-200 dark:border-gray-700 px-3 py-2 text-left font-bold bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 align-top">${cellContent}</th>`;
+            });
+            tableHtml += '</tr></thead><tbody>';
+            dataRows.forEach(row => {
+                if (row.length > 0) {
+                    tableHtml += '<tr>';
+                    headerRow.forEach((_, index) => {
+                        const cellContent = formatTableCell(row[index] || '');
+                        tableHtml += `<td class="border border-gray-200 dark:border-gray-700 px-3 py-2 text-gray-800 dark:text-gray-200 align-top leading-relaxed">${cellContent}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                }
+            });
+            tableHtml += '</tbody></table></div>';
+            return tableHtml;
+        });
+
         processedText = processedText
             .replace(/^### (.*$)/gim, '<h3 class="text-base sm:text-lg font-bold mt-4 mb-2 text-gray-900 dark:text-white">$1</h3>')
             .replace(/^## (.*$)/gim, '<h2 class="text-lg sm:text-xl font-bold mt-5 mb-3 text-gray-900 dark:text-white">$1</h2>')
