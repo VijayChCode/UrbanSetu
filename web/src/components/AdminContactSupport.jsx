@@ -251,14 +251,22 @@ export default function AdminContactSupport({ forceModalOpen = false, onModalClo
   const handleConfirmDeleteAll = async () => {
     setIsDeletingAll(true);
     try {
-      const msgs = [...messages];
-      for (const msg of msgs) {
-        try {
-          await authenticatedFetch(`${API_BASE_URL}/api/contact/messages/${msg._id}`, {
-            method: 'DELETE',
-          });
-        } catch (_) { /* ignore individual failures */ }
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/contact/messages/all/clear`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        // Fallback to deleting individually if bulk endpoint is unavailable
+        const msgs = [...messages];
+        for (const msg of msgs) {
+          try {
+            await authenticatedFetch(`${API_BASE_URL}/api/contact/messages/${msg._id}`, {
+              method: 'DELETE',
+            });
+          } catch (_) { /* ignore individual failures */ }
+        }
       }
+
       setMessages([]);
       fetchUnreadCount();
       toast.success('All messages deleted successfully!');

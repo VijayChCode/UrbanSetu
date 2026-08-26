@@ -275,7 +275,10 @@ export const indexContactMessages = async () => {
     try {
         console.log('🔄 Indexing contact messages for chatbot...');
 
-        const contacts = await Contact.find({ status: { $in: ['read', 'replied'] } })
+        const contacts = await Contact.find({ 
+            status: { $in: ['read', 'replied'] },
+            deletedByAdmin: { $ne: true }
+        })
             .select('email subject message status adminReply adminReplyAt createdAt')
             .sort({ createdAt: -1 })
             .limit(100) // Limit to recent 100 messages

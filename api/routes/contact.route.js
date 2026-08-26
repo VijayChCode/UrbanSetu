@@ -6,6 +6,7 @@ import {
     markMessageAsReplied,
     getUnreadMessageCount,
     deleteSupportMessage,
+    deleteAllSupportMessages,
     sendAdminReply,
     getUserSupportMessages,
     deleteUserMessage
@@ -25,6 +26,7 @@ router.get('/unread-count', verifyToken, getUnreadMessageCount);
 router.put('/messages/:messageId/read', verifyToken, markMessageAsRead);
 router.put('/messages/:messageId/replied', verifyToken, markMessageAsReplied);
 router.post('/messages/:messageId/reply', verifyToken, sendAdminReply);
+router.delete('/messages/all/clear', verifyToken, deleteAllSupportMessages);
 router.delete('/messages/:messageId', verifyToken, deleteSupportMessage);
 
 export default router; 

@@ -26,10 +26,11 @@ export const sendSupportMessage = async (req, res, next) => {
             ticketId,
             name,
             email,
-            email,
             subject,
             message,
-            attachments: req.body.attachments || []
+            attachments: req.body.attachments || [],
+            deletedByUser: false,
+            deletedByAdmin: false
         });
 
         await newContact.save();
@@ -52,10 +53,10 @@ export const sendSupportMessage = async (req, res, next) => {
     }
 };
 
-// Get all support messages (for admins)
+// Get all support messages (for admins - only non-admin-deleted)
 export const getAllSupportMessages = async (req, res, next) => {
     try {
-        const messages = await Contact.find()
+        const messages = await Contact.find({ deletedByAdmin: { $ne: true } })
             .sort({ createdAt: -1 })
             .select('-__v');
 
@@ -71,7 +72,7 @@ export const markMessageAsRead = async (req, res, next) => {
         const { messageId } = req.params;
 
         const message = await Contact.findById(messageId);
-        if (!message) {
+        if (!message || message.deletedByAdmin) {
             return next(errorHandler(404, "Message not found"));
         }
 
@@ -94,7 +95,7 @@ export const markMessageAsReplied = async (req, res, next) => {
         const { messageId } = req.params;
 
         const message = await Contact.findById(messageId);
-        if (!message) {
+        if (!message || message.deletedByAdmin) {
             return next(errorHandler(404, "Message not found"));
         }
 
@@ -111,10 +112,13 @@ export const markMessageAsReplied = async (req, res, next) => {
     }
 };
 
-// Get unread message count (for admins)
+// Get unread message count (for admins - only non-admin-deleted)
 export const getUnreadMessageCount = async (req, res, next) => {
     try {
-        const count = await Contact.countDocuments({ status: 'unread' });
+        const count = await Contact.countDocuments({
+            status: 'unread',
+            deletedByAdmin: { $ne: true }
+        });
 
         res.status(200).json({
             success: true,
@@ -125,7 +129,7 @@ export const getUnreadMessageCount = async (req, res, next) => {
     }
 };
 
-// Delete support message (for admins)
+// Delete support message (for admins - soft delete on admin side)
 export const deleteSupportMessage = async (req, res, next) => {
     try {
         const { messageId } = req.params;
@@ -133,10 +137,45 @@ export const deleteSupportMessage = async (req, res, next) => {
         if (!message) {
             return next(errorHandler(404, "Message not found"));
         }
-        await Contact.findByIdAndDelete(messageId);
+
+        // Mark as deleted by admin
+        message.deletedByAdmin = true;
+        message.deletedByAdminAt = new Date();
+
+        // If the user already deleted this message, permanently remove from DB
+        if (message.deletedByUser) {
+            await Contact.findByIdAndDelete(messageId);
+        } else {
+            await message.save();
+        }
+
         res.status(200).json({
             success: true,
             message: "Support message deleted successfully"
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Delete all support messages (for admins - soft delete all on admin side)
+export const deleteAllSupportMessages = async (req, res, next) => {
+    try {
+        // Mark all non-admin-deleted messages as deleted by admin
+        await Contact.updateMany(
+            { deletedByAdmin: { $ne: true } },
+            { $set: { deletedByAdmin: true, deletedByAdminAt: new Date() } }
+        );
+
+        // Permanently delete messages that have been deleted by both user and admin
+        await Contact.deleteMany({
+            deletedByUser: true,
+            deletedByAdmin: true
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "All support messages deleted successfully"
         });
     } catch (error) {
         next(error);
@@ -156,7 +195,7 @@ export const sendAdminReply = async (req, res, next) => {
         }
 
         const message = await Contact.findById(messageId);
-        if (!message) {
+        if (!message || message.deletedByAdmin) {
             return next(errorHandler(404, "Message not found"));
         }
 
@@ -191,7 +230,7 @@ export const sendAdminReply = async (req, res, next) => {
     }
 };
 
-// Get user's support messages and replies
+// Get user's support messages and replies (only non-user-deleted)
 export const getUserSupportMessages = async (req, res, next) => {
     try {
         const { email } = req.params;
@@ -200,7 +239,10 @@ export const getUserSupportMessages = async (req, res, next) => {
             return next(errorHandler(400, "Email is required"));
         }
 
-        const messages = await Contact.find({ email })
+        const messages = await Contact.find({
+            email,
+            deletedByUser: { $ne: true }
+        })
             .sort({ createdAt: -1 })
             .select('-__v');
 
@@ -210,7 +252,7 @@ export const getUserSupportMessages = async (req, res, next) => {
     }
 };
 
-// Delete user's own message
+// Delete user's own message (soft delete on user side)
 export const deleteUserMessage = async (req, res, next) => {
     try {
         const { messageId } = req.params;
@@ -231,8 +273,16 @@ export const deleteUserMessage = async (req, res, next) => {
             return next(errorHandler(403, "You can only delete your own messages"));
         }
 
-        // Allow deletion of any message (unread, read, or replied)
-        await Contact.findByIdAndDelete(messageId);
+        // Mark as deleted by user
+        message.deletedByUser = true;
+        message.deletedByUserAt = new Date();
+
+        // If the admin already deleted this message, permanently remove from DB
+        if (message.deletedByAdmin) {
+            await Contact.findByIdAndDelete(messageId);
+        } else {
+            await message.save();
+        }
 
         res.status(200).json({
             success: true,

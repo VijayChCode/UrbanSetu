@@ -106,19 +106,34 @@ All email templates are located in `api/utils/emailService.js`. They utilize a c
     *   Closure Date.
     *   "View Loan Details" button.
 
+### C. Festival Greetings & Real-Time Alerts
+**File:** `api/schedulers/festivalGreetingScheduler.js`
+
+This service automatically detects current cultural/seasonal festivals and delivers rich greetings to all eligible active users simultaneously via email, real-time in-app notification bell alerts, and mobile push notifications.
+
+*   **Schedule:** Runs daily at **12:00 AM Midnight IST** (`0 0 * * *` with `timezone: "Asia/Kolkata"`).
+*   **Logic:**
+    *   Queries `api/utils/seasonalEvents.js` for active festival themes on the current date.
+    *   Finds active users who haven't yet received greetings for the festival in the current year.
+    *   Dispatches responsive HTML email via `sendFestivalGreetingEmail()`.
+    *   Instantly creates in-app notification (`type: 'festival_greeting'`).
+    *   Emits real-time WebSocket socket event (`notificationCreated`) to ring the user's **NotificationBell** and display interactive toast popups.
+    *   Dispatches mobile push notification via `sendPushNotification()`.
+    *   Updates the user's `festivalGreetingsSent` history in MongoDB to prevent duplicate sends.
+
 ## 3. Integration Points
 
 ### A. Scheduler Service
-**File:** `api/services/schedulerService.js`
+**File:** `api/services/schedulerService.js` & `api/schedulers/festivalGreetingScheduler.js`
 *   The `node-cron` library is used to orchestrate these checks.
 *   **Integration:**
     ```javascript
-    import { checkAndSendRentReminders } from './rentReminderService.js';
-    import { checkAndSendLoanReminders } from './loanReminderService.js';
+    import { startScheduler } from './services/schedulerService.js';
+    import { startFestivalGreetingScheduler } from './schedulers/festivalGreetingScheduler.js';
 
-    // ... inside startScheduler ...
-    scheduleLoanReminders(); // 9:30 AM
-    scheduleRentReminders(); // 10:30 AM
+    // ... inside startServer ...
+    startScheduler(app);
+    startFestivalGreetingScheduler(app); // Runs daily at 12:00 AM Midnight IST
     ```
 
 ### B. Payment Route Integration
@@ -128,11 +143,11 @@ All email templates are located in `api/utils/emailService.js`. They utilize a c
 
 ## 4. How to Test
 
-1.  **Manual Trigger:** You can manually invoke `checkAndSendRentReminders()` or `checkAndSendLoanReminders()` in a temporary script or route to force a check.
-2.  **Date Manipulation:** In a development environment, you can modify the `dueDate` of a `RentWallet` or `RentalLoan` item in the database to be "yesterday" or "3 days from now" to verify that the emails trigger correctly.
-3.  **Logs:** Check the server console logs. The services interpret "sent" actions with logs like:
-    *   `Sent due reminder to user@example.com for Property Name`
-    *   `Sent overdue reminder (3 days) to user@example.com`
+1.  **Manual Trigger:** You can manually invoke `processFestivalGreetings(app)` or `checkAndSendRentReminders()` in a test script to force an immediate run.
+2.  **Date Manipulation:** In a development environment, you can modify the `dueDate` of a `RentWallet` or `RentalLoan` item in the database to verify rent/loan reminders.
+3.  **Logs:** Check server logs for festival runs:
+    *   `🎉 [Festival Greetings] Starting daily check...`
+    *   `✅ Sent combined Diwali greeting and in-app notification to username`
 
 ---
-*Documentation generated on 2025-12-14*
+*Documentation updated on 2026-08-26*
