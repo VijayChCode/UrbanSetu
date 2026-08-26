@@ -37,7 +37,7 @@ export const sendSupportMessage = async (req, res, next) => {
 
         // Send confirmation email
         try {
-            await sendContactSupportConfirmationEmail(email, ticketId, message, name);
+            await sendContactSupportConfirmationEmail(email, ticketId, message, name, newContact.attachments);
         } catch (emailError) {
             console.error('Error sending confirmation email:', emailError);
             // Don't fail the request if email sending fails

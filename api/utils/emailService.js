@@ -2505,7 +2505,7 @@ export const sendMoveOutChecklistApprovedEmail = async (tenantEmail, landlordEma
 };
 
 // Contact Support Confirmation Email
-export const sendContactSupportConfirmationEmail = async (email, ticketId, message, senderName) => {
+export const sendContactSupportConfirmationEmail = async (email, ticketId, message, senderName, attachments = []) => {
   try {
     const subject = `📬 We've Received Your Support Request - Ticket #${ticketId}`;
 
@@ -2564,6 +2564,19 @@ export const sendContactSupportConfirmationEmail = async (email, ticketId, messa
               <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.6; word-wrap: break-word;">${message.replace(/\n/g, '<br>')}</p>
             </div>
             
+            ${attachments && attachments.length > 0 ? `
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+              <h3 style="color: #334155; margin: 0 0 12px; font-size: 16px;">Attached Screenshots (${attachments.length})</h3>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${attachments.map((url, i) => `
+                  <a href="${url}" target="_blank" style="display: inline-block; text-decoration: none;">
+                    <img src="${url}" alt="Attachment ${i + 1}" style="width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;" />
+                  </a>
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
+
             <div style="text-align: center; margin: 30px 0;">
               <a href="${process.env.CLIENT_URL || 'https://urbansetu.vercel.app'}/contact" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;">
                 📧 Contact Support
