@@ -8,6 +8,7 @@ import BecomeAgentSkeleton from '../../components/skeletons/BecomeAgentSkeleton'
 import { API_BASE_URL } from '../../config/api';
 import { authenticatedFetch } from '../../utils/auth';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import ContactSupportWrapper from '../../components/ContactSupportWrapper';
 
 const BecomeAgent = () => {
     usePageTitle('Become an Agent - UrbanSetu');
@@ -521,6 +522,7 @@ const BecomeAgent = () => {
                     </div>
                 </div>
             </div>
+            <ContactSupportWrapper />
         </div>
     );
 };

@@ -10,6 +10,7 @@ import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
 import SEO from '../../components/SEO';
 import { API_BASE_URL } from '../../config/api';
+import ContactSupportWrapper from '../../components/ContactSupportWrapper';
 
 const FindAgent = () => {
     usePageTitle('Find Agents - UrbanSetu');
@@ -450,6 +451,8 @@ const FindAgent = () => {
                     animation: fadeInUp 0.5s ease-out;
                 }
             `}</style>
+
+            <ContactSupportWrapper />
         </div>
     );
 };
