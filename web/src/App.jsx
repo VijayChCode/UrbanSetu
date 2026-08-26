@@ -303,12 +303,17 @@ function normalizeRoute(path, role) {
   }
 
   // List of base routes that have public-facing versions
-  const publicBases = ["about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", "cookie-policy", "listing", "home", "contact", "setuai", "ai", "community-guidelines", "community", "help-center", "agents", "market-trends", "error-codes"];
+  const publicBases = [
+    "about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", 
+    "cookie-policy", "listing", "home", "contact", "setuai", "ai", "community-guidelines", 
+    "community", "help-center", "agents", "market-trends", "error-codes", "view", "download", 
+    "updates", "status", "v", "i"
+  ];
 
   // List of base routes that exist for both user and admin but are NOT public
   const parallelBases = [
     "year", "profile", "settings", "investment-tools", "create-listing", "update-listing",
-    "change-password", "view", "view-chat", "reviews", "disputes",
+    "change-password", "view-chat", "reviews", "disputes",
     "property-verification", "rental-ratings", "rental-contracts", "rental-loans",
     "services", "route-planner", "device-management", "reminders"
   ];
