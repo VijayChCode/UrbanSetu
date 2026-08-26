@@ -115,6 +115,7 @@ const DeviceManagement = () => {
   const { currentUser } = useSelector((state) => state.user);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [revokingSession, setRevokingSession] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -145,7 +146,12 @@ const DeviceManagement = () => {
 
   const fetchSessions = async () => {
     try {
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
       const controller = new AbortController();
+      controllerRef.current = controller;
+
       const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/session-management/my-sessions`, {
         headers: {
           'Content-Type': 'application/json',
@@ -159,17 +165,25 @@ const DeviceManagement = () => {
       const data = await res.json();
 
       if (data.success) {
-        setSessions(data.sessions);
+        setSessions(data.sessions || []);
         setLastUpdated(new Date());
       } else {
         toast.error(data.message || 'Failed to fetch sessions');
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
-      toast.error('Failed to fetch sessions');
+      if (error.name !== 'AbortError') {
+        console.error('Error fetching sessions:', error);
+        toast.error('Failed to fetch sessions');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchSessions();
+    setIsRefreshing(false);
   };
 
   // Toggle auto refresh every 30s
@@ -345,11 +359,12 @@ const DeviceManagement = () => {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex rounded-lg shadow-sm bg-gray-50 dark:bg-gray-700 p-1 border border-gray-200 dark:border-gray-600">
                 <button
-                  onClick={() => { setLoading(true); fetchSessions(); }}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-600 hover:shadow-sm transition-all focus:outline-none"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-600 hover:shadow-sm transition-all focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed"
                   title="Refresh sessions"
                 >
-                  {loading ? (
+                  {isRefreshing ? (
                     <UrbanSetuSpinner size="sm" className="mr-2" />
                   ) : (
                     <FaSync className="mr-2 text-gray-500 dark:text-gray-400" />
@@ -441,10 +456,18 @@ const DeviceManagement = () => {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">No active sessions found</h3>
                 <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">This seems unusual. Try refreshing the page or logging in again.</p>
                 <button
-                  onClick={() => { setLoading(true); fetchSessions(); }}
-                  className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="mt-6 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Reload Data
+                  {isRefreshing ? (
+                    <>
+                      <UrbanSetuSpinner size="sm" isBright={true} className="mr-2" />
+                      Reloading...
+                    </>
+                  ) : (
+                    'Reload Data'
+                  )}
                 </button>
               </div>
             ) : (
