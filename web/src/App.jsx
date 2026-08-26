@@ -308,7 +308,7 @@ function normalizeRoute(path, role) {
   // List of base routes that exist for both user and admin but are NOT public
   const parallelBases = [
     "year", "profile", "settings", "investment-tools", "create-listing", "update-listing",
-    "community", "change-password", "view", "view-chat", "reviews", "disputes",
+    "change-password", "view", "view-chat", "reviews", "disputes",
     "property-verification", "rental-ratings", "rental-contracts", "rental-loans",
     "services", "route-planner", "device-management", "reminders"
   ];
@@ -1397,8 +1397,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
             <Route path="/contact" element={currentUser ? <Navigate to="/user/contact" /> : <Contact />} />
             <Route path="/setuai" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/setuai" : "/user/setuai"} /> : <PublicAI />} />
             <Route path="/ai" element={<Navigate to="/setuai" replace />} />
-            <Route path="/community" element={currentUser ? <Navigate to="/user/community" /> : <Community />} />
-            <Route path="/community/post/:postId" element={currentUser ? <Navigate to="/user/community" /> : <Community />} />
+            <Route path="/community" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/community" : "/user/community"} /> : <Community />} />
+            <Route path="/community/post/:postId" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? `/admin/community/post/:postId` : `/user/community/post/:postId`} /> : <Community />} />
             <Route path="/community-guidelines" element={currentUser ? <NotFound /> : <CommunityGuidelines />} />
             <Route path="/restore-account/:token" element={<AccountRevocation />} />
             <Route path="/account-conflict" element={<AccountConflictResolution />} />
