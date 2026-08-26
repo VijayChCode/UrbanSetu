@@ -293,7 +293,6 @@ connectToMongoDB().then(() => {
   startReferralReminderScheduler();
   initializeYearInReviewScheduler();
   startCoinExpiryScheduler();
-  startFestivalGreetingScheduler();
   startMonthlyLeaderboardScheduler();
   // Initialize Cloudinary multi-account pool and start monthly reset scheduler
   initializeCloudinaryPool().then(() => {
@@ -2458,6 +2457,7 @@ const startServer = () => {
 
     // Start the appointment reminder scheduler
     startScheduler(app);
+    startFestivalGreetingScheduler(app);
 
     // Initialize data synchronization
     console.log('🚀 Initializing data synchronization...');

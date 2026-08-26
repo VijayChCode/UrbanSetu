@@ -91,6 +91,7 @@ export const sendPushNotification = async (userId, title, body, options = {}) =>
             'promotion': 'marketingNotifications',
             'newsletter': 'marketingNotifications',
             'platform_update': 'marketingNotifications',
+            'festival_greeting': 'marketingNotifications',
 
             // Community
             'community': 'communitySocial',

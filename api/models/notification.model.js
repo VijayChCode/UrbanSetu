@@ -73,7 +73,8 @@ const notificationSchema = new mongoose.Schema(
         'blog_reported',
         'video_issue_report',
         'platform_update',
-        'welcome'
+        'welcome',
+        'festival_greeting'
       ],
     },
     title: {

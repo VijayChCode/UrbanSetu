@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { FaBell, FaTimes, FaCheck, FaRocket, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo, FaUndo, FaSearch, FaFilter, FaCopy, FaExclamationTriangle, FaHome, FaVideo } from 'react-icons/fa';
+import { FaBell, FaTimes, FaCheck, FaRocket, FaTrash, FaEye, FaCalendarAlt, FaEdit, FaEnvelope, FaPaperPlane, FaUsers, FaUser, FaRedo, FaUndo, FaSearch, FaFilter, FaCopy, FaExclamationTriangle, FaHome, FaVideo, FaGift } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { socket } from '../utils/socket.js';
 import { useNavigate } from 'react-router-dom';
@@ -472,6 +472,12 @@ export default function NotificationBell({ mobile = false }) {
             <FaUser className={iconBase} />
           </div>
         );
+      case 'festival_greeting':
+        return (
+          <div className={`${containerBase} bg-gradient-to-br from-amber-100 to-orange-100 text-orange-600 dark:from-amber-900/40 dark:to-orange-900/40 dark:text-orange-400`}>
+            <FaGift className={iconBase} />
+          </div>
+        );
       default:
         return (
           <div className={`${containerBase} bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400`}>
@@ -532,7 +538,7 @@ export default function NotificationBell({ mobile = false }) {
       { id: 'Community', icon: FaUsers, label: 'Community', types: ['community_report', 'blog_reported'] },
       { id: 'Appointments', icon: FaCalendarAlt, label: 'Appointments', types: ['appointment_booked', 'appointment_updated', 'appointment_accepted_by_seller', 'appointment_cancelled_by_seller', 'appointment_cancelled_by_buyer', 'appointment_cancelled_by_admin', 'appointment_accepted_by_seller'] },
       { id: 'Financial', icon: FaEnvelope, label: 'Payments', types: ['rent_payment_reminder', 'rent_dispute_resolved', 'rent_payment_overdue', 'rent_dispute_raised', 'rent_auto_debit_failed', 'rent_auto_debit_success', 'rent_contract_signed', 'rent_contract_accepted', 'rent_contract_rejected', 'rent_contract_terminated'] },
-      { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report', 'platform_update', 'welcome'] }
+      { id: 'System', icon: FaExclamationTriangle, label: 'System', types: ['admin_message', 'client_error_report', 'platform_update', 'welcome', 'festival_greeting'] }
     ];
 
     if (isAdmin()) {
