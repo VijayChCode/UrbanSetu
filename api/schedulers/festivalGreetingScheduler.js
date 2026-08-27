@@ -45,12 +45,31 @@ export const processFestivalGreetings = async (app = appInstance) => {
             return;
         }
 
-        const notifTitle = themes.length === 1
-            ? `${themes[0].icon || '🎉'} ${themes[0].greet || 'Happy ' + themes[0].name + '!'}`
-            : `🎉 Special Festival Greetings: ${festivalNames}!`;
+        const isMultiple = themes.length > 1;
+        const combinedIcons = themes.map(t => t.icon).filter(Boolean).join(' ') || '🎉';
+        const combinedNames = themes.length > 2
+            ? `${themes.slice(0, -1).map(t => t.name).join(', ')} & ${themes[themes.length - 1].name}`
+            : themes.map(t => t.name).join(' & ');
 
-        const notifMessage = themes.map(t => `${t.icon ? t.icon + ' ' : ''}${t.desc || t.name}`).join(' • ') ||
-            `Warm festival greetings and best wishes to you and your family on the joyful occasion of ${festivalNames}! From all of us at UrbanSetu.`;
+        // Exact matching Title as in email template header / subject
+        const notifTitle = isMultiple
+            ? `${combinedIcons} Happy ${combinedNames}!`
+            : `${themes[0].icon || '🎉'} ${themes[0].greeting || `Happy ${themes[0].name}!`}`;
+
+        // Exact matching Wishing Body as in email template
+        const celebrationOccasion = themes.length > 2
+            ? 'wonderful day of multiple celebrations'
+            : (isMultiple ? 'wonderful day of double celebration' : 'auspicious occasion');
+
+        const wishingClosing = `On this ${celebrationOccasion} of ${combinedNames}, everyone at UrbanSetu wishes you happiness, prosperity, and the warmth of home. May your home be filled with joy and laughter today and always!`;
+
+        const festivalDescriptions = isMultiple
+            ? themes.map(t => `${t.icon ? t.icon + ' ' : ''}${t.name}: "${t.description || t.greeting}"`).join('\n\n')
+            : (themes[0].description ? `"${themes[0].description}"` : '');
+
+        const notifMessage = festivalDescriptions
+            ? `${festivalDescriptions}\n\n${wishingClosing}`
+            : wishingClosing;
 
         const io = app?.get?.('io');
 
