@@ -4973,6 +4973,12 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     if (streamData.type === 'chunk') {
                                         streamingResponse += streamData.content;
 
+                                        // Hide thinking tags as soon as actual content starts streaming
+                                        if (streamingResponse.length === streamData.content.length) {
+                                            // This is the first chunk — stop the thinking indicators
+                                            setIsLoading(false);
+                                        }
+
                                         // Update the streaming message in real-time
                                         setMessages(prev => {
                                             const currentMessages = Array.isArray(prev) ? prev : [];
@@ -10438,6 +10444,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             )}
 
                             {messages.map((message, index) => {
+                                // Don't render empty streaming placeholder — thinking tags handle this state
+                                if (message.isStreaming && !message.content) return null;
+
                                 const showDivider = index === 0 || !isSameDay(messages[index - 1]?.timestamp, message.timestamp);
                                 const dividerLabel = showDivider ? getDateLabel(message.timestamp) : '';
                                 return (
@@ -11284,7 +11293,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                     </React.Fragment>
                                 );
                             })}
-                            {isLoading && (
+                            {isLoading && !messages.some(m => m.isStreaming) && (
                                 <div className="flex justify-start">
                                     <div className={`${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'} p-3 rounded-2xl`}>
                                         <div className="flex items-center space-x-3">
