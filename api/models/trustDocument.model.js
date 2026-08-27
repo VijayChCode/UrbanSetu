@@ -4,7 +4,7 @@ const trustDocumentSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['readme', 'safety_declaration', 'privacy_policy', 'terms_of_service', 'checksum'],
+        enum: ['device_compatibility', 'readme', 'safety_declaration', 'privacy_policy', 'terms_of_service', 'checksum'],
         unique: true,
         trim: true,
     },
