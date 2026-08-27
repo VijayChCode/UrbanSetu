@@ -17,6 +17,7 @@ const AdminHelpCenter = () => {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingArticle, setEditingArticle] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -84,6 +85,7 @@ const AdminHelpCenter = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true);
         try {
             const payload = {
                 ...formData,
@@ -107,7 +109,10 @@ const AdminHelpCenter = () => {
             const data = await res.json();
 
             if (res.ok) {
-                toast.success(editingArticle ? 'Article updated' : 'Article created');
+                toast.success(editingArticle 
+                    ? 'Article updated successfully' 
+                    : (formData.isPublished ? 'Article created & published successfully' : 'Article drafted successfully')
+                );
                 setIsModalOpen(false);
                 fetchArticles();
             } else {
@@ -115,6 +120,8 @@ const AdminHelpCenter = () => {
             }
         } catch (error) {
             toast.error('Something went wrong');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -428,16 +435,28 @@ const AdminHelpCenter = () => {
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                                 <button
                                     type="button"
+                                    disabled={submitting}
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 font-medium"
+                                    className="px-6 py-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-500/30"
+                                    disabled={submitting}
+                                    className="px-6 py-2.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-500/30 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    {editingArticle ? 'Save Changes' : 'Create Article'}
+                                    {submitting && (
+                                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                    )}
+                                    {editingArticle
+                                        ? (formData.isPublished
+                                            ? (submitting ? 'Saving...' : 'Save Changes')
+                                            : (submitting ? 'Saving Draft...' : 'Save Draft'))
+                                        : (formData.isPublished
+                                            ? (submitting ? 'Creating...' : 'Create Article')
+                                            : (submitting ? 'Drafting...' : 'Draft Article'))
+                                    }
                                 </button>
                             </div>
                         </form>
