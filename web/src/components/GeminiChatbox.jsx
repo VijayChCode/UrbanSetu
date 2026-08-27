@@ -9905,14 +9905,32 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                             toast.warning('Starting a new chat is disabled during your policy cooldown.');
                                                             return;
                                                         }
+                                                        if (messages.length === 0) {
+                                                            return;
+                                                        }
                                                         createNewSession();
                                                         setIsHeaderMenuOpen(false);
                                                     }}
-                                                    disabled={isBlockedByPolicy}
-                                                    className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:scale-[1.02] group'}`}
+                                                    disabled={isBlockedByPolicy || isLoadingNewSession || messages.length === 0}
+                                                    className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-all duration-200 ${
+                                                        isBlockedByPolicy || isLoadingNewSession || messages.length === 0
+                                                            ? 'opacity-40 cursor-not-allowed grayscale select-none'
+                                                            : `${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} hover:scale-[1.02] group`
+                                                    }`}
+                                                    title={
+                                                        messages.length === 0
+                                                            ? 'You are already in a new chat'
+                                                            : isBlockedByPolicy
+                                                                ? 'Starting a new chat is disabled during your policy cooldown'
+                                                                : 'Start a new chat'
+                                                    }
                                                 >
-                                                    <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} ${isBlockedByPolicy ? '' : 'group-hover:scale-110'} transition-transform duration-200`}>
-                                                        <FaComments size={14} className="text-blue-500" />
+                                                    <div className={`p-1.5 rounded-lg ${
+                                                        isBlockedByPolicy || isLoadingNewSession || messages.length === 0
+                                                            ? (isDarkMode ? 'bg-gray-700/40 text-gray-500' : 'bg-gray-200 text-gray-400')
+                                                            : `${isDarkMode ? 'bg-blue-500/20 text-blue-500' : 'bg-blue-100 text-blue-500'} group-hover:scale-110`
+                                                    } transition-transform duration-200`}>
+                                                        <FaComments size={14} className={isBlockedByPolicy || isLoadingNewSession || messages.length === 0 ? '' : 'text-blue-500'} />
                                                     </div>
                                                     <span className="font-medium">New Chat</span>
                                                 </button>
@@ -12813,11 +12831,22 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                                         toast.warning('Starting a new chat is disabled during your policy cooldown.');
                                                         return;
                                                     }
+                                                    if (messages.length === 0) {
+                                                        setShowHistory(false);
+                                                        return;
+                                                    }
                                                     createNewSession();
                                                     setShowHistory(false);
                                                 }}
-                                                disabled={isBlockedByPolicy}
-                                                className={`px-3 py-1.5 text-xs rounded bg-green-600 text-white flex items-center gap-1 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-green-700'}`}
+                                                disabled={isBlockedByPolicy || isLoadingNewSession || messages.length === 0}
+                                                className={`px-3 py-1.5 text-xs rounded bg-green-600 text-white flex items-center gap-1 ${(isBlockedByPolicy || isLoadingNewSession || messages.length === 0) ? 'opacity-40 cursor-not-allowed grayscale select-none' : 'hover:bg-green-700'}`}
+                                                title={
+                                                    messages.length === 0
+                                                        ? 'You are already in a new chat'
+                                                        : isBlockedByPolicy
+                                                            ? 'Starting a new chat is disabled during your policy cooldown'
+                                                            : 'Start a new chat'
+                                                }
                                             >
                                                 <FaComments size={10} />
                                                 New Chat
