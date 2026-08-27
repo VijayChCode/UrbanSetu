@@ -1292,10 +1292,18 @@ export default function AdminDeploymentManagement() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
+                title: "Device Compatibility Guide",
+                category: "device_compatibility",
+                file: "DEVICE_COMPATIBILITY_GUIDE.pdf",
+                desc: "Hardware matrix and chipsets supported across 64-bit Modern, 32-bit Legacy, and Universal editions.",
+                color: "teal",
+                icon: FaMobile,
+              },
+              {
                 title: "README & Installation Guide",
                 category: "readme",
                 file: "README.pdf",
-                desc: "Step-by-step guidance on how users can securely install the APK, handle permissions, and bypass Play Protect safely.",
+                desc: "Installation manual explaining Play Protect bypass, system settings, and unknown source access permissions.",
                 color: "blue",
                 icon: FaInfoCircle,
               },

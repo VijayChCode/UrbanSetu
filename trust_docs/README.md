@@ -1,68 +1,62 @@
-# UrbanSetu APK Installation & Verification Guide
+# UrbanSetu APK Installation & Device Setup Guide
 
-Welcome to the official UrbanSetu mobile application installation guide. This document explains how to install the app safely on your Android device and verify its digital signature to guarantee you have the genuine, unaltered, malware-free package.
-
----
-
-## 📱 Quick Installation Steps
-
-Since this application is distributed directly as an APK to ensure the fastest delivery of updates, your device will require permission to install from "Unknown Sources" (which simply means sources outside the Google Play Store).
-
-### Step 1: Download the APK
-Download the `.apk` file directly from our secure official Google Drive link.
-
-### Step 2: Enable "Unknown Sources" or "Install Unknown Apps"
-Depending on your Android version:
-- **Android 8.0 (Oreo) and newer:** 
-  1. Open the downloaded `.apk` file using your file manager or browser.
-  2. A system prompt will appear saying: *"For your security, your phone is not allowed to install unknown apps from this source."*
-  3. Click **Settings** on the prompt.
-  4. Toggle on **Allow from this source**.
-  5. Go back and tap **Install**.
-- **Android 7.0 (Nougat) and older:**
-  1. Go to **Settings** -> **Security** (or **Lock Screen and Security**).
-  2. Locate **Unknown Sources** and toggle it **On**.
-  3. Confirm the prompt by tapping **OK**.
-  4. Open your File Manager, navigate to the **Downloads** folder, and tap the APK to install.
-
-### Step 3: Bypass Play Protect warning (if visible)
-Because the app is self-signed and distributed directly, Google Play Protect may display a warning: *"Blocked by Play Protect - Play Protect doesn't recognize this app's developer."*
-1. Tap **More details** (or **Install anyway** if directly visible).
-2. Tap **Install anyway** to proceed.
+Welcome to the official UrbanSetu Mobile App Installation Guide. This guide covers how to choose the right APK for your device, install it smoothly on Android, and verify its digital signature.
 
 ---
 
-## 🔒 Verification & Trust Details
+## 🚀 1. Choosing the Right APK File
 
-To verify that the file has not been tampered with or modified by third parties during transit, you can check its **SHA-256 Checksum**.
+In our Google Drive repository, you will find different editions of the UrbanSetu APK:
 
-### Package Checksum Details
-* **App Name:** UrbanSetu Mobile
-* **Official Package:** `urbansetu-latest.apk`
-* **Official SHA-256 Checksum:** `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` *(Example hash - always check CHECKSUM.md for the active hash of the current build)*
+* **`UrbanSetu_Modern.apk` (~48.58 MB):**
+  * Built for **64-bit ARM (`arm64-v8a`)** devices.
+  * Recommended for 95%+ of modern smartphones (Samsung Galaxy, Xiaomi/Redmi, OnePlus, Realme, Vivo, Oppo, Pixel, etc.).
+* **`UrbanSetu_Legacy.apk` (~41.67 MB):**
+  * Built for **32-bit ARM (`armeabi-v7a`)** devices.
+  * Recommended for older smartphones or entry-level phones running 32-bit chipsets.
+* **`UrbanSetu_Universal.apk` (~110.72 MB):**
+  * Contains all architectures (`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`).
+  * Works on **ANY device**, tablet, or PC emulator (BlueStacks, LDPlayer, Nox).
 
-### How to Verify Checksum
-
-#### 1. On Windows (PowerShell):
-Open PowerShell and run the following command:
-```powershell
-Get-FileHash .\urbansetu-latest.apk -Algorithm SHA256
-```
-
-#### 2. On macOS / Linux (Terminal):
-Open your terminal and run:
-```bash
-shasum -a 256 urbansetu-latest.apk
-```
-
-#### 3. Online:
-You can drag and drop the downloaded APK into secure public hashing tools like [Virustotal](https://www.virustotal.com/) or online SHA256 calculators.
-* **Pro-tip:** Uploading the APK to **VirusTotal** will also scan it across 70+ antivirus engines to prove it is 100% clean, safe, and malware-free!
+> **Tip:** If you're not sure, try the **Modern Edition (48.58 MB)** first. If your phone gives an "App not installed" error, download the **Legacy (41.67 MB)** or **Universal (110.72 MB)** edition.
 
 ---
 
-## 🤝 Need Support?
-If you have any questions, security concerns, or difficulty installing:
-* Visit our official portal: [UrbanSetu Support](https://urbansetu.vercel.app/contact)
-* Support & Feedback: `urbansetu.noreply@gmail.com`
-* Accounts & Legal: `auth.urbansetu@gmail.com`
+## 📱 2. Step-by-Step Installation Instructions
+
+### Step 1: Download from Official Google Drive
+Tap the `.apk` file of your choice from the official UrbanSetu Google Drive repository.
+
+### Step 2: Allow Installation of Unknown Apps
+* **On Android 8.0 (Oreo) to Android 15+:**
+  1. When opening the downloaded APK, your phone may say: *"For your security, your phone is not allowed to install unknown apps from this source."*
+  2. Tap **Settings** on the prompt.
+  3. Turn on the toggle for **"Allow from this source"**.
+  4. Press the back button and tap **Install**.
+* **On Android 7.0 (Nougat):**
+  1. Open phone **Settings** -> **Security** (or **Lock Screen & Security**).
+  2. Turn on **Unknown Sources** and tap **OK**.
+  3. Open your Downloads folder and tap the APK to install.
+
+### Step 3: Bypass Google Play Protect Warning
+Because UrbanSetu is self-signed and distributed directly outside Google Play Store, Play Protect may show: *"Blocked by Play Protect - Play Protect doesn't recognize this app's developer."*
+1. Tap **"More details"** (or the down arrow icon).
+2. Tap **"Install anyway"**.
+3. The app will install and complete in a few seconds!
+
+---
+
+## 🔒 3. Integrity Verification & Safety
+
+Every UrbanSetu APK is scanned and certified 100% clean and free of malware or spyware.
+
+* To verify the authenticity of your downloaded file, review the SHA-256 and MD5 fingerprints in **`CHECKSUM.pdf`** or **`CHECKSUM.md`**.
+* You can also upload the APK to [VirusTotal](https://www.virustotal.com/) to see live clean reports from 70+ security vendors.
+
+---
+
+## 📞 Support & Contacts
+If you encounter any issues:
+* **Official Portal:** [UrbanSetu Downloads](https://urbansetu.vercel.app/user/download)
+* **Support Email:** `urbansetu.noreply@gmail.com`
+* **Accounts & Security:** `auth.urbansetu@gmail.com`

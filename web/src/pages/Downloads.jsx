@@ -289,6 +289,13 @@ export default function Downloads() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {[
                             {
+                                title: "Device Compatibility Guide",
+                                category: "device_compatibility",
+                                file: "DEVICE_COMPATIBILITY_GUIDE.pdf",
+                                desc: "Hardware and processor architecture matrix for 64-bit Modern, 32-bit Legacy, and Universal APK editions.",
+                                color: "teal",
+                            },
+                            {
                                 title: "README & Installation Guide",
                                 category: "readme",
                                 file: "README.pdf",

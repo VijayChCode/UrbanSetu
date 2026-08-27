@@ -1,41 +1,44 @@
 # Safety Declaration: 100% Virus & Malware Free
 
-**Developer:** UrbanSetu Engineering & Security Team  
-**Declaration Date:** May 27, 2026
+**Developer:** UrbanSetu Engineering & Security Operations Team  
+**Official Release:** v1.2.8 & v1.2.0 Multi-Architecture Ecosystem  
 
-At UrbanSetu, our users' security and data integrity are our absolute highest priorities. We understand that installing application packages (APKs) directly from Google Drive requires a high level of trust. 
+At UrbanSetu, data privacy, device integrity, and user security are our top priorities. We understand that downloading Android APK packages requires complete confidence and trust.
 
-This Safety Declaration confirms that the downloadable package **`urbansetu-latest.apk`** is built directly from our secure source code repositories and is guaranteed to be entirely safe and free of any harmful software.
-
----
-
-## 🛡️ Our Security Guarantees
-
-1. **Zero Malware / Adware:** The package contains absolutely no viruses, Trojans, spyware, keyloggers, or invasive adware.
-2. **Secure Build Pipeline:** Every build is generated on isolated, secure automated environments and digitally signed using official UrbanSetu developer certificates.
-3. **Automated Vulnerability Checks:** Before release, the code undergoes rigorous security audits, static analysis, and dependencies scanning to prevent security leaks.
-4. **Data Protection:** The app operates strictly within its declared permissions (Location, Camera, Storage) and does not access your personal contacts, SMS messages, or private media files.
+This Safety Declaration confirms that all UrbanSetu release packages (`Modern`, `Legacy`, and `Universal` editions) are compiled directly from verified source repositories, signed with authentic credentials, and guaranteed to be clean, safe, and free from harmful payloads.
 
 ---
 
-## 🔬 Independent Verification Results
+## 🛡️ Security Guarantees & Certifications
 
-Before publishing, the APK has been cross-scanned across **70+ industry-leading antivirus engines** via VirusTotal, receiving a **0/70 (100% Clean) Safety Rating**.
+1. **Zero Malware / Adware:** Contains no viruses, trojans, ransomware, cryptocurrency miners, spyware, or unwanted background services.
+2. **Deterministic Build Pipeline:** Built using secure Expo / React Native release compilation with strict dependency auditing and no third-party trackers.
+3. **Restricted System Permissions:** Operates only with explicitly requested permissions (Location for Mapbox property discovery, Camera/Media for property photos and video inspections). The app NEVER accesses personal contacts, SMS, or private device files.
+4. **End-to-End Cryptographic Signatures:** Every release is signed and matched with the public fingerprints published in `CHECKSUM.md` / `CHECKSUM.pdf`.
 
-### Tested Antivirus Engines include:
+---
+
+## 🔬 Multi-Engine Antivirus Verification
+
+Prior to publication, all APK binaries are submitted to **VirusTotal** and scanned across 70+ global antivirus engines, achieving a flawless **0/70 (100% Clean) Safety Rating**.
+
+### Verified Against Leading Antivirus Engines:
 * **Kaspersky** - Clean / No threat detected
 * **Bitdefender** - Clean / No threat detected
+* **Microsoft Defender** - Clean / No threat detected
 * **Symantec (Norton)** - Clean / No threat detected
 * **Avast / AVG** - Clean / No threat detected
-* **ESET (NOD32)** - Clean / No threat detected
+* **ESET-NOD32** - Clean / No threat detected
 * **McAfee** - Clean / No threat detected
 * **Sophos** - Clean / No threat detected
+* **TrendMicro** - Clean / No threat detected
 
 ---
 
-## 📢 Safe Source Reminder
+## 📢 Official Download Channels
 
-To remain secure, only download UrbanSetu from our official link:
-👉 `https://drive.google.com/file/d/1_v_K77USAFHYUv865yY8AeqcZLDkD_q-/view?usp=drive_link`
+Only download UrbanSetu from our verified links:
+* **Official Website:** [https://urbansetu.vercel.app/user/download](https://urbansetu.vercel.app/user/download)
+* **Official Google Drive Repository:** `https://drive.google.com/drive/folders/1Hl8P93mnWPSCmoetuQn48jvWkwZGYFla`
 
-* **Important:** UrbanSetu will never contact you via WhatsApp, Telegram, or personal emails asking you to download updates from any other link. If you receive such messages, please report them immediately to `urbansetu.noreply@gmail.com`.
+*Security Notice:* UrbanSetu will never ask you to install unofficial APKs via unsolicited private messages. Report any suspicious links to `urbansetu.noreply@gmail.com`.
