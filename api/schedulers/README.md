@@ -252,7 +252,7 @@ If you hit limits:
 The festival greeting scheduler automatically sends seasonal and cultural greetings to all active users on the day of any celebration. It sends a rich HTML email, creates an in-app notification, triggers the real-time **Notification Bell** via WebSockets, and dispatches mobile push notifications.
 
 ## Schedule
-- **Frequency:** Daily at **12:00 AM Midnight IST** (`0 0 * * *`)
+- **Frequency:** Daily at **9:30 AM IST** (`30 9 * * *`)
 - **Timezone:** Asia/Kolkata (IST)
 - **Entry File:** `api/schedulers/festivalGreetingScheduler.js`
 
