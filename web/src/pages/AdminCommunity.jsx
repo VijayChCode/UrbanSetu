@@ -117,11 +117,15 @@ export default function AdminCommunity() {
     }, [posts, stats.trendingTopics]);
 
     const activePost = useMemo(() => {
-        if (!postId || !posts) return null;
-        return posts.find(p => p._id === postId);
+        if (!postId || !posts || posts.length === 0) return null;
+        return posts.find(p => p._id === postId) || null;
     }, [postId, posts]);
 
-    const dynamicTitle = activePost ? activePost.title : "Admin Dashboard - Community Moderation";
+    const dynamicTitle = activePost 
+        ? `${activePost.title} · Admin Moderation` 
+        : postId
+            ? "Discussion Not Found · Admin Moderation"
+            : "Admin Dashboard - Community Moderation";
     usePageTitle(dynamicTitle);
 
     // Emoji Picker State
@@ -192,27 +196,35 @@ export default function AdminCommunity() {
             params.append('skip', currentSkip);
 
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum?${params.toString()}`);
-            const data = await res.json();
+            const data = await res.json().catch(() => ({ posts: [], hasMore: false }));
 
-            if (res.ok) {
+            if (res.ok && data) {
                 if (isLoadMore) {
                     setPosts(prev => {
                         const existingIds = new Set(prev.map(p => p._id));
-                        const newPosts = data.posts.filter(p => !existingIds.has(p._id));
+                        const newPosts = (data.posts || []).filter(p => !existingIds.has(p._id));
                         return [...prev, ...newPosts];
                     });
                 } else {
-                    setPosts(data.posts);
-                    if (postId) {
+                    setPosts(data.posts || []);
+                    if (postId && data.posts && data.posts.length > 0) {
                         setExpandedSummaries(prev => ({ ...prev, [postId]: true }));
                         setExpandedComments(prev => ({ ...prev, [postId]: true }));
                     }
                 }
-                setHasMore(data.hasMore);
+                setHasMore(Boolean(data.hasMore) && !postId);
+            } else {
+                setHasMore(false);
+                if (!isLoadMore) {
+                    setPosts([]);
+                }
             }
         } catch (error) {
-            console.error(error);
-            toast.error('Failed to load community posts');
+            console.error('Failed to fetch posts in admin community:', error);
+            setHasMore(false);
+            if (!isLoadMore) {
+                setPosts([]);
+            }
         } finally {
             if (isLoadMore) {
                 setLoadingMore(false);
@@ -224,7 +236,7 @@ export default function AdminCommunity() {
     };
 
     useEffect(() => {
-        if (!hasMore || loadingMore || loading) return;
+        if (!hasMore || loadingMore || loading || postId) return;
 
         const observer = new IntersectionObserver((entries) => {
             const first = entries[0];
@@ -247,7 +259,7 @@ export default function AdminCommunity() {
                 observer.unobserve(target);
             }
         };
-    }, [hasMore, loadingMore, loading, posts.length]);
+    }, [hasMore, loadingMore, loading, posts.length, postId]);
 
     // Search Debounce & Suggestions
     useEffect(() => {
@@ -1338,17 +1350,43 @@ export default function AdminCommunity() {
                             </button>
                         )}
                         {posts.length === 0 ? (
-                            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-                                <FaUsers className="text-6xl text-gray-200 dark:text-gray-700 mx-auto mb-4" />
-                                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No posts found</h3>
-                                <p className="text-gray-500 dark:text-gray-400 mb-6">Be the first to start a conversation in this category!</p>
-                                <button
-                                    onClick={() => setShowCreateModal(true)}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Start Discussion
-                                </button>
-                            </div>
+                            postId ? (
+                                <div className="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-300">
+                                    <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-200/50 dark:border-amber-800/50">
+                                        <FaExclamationTriangle className="text-2xl" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Discussion Not Found</h3>
+                                    <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6 text-sm leading-relaxed">
+                                        The community discussion you're looking for doesn't exist, may have been removed, or the link is invalid.
+                                    </p>
+                                    <div className="flex flex-wrap items-center justify-center gap-3">
+                                        <button
+                                            onClick={() => navigate('/admin/community')}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-500/20"
+                                        >
+                                            <FaArrowLeft className="text-xs" /> Back to All Discussions
+                                        </button>
+                                        <button
+                                            onClick={() => setShowCreateModal(true)}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                                        >
+                                            <FaPlus className="text-xs" /> Start New Discussion
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+                                    <FaUsers className="text-6xl text-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No posts found</h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-6">Be the first to start a conversation in this category!</p>
+                                    <button
+                                        onClick={() => setShowCreateModal(true)}
+                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    >
+                                        Start Discussion
+                                    </button>
+                                </div>
+                            )
                         ) : (
                             sortedPosts.map((post, index) => (
                                 <div
@@ -2225,7 +2263,7 @@ export default function AdminCommunity() {
                                 </div>
                             ))
                         )}
-                        {hasMore && (
+                        {!postId && hasMore && (
                             <div id="infinite-scroll-trigger" className="pt-4 pb-8 flex justify-center">
                                 {loadingMore ? (
                                     <div className="w-full space-y-6">

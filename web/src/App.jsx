@@ -40,6 +40,15 @@ const BlogRedirect = () => {
   const isGuide = location.pathname.includes('/guide/');
   return <Navigate to={`/user/${isGuide ? 'guide' : 'blog'}/${slug}`} replace />;
 };
+
+// Community post redirect component for logged-in users
+const CommunityPostRedirect = () => {
+  const { postId } = useParams();
+  const { currentUser } = useSelector((state) => state.user);
+  if (!currentUser) return <Community />;
+  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'rootadmin';
+  return <Navigate to={isAdmin ? `/admin/community/post/${postId}` : `/user/community/post/${postId}`} replace />;
+};
 import Privacy from "./pages/Privacy";
 import UserTerms from "./pages/UserTerms";
 import AdminTerms from "./pages/AdminTerms";
@@ -1403,7 +1412,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
             <Route path="/setuai" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/setuai" : "/user/setuai"} /> : <PublicAI />} />
             <Route path="/ai" element={<Navigate to="/setuai" replace />} />
             <Route path="/community" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/community" : "/user/community"} /> : <Community />} />
-            <Route path="/community/post/:postId" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? `/admin/community/post/:postId` : `/user/community/post/:postId`} /> : <Community />} />
+            <Route path="/community/post/:postId" element={<CommunityPostRedirect />} />
             <Route path="/community-guidelines" element={currentUser ? <NotFound /> : <CommunityGuidelines />} />
             <Route path="/restore-account/:token" element={<AccountRevocation />} />
             <Route path="/account-conflict" element={<AccountConflictResolution />} />

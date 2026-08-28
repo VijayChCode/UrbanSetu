@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ForumPost from '../models/forumPost.model.js';
 import User from '../models/user.model.js';
 import { errorHandler } from '../utils/error.js';
@@ -91,9 +92,17 @@ export const getPosts = async (req, res, next) => {
         let query = {};
 
         if (postId) {
+            if (!mongoose.Types.ObjectId.isValid(postId)) {
+                return res.status(200).json({ posts: [], total: 0, hasMore: false });
+            }
             query._id = postId;
         } else {
-            if (userId) query.author = userId;
+            if (userId) {
+                if (!mongoose.Types.ObjectId.isValid(userId)) {
+                    return res.status(200).json({ posts: [], total: 0, hasMore: false });
+                }
+                query.author = userId;
+            }
 
             if (city) query['location.city'] = { $regex: escapeRegex(city), $options: 'i' };
             if (neighborhood) query['location.neighborhood'] = { $regex: escapeRegex(neighborhood), $options: 'i' };
@@ -135,6 +144,10 @@ export const getPosts = async (req, res, next) => {
 
 export const getPostById = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id)
             .populate('author', 'username avatar email type isVerified profileVisibility')
             .populate('comments.user', 'username avatar')
@@ -155,6 +168,10 @@ export const getPostById = async (req, res, next) => {
 
 export const deletePost = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
@@ -182,6 +199,10 @@ export const deletePost = async (req, res, next) => {
 
 export const togglePin = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
@@ -201,6 +222,10 @@ export const togglePin = async (req, res, next) => {
 
 export const likePost = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
@@ -228,6 +253,10 @@ export const likePost = async (req, res, next) => {
 
 export const dislikePost = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
@@ -255,6 +284,10 @@ export const dislikePost = async (req, res, next) => {
 
 export const addComment = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
         if (post.isLocked && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
@@ -287,8 +320,16 @@ export const addComment = async (req, res, next) => {
 
 export const deleteComment = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
 
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
@@ -314,8 +355,16 @@ export const deleteComment = async (req, res, next) => {
 
 export const updateComment = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
 
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
@@ -343,11 +392,19 @@ export const updateComment = async (req, res, next) => {
 
 export const addReply = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
         if (post.isLocked && req.user.role !== 'admin' && req.user.role !== 'rootadmin') {
             return next(errorHandler(403, 'This discussion is locked'));
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
         }
 
         const comment = post.comments.id(req.params.commentId);
@@ -356,8 +413,8 @@ export const addReply = async (req, res, next) => {
         const { content, replyToUser, parentReplyId } = req.body;
         const newReply = {
             user: req.user.id,
-            replyToUser: replyToUser || null,
-            parentReplyId: parentReplyId || null,
+            replyToUser: (replyToUser && mongoose.Types.ObjectId.isValid(replyToUser)) ? replyToUser : null,
+            parentReplyId: (parentReplyId && mongoose.Types.ObjectId.isValid(parentReplyId)) ? parentReplyId : null,
             content
         };
 
@@ -381,11 +438,23 @@ export const addReply = async (req, res, next) => {
 
 export const deleteReply = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
+
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.replyId)) {
+            return next(errorHandler(404, 'Reply not found'));
+        }
 
         const reply = comment.replies.id(req.params.replyId);
         if (!reply) return next(errorHandler(404, 'Reply not found'));
@@ -409,11 +478,23 @@ export const deleteReply = async (req, res, next) => {
 
 export const updateReply = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
+
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.replyId)) {
+            return next(errorHandler(404, 'Reply not found'));
+        }
 
         const reply = comment.replies.id(req.params.replyId);
         if (!reply) return next(errorHandler(404, 'Reply not found'));
@@ -443,8 +524,16 @@ export const updateReply = async (req, res, next) => {
 
 export const likeComment = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
 
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
@@ -475,8 +564,16 @@ export const likeComment = async (req, res, next) => {
 
 export const dislikeComment = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
 
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
@@ -507,11 +604,23 @@ export const dislikeComment = async (req, res, next) => {
 
 export const likeReply = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
+
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.replyId)) {
+            return next(errorHandler(404, 'Reply not found'));
+        }
 
         const reply = comment.replies.id(req.params.replyId);
         if (!reply) return next(errorHandler(404, 'Reply not found'));
@@ -542,11 +651,23 @@ export const likeReply = async (req, res, next) => {
 
 export const dislikeReply = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
+
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.replyId)) {
+            return next(errorHandler(404, 'Reply not found'));
+        }
 
         const reply = comment.replies.id(req.params.replyId);
         if (!reply) return next(errorHandler(404, 'Reply not found'));
@@ -685,6 +806,10 @@ export const getCommunityStats = async (req, res, next) => {
 
 export const lockPost = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
@@ -714,6 +839,10 @@ export const lockPost = async (req, res, next) => {
 
 export const reportPost = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
@@ -755,8 +884,16 @@ export const reportPost = async (req, res, next) => {
 
 export const reportComment = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
 
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
@@ -799,11 +936,23 @@ export const reportComment = async (req, res, next) => {
 
 export const reportReply = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
+        if (!mongoose.Types.ObjectId.isValid(req.params.commentId)) {
+            return next(errorHandler(404, 'Comment not found'));
+        }
+
         const comment = post.comments.id(req.params.commentId);
         if (!comment) return next(errorHandler(404, 'Comment not found'));
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.replyId)) {
+            return next(errorHandler(404, 'Reply not found'));
+        }
 
         const reply = comment.replies.id(req.params.replyId);
         if (!reply) return next(errorHandler(404, 'Reply not found'));
@@ -861,6 +1010,10 @@ export const getSuggestions = async (req, res, next) => {
 
 export const updatePost = async (req, res, next) => {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return next(errorHandler(404, 'Post not found'));
+        }
+
         const post = await ForumPost.findById(req.params.id);
         if (!post) return next(errorHandler(404, 'Post not found'));
 
