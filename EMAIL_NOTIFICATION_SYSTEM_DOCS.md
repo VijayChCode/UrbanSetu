@@ -111,7 +111,7 @@ All email templates are located in `api/utils/emailService.js`. They utilize a c
 
 This service automatically detects current cultural/seasonal festivals and delivers rich greetings to all eligible active users simultaneously via email, real-time in-app notification bell alerts, and mobile push notifications.
 
-*   **Schedule:** Runs daily at **12:00 AM Midnight IST** (`0 0 * * *` with `timezone: "Asia/Kolkata"`).
+*   **Schedule:** Runs daily at **9:30 AM IST** (`30 9 * * *` with `timezone: "Asia/Kolkata"`).
 *   **Logic:**
     *   Queries `api/utils/seasonalEvents.js` for active festival themes on the current date.
     *   Finds active users who haven't yet received greetings for the festival in the current year.
@@ -133,7 +133,7 @@ This service automatically detects current cultural/seasonal festivals and deliv
 
     // ... inside startServer ...
     startScheduler(app);
-    startFestivalGreetingScheduler(app); // Runs daily at 12:00 AM Midnight IST
+    startFestivalGreetingScheduler(app); // Runs daily at 9:30 AM IST
     ```
 
 ### B. Payment Route Integration

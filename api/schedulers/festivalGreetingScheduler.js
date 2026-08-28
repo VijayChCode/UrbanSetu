@@ -159,15 +159,15 @@ export const startFestivalGreetingScheduler = (app) => {
         appInstance = app;
     }
 
-    // Run Daily at 12:00 AM Midnight (Asia/Kolkata timezone)
-    cron.schedule('0 0 * * *', async () => {
+    // Run Daily at 9:30 AM (Asia/Kolkata timezone)
+    cron.schedule('30 9 * * *', async () => {
         await processFestivalGreetings(appInstance);
     }, {
         scheduled: true,
         timezone: "Asia/Kolkata"
     });
 
-    console.log('📅 Festival Greeting scheduler started (Daily at 12:00 AM Midnight IST)');
+    console.log('📅 Festival Greeting scheduler started (Daily at 9:30 AM IST)');
 };
 
 export default startFestivalGreetingScheduler;
