@@ -1790,7 +1790,7 @@ export default function Settings() {
               {t('settings.error_directory') || 'Error Directory'}
             </Link>
             <Link
-              to="/status?tab=currentstatus"
+              to={currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/status?tab=currentstatus' : '/user/status?tab=currentstatus'}
               className="block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
             >
               System Status

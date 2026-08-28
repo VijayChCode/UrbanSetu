@@ -1411,7 +1411,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
 
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/updates" element={<Updates />} />
-            <Route path="/status" element={<StatusPage />} />
+            <Route path="/status" element={currentUser ? <Navigate to={(currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin/status" : "/user/status"} /> : <StatusPage />} />
             <Route path="/setuai/share/:shareToken" element={<SharedChatView />} />
             <Route path="/ai/share/:shareToken" element={<SharedChatView />} />
             <Route path="/v/:token" element={<VideoEmbed />} />
@@ -1486,6 +1486,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/user/leaderboard" element={<Leaderboard />} />
               <Route path="/user/year/:year" element={<YearInReview />} />
               <Route path="/user/updates" element={<Updates />} />
+              <Route path="/user/status" element={<StatusPage />} />
               <Route path="/user/download" element={<Downloads />} />
               <Route path="/user/help-center" element={<HelpCenter />} />
               <Route path="/user/help-center/article/:slug" element={<ArticleView />} />
@@ -1531,6 +1532,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/cookie-policy" element={<AdminCookiePolicy />} />
               <Route path="/admin/community-guidelines" element={<CommunityGuidelines />} />
               <Route path="/admin/updates" element={<AdminUpdates />} />
+              <Route path="/admin/status" element={<StatusPage />} />
               <Route path="/admin/agents" element={<AdminAgents />} />
               <Route path="/admin/agents/:id" element={<AgentProfile />} />
               <Route path="/admin/help-center" element={<AdminHelpCenter />} />
