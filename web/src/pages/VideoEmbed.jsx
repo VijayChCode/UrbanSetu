@@ -115,7 +115,7 @@ const VideoEmbed = () => {
 
                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                         <Link
-                            to="/"
+                            to={!currentUser ? "/" : (currentUser.role === 'admin' || currentUser.role === 'rootadmin') ? "/admin" : "/user"}
                             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold text-sm transition-all hover:scale-105"
                         >
                             <FaArrowLeft className="text-xs" />

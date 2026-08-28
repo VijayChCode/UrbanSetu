@@ -311,12 +311,37 @@ function normalizeRoute(path, role) {
     return role === "admin" ? "/admin" : "/user";
   }
 
+  // Universal standalone routes that should not be prefixed or altered for any role
+  if (
+    path.startsWith('/i/') ||
+    path.startsWith('/v/') ||
+    path.startsWith('/setuai/share/') ||
+    path.startsWith('/ai/share/') ||
+    path.startsWith('/call/') ||
+    path.startsWith('/restore-account/') ||
+    path.startsWith('/account-conflict') ||
+    path.startsWith('/restore-property') ||
+    path.startsWith('/unsubscribe') ||
+    path.startsWith('/security/lock-account/') ||
+    path.startsWith('/security/unlock-account/')
+  ) {
+    return path;
+  }
+
+  // If a user or admin lands on /user/i/:token, /admin/i/:token, /user/v/:token, /admin/v/:token, normalize to clean /i/:token or /v/:token
+  if (path.startsWith('/user/i/') || path.startsWith('/admin/i/')) {
+    return path.replace(/^\/(user|admin)\/i\//, '/i/');
+  }
+  if (path.startsWith('/user/v/') || path.startsWith('/admin/v/')) {
+    return path.replace(/^\/(user|admin)\/v\//, '/v/');
+  }
+
   // List of base routes that have public-facing versions
   const publicBases = [
     "about", "blogs", "blog", "guides", "guide", "faqs", "search", "terms", "privacy", 
     "cookie-policy", "listing", "home", "contact", "setuai", "ai", "community-guidelines", 
     "community", "help-center", "agents", "market-trends", "error-codes", "view", "download", 
-    "updates", "status", "v", "i"
+    "updates", "status"
   ];
 
   // List of base routes that exist for both user and admin but are NOT public
@@ -568,6 +593,12 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
     location.pathname.startsWith('/user/community/post/') ||
     location.pathname === '/admin/community' ||
     location.pathname.startsWith('/admin/community/post/') ||
+    location.pathname.startsWith('/i/') ||
+    location.pathname.startsWith('/user/i/') ||
+    location.pathname.startsWith('/admin/i/') ||
+    location.pathname.startsWith('/v/') ||
+    location.pathname.startsWith('/user/v/') ||
+    location.pathname.startsWith('/admin/v/') ||
     location.pathname.startsWith('/view/') ||
     location.pathname.startsWith('/user/view/') ||
     location.pathname.startsWith('/admin/view/') ||
@@ -1372,7 +1403,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
       <VisitorTracker />
       <GoogleOneTap />
       <SitemapNav />
-      {!hideHeaderRoutes.includes(location.pathname) && !location.pathname.includes('/year/') && !location.pathname.includes('/call/') && isHeaderVisible && (
+      {!hideHeaderRoutes.includes(location.pathname) && !location.pathname.includes('/year/') && !location.pathname.includes('/call/') && !location.pathname.startsWith('/i/') && !location.pathname.startsWith('/v/') && !location.pathname.startsWith('/user/i/') && !location.pathname.startsWith('/user/v/') && !location.pathname.startsWith('/admin/i/') && !location.pathname.startsWith('/admin/v/') && isHeaderVisible && (
         currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')
           ? <AdminHeader />
           : <Header />
@@ -1504,6 +1535,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/user/agents" element={<FindAgent />} />
               <Route path="/user/agents/:id" element={<AgentProfile />} />
               <Route path="/user/market-trends" element={<MarketTrends />} />
+              <Route path="/user/v/:token" element={<VideoEmbed />} />
+              <Route path="/user/i/:token" element={<ImageEmbed />} />
               <Route path="/agent/dashboard" element={<AgentDashboard />} />
               <Route path="/user/become-an-agent" element={<BecomeAgent />} />
             </Route>
@@ -1587,6 +1620,8 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
               <Route path="/admin/help-center" element={<AdminHelpCenter />} />
               <Route path="/admin/error-codes" element={<ErrorCodes />} />
               <Route path="/admin/market-trends" element={<MarketTrends />} />
+              <Route path="/admin/v/:token" element={<VideoEmbed />} />
+              <Route path="/admin/i/:token" element={<ImageEmbed />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
