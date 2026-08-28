@@ -257,12 +257,16 @@ const AdminHelpCenter = () => {
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        <tbody key={currentPage} className="divide-y divide-gray-100 dark:divide-gray-700">
                             {loading ? (
                                 <tr><td colSpan="5" className="text-center py-8">Loading...</td></tr>
                             ) : filteredArticles.length > 0 ? (
-                                paginatedArticles.map(article => (
-                                    <tr key={article._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                paginatedArticles.map((article, index) => (
+                                    <tr 
+                                        key={article._id} 
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                                        style={{ animation: `fadeIn 0.25s ease-out ${index * 0.04}s backwards` }}
+                                    >
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">{article.title}</div>
                                             <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{article.description}</div>
@@ -475,6 +479,13 @@ const AdminHelpCenter = () => {
                 cancelText="Cancel"
                 isDestructive={true}
             />
+
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 };
