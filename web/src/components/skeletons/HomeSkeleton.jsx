@@ -301,6 +301,54 @@ export default function HomeSkeleton() {
           </div>
         </div>
 
+        {/* ─── Educational & Major Project Banner Skeleton ─── */}
+        <div
+          className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl p-[2px] bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 mb-8 shadow-lg"
+          style={{ animation: 'hsk-fade-in-up 0.6s 160ms both ease-out' }}
+        >
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-[14px] sm:rounded-[22px] p-4 sm:p-6 md:p-8 text-left">
+            {/* Badges row */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Shimmer className="h-6 w-36 rounded-full" delay={180} />
+                <Shimmer className="h-6 w-32 rounded-full" delay={220} />
+                <Shimmer className="h-6 w-28 rounded-full" delay={260} />
+              </div>
+              <div className="flex items-center gap-1.5 ml-auto">
+                <Shimmer className="h-7 w-7 rounded-xl" delay={260} />
+                <Shimmer className="h-7 w-7 rounded-xl" delay={300} />
+              </div>
+            </div>
+
+            {/* Header with Sparkle Icon + Title */}
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="hidden sm:flex w-10 h-10 md:w-12 md:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 items-center justify-center shrink-0">
+                <span className="text-xl">✨</span>
+              </div>
+              <div className="flex-1 space-y-3">
+                <Shimmer className="h-6 sm:h-7 w-64 sm:w-96 rounded-lg" delay={250} />
+                <div className="space-y-2">
+                  <Shimmer className="h-4 w-full rounded" delay={300} />
+                  <Shimmer className="h-4 w-5/6 rounded" delay={350} />
+                </div>
+
+                {/* Feature chips skeleton */}
+                <div className="pt-1 flex flex-wrap gap-2">
+                  <Shimmer className="h-7 w-44 rounded-lg sm:rounded-xl" delay={380} />
+                  <Shimmer className="h-7 w-40 rounded-lg sm:rounded-xl" delay={420} />
+                  <Shimmer className="h-7 w-36 rounded-lg sm:rounded-xl" delay={460} />
+                </div>
+
+                {/* Action button skeletons */}
+                <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                  <Shimmer className="h-10 w-full sm:w-56 rounded-xl" delay={500} />
+                  <Shimmer className="h-10 w-full sm:w-40 rounded-xl" delay={550} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* ─── Dashboard Walkthrough Card Skeleton ─── */}
         <div 
           className="bg-white/60 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/50 rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm relative overflow-hidden"
