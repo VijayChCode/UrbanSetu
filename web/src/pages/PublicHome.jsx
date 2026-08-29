@@ -23,6 +23,7 @@ import DailyQuote from "../components/DailyQuote";
 import { useSeasonalTheme, useAllSeasonalThemes } from "../hooks/useSeasonalTheme.jsx";
 import ThemeDetailModal from "../components/ThemeDetailModal";
 import DemoVideoModal from "../components/DemoVideoModal";
+import EducationalProjectBanner from "../components/EducationalProjectBanner";
 
 import { authenticatedFetch } from '../utils/auth';
 
@@ -393,8 +394,13 @@ export default function PublicHome() {
               </Link>
             </div>
 
+            {/* Educational & Major Project Highlight Banner */}
+            <div className="mt-12 max-w-5xl mx-auto animate-fade-in-delay" style={{ animationDelay: "0.7s" }}>
+              <EducationalProjectBanner isUser={false} />
+            </div>
+
             {/* Stats Cards */}
-            <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto animate-fade-in-delay" style={{ animationDelay: "0.8s" }}>
+            <div className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto animate-fade-in-delay" style={{ animationDelay: "0.8s" }}>
               {[
                 { icon: FaHome, label: "Properties", value: stats.properties, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30" },
                 { icon: FaUsers, label: "Happy Users", value: stats.users, color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/30" },
