@@ -166,12 +166,16 @@ export default function Watchlist() {
     calculateWatchlistStats();
   }, [items]);
 
-  const handleRemove = async (listingId) => {
+  const handleRemove = async (identifier) => {
     try {
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/watchlist/remove/${listingId}`, { method: 'DELETE' });
+      const res = await authenticatedFetch(`${API_BASE_URL}/api/watchlist/remove/${identifier}`, { method: 'DELETE' });
       if (res.ok) {
-        setItems(prev => prev.filter(l => l._id !== listingId));
-        setWatchlistItems(prev => prev.filter(w => (w.listingId?.['_id'] || w.listingIdRaw) !== listingId));
+        setItems(prev => prev.filter(l => l._id !== identifier));
+        setWatchlistItems(prev => prev.filter(w => 
+          (w.listingId?._id || w.listingId?.['id']) !== identifier && 
+          w.listingIdRaw !== identifier && 
+          w._id !== identifier
+        ));
         toast.success('Removed from watchlist');
       }
     } catch (_) { }
@@ -849,19 +853,35 @@ export default function Watchlist() {
         {/* Removed/Unavailable Properties */}
         {watchlistItems.some(w => !w.listingId) && (
           <div className="mb-6 p-4 rounded-lg border border-yellow-200 dark:border-yellow-900/30 bg-yellow-50 dark:bg-yellow-900/20">
-            <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Removed or Unavailable</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-yellow-800 dark:text-yellow-300">Removed or Unavailable</h3>
+              {watchlistItems.filter(w => !w.listingId).length > 1 && (
+                <button
+                  onClick={async () => {
+                    const removedDocs = watchlistItems.filter(w => !w.listingId);
+                    for (const doc of removedDocs) {
+                      await handleRemove(doc._id || doc.listingIdRaw);
+                    }
+                  }}
+                  className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <FaTrash className="text-[10px]" /> Remove all unavailable
+                </button>
+              )}
+            </div>
             <div className="space-y-2">
               {watchlistItems.filter(w => !w.listingId).map((w) => (
-                <div key={w._id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                <div key={w._id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
                   <div>
-                    <p className="text-gray-800 dark:text-gray-200 font-medium">This property has been removed or is no longer available.</p>
+                    <p className="text-gray-800 dark:text-gray-200 font-medium text-sm">This property has been removed or is no longer available.</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">You can remove it from your watchlist.</p>
                   </div>
-                  {w.listingIdRaw && (
-                    <button onClick={() => handleRemove(w.listingIdRaw)} className="px-3 py-1 rounded bg-red-600 text-white text-sm flex items-center gap-2 hover:bg-red-700 transition-colors">
-                      <FaTrash className="text-xs" /> Remove
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleRemove(w._id || w.listingIdRaw)}
+                    className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium flex items-center gap-1.5 hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
+                  >
+                    <FaTrash className="text-xs" /> Remove
+                  </button>
                 </div>
               ))}
             </div>

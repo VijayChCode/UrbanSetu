@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { errorHandler } from "../utils/error.js";
 import PropertyWatchlist from "../models/propertyWatchlist.model.js";
 import Listing from "../models/listing.model.js";
@@ -17,9 +18,10 @@ export const getUserWatchlist = async (req, res, next) => {
     // Include original listing ref for removed listings and pass along effectivePriceAtAdd
     const response = items.map((doc) => {
       const obj = doc.toObject({ virtuals: false });
+      const rawListingId = doc.populated('listingId') || (doc._doc && doc._doc.listingId) || obj.listingId?._id;
       return {
         ...obj,
-        listingIdRaw: obj.listingId?._id || doc.listingId,
+        listingIdRaw: rawListingId ? rawListingId.toString() : null,
       };
     });
 
@@ -53,7 +55,15 @@ export const removeFromWatchlist = async (req, res, next) => {
   try {
     const { listingId } = req.params;
     const userId = req.user._id;
-    const deleted = await PropertyWatchlist.findOneAndDelete({ userId, listingId });
+
+    let query = { userId };
+    if (mongoose.isValidObjectId(listingId)) {
+      query.$or = [{ listingId }, { _id: listingId }];
+    } else {
+      query.listingId = listingId;
+    }
+
+    const deleted = await PropertyWatchlist.findOneAndDelete(query);
     if (!deleted) return next(errorHandler(404, 'Item not in watchlist'));
     res.status(200).json({ success: true });
   } catch (error) {
