@@ -161,7 +161,7 @@ export const sendPushNotification = async (userId, title, body, options = {}) =>
                 expoMessages.push({
                     to: pushToken,
                     sound: user.settings.notificationSound === 'none' ? null : 'default',
-                    title: `✨ ${title}`, // Premium prefix
+                    title: title,
                     body: body,
                     data: {
                         ...data,
@@ -226,7 +226,7 @@ export const sendPushNotification = async (userId, title, body, options = {}) =>
                 const fcmMessage = {
                     tokens: fcmTokens,
                     notification: {
-                        title: `✨ ${title}`,
+                        title: title,
                         body: body,
                         ...(imageUrl && { imageUrl: imageUrl }) // Rich image for native Android
                     },
@@ -343,7 +343,7 @@ export const sendBroadcastPushNotification = async (title, body, options = {}) =
             const messages = chunk.map(({ token, sound }) => ({
                 to: token,
                 sound: sound === 'none' ? null : 'default',
-                title: `✨ ${title}`,
+                title: title,
                 body,
                 data: { ...data, click_action: category },
                 ...(category && { categoryId: category }),
@@ -376,7 +376,7 @@ export const sendBroadcastPushNotification = async (title, body, options = {}) =
                 try {
                     const fcmRes = await admin.messaging().sendEachForMulticast({
                         tokens: chunk,
-                        notification: { title: `✨ ${title}`, body },
+                        notification: { title: title, body },
                         data: { click_action: category, ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])) },
                         android: { priority: 'high', notification: { channelId: 'default', sound: 'default' } },
                         apns: { payload: { aps: { sound: 'default' } } },
