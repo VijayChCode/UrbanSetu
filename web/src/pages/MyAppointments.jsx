@@ -3530,6 +3530,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   // Store appointment and reasons for modals
   const [appointmentToHandle, setAppointmentToHandle] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const messageRefs = useRef({}); // Add messageRefs here
 
@@ -6427,6 +6428,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       toast.error('Reason is required for cancellation.');
       return;
     }
+    setCancelLoading(true);
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/cancel`, {
         method: 'PATCH',
@@ -6448,6 +6450,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         return;
       }
       toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
