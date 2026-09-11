@@ -1737,104 +1737,141 @@ export const deleteRating = async (req, res) => {
     }
 };
 // -------------------------------------------------------------
+// -------------------------------------------------------------
 // SMART SUGGESTIONS GENERATOR
 // -------------------------------------------------------------
+const BACKEND_SMART_SUGGESTIONS = [
+    // --- Property Search & Localities ---
+    "Find properties under ₹50L in Bangalore",
+    "Find premium 3 BHK villas in prime locations",
+    "Find 2 BHK apartments near IT corridors",
+    "Compare 2BHK vs 3BHK apartments",
+    "Show me newly launched residential projects",
+    "What are the top family-friendly neighborhoods to live in?",
+    "Find luxury apartments with scenic city views",
+    "Find ready-to-move flats with zero brokerage",
+    "Find properties with good metro connectivity under ₹75L",
+    "Search for independent houses with private gardens",
+    "Find studio apartments under ₹25,000 monthly rent",
+    "Show pet-friendly rental communities with parks",
+    "Find gated society apartments near top schools",
+    "Find penthouses with terrace gardens in metro cities",
+    "Show verified listings with 3D virtual walkthroughs",
+    "Find duplex apartments in gated communities",
+    "Find sea-facing or lakefront properties available for sale",
+    "Find properties close to international airports",
+    "Find affordable residential plots in developing corridors",
+    "Find furnished 1 BHK apartments for working professionals",
+
+    // --- Investment & Commercial Real Estate ---
+    "What are the best areas for real estate investment?",
+    "Best high-yield commercial property investment areas",
+    "Compare benefits of buying a flat vs an independent house",
+    "What are top real estate investment hotspots this year?",
+    "Should I invest in commercial or residential property?",
+    "How does property appreciation work in metro corridors?",
+    "What are the benefits of investing in pre-launch projects?",
+    "Which cities offer the highest rental yield in India?",
+    "Is it better to invest in plots or built-up apartments?",
+    "What are REITs and how do they compare to physical real estate?",
+    "How do upcoming metro lines impact property price growth?",
+    "What are the risks of investing in under-construction projects?",
+    "How to analyze rental demand before buying an investment property?",
+    "What is capital gains tax on property sale and how to save it?",
+    "How to evaluate commercial shop investment returns?",
+    "What is the average ROI for warehousing and logistics spaces?",
+
+    // --- Home Loans, Finance & Budgeting ---
+    "Help me understand home loan process",
+    "Calculate monthly EMI for a 50 Lakh loan at 8.5%",
+    "Calculate monthly EMI for an 80 Lakh loan for 20 years",
+    "Explain home loan eligibility and tax benefits",
+    "How much down payment do I need for a house?",
+    "How to check property resale value accurately",
+    "Fixed vs floating home loan interest rate - which is better?",
+    "How can I improve my CIBIL score for a lower home loan rate?",
+    "Can co-applicants claim dual tax exemption on home loans?",
+    "What hidden costs should I budget for when buying a home?",
+    "How does home loan prepayment reduce total interest paid?",
+    "What is the difference between home loan sanction and disbursement?",
+    "How to calculate property debt-to-income ratio?",
+    "Explain Pradhan Mantri Awas Yojana (PMAY) subsidy benefits",
+
+    // --- Rental, Rent-Lock & Tenant Guidance ---
+    "How does the Rent-Lock agreement feature work?",
+    "How to negotiate rent or property price effectively",
+    "What are tenant rights and rental agreement rules?",
+    "Draft a polite email negotiating apartment rent",
+    "What clauses must be included in an 11-month rental agreement?",
+    "How does Rent-Lock protect me from unexpected rent hikes?",
+    "Who is responsible for minor vs major repairs in a rental flat?",
+    "What is the standard notice period for vacating a rented home?",
+    "How to handle security deposit refund disputes with landlords?",
+    "What are the rules regarding tenant maintenance charges?",
+    "Tips for inspecting a rental apartment before moving in",
+
+    // --- Legal Compliance, RERA & Registration ---
+    "What documents are required for property registration?",
+    "Explain RERA buyer protections and builder compliance",
+    "What is the difference between carpet area and super built-up area?",
+    "Guide for first-time home buyers before signing contracts",
+    "How to check property title deeds and verify encumbrances?",
+    "What is an Occupancy Certificate (OC) and why is it essential?",
+    "What is a Khata certificate and how to transfer A-Khata?",
+    "What is stamp duty and registration charges calculation?",
+    "How to verify RERA registration number of a housing project?",
+    "What happens if a builder delays possession beyond the promised date?",
+    "Checklist of legal documents to inspect before buying resale flats",
+    "What is a Commencement Certificate (CC) in building construction?",
+    "How to check land zoning and agricultural conversion approvals?",
+
+    // --- Sustainability, Green Buildings & ESG ---
+    "Check ESG ratings and green certifications for homes",
+    "What are IGBC and GRIHA green building certifications?",
+    "How do solar panels and rainwater harvesting lower maintenance bills?",
+    "Are green-certified homes more valuable in the resale market?",
+    "What sustainable construction materials are used in modern housing?",
+    "How does waste management and STP water recycling work in societies?",
+
+    // --- Neighborhoods, Lifestyle & Inspection ---
+    "Find neighborhoods with the best air quality and green parks",
+    "How to evaluate water supply and electricity reliability in an area",
+    "What amenities increase the long-term resale value of a flat?",
+    "Compare cost of living between city center and suburban areas",
+    "How to check flood risk and waterlogging history of a locality",
+    "What questions should I ask society residents before buying a flat?",
+    "How to check mobile network coverage and internet fiber in an area",
+
+    // --- Site Visits, Scheduling & Assistant Reminders ---
+    "Schedule a reminder for my property visit tomorrow at 10 AM",
+    "Set an alarm to follow up with the listing agent on Friday at 5 PM",
+    "Help me create a checklist for property inspection during a site visit",
+    "How do I book a site visit through UrbanSetu?",
+    "Draft a message asking the landlord about parking and maintenance"
+];
+
 export const getSmartSuggestions = async (req, res) => {
     try {
-        const { sessionId, currentSuggestions = [] } = req.body;
-        const userId = req.user?.id;
+        const { currentSuggestions = [] } = req.body;
+        const currentSet = new Set(Array.isArray(currentSuggestions) ? currentSuggestions : []);
+        const available = BACKEND_SMART_SUGGESTIONS.filter(s => !currentSet.has(s));
+        const pool = available.length >= 4 ? available : BACKEND_SMART_SUGGESTIONS;
+        const suggestions = [...pool].sort(() => 0.5 - Math.random()).slice(0, 4);
 
-        let context = "";
-        if (userId && sessionId) {
-            const chatHistory = await ChatHistory.findOne({ userId, sessionId, isActive: true });
-            if (chatHistory && chatHistory.messages.length > 0) {
-                // Get last 5 messages for context
-                const lastMessages = chatHistory.messages.slice(-5);
-                context = lastMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
-            }
-        }
-
-        const prompt = `
-        You are a real estate expert assistant for UrbanSetu. 
-        Based on the following chat history context (if any), generate 5 unique, helpful, and creative one-line suggestions for the user to ask next.
-        
-        CONTEXT:
-        ${context || "No context provided. Customer is browsing real estate offerings."}
-
-        CURRENTLY SHOWN SUGGESTIONS (Avoid these to provide variety):
-        ${currentSuggestions.join(", ") || "None"}
-
-        RULES:
-        1. Suggestions must be concise (max 10 words).
-        2. Focus on: property search, investment, legal aid, home loans, ESG ratings, or Rent-Lock feature.
-        3. Do NOT include numbering or any extra text.
-        4. Return ONLY a valid JSON array of strings.
-        
-        Example Output: ["Find premium villas in Pune", "What is an ESG rating?", "Explain the Rent-Lock process"]
-        `;
-
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: "system", content: prompt }],
-            model: GROQ_MODEL,
-            response_format: { type: "json_object" }
-        });
-        const content = completion.choices[0].message.content;
-
-        // Track persistent usage
-        if (userId && completion.usage) {
-            updateUserAIUsage(userId, completion.usage);
-
-            // Increment current session's out-of-band tokens (nonMessageTokens)
-            if (sessionId) {
-                try {
-                    const tokens = completion.usage.total_tokens || 0;
-                    // We update nonMessageTokens and ALSO totalTokens in one atomic operation
-                    await ChatHistory.findOneAndUpdate(
-                        { userId, sessionId, isActive: true },
-                        {
-                            $inc: { 
-                                nonMessageTokens: tokens,
-                                totalTokens: tokens
-                            }
-                        }
-                    );
-                } catch (sessErr) {
-                    console.warn("Failed to increment session tokens for suggestions:", sessErr);
-                }
-            }
-        }
-        let suggestions = [];
-        try {
-            const parsed = JSON.parse(content);
-            // Some models return { "suggestions": [...] }, handle both cases
-            suggestions = Array.isArray(parsed) ? parsed : (parsed.suggestions || Object.values(parsed)[0]);
-        } catch (e) {
-            console.error("Failed to parse suggestions JSON:", e);
-            suggestions = [
-                "Find properties near me",
-                "Best investment areas in 2026",
-                "Understand the home loan process",
-                "Compare rent vs buy scenarios"
-            ];
-        }
-
-        // Clean and limit suggestions
-        suggestions = Array.isArray(suggestions)
-            ? suggestions.slice(0, 6).map(s => s.replace(/^\d+\.\s*/, '').replace(/^"|"$/g, '').trim())
-            : [];
-
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            suggestions: suggestions.length > 0 ? suggestions : ["Find premium properties", "Check ESG scores", "How to use Rent-Lock"],
-            usage: completion.usage // Return usage metadata
+            suggestions
         });
-
     } catch (error) {
-        console.error('Error generating smart suggestions:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to generate suggestions',
-            suggestions: ["Find properties under ₹50L", "Investment guide for 2026", "What is Rent-Lock?"]
+        console.error('Error in smart suggestions:', error);
+        return res.status(200).json({
+            success: true,
+            suggestions: [
+                "Find properties under ₹50L in Bangalore",
+                "Best high-yield commercial property investment areas",
+                "How does the Rent-Lock agreement feature work?",
+                "Calculate monthly EMI for a 50 Lakh loan at 8.5%"
+            ]
         });
     }
 };

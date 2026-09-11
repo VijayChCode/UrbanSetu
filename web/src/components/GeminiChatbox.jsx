@@ -263,6 +263,116 @@ const getRandomSuggestions = () => {
     return [...reSelected, ...genSelected].sort(() => 0.5 - Math.random());
 };
 
+const HARDCODED_SMART_SUGGESTIONS = [
+    // --- Property Search & Localities ---
+    "Find properties under ₹50L in Bangalore",
+    "Find premium 3 BHK villas in prime locations",
+    "Find 2 BHK apartments near IT corridors",
+    "Compare 2BHK vs 3BHK apartments",
+    "Show me newly launched residential projects",
+    "What are the top family-friendly neighborhoods to live in?",
+    "Find luxury apartments with scenic city views",
+    "Find ready-to-move flats with zero brokerage",
+    "Find properties with good metro connectivity under ₹75L",
+    "Search for independent houses with private gardens",
+    "Find studio apartments under ₹25,000 monthly rent",
+    "Show pet-friendly rental communities with parks",
+    "Find gated society apartments near top schools",
+    "Find penthouses with terrace gardens in metro cities",
+    "Show verified listings with 3D virtual walkthroughs",
+    "Find duplex apartments in gated communities",
+    "Find sea-facing or lakefront properties available for sale",
+    "Find properties close to international airports",
+    "Find affordable residential plots in developing corridors",
+    "Find furnished 1 BHK apartments for working professionals",
+
+    // --- Investment & Commercial Real Estate ---
+    "What are the best areas for real estate investment?",
+    "Best high-yield commercial property investment areas",
+    "Compare benefits of buying a flat vs an independent house",
+    "What are top real estate investment hotspots this year?",
+    "Should I invest in commercial or residential property?",
+    "How does property appreciation work in metro corridors?",
+    "What are the benefits of investing in pre-launch projects?",
+    "Which cities offer the highest rental yield in India?",
+    "Is it better to invest in plots or built-up apartments?",
+    "What are REITs and how do they compare to physical real estate?",
+    "How do upcoming metro lines impact property price growth?",
+    "What are the risks of investing in under-construction projects?",
+    "How to analyze rental demand before buying an investment property?",
+    "What is capital gains tax on property sale and how to save it?",
+    "How to evaluate commercial shop investment returns?",
+    "What is the average ROI for warehousing and logistics spaces?",
+
+    // --- Home Loans, Finance & Budgeting ---
+    "Help me understand home loan process",
+    "Calculate monthly EMI for a 50 Lakh loan at 8.5%",
+    "Calculate monthly EMI for an 80 Lakh loan for 20 years",
+    "Explain home loan eligibility and tax benefits",
+    "How much down payment do I need for a house?",
+    "How to check property resale value accurately",
+    "Fixed vs floating home loan interest rate - which is better?",
+    "How can I improve my CIBIL score for a lower home loan rate?",
+    "Can co-applicants claim dual tax exemption on home loans?",
+    "What hidden costs should I budget for when buying a home?",
+    "How does home loan prepayment reduce total interest paid?",
+    "What is the difference between home loan sanction and disbursement?",
+    "How to calculate property debt-to-income ratio?",
+    "Explain Pradhan Mantri Awas Yojana (PMAY) subsidy benefits",
+
+    // --- Rental, Rent-Lock & Tenant Guidance ---
+    "How does the Rent-Lock agreement feature work?",
+    "How to negotiate rent or property price effectively",
+    "What are tenant rights and rental agreement rules?",
+    "Draft a polite email negotiating apartment rent",
+    "What clauses must be included in an 11-month rental agreement?",
+    "How does Rent-Lock protect me from unexpected rent hikes?",
+    "Who is responsible for minor vs major repairs in a rental flat?",
+    "What is the standard notice period for vacating a rented home?",
+    "How to handle security deposit refund disputes with landlords?",
+    "What are the rules regarding tenant maintenance charges?",
+    "Tips for inspecting a rental apartment before moving in",
+
+    // --- Legal Compliance, RERA & Registration ---
+    "What documents are required for property registration?",
+    "Explain RERA buyer protections and builder compliance",
+    "What is the difference between carpet area and super built-up area?",
+    "Guide for first-time home buyers before signing contracts",
+    "How to check property title deeds and verify encumbrances?",
+    "What is an Occupancy Certificate (OC) and why is it essential?",
+    "What is a Khata certificate and how to transfer A-Khata?",
+    "What is stamp duty and registration charges calculation?",
+    "How to verify RERA registration number of a housing project?",
+    "What happens if a builder delays possession beyond the promised date?",
+    "Checklist of legal documents to inspect before buying resale flats",
+    "What is a Commencement Certificate (CC) in building construction?",
+    "How to check land zoning and agricultural conversion approvals?",
+
+    // --- Sustainability, Green Buildings & ESG ---
+    "Check ESG ratings and green certifications for homes",
+    "What are IGBC and GRIHA green building certifications?",
+    "How do solar panels and rainwater harvesting lower maintenance bills?",
+    "Are green-certified homes more valuable in the resale market?",
+    "What sustainable construction materials are used in modern housing?",
+    "How does waste management and STP water recycling work in societies?",
+
+    // --- Neighborhoods, Lifestyle & Inspection ---
+    "Find neighborhoods with the best air quality and green parks",
+    "How to evaluate water supply and electricity reliability in an area",
+    "What amenities increase the long-term resale value of a flat?",
+    "Compare cost of living between city center and suburban areas",
+    "How to check flood risk and waterlogging history of a locality",
+    "What questions should I ask society residents before buying a flat?",
+    "How to check mobile network coverage and internet fiber in an area",
+
+    // --- Site Visits, Scheduling & Assistant Reminders ---
+    "Schedule a reminder for my property visit tomorrow at 10 AM",
+    "Set an alarm to follow up with the listing agent on Friday at 5 PM",
+    "Help me create a checklist for property inspection during a site visit",
+    "How do I book a site visit through UrbanSetu?",
+    "Draft a message asking the landlord about parking and maintenance"
+];
+
 const THINKING_TAGS = [
     "Thinking...",
     "Analyzing query...",
@@ -8525,51 +8635,26 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         inputRef.current?.focus();
     };
 
-    const handleLoadMoreSuggestions = async () => {
-        if (isLoadingMoreSuggestions || !canLoadMoreSuggestions) return;
-
-        // Check limit
-        if (suggestionLoadCount >= 5) {
-            toast.warning('Refresh limit reached. Please wait a minute for rest.', { icon: '⏳' });
-            setCanLoadMoreSuggestions(false);
-            return;
-        }
+    const handleLoadMoreSuggestions = () => {
+        if (isLoadingMoreSuggestions) return;
 
         setIsLoadingMoreSuggestions(true);
+
         try {
-            const currentSessionId = sessionId || localStorage.getItem('gemini_session_id');
-            const res = await authenticatedFetch(`${API_BASE_URL}/api/gemini/suggestions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sessionId: currentSessionId,
-                    currentSuggestions: smartSuggestions
-                })
-            });
+            // Pick 4 fresh suggestions from the hardcoded pool that are NOT currently displayed
+            const currentSet = new Set(Array.isArray(smartSuggestions) ? smartSuggestions : []);
+            const available = HARDCODED_SMART_SUGGESTIONS.filter(s => !currentSet.has(s));
+            const pool = available.length >= 4 ? available : HARDCODED_SMART_SUGGESTIONS;
+            const newBatch = [...pool].sort(() => 0.5 - Math.random()).slice(0, 4);
 
-            const data = await res.json();
-            if (data.success && data.suggestions && data.suggestions.length > 0) {
-                setSmartSuggestions(data.suggestions);
-                setSuggestionLoadCount(prev => prev + 1);
-
-                // Add suggestion tokens to current session total and lifetime
-                if (data.usage && data.usage.total_tokens) {
-                    const tokensAdded = data.usage.total_tokens;
-                    setActiveSessionTokens(prev => prev + tokensAdded);
-                    setLifetimeUsage(prev => ({
-                        ...prev,
-                        totalTokens: (prev.totalTokens || 0) + tokensAdded
-                    }));
-                }
-
+            // Brief delay for smooth visual feedback
+            setTimeout(() => {
+                setSmartSuggestions(newBatch);
+                setIsLoadingMoreSuggestions(false);
                 toast.success('Suggestions updated!', { icon: '✨' });
-            } else {
-                toast.error('Failed to get new suggestions');
-            }
+            }, 200);
         } catch (error) {
-            console.error('Error fetching suggestions:', error);
-            toast.error('Could not load more suggestions');
-        } finally {
+            console.error('Error refreshing suggestions:', error);
             setIsLoadingMoreSuggestions(false);
         }
     };
@@ -11473,11 +11558,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={handleLoadMoreSuggestions}
-                                                    disabled={isBlockedByPolicy || isLoadingMoreSuggestions || !canLoadMoreSuggestions}
+                                                    disabled={isBlockedByPolicy || isLoadingMoreSuggestions}
                                                     className={`p-1 rounded-full transition-all duration-200 ${isDarkMode
                                                         ? 'hover:bg-gray-700 text-gray-500'
-                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${isBlockedByPolicy || !canLoadMoreSuggestions ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center`}
-                                                    title={isBlockedByPolicy ? "Disabled during cooldown" : !canLoadMoreSuggestions ? "Refresh limit reached. Please wait." : "Load More Suggestions"}
+                                                        : `hover:bg-white text-gray-400 shadow-sm border border-transparent hover:border-blue-100`} hover:text-blue-500 ${isBlockedByPolicy ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center`}
+                                                    title={isBlockedByPolicy ? "Disabled during cooldown" : "Load More Suggestions"}
                                                 >
                                                     {isLoadingMoreSuggestions ? <UrbanSetuSpinner size="sm" /> : <FaSync size={10} />}
                                                 </button>
