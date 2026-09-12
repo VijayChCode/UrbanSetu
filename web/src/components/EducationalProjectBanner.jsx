@@ -47,7 +47,8 @@ export default function EducationalProjectBanner({ className = "", isUser = fals
     sessionStorage.removeItem("urbansetu_edu_banner_dismissed");
   };
 
-  const contactLink = isUser ? "/user/contact" : "/contact";
+  const feedbackFormUrl =
+    "https://docs.google.com/forms/d/e/1FAIpQLSfczXodXme_kSsff2XNktDp6y9r0DyXm_abV9VIqK3PcBKhVg/viewform";
   const aboutLink = isUser ? "/user/about" : "/about";
 
   if (isDismissed) {
@@ -174,14 +175,16 @@ export default function EducationalProjectBanner({ className = "", isUser = fals
 
                   {/* Bottom Action CTAs */}
                   <div className="pt-1.5 sm:pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-                    <Link
-                      to={contactLink}
+                    <a
+                      href={feedbackFormUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="group/btn inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                     >
                       <MessageSquareHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 group-hover/btn:scale-110 transition-transform" />
                       <span>Give Feedback & Suggestions</span>
                       <ArrowRight className="w-3.5 h-3.5 shrink-0 group-hover/btn:translate-x-1 transition-transform" />
-                    </Link>
+                    </a>
 
                     <Link
                       to={aboutLink}
