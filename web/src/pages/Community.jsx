@@ -14,6 +14,7 @@ import UserAvatar from '../components/UserAvatar';
 import SocialSharePanel from '../components/SocialSharePanel';
 import { authenticatedFetch } from '../utils/auth';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+import CommunitySignInModal from '../components/CommunitySignInModal';
 
 export default function Community() {
     const { currentUser } = useSelector((state) => state.user);
@@ -62,6 +63,7 @@ export default function Community() {
     });
     const [reportModal, setReportModal] = useState({ isOpen: false, type: 'post', id: null, commentId: null, replyId: null });
     const [shareModal, setShareModal] = useState({ isOpen: false, url: '', title: '', description: '' });
+    const [authModal, setAuthModal] = useState({ isOpen: false, action: 'like' });
     const [activeReplyInput, setActiveReplyInput] = useState(null); // ID of comment or reply being replied to
     const [editingContent, setEditingContent] = useState({ type: null, id: null, content: '' });
     const [editingPost, setEditingPost] = useState(null); // State for editing main post content
@@ -486,7 +488,7 @@ export default function Community() {
     }, [activeTab]);
 
     const handleLike = async (postId) => {
-        if (!currentUser) return toast.info('Please sign in to like this post');
+        if (!currentUser) return setAuthModal({ isOpen: true, action: 'like' });
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/like/${postId}`, {
                 method: 'PUT'
@@ -501,7 +503,7 @@ export default function Community() {
     };
 
     const handleDislike = async (postId) => {
-        if (!currentUser) return toast.info('Please sign in to dislike this post');
+        if (!currentUser) return setAuthModal({ isOpen: true, action: 'dislike' });
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/dislike/${postId}`, {
                 method: 'PUT'
@@ -516,7 +518,7 @@ export default function Community() {
     };
 
     const handleCommentReaction = async (postId, commentId, reactionType) => {
-        if (!currentUser) return toast.info('Please sign in to react');
+        if (!currentUser) return setAuthModal({ isOpen: true, action: reactionType === 'dislike' ? 'dislike' : 'like' });
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}/${commentId}/${reactionType}`, {
                 method: 'PUT'
@@ -563,7 +565,7 @@ export default function Community() {
     };
 
     const handleReplyReaction = async (postId, commentId, replyId, reactionType) => {
-        if (!currentUser) return toast.info('Please sign in to react');
+        if (!currentUser) return setAuthModal({ isOpen: true, action: reactionType === 'dislike' ? 'dislike' : 'like' });
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}/${commentId}/reply/${replyId}/${reactionType}`, {
                 method: 'PUT'
@@ -808,7 +810,7 @@ export default function Community() {
 
     const handleCreatePost = async (e) => {
         e.preventDefault();
-        if (!currentUser) return toast.info('Please sign in to create a post');
+        if (!currentUser) return setAuthModal({ isOpen: true, action: 'post' });
 
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/create`, {
@@ -1157,6 +1159,7 @@ export default function Community() {
 
     const handleAddComment = async (e, postId) => {
         e.preventDefault();
+        if (!currentUser) return setAuthModal({ isOpen: true, action: 'comment' });
         const content = commentText[postId];
         if (!content || !content.trim()) return;
 
@@ -1179,6 +1182,8 @@ export default function Community() {
                     return post;
                 }));
                 setCommentText(prev => ({ ...prev, [postId]: '' }));
+                // Automatically expand comments so user sees the newly posted comment
+                setExpandedComments(prev => ({ ...prev, [postId]: true }));
                 toast.success('Comment added');
             } else {
                 const data = await res.json();
@@ -1325,7 +1330,7 @@ export default function Community() {
                                 )}
                                 <button
                                     onClick={() => {
-                                        if (!currentUser) return toast.info("Please sign in to post");
+                                        if (!currentUser) return setAuthModal({ isOpen: true, action: 'post' });
                                         setShowCreateModal(true);
                                     }}
                                     className="flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 transition-all flex-1 sm:flex-none"
@@ -1369,7 +1374,7 @@ export default function Community() {
                                             <FaArrowLeft className="text-xs" /> Back to All Discussions
                                         </button>
                                         <button
-                                            onClick={() => currentUser ? setShowCreateModal(true) : toast.info("Please sign in to post")}
+                                            onClick={() => currentUser ? setShowCreateModal(true) : setAuthModal({ isOpen: true, action: 'post' })}
                                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                                         >
                                             <FaPlus className="text-xs" /> Start New Discussion
@@ -1382,7 +1387,7 @@ export default function Community() {
                                     <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">No posts found</h3>
                                     <p className="text-gray-500 dark:text-gray-400 mb-6">Be the first to start a conversation in this category!</p>
                                     <button
-                                        onClick={() => currentUser ? setShowCreateModal(true) : toast.info("Please sign in to post")}
+                                        onClick={() => currentUser ? setShowCreateModal(true) : setAuthModal({ isOpen: true, action: 'post' })}
                                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                     >
                                         Start Discussion
@@ -1491,7 +1496,7 @@ export default function Community() {
                                             <div className="flex items-center gap-4">
                                                 <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded-full px-1 border border-gray-100 dark:border-gray-700">
                                                     <button
-                                                        onClick={() => currentUser ? handleLike(post._id) : toast.info('Please sign in to like')}
+                                                        onClick={() => currentUser ? handleLike(post._id) : setAuthModal({ isOpen: true, action: 'like' })}
                                                         className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ${currentUser && post.likes?.includes(currentUser._id)
                                                             ? 'text-blue-600 dark:text-blue-400'
                                                             : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
@@ -1503,7 +1508,7 @@ export default function Community() {
                                                     </button>
                                                     <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-700"></div>
                                                     <button
-                                                        onClick={() => currentUser ? handleDislike(post._id) : toast.info('Please sign in to dislike')}
+                                                        onClick={() => currentUser ? handleDislike(post._id) : setAuthModal({ isOpen: true, action: 'dislike' })}
                                                         className={`group flex items-center gap-1.5 px-2 py-1.5 rounded-full transition-all ${currentUser && post.dislikes?.includes(currentUser._id)
                                                             ? 'text-red-500 dark:text-red-400'
                                                             : 'text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400'
@@ -1535,9 +1540,9 @@ export default function Community() {
                                     </div>
 
                                     {/* Comments Section */}
-                                    {expandedComments[post._id] && (
-                                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 animate-fade-in">
-                                            <div className="space-y-4 mb-4">
+                                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                                        {expandedComments[post._id] && (
+                                            <div className="space-y-4 mb-4 animate-fade-in">
                                                 {commentsLoading[post._id] ? (
                                                     <div className="space-y-4 mb-4 animate-pulse">
                                                         {[1, 2].map((i) => (
@@ -1644,7 +1649,7 @@ export default function Community() {
                                                                         <div className="flex items-center gap-4 mt-2">
                                                                             <button
                                                                                 onClick={() => {
-                                                                                    if (!currentUser) return toast.info('Please sign in to reply');
+                                                                                    if (!currentUser) return setAuthModal({ isOpen: true, action: 'reply' });
                                                                                     setActiveReplyInput(comment._id);
                                                                                     setReplyingTo({ postId: post._id, commentId: comment._id });
                                                                                 }}
@@ -1654,13 +1659,13 @@ export default function Community() {
                                                                             </button>
                                                                             <div className="flex items-center gap-3">
                                                                                 <button
-                                                                                    onClick={() => currentUser ? handleCommentReaction(post._id, comment._id, 'like') : toast.info('Please sign in to like')}
+                                                                                    onClick={() => currentUser ? handleCommentReaction(post._id, comment._id, 'like') : setAuthModal({ isOpen: true, action: 'like' })}
                                                                                     className={`flex items-center gap-1 text-[10px] font-bold ${currentUser && comment.likes?.includes(currentUser._id) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400'}`}
                                                                                 >
                                                                                     <FaThumbsUp size={10} /> {comment.likes?.length || 0}
                                                                                 </button>
                                                                                 <button
-                                                                                    onClick={() => currentUser ? handleCommentReaction(post._id, comment._id, 'dislike') : toast.info('Please sign in to dislike')}
+                                                                                    onClick={() => currentUser ? handleCommentReaction(post._id, comment._id, 'dislike') : setAuthModal({ isOpen: true, action: 'dislike' })}
                                                                                     className={`flex items-center gap-1 text-[10px] font-bold ${currentUser && comment.dislikes?.includes(currentUser._id) ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400'}`}
                                                                                 >
                                                                                     <FaThumbsDown size={10} />
@@ -1913,20 +1918,20 @@ export default function Community() {
                                                                                                         {!reply.isDeleted && (
                                                                                                             <div className="flex items-center gap-3 mt-1 flex-wrap">
                                                                                                                 <button
-                                                                                                                    onClick={() => handleReplyReaction(post._id, comment._id, reply._id, 'like')}
+                                                                                                                    onClick={() => currentUser ? handleReplyReaction(post._id, comment._id, reply._id, 'like') : setAuthModal({ isOpen: true, action: 'like' })}
                                                                                                                     className={`flex items-center gap-1 text-xs font-bold ${currentUser && reply.likes?.includes(currentUser._id) ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
                                                                                                                 >
                                                                                                                     <FaThumbsUp size={10} /> {reply.likes?.length || 0}
                                                                                                                 </button>
                                                                                                                 <button
-                                                                                                                    onClick={() => handleReplyReaction(post._id, comment._id, reply._id, 'dislike')}
+                                                                                                                    onClick={() => currentUser ? handleReplyReaction(post._id, comment._id, reply._id, 'dislike') : setAuthModal({ isOpen: true, action: 'dislike' })}
                                                                                                                     className={`flex items-center gap-1 text-xs font-bold ${currentUser && reply.dislikes?.includes(currentUser._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                                                                                                                 >
                                                                                                                     <FaThumbsDown size={10} />
                                                                                                                 </button>
                                                                                                                 <button
                                                                                                                     onClick={() => {
-                                                                                                                        if (!currentUser) return toast.info('Please sign in to reply');
+                                                                                                                        if (!currentUser) return setAuthModal({ isOpen: true, action: 'reply' });
                                                                                                                         setActiveReplyInput(reply._id);
                                                                                                                         if (reply.user) {
                                                                                                                             setReplyingTo({ userId: reply.user._id, username: reply.user.username });
@@ -2089,23 +2094,48 @@ export default function Community() {
                                                     <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-2">No comments yet. Be the first to share your thoughts!</p>
                                                 )}
                                             </div>
+                                        )}
 
-                                            {currentUser && (
-                                                <form onSubmit={(e) => handleAddComment(e, post._id)} className="flex gap-2">
-                                                    <img
-                                                        src={currentUser.avatar || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"}
-                                                        className="w-8 h-8 rounded-full object-cover"
-                                                        alt="Current User"
-                                                    />
-                                                    <div className="flex-1 relative">
-                                                        {showMentionSuggestions.show && showMentionSuggestions.id === post._id && showMentionSuggestions.type === 'comment' && renderMentionsPanel()}
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Write a comment... (use @ to mention property)"
-                                                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full pl-4 pr-16 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-900/30 text-gray-900 dark:text-white text-sm transition-all"
-                                                            value={commentText[post._id] || ''}
-                                                            onChange={(e) => handleInputChange(e, 'comment', post._id)}
-                                                        />
+                                        {/* Main Post Comment Input Form - ALWAYS SHOWN (both when comments are hidden and expanded) */}
+                                        <form
+                                            onSubmit={(e) => {
+                                                if (!currentUser) {
+                                                    e.preventDefault();
+                                                    setAuthModal({ isOpen: true, action: 'comment' });
+                                                    return;
+                                                }
+                                                handleAddComment(e, post._id);
+                                            }}
+                                            className="flex gap-2 items-center"
+                                        >
+                                            <UserAvatar
+                                                user={currentUser}
+                                                size="w-8 h-8"
+                                                className="flex-shrink-0 text-sm"
+                                            />
+                                            <div className="flex-1 relative">
+                                                {showMentionSuggestions.show && showMentionSuggestions.id === post._id && showMentionSuggestions.type === 'comment' && renderMentionsPanel()}
+                                                <input
+                                                    type="text"
+                                                    placeholder={currentUser ? "Write a comment... (use @ to mention property)" : "Write a comment... (Sign in to join discussion)"}
+                                                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full pl-4 pr-16 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-900/30 text-gray-900 dark:text-white text-sm transition-all cursor-pointer"
+                                                    value={currentUser ? (commentText[post._id] || '') : ''}
+                                                    readOnly={!currentUser}
+                                                    onClick={() => {
+                                                        if (!currentUser) {
+                                                            setAuthModal({ isOpen: true, action: 'comment' });
+                                                        }
+                                                    }}
+                                                    onChange={(e) => {
+                                                        if (!currentUser) {
+                                                            setAuthModal({ isOpen: true, action: 'comment' });
+                                                            return;
+                                                        }
+                                                        handleInputChange(e, 'comment', post._id);
+                                                    }}
+                                                />
+                                                {currentUser && (
+                                                    <>
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowEmojiPicker(prev => ({
@@ -2141,18 +2171,19 @@ export default function Community() {
                                                                 />
                                                             </div>
                                                         )}
-                                                        <button
-                                                            type="submit"
-                                                            disabled={!commentText[post._id]?.trim()}
-                                                            className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                        >
-                                                            <FaArrowRight className="text-xs" />
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            )}
-                                        </div>
-                                    )}
+                                                    </>
+                                                )}
+                                                <button
+                                                    type="submit"
+                                                    disabled={currentUser && !commentText[post._id]?.trim()}
+                                                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                    title={currentUser ? "Send Comment" : "Sign in to comment"}
+                                                >
+                                                    <FaArrowRight className="text-xs" />
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             ))
                         )}
@@ -2466,6 +2497,11 @@ export default function Community() {
                     url={shareModal.url}
                     title={shareModal.title}
                     description={shareModal.description}
+                />
+                <CommunitySignInModal
+                    isOpen={authModal.isOpen}
+                    onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))}
+                    action={authModal.action}
                 />
             </div>
         </div >
