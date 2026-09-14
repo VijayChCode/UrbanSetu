@@ -9,12 +9,14 @@ import {
 } from 'lucide-react';
 import SEO from '../components/SEO';
 import { authenticatedFetch } from '../utils/auth';
+import GuestSignInModal from '../components/GuestSignInModal';
 
 const PublicFAQs = () => {
   // SEO Dynamic Tags
   const seoTitle = "Frequently Asked Questions - Help Center";
   const seoDescription = "Find answers to commonly asked questions about buying, renting, and selling properties on UrbanSetu. Learn about verification, payments, and smart search features.";
 
+  const [authModal, setAuthModal] = useState({ isOpen: false, action: 'rate-faq' });
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -189,6 +191,10 @@ const PublicFAQs = () => {
 
   const handleRating = async (faqId, type, e) => {
     e.stopPropagation(); // Prevent toggling accordion
+    if (!currentUser) {
+      setAuthModal({ isOpen: true, action: 'rate-faq' });
+      return;
+    }
     if (reactionLoading[faqId]) return;
 
     setReactionLoading(prev => ({ ...prev, [faqId]: true }));
@@ -221,7 +227,7 @@ const PublicFAQs = () => {
         }));
       } else {
         if (response.status === 401) {
-          toast.info('Please log in to rate this FAQ');
+          setAuthModal({ isOpen: true, action: 'rate-faq' });
         } else {
           const errorData = await response.json();
           toast.error(errorData.message || 'Error rating FAQ');
@@ -555,6 +561,12 @@ const PublicFAQs = () => {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+
+      <GuestSignInModal
+        isOpen={authModal.isOpen}
+        onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))}
+        action={authModal.action}
+      />
     </div>
   );
 };

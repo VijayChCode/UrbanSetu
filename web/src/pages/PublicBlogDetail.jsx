@@ -24,8 +24,10 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
 import AdvancedImage from '../components/AdvancedImage';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
+import GuestSignInModal from '../components/GuestSignInModal';
 
 const PublicBlogDetail = () => {
+  const [authModal, setAuthModal] = useState({ isOpen: false, action: 'like-blog' });
 
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -173,6 +175,10 @@ const PublicBlogDetail = () => {
   };
 
   const handleLike = async () => {
+    if (!currentUser) {
+      setAuthModal({ isOpen: true, action: 'like-blog' });
+      return;
+    }
     if (likeLoading) return;
 
     setLikeLoading(true);
@@ -188,7 +194,7 @@ const PublicBlogDetail = () => {
         setIsLoggedIn(true);
       } else {
         if (response.status === 401) {
-          toast.info('Please log in to like this blog');
+          setAuthModal({ isOpen: true, action: 'like-blog' });
           setIsLoggedIn(false);
         } else {
           const errorData = await response.json();
@@ -217,6 +223,10 @@ const PublicBlogDetail = () => {
 
   const handleComment = async (e) => {
     e.preventDefault();
+    if (!currentUser) {
+      setAuthModal({ isOpen: true, action: 'comment-blog' });
+      return;
+    }
     if (!comment.trim()) return;
 
     setCommentLoading(true);
@@ -239,7 +249,7 @@ const PublicBlogDetail = () => {
       } else {
         const errorData = await response.json();
         if (response.status === 401) {
-          toast.info('Please log in to comment');
+          setAuthModal({ isOpen: true, action: 'comment-blog' });
         } else {
           toast.error(errorData.message || 'Error adding comment');
         }
@@ -334,7 +344,7 @@ const PublicBlogDetail = () => {
 
   const handleReportClick = () => {
     if (!currentUser) {
-      toast.info('Please log in to report this article');
+      setAuthModal({ isOpen: true, action: 'report-blog' });
       return;
     }
     setShowReportModal(true);
@@ -948,6 +958,11 @@ const PublicBlogDetail = () => {
           'Hate Speech / Harassment',
           'Other'
         ]}
+      />
+      <GuestSignInModal
+        isOpen={authModal.isOpen}
+        onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))}
+        action={authModal.action}
       />
     </div>
   );

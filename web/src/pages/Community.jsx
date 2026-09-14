@@ -14,7 +14,7 @@ import UserAvatar from '../components/UserAvatar';
 import SocialSharePanel from '../components/SocialSharePanel';
 import { authenticatedFetch } from '../utils/auth';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
-import CommunitySignInModal from '../components/CommunitySignInModal';
+import GuestSignInModal from '../components/GuestSignInModal';
 
 export default function Community() {
     const { currentUser } = useSelector((state) => state.user);
@@ -2498,7 +2498,7 @@ export default function Community() {
                     title={shareModal.title}
                     description={shareModal.description}
                 />
-                <CommunitySignInModal
+                <GuestSignInModal
                     isOpen={authModal.isOpen}
                     onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))}
                     action={authModal.action}

@@ -8,6 +8,7 @@ import { usePageTitle } from '../../hooks/usePageTitle';
 import { authenticatedFetch } from '../../utils/auth';
 import { getErrorCode } from '../../utils/errorRegistry';
 import SEO from '../../components/SEO';
+import GuestSignInModal from '../../components/GuestSignInModal';
 
 const ArticleView = () => {
     const { currentUser } = useSelector((state) => state.user);
@@ -18,6 +19,7 @@ const ArticleView = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [voteStatus, setVoteStatus] = useState(null); // 'helpful', 'not_helpful' or null
+    const [authModal, setAuthModal] = useState({ isOpen: false, action: 'rate-article' });
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -46,6 +48,11 @@ const ArticleView = () => {
     }, [slug]);
 
     const handleVote = async (type) => {
+        if (!currentUser) {
+            setAuthModal({ isOpen: true, action: 'rate-article' });
+            return;
+        }
+
         // Optimistic UI update
         const previousStatus = voteStatus;
 
@@ -65,7 +72,9 @@ const ArticleView = () => {
             if (!res.ok) {
                 // Revert on error
                 setVoteStatus(previousStatus);
-                // toast.error("Failed to vote"); 
+                if (res.status === 401) {
+                    setAuthModal({ isOpen: true, action: 'rate-article' });
+                }
             }
 
         } catch (err) {
@@ -225,6 +234,12 @@ const ArticleView = () => {
                     Need more help? <Link to={!currentUser ? '/contact' : (currentUser.role === 'admin' || currentUser.role === 'rootadmin' ? '/admin/support' : '/user/contact')} className="text-blue-600 dark:text-blue-400 hover:underline">Contact our support team</Link>
                 </div>
             </div>
+
+            <GuestSignInModal
+                isOpen={authModal.isOpen}
+                onClose={() => setAuthModal(prev => ({ ...prev, isOpen: false }))}
+                action={authModal.action}
+            />
         </div>
     );
 };
