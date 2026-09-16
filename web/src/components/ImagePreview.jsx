@@ -419,18 +419,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
       switch (e.key) {
         case 'ArrowLeft':
-          setCurrentIndex(prev => {
-            if (prev > 0) return prev - 1;
-            showFeedback("First Image");
-            return prev;
-          });
+          setCurrentIndex(prev => (prev > 0 ? prev - 1 : prev));
           break;
         case 'ArrowRight':
-          setCurrentIndex(prev => {
-            if (prev < imagesArray.length - 1) return prev + 1;
-            showFeedback("Last Image");
-            return prev;
-          });
+          setCurrentIndex(prev => (prev < imagesArray.length - 1 ? prev + 1 : prev));
           break;
         case '+':
         case '=':
@@ -698,7 +690,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         // Prevent Loop (Stop at edges)
         // Prevent Loop (Stop at edges) with Feedback
         if (dir === 1 && currentIndex >= imagesArray.length - 1) {
-          showFeedback("Last Image");
           setIsAnimatingSwipe(true);
           setSwipeOffset(0);
           setTimeout(() => setIsAnimatingSwipe(false), 300);
@@ -706,7 +697,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           return;
         }
         if (dir === -1 && currentIndex <= 0) {
-          showFeedback("First Image");
           setIsAnimatingSwipe(true);
           setSwipeOffset(0);
           setTimeout(() => setIsAnimatingSwipe(false), 300);
