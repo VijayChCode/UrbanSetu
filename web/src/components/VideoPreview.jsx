@@ -460,14 +460,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               setActiveGesture('volume');
               if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
               gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
-
-              // Show center toast
-              showFeedback(
-                <div className="flex items-center gap-3">
-                  {getVolumeIcon(newVal)}
-                  <span>Volume: {Math.round(newVal * 100)}%</span>
-                </div>
-              );
               return newVal;
             });
           }
@@ -483,14 +475,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
               setActiveGesture('volume');
               if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
               gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
-
-              // Show center toast
-              showFeedback(
-                <div className="flex items-center gap-3">
-                  {getVolumeIcon(newVal)}
-                  <span>Volume: {Math.round(newVal * 100)}%</span>
-                </div>
-              );
               return newVal;
             });
           }
@@ -1782,12 +1766,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
       setBrightness(newVal);
       setActiveGesture('brightness');
-      showFeedback(
-        <div className="flex items-center gap-3">
-          <FaSun />
-          <span>Brightness: {Math.round(newVal * 100)}%</span>
-        </div>
-      );
       clearGesture();
     }
     // Right 15% - Volume
@@ -1798,12 +1776,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
 
       setVolume(newVal);
       setActiveGesture('volume');
-      showFeedback(
-        <div className="flex items-center gap-3">
-          {getVolumeIcon(newVal)}
-          <span>Volume: {Math.round(newVal * 100)}%</span>
-        </div>
-      );
       clearGesture();
     }
   };
@@ -1933,21 +1905,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         if (gestureRef.current.type === 'volume') {
           const newVal = Math.min(Math.max(gestureRef.current.startVal - change, 0), 1);
           setVolume(newVal);
-          showFeedback(
-            <div className="flex items-center gap-3">
-              {getVolumeIcon(newVal)}
-              <span>Volume: {Math.round(newVal * 100)}%</span>
-            </div>
-          );
         } else if (gestureRef.current.type === 'brightness') {
           const newVal = Math.min(Math.max(gestureRef.current.startVal - change, 0.2), 2.0);
           setBrightness(newVal);
-          showFeedback(
-            <div className="flex items-center gap-3">
-              <FaSun />
-              <span>Brightness: {Math.round(newVal * 100)}%</span>
-            </div>
-          );
         }
       } else if (scale === 1 && !isSpeedingRef.current) {
         // Not long-pressing for speed, so we are either detecting OR swiping
@@ -2933,14 +2893,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                         setActiveGesture('volume');
                         if (gestureTimeoutRef.current) clearTimeout(gestureTimeoutRef.current);
                         gestureTimeoutRef.current = setTimeout(() => setActiveGesture(null), 1000);
-
-                        // Show center toast feedback with percentage
-                        showFeedback(
-                          <div className="flex items-center gap-3">
-                            {getVolumeIcon(newVal, { size: 24 })}
-                            <span>Volume: {Math.round(newVal * 100)}%</span>
-                          </div>
-                        );
                       }}
                       className="w-28 h-6 appearance-none bg-transparent cursor-pointer transition-all volume-slider-custom"
                       style={{
