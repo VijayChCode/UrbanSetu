@@ -423,11 +423,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           break;
         case 'm': // Mute
           e.preventDefault();
-          setVolume(v => {
-            const newV = v === 0 ? 1 : 0;
-            showFeedback(newV === 0 ? "Muted" : "Unmuted");
-            return newV;
-          });
+          setVolume(v => (v === 0 ? 1 : 0));
           break;
         case 'arrowright': // Forward 5s or Next video
         case 'l': // +10s
@@ -1136,9 +1132,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       setScale(1);
       setRotation(0);
       setPosition({ x: 0, y: 0 });
-      showFeedback("Mini Player");
-    } else {
-      showFeedback("Normal View");
     }
 
     setIsMiniMode(willBeMini);
@@ -1210,19 +1203,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     if (isMuted) {
       setVolume(1);
       setIsMuted(false);
-      showFeedback(
-        <div className="flex items-center gap-3">
-          {getVolumeIcon(1)} <span>Unmuted</span>
-        </div>
-      );
     } else {
       setVolume(0);
       setIsMuted(true);
-      showFeedback(
-        <div className="flex items-center gap-3">
-          {getVolumeIcon(0)} <span>Muted</span>
-        </div>
-      );
     }
   };
 
@@ -1470,7 +1453,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     setRotation(0);
     setPosition({ x: 0, y: 0 });
     setPlaybackRate(1);
-    showFeedback("Reset");
   };
 
   const speedUp = () => {

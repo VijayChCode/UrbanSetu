@@ -585,7 +585,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     setScale(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
-    showFeedback("Reset");
   };
 
   const handleRotate = () => {
@@ -852,7 +851,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         document.exitFullscreen?.()?.catch(err => console.warn("Exit fullscreen failed:", err));
       }
       setIsFullscreen(false);
-      showFeedback("Exit Fullscreen");
     } else {
       el.requestFullscreen?.()?.catch(err => {
         console.warn("Element requestFullscreen failed, trying document fallback:", err);
@@ -867,17 +865,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         }
       });
       setIsFullscreen(true);
-      showFeedback("Fullscreen");
     }
   };
 
   const toggleSlideshow = () => {
     if (imageError || imageLoading) return;
-    setIsSlideshow(prev => {
-      const newState = !prev;
-      showFeedback(newState ? "Slideshow Started" : "Slideshow Stopped");
-      return newState;
-    });
+    setIsSlideshow(prev => !prev);
   };
 
   const handleShare = async () => {
