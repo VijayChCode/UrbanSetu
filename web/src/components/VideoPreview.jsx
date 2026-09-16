@@ -1232,7 +1232,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           }
         }
         setIsFullscreen(true);
-        showFeedback("Fullscreen");
         safeUnlockOrientation();
       } else {
         if (document.exitFullscreen) {
@@ -1242,7 +1241,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           }
         }
         setIsFullscreen(false);
-        showFeedback("Exit Fullscreen");
         safeUnlockOrientation();
       }
     } catch (err) {
