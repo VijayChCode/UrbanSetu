@@ -590,11 +590,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
   const handleRotate = () => {
     if (imageError || imageLoading) return;
-    setRotation(prev => {
-      const newRot = prev + 90;
-      showFeedback(`${newRot}°`);
-      return newRot;
-    });
+    setRotation(prev => prev + 90);
   };
 
   const handleMouseDown = (e) => {

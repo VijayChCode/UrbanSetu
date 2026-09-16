@@ -1476,11 +1476,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const handleRotate = (e) => {
     e?.stopPropagation();
     if (hasError || isLoading) return;
-    setRotation(r => {
-      const newR = r + 90;
-      showFeedback(`${newR}°`);
-      return newR;
-    });
+    setRotation(r => r + 90);
   };
 
   const handleReset = (e) => {
