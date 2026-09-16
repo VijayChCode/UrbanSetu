@@ -1460,7 +1460,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     e?.stopPropagation();
     const newScale = Math.min(scale * 1.5, 5);
     setScale(newScale);
-    showFeedback(`${Math.round(newScale * 100)}%`);
   };
 
   const handleZoomOut = (e) => {
@@ -1470,7 +1469,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     if (newScale < 1.1) newScale = 1;
 
     setScale(newScale);
-    showFeedback(`${Math.round(newScale * 100)}%`);
 
     if (newScale <= 1.5) setPosition({ x: 0, y: 0 }); // Reset pos if zoomed out
   };
@@ -1904,7 +1902,6 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       const newScale = Math.min(Math.max(pinchStartScaleRef.current * ratio, 1), 5); // Limit scale 1x-5x
 
       setScale(newScale);
-      showFeedback(`${Math.round(newScale * 100)}%`);
 
       // Auto-reset position if zoomed out to near 1x
       if (newScale <= 1.1) {

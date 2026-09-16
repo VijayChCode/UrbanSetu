@@ -567,11 +567,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
   const handleZoomIn = () => {
     if (imageError || imageLoading) return;
-    setScale(prev => {
-      const newScale = Math.min(prev * 1.2, 8);
-      showFeedback(`${Math.round(newScale * 100)}%`);
-      return newScale;
-    });
+    setScale(prev => Math.min(prev * 1.2, 8));
   };
 
   const handleZoomOut = () => {
@@ -579,7 +575,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     setScale(prev => {
       let newScale = Math.max(prev / 1.2, 1);
       if (newScale < 1.1) newScale = 1; // Snap to 1
-      showFeedback(`${Math.round(newScale * 100)}%`);
       if (newScale <= 1) setPosition({ x: 0, y: 0 });
       return newScale;
     });
@@ -670,7 +665,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       const newScale = Math.min(Math.max(pinchStartScaleRef.current * ratio, 1), 8); // Min 1
 
       setScale(newScale);
-      showFeedback(`${Math.round(newScale * 100)}%`);
 
       // Auto-reset position if zoomed out to near 1x
       if (newScale <= 1.1) {
@@ -756,7 +750,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           // Double tap to Zoom Out
           setScale(1);
           setPosition({ x: 0, y: 0 });
-          showFeedback("100%");
         } else {
           // Double tap to Zoom In
           const targetScale = 2.5;
@@ -785,7 +778,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
             setScale(targetScale);
           }
 
-          showFeedback("250%");
           setShowControls(false); // Hide controls for better view
         }
         lastTapRef.current = 0;
@@ -1083,7 +1075,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       // Zoom out to normal
       setScale(1);
       setPosition({ x: 0, y: 0 });
-      showFeedback("100%");
     } else {
       // Zoom in to 2.5x at the clicked position
       const targetScale = 2.5;
@@ -1107,7 +1098,6 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
         setScale(targetScale);
         setPosition(clampedPos);
-        showFeedback("250%");
         
         // Hide controls for an immersive zoomed-in view
         setShowControls(false);
