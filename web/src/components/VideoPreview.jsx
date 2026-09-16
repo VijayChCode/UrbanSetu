@@ -174,6 +174,9 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   const abortControllerRef = useRef(null);
   const savedTimeRef = useRef(0);
   const isRecoveringRef = useRef(false);
+  const seekBarRef = useRef(null);
+  const isSeekingRef = useRef(false);
+  const seekWasPlayingRef = useRef(false);
 
   // Helper to optimize Cloudinary URLs
   const optimizeVideoUrl = (rawItem) => {
@@ -978,6 +981,60 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   }, [isMiniMode, isOpen]);
 
+  // Seek Bar Drag Effect - Global mouse/touch listeners for dragging the progress bar
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleSeekMove = (e) => {
+      if (!isSeekingRef.current || !seekBarRef.current) return;
+      e.preventDefault();
+
+      const rect = seekBarRef.current.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const d = duration || videoRef.current?.duration || 0;
+
+      if (videoRef.current && isFinite(d) && d > 0) {
+        videoRef.current.currentTime = pos * d;
+        setProgress(pos * 100);
+        setCurrentTime(pos * d);
+      }
+
+      // Update preview thumbnail while dragging
+      setPreviewTime(pos * d);
+      setPreviewPos(pos * 100);
+      setShowPreview(true);
+      if (previewVideoRef.current) {
+        previewVideoRef.current.currentTime = pos * d;
+      }
+    };
+
+    const handleSeekEnd = () => {
+      if (!isSeekingRef.current) return;
+      isSeekingRef.current = false;
+      setShowPreview(false);
+
+      // Resume playback if was playing before seek started
+      if (seekWasPlayingRef.current && videoRef.current) {
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
+      seekWasPlayingRef.current = false;
+    };
+
+    window.addEventListener('mousemove', handleSeekMove);
+    window.addEventListener('mouseup', handleSeekEnd);
+    window.addEventListener('touchmove', handleSeekMove, { passive: false });
+    window.addEventListener('touchend', handleSeekEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleSeekMove);
+      window.removeEventListener('mouseup', handleSeekEnd);
+      window.removeEventListener('touchmove', handleSeekMove);
+      window.removeEventListener('touchend', handleSeekEnd);
+    };
+  }, [isOpen, duration]);
+
   if (!isOpen || !videos || videos.length === 0) return null;
 
   // Handlers
@@ -1104,6 +1161,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
   };
 
   const handleTimeUpdate = () => {
+    if (isSeekingRef.current) return; // Don't override progress while user is dragging the seek bar
     if (videoRef.current) {
       const current = videoRef.current.currentTime;
       const total = videoRef.current.duration;
@@ -2009,6 +2067,31 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     setTimeout(() => { isTouchRef.current = false; }, 500);
   };
 
+  // Seek Bar pointer down handler (initiates drag seeking)
+  const handleSeekBarPointerDown = (e) => {
+    if (hasError || isLoading || !duration) return;
+    e.stopPropagation();
+    if (e.type === 'mousedown') e.preventDefault();
+    isSeekingRef.current = true;
+
+    const rect = seekBarRef.current.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const d = duration || videoRef.current?.duration || 0;
+
+    if (videoRef.current && isFinite(d) && d > 0) {
+      videoRef.current.currentTime = pos * d;
+      setProgress(pos * 100);
+      setCurrentTime(pos * d);
+    }
+
+    // Remember playback state and pause during seek for smooth dragging
+    seekWasPlayingRef.current = videoRef.current && !videoRef.current.paused;
+    if (seekWasPlayingRef.current) {
+      videoRef.current.pause();
+    }
+  };
+
   const formatTime = (seconds, isRemaining = false) => {
     // Show placeholder only for truly invalid values (NaN, undefined, Infinity)
     // Note: 0 is a valid elapsed time (start of video)
@@ -2703,7 +2786,10 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         >
           <div className={`w-full space-y-1 ${hasError ? 'opacity-40 pointer-events-none' : ''}`}>
             <div
+              ref={seekBarRef}
               className={`w-full h-1.5 bg-white/30 rounded-full relative group/slider ${hasError || isLoading || !duration ? 'pointer-events-none opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+              onMouseDown={handleSeekBarPointerDown}
+              onTouchStart={handleSeekBarPointerDown}
               onMouseMove={(e) => {
                 if (hasError || isLoading || !duration) return;
                 setShowControls(true);
