@@ -16108,14 +16108,33 @@ function PaymentStatusCell({ appointment, isBuyer }) {
                     </div>
                   </div>
                 )}
-                <a
-                  href={paymentStatus.receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 text-xs font-semibold px-3 py-1 rounded"
+                <button
+                  onClick={async () => {
+                    try {
+                      const receiptUrl = paymentStatus.receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL);
+                      const res = await authenticatedFetch(receiptUrl);
+                      if (!res.ok) {
+                        toast.error('Failed to download receipt');
+                        return;
+                      }
+                      const blob = await res.blob();
+                      const objUrl = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = objUrl;
+                      a.download = `receipt_${paymentStatus.paymentId || 'payment'}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(objUrl);
+                      toast.success('Receipt downloaded successfully');
+                    } catch {
+                      toast.error('Failed to download receipt');
+                    }
+                  }}
+                  className="mt-1 inline-flex items-center gap-1 text-white bg-green-600 hover:bg-green-700 text-xs font-semibold px-3 py-1 rounded cursor-pointer"
                 >
                   <FaDownload /> Receipt
-                </a>
+                </button>
               </>
             ) : null
           )}

@@ -1063,9 +1063,28 @@ const PaymentModal = ({ isOpen, onClose, appointment, onPaymentSuccess, existing
     }
   };
 
-  const downloadReceipt = () => {
+  const downloadReceipt = async () => {
     if (receiptUrl) {
-      window.open(receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL), '_blank');
+      try {
+        const url = receiptUrl.replace(/^https?:\/\/[^\/]+/, import.meta.env.VITE_API_BASE_URL);
+        const res = await authenticatedFetch(url);
+        if (!res.ok) {
+          toast.error('Failed to download receipt');
+          return;
+        }
+        const blob = await res.blob();
+        const objUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objUrl;
+        a.download = 'receipt.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(objUrl);
+        toast.success('Receipt downloaded successfully');
+      } catch {
+        toast.error('Failed to download receipt');
+      }
     }
   };
 

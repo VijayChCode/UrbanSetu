@@ -368,11 +368,10 @@ router.post("/create-intent", verifyToken, async (req, res) => {
   }
 });
 
-// GET: Stream PDF receipt (public - no auth required for email access)
-router.get('/:paymentId/receipt', async (req, res) => {
+// GET: Stream PDF receipt (authenticated - only payment owner or admin can download)
+router.get('/:paymentId/receipt', verifyToken, async (req, res) => {
   try {
     const { paymentId } = req.params;
-    const { admin } = req.query; // Check if admin parameter is present
     const payment = await Payment.findOne({ paymentId })
       .populate('appointmentId', 'propertyName date time status buyerId sellerId')
       .populate('listingId', 'name address')
@@ -381,6 +380,17 @@ router.get('/:paymentId/receipt', async (req, res) => {
       .populate('userId', 'username email firstName');
 
     if (!payment) return res.status(404).json({ message: 'Payment not found' });
+
+    // Authorization: Only the user who made the payment or an admin can download
+    const isOwner = payment.userId && (
+      payment.userId._id?.toString() === req.user._id.toString() ||
+      payment.userId.toString() === req.user._id.toString()
+    );
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'rootadmin' || req.user.isDefaultAdmin;
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: 'You are not authorized to download this receipt' });
+    }
 
     res.status(200);
     res.setHeader('Content-Type', 'application/pdf');

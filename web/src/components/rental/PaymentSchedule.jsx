@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCalendarAlt, FaCheckCircle, FaClock, FaExclamationTriangle, FaMoneyBillWave, FaDownload, FaCoins } from "react-icons/fa";
 import { toast } from 'react-toastify';
+import { authenticatedFetch } from '../../utils/csrf';
 import PaymentModal from '../PaymentModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -292,10 +293,29 @@ export default function PaymentSchedule({ wallet, contract, isTenant }) {
 
                           {isTenant && (payment.status === 'completed' || payment.status === 'paid') && payment.paymentId && (
                             <button
-                              onClick={() => {
+                              onClick={async () => {
                                 const receiptId = typeof payment.paymentId === 'object' ? payment.paymentId.paymentId : payment.paymentId;
                                 if (receiptId) {
-                                  window.open(`${API_BASE_URL}/api/payments/${receiptId}/receipt`, '_blank');
+                                  try {
+                                    const receiptUrl = `${API_BASE_URL}/api/payments/${receiptId}/receipt`;
+                                    const res = await authenticatedFetch(receiptUrl);
+                                    if (!res.ok) {
+                                      toast.error('Failed to download receipt');
+                                      return;
+                                    }
+                                    const blob = await res.blob();
+                                    const objUrl = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = objUrl;
+                                    a.download = `receipt_${receiptId}.pdf`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    a.remove();
+                                    window.URL.revokeObjectURL(objUrl);
+                                    toast.success('Receipt downloaded successfully');
+                                  } catch {
+                                    toast.error('Failed to download receipt');
+                                  }
                                 } else {
                                   toast.error("Receipt ID not found.");
                                 }

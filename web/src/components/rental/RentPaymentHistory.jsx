@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { FaHistory, FaDownload, FaFilter, FaSearch, FaCheckCircle, FaTimesCircle, FaClock, FaExclamationTriangle, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import { toast } from 'react-toastify';
+import { authenticatedFetch } from '../../utils/csrf';
 import jsPDF from 'jspdf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -78,7 +79,21 @@ export default function RentPaymentHistory({ wallet, contract, isTenant }) {
       }
 
       const receiptUrl = `${API_BASE_URL}/api/payments/${receiptId}/receipt`;
-      window.open(receiptUrl, '_blank');
+      const res = await authenticatedFetch(receiptUrl);
+      if (!res.ok) {
+        toast.error('Failed to download receipt');
+        return;
+      }
+      const blob = await res.blob();
+      const objUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = `receipt_${receiptId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(objUrl);
+      toast.success('Receipt downloaded successfully');
     } catch (error) {
       console.error("Error downloading receipt:", error);
       toast.error("Failed to download receipt.");

@@ -24,7 +24,7 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
     });
   };
 
-  const handleDownloadReceipt = (emi) => {
+  const handleDownloadReceipt = async (emi) => {
     const payment = emi.paymentId;
     if (!payment) {
       toast.warning("Receipt not available for this payment.");
@@ -38,8 +38,27 @@ export default function LoanStatusDisplay({ loan, currentUser, onUpdate, STATUS_
       return;
     }
 
-    const receiptUrl = `${API_BASE_URL}/api/payments/${receiptId}/receipt`;
-    window.open(receiptUrl, '_blank');
+    try {
+      const receiptUrl = `${API_BASE_URL}/api/payments/${receiptId}/receipt`;
+      const res = await authenticatedFetch(receiptUrl);
+      if (!res.ok) {
+        toast.error('Failed to download receipt');
+        return;
+      }
+      const blob = await res.blob();
+      const objUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = `receipt_${receiptId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(objUrl);
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error("Error downloading receipt:", error);
+      toast.error("Failed to download receipt.");
+    }
   };
 
   const handleDownloadDocument = async (docUrl, docName) => {
