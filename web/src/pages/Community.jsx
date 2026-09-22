@@ -490,133 +490,217 @@ export default function Community() {
 
     const handleLike = async (postId) => {
         if (!currentUser) return setAuthModal({ isOpen: true, action: 'like' });
+        const userId = currentUser._id;
+
+        // Optimistic update — update UI immediately
+        setPosts(prevPosts => prevPosts.map(post => {
+            if (post._id !== postId) return post;
+            let newLikes = [...(post.likes || [])];
+            let newDislikes = [...(post.dislikes || [])];
+            if (newLikes.includes(userId)) {
+                newLikes = newLikes.filter(id => id !== userId);
+            } else {
+                newLikes.push(userId);
+                newDislikes = newDislikes.filter(id => id !== userId);
+            }
+            return { ...post, likes: newLikes, dislikes: newDislikes };
+        }));
+
+        // Sync with backend silently
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/like/${postId}`, {
                 method: 'PUT'
             });
-            if (res.ok) {
-                const updatedPost = await res.json();
-                setPosts(posts.map(post => post._id === postId ? { ...updatedPost, author: post.author, comments: post.comments } : post));
+            if (!res.ok) {
+                // Revert on failure
+                setPosts(prevPosts => prevPosts.map(post => {
+                    if (post._id !== postId) return post;
+                    let newLikes = [...(post.likes || [])];
+                    let newDislikes = [...(post.dislikes || [])];
+                    if (newLikes.includes(userId)) {
+                        newLikes = newLikes.filter(id => id !== userId);
+                    } else {
+                        newLikes.push(userId);
+                        newDislikes = newDislikes.filter(id => id !== userId);
+                    }
+                    return { ...post, likes: newLikes, dislikes: newDislikes };
+                }));
             }
         } catch (error) {
             console.error(error);
+            // Revert on error
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post._id !== postId) return post;
+                let newLikes = [...(post.likes || [])];
+                let newDislikes = [...(post.dislikes || [])];
+                if (newLikes.includes(userId)) {
+                    newLikes = newLikes.filter(id => id !== userId);
+                } else {
+                    newLikes.push(userId);
+                    newDislikes = newDislikes.filter(id => id !== userId);
+                }
+                return { ...post, likes: newLikes, dislikes: newDislikes };
+            }));
         }
     };
 
     const handleDislike = async (postId) => {
         if (!currentUser) return setAuthModal({ isOpen: true, action: 'dislike' });
+        const userId = currentUser._id;
+
+        // Optimistic update — update UI immediately
+        setPosts(prevPosts => prevPosts.map(post => {
+            if (post._id !== postId) return post;
+            let newLikes = [...(post.likes || [])];
+            let newDislikes = [...(post.dislikes || [])];
+            if (newDislikes.includes(userId)) {
+                newDislikes = newDislikes.filter(id => id !== userId);
+            } else {
+                newDislikes.push(userId);
+                newLikes = newLikes.filter(id => id !== userId);
+            }
+            return { ...post, likes: newLikes, dislikes: newDislikes };
+        }));
+
+        // Sync with backend silently
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/dislike/${postId}`, {
                 method: 'PUT'
             });
-            if (res.ok) {
-                const updatedPost = await res.json();
-                setPosts(posts.map(post => post._id === postId ? { ...updatedPost, author: post.author, comments: post.comments } : post));
+            if (!res.ok) {
+                // Revert on failure
+                setPosts(prevPosts => prevPosts.map(post => {
+                    if (post._id !== postId) return post;
+                    let newLikes = [...(post.likes || [])];
+                    let newDislikes = [...(post.dislikes || [])];
+                    if (newDislikes.includes(userId)) {
+                        newDislikes = newDislikes.filter(id => id !== userId);
+                    } else {
+                        newDislikes.push(userId);
+                        newLikes = newLikes.filter(id => id !== userId);
+                    }
+                    return { ...post, likes: newLikes, dislikes: newDislikes };
+                }));
             }
         } catch (error) {
             console.error(error);
+            // Revert on error
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post._id !== postId) return post;
+                let newLikes = [...(post.likes || [])];
+                let newDislikes = [...(post.dislikes || [])];
+                if (newDislikes.includes(userId)) {
+                    newDislikes = newDislikes.filter(id => id !== userId);
+                } else {
+                    newDislikes.push(userId);
+                    newLikes = newLikes.filter(id => id !== userId);
+                }
+                return { ...post, likes: newLikes, dislikes: newDislikes };
+            }));
         }
     };
 
     const handleCommentReaction = async (postId, commentId, reactionType) => {
         if (!currentUser) return setAuthModal({ isOpen: true, action: reactionType === 'dislike' ? 'dislike' : 'like' });
+        const userId = currentUser._id;
+
+        // Optimistic update — update UI immediately
+        const applyCommentReaction = (prevPosts) => prevPosts.map(post => {
+            if (post._id !== postId) return post;
+            return {
+                ...post,
+                comments: post.comments.map(comment => {
+                    if (comment._id !== commentId) return comment;
+                    let newLikes = [...(comment.likes || [])];
+                    let newDislikes = [...(comment.dislikes || [])];
+                    if (reactionType === 'like') {
+                        if (newLikes.includes(userId)) {
+                            newLikes = newLikes.filter(id => id !== userId);
+                        } else {
+                            newLikes.push(userId);
+                            newDislikes = newDislikes.filter(id => id !== userId);
+                        }
+                    } else {
+                        if (newDislikes.includes(userId)) {
+                            newDislikes = newDislikes.filter(id => id !== userId);
+                        } else {
+                            newDislikes.push(userId);
+                            newLikes = newLikes.filter(id => id !== userId);
+                        }
+                    }
+                    return { ...comment, likes: newLikes, dislikes: newDislikes };
+                })
+            };
+        });
+
+        setPosts(applyCommentReaction);
+
+        // Sync with backend silently
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}/${commentId}/${reactionType}`, {
                 method: 'PUT'
             });
-            if (res.ok) {
-                // Optimistic/Manual update to preserve author info
-                setPosts(prevPosts => prevPosts.map(post => {
-                    if (post._id === postId) {
-                        return {
-                            ...post,
-                            comments: post.comments.map(comment => {
-                                if (comment._id === commentId) {
-                                    const userId = currentUser._id;
-                                    let newLikes = [...(comment.likes || [])];
-                                    let newDislikes = [...(comment.dislikes || [])];
-
-                                    if (reactionType === 'like') {
-                                        if (newLikes.includes(userId)) {
-                                            newLikes = newLikes.filter(id => id !== userId);
-                                        } else {
-                                            newLikes.push(userId);
-                                            newDislikes = newDislikes.filter(id => id !== userId);
-                                        }
-                                    } else {
-                                        if (newDislikes.includes(userId)) {
-                                            newDislikes = newDislikes.filter(id => id !== userId);
-                                        } else {
-                                            newDislikes.push(userId);
-                                            newLikes = newLikes.filter(id => id !== userId);
-                                        }
-                                    }
-                                    return { ...comment, likes: newLikes, dislikes: newDislikes };
-                                }
-                                return comment;
-                            })
-                        };
-                    }
-                    return post;
-                }));
+            if (!res.ok) {
+                setPosts(applyCommentReaction); // Revert
             }
         } catch (error) {
             console.error(error);
+            setPosts(applyCommentReaction); // Revert
         }
     };
 
     const handleReplyReaction = async (postId, commentId, replyId, reactionType) => {
         if (!currentUser) return setAuthModal({ isOpen: true, action: reactionType === 'dislike' ? 'dislike' : 'like' });
+        const userId = currentUser._id;
+
+        // Optimistic update — update UI immediately
+        const applyReplyReaction = (prevPosts) => prevPosts.map(post => {
+            if (post._id !== postId) return post;
+            return {
+                ...post,
+                comments: post.comments.map(comment => {
+                    if (comment._id !== commentId) return comment;
+                    return {
+                        ...comment,
+                        replies: (comment.replies || []).map(reply => {
+                            if (reply._id !== replyId) return reply;
+                            let newLikes = [...(reply.likes || [])];
+                            let newDislikes = [...(reply.dislikes || [])];
+                            if (reactionType === 'like') {
+                                if (newLikes.includes(userId)) {
+                                    newLikes = newLikes.filter(id => id !== userId);
+                                } else {
+                                    newLikes.push(userId);
+                                    newDislikes = newDislikes.filter(id => id !== userId);
+                                }
+                            } else {
+                                if (newDislikes.includes(userId)) {
+                                    newDislikes = newDislikes.filter(id => id !== userId);
+                                } else {
+                                    newDislikes.push(userId);
+                                    newLikes = newLikes.filter(id => id !== userId);
+                                }
+                            }
+                            return { ...reply, likes: newLikes, dislikes: newDislikes };
+                        })
+                    };
+                })
+            };
+        });
+
+        setPosts(applyReplyReaction);
+
+        // Sync with backend silently
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}/${commentId}/reply/${replyId}/${reactionType}`, {
                 method: 'PUT'
             });
-            if (res.ok) {
-                // Optimistic/Manual update to preserve author info
-                setPosts(prevPosts => prevPosts.map(post => {
-                    if (post._id === postId) {
-                        return {
-                            ...post,
-                            comments: post.comments.map(comment => {
-                                if (comment._id === commentId) {
-                                    return {
-                                        ...comment,
-                                        replies: comment.replies.map(reply => {
-                                            if (reply._id === replyId) {
-                                                const userId = currentUser._id;
-                                                let newLikes = [...(reply.likes || [])];
-                                                let newDislikes = [...(reply.dislikes || [])];
-
-                                                if (reactionType === 'like') {
-                                                    if (newLikes.includes(userId)) {
-                                                        newLikes = newLikes.filter(id => id !== userId);
-                                                    } else {
-                                                        newLikes.push(userId);
-                                                        newDislikes = newDislikes.filter(id => id !== userId);
-                                                    }
-                                                } else {
-                                                    if (newDislikes.includes(userId)) {
-                                                        newDislikes = newDislikes.filter(id => id !== userId);
-                                                    } else {
-                                                        newDislikes.push(userId);
-                                                        newLikes = newLikes.filter(id => id !== userId);
-                                                    }
-                                                }
-                                                return { ...reply, likes: newLikes, dislikes: newDislikes };
-                                            }
-                                            return reply;
-                                        })
-                                    };
-                                }
-                                return comment;
-                            })
-                        };
-                    }
-                    return post;
-                }));
+            if (!res.ok) {
+                setPosts(applyReplyReaction); // Revert
             }
         } catch (error) {
             console.error(error);
+            setPosts(applyReplyReaction); // Revert
         }
     };
 
