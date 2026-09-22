@@ -1,0 +1,1640 @@
+[
+  {
+    "id": 1,
+    "name": "The Grand Imperial - 3 BHK Sea-View Luxury Apartment",
+    "description": "Ultra-luxurious 3 BHK apartment in South Mumbai overlooking the Arabian Sea. Features Italian marble, VRV air conditioning, automated lighting, double-glazed soundproof glass, and an expansive sea-facing balcony. 5-star amenities include heated indoor pool, concierge, and valet parking.",
+    "propertyNumber": "Flat 2802, Wing A",
+    "landmark": "Near Mahalaxmi Race Course & Palladium Mall",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400018",
+    "address": "Flat 2802, Wing A, The Grand Imperial, Dr E Moses Rd, Worli, Mumbai, Maharashtra - 400018",
+    "locationLink": "https://maps.google.com/?q=18.9986,72.8174",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 4,
+    "regularPrice": 65000000,
+    "discountPrice": 62000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2150,
+    "floor": 28,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Sea-view Living Hall with Balcony",
+      "1": "Master Suite with Hardwood Accents"
+    }
+  },
+  {
+    "id": 2,
+    "name": "CyberHeights Executive - 2 BHK Furnished Apartment",
+    "description": "Modern, ready-to-move 2 BHK apartment in the heart of HITEC City. Equipped with ergonomic work-from-home setups, modular kitchen with piped gas, high-speed fiber internet, and 100% DG power backup. Within 5 minutes of Google, Amazon, and Inorbit Mall.",
+    "propertyNumber": "Flat 604, Block C",
+    "landmark": "Opposite Cyber Towers & Metro Station",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "pincode": "500081",
+    "address": "Flat 604, Block C, CyberHeights, Madhapur, HITEC City, Hyderabad, Telangana - 500081",
+    "locationLink": "https://maps.google.com/?q=17.4474,78.3762",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 38000,
+    "monthlyRent": 38000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 3200,
+    "advanceRentMonths": 1,
+    "discountPrice": 35000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1250,
+    "floor": 6,
+    "propertyAge": 3,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Living Room with Work Station",
+      "1": "Modular Kitchen with Appliances"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Palm Meadows Luxury Villa - 4 BHK with Private Garden",
+    "description": "Gated European-style luxury villa with a private landscaped front lawn and plunge pool. Vaulted double-height ceilings, private elevator, servant quarters, and solar water heating. Located in a secure gated township with clubhouse, tennis court, and squash arena.",
+    "propertyNumber": "Villa 48, Boulevard 3",
+    "landmark": "Near Forum Shantiniketan & ITPL",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560066",
+    "address": "Villa 48, Boulevard 3, Palm Meadows, Varthur Main Rd, Whitefield, Bengaluru, Karnataka - 560066",
+    "locationLink": "https://maps.google.com/?q=12.9698,77.7499",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 5,
+    "regularPrice": 47500000,
+    "discountPrice": 45000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 3800,
+    "floor": 0,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Villa Exterior with Manicured Lawn",
+      "1": "Private Plunge Pool & Deck"
+    }
+  },
+  {
+    "id": 4,
+    "name": "The Camellias Signature Residence - 4 BHK Golf Suite",
+    "description": "Super-luxury condominium overlooking the DLF Golf Course. Floor-to-ceiling soundproof acoustic glass, private elevator vestibule, radiant cooling, and chef's kitchen. World-class clubhouse with 7 dining venues, Olympic pool, and private spa.",
+    "propertyNumber": "Tower 6B, Unit 1801",
+    "landmark": "DLF Phase 5, Golf Course Road",
+    "city": "Gurgaon",
+    "state": "Haryana",
+    "pincode": "122002",
+    "address": "Unit 1801, Tower 6B, The Camellias, DLF Phase 5, Golf Course Rd, Gurugram, Haryana - 122002",
+    "locationLink": "https://maps.google.com/?q=28.4595,77.0984",
+    "type": "rent",
+    "bedrooms": 4,
+    "bathrooms": 5,
+    "regularPrice": 275000,
+    "monthlyRent": 275000,
+    "securityDepositMonths": 3,
+    "maintenanceCharges": 18000,
+    "advanceRentMonths": 1,
+    "discountPrice": 260000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 5100,
+    "floor": 18,
+    "propertyAge": 1,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "3_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Grand Living Room Facing Golf Greens",
+      "1": "Master Dressing Room with Smoked Glass"
+    }
+  },
+  {
+    "id": 5,
+    "name": "South Extension Heritage Floor - 3 BHK Builder Floor",
+    "description": "Elegant ground-floor builder floor in prime South Extension Part 2. Comes with private front and rear courtyards, independent stilt car parking for 2 sedans, separate servant room, and Vastu-compliant layout.",
+    "propertyNumber": "Ground Floor, E-34",
+    "landmark": "Near South Extension Metro & AIIMS",
+    "city": "New Delhi",
+    "state": "Delhi",
+    "pincode": "110049",
+    "address": "E-34, Ground Floor, South Extension Part 2, New Delhi - 110049",
+    "locationLink": "https://maps.google.com/?q=28.5682,77.2211",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 34000000,
+    "discountPrice": 32500000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1950,
+    "floor": 0,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Drawing Room with Cove Lighting",
+      "1": "Designer Kitchen with Granite Counter"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Koregaon Park Verdant Haven - 1 BHK Designer Studio",
+    "description": "Stylish 1 BHK studio with green canopy balcony view. Built-in wardrobe, pull-out sofa bed, induction kitchenette, high-speed Wi-Fi, and 24/7 security. Walking distance to popular cafes, yoga studios, and Osho Garden.",
+    "propertyNumber": "Apartment 204, Lane 7",
+    "landmark": "Near German Bakery & Koregaon Park Plaza",
+    "city": "Pune",
+    "state": "Maharashtra",
+    "pincode": "411001",
+    "address": "Flat 204, Lane 7, Koregaon Park, Pune, Maharashtra - 411001",
+    "locationLink": "https://maps.google.com/?q=18.5362,73.8940",
+    "type": "rent",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "regularPrice": 24000,
+    "monthlyRent": 24000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 1500,
+    "advanceRentMonths": 1,
+    "discountPrice": 0,
+    "offer": false,
+    "parking": true,
+    "furnished": true,
+    "area": 580,
+    "floor": 2,
+    "propertyAge": 3,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Sunlit Studio Living Space with Balcony"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Ballygunge Circular Manor - 4 BHK Classic Apartment",
+    "description": "Prestigious 4 BHK home in prime South Kolkata. High ceilings, teakwood doors, expansive wraparound balconies, marble flooring, and dedicated parking for 2 vehicles. Quiet leafy neighborhood close to clubs and top schools.",
+    "propertyNumber": "Flat 5A, Heritage Court",
+    "landmark": "Near CC&FC Club & Birla Temple",
+    "city": "Kolkata",
+    "state": "West Bengal",
+    "pincode": "700019",
+    "address": "Flat 5A, Heritage Court, Ballygunge Circular Rd, Kolkata, West Bengal - 700019",
+    "locationLink": "https://maps.google.com/?q=22.5298,88.3615",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "regularPrice": 39000000,
+    "discountPrice": 37000000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 2750,
+    "floor": 5,
+    "propertyAge": 5,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room with Natural Cross Ventilation"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Marina Breeze Bayfront - 3 BHK Sea-Facing Condo",
+    "description": "Stunning beachfront condominium along ECR Chennai. Panoramic Bay of Bengal view, modular German kitchen, clubhouse access, swimming pool, and direct gated beach promenade access.",
+    "propertyNumber": "Tower 2, Flat 1104",
+    "landmark": "Near Mayajaal Multiplex, Kanathur, ECR",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "pincode": "603112",
+    "address": "Flat 1104, Tower 2, Marina Breeze, East Coast Road, Chennai, Tamil Nadu - 603112",
+    "locationLink": "https://maps.google.com/?q=12.8465,80.2442",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 62000,
+    "monthlyRent": 62000,
+    "securityDepositMonths": 5,
+    "maintenanceCharges": 5500,
+    "advanceRentMonths": 1,
+    "discountPrice": 58000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1950,
+    "floor": 11,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year", "5_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Sea-Facing Living Area with Glass Balustrade"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Candolim Sunshine Villa - 3 BHK Portuguese Colonial Villa",
+    "description": "Charming restored Indo-Portuguese villa with high pitched tiled roof, exposed laterite stone walls, wrap-around veranda (balcão), private pool, and mango garden. 500 meters from Candolim beach.",
+    "propertyNumber": "House No. 112/A, Vaddy",
+    "landmark": "Near Candolim Beach Road & Newton's Supermarket",
+    "city": "Candolim",
+    "state": "Goa",
+    "pincode": "403515",
+    "address": "House 112/A, Vaddy, Candolim, North Goa - 403515",
+    "locationLink": "https://maps.google.com/?q=15.5188,73.7634",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 32000000,
+    "discountPrice": 30500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2400,
+    "floor": 0,
+    "propertyAge": 6,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Colonial Front Porch & Private Swimming Pool"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Rajvilas Royal Haveli - 5 BHK Heritage Courtyard Home",
+    "description": "Exquisite heritage-style haveli crafted with authentic Jodhpur sandstone and carved jharokhas. Central marble fountain courtyard, terrace lounge, private lift, and handcrafted fresco ceilings.",
+    "propertyNumber": "Kothi 19, Civil Lines",
+    "landmark": "Near CM Residence & Jacob Road",
+    "city": "Jaipur",
+    "state": "Rajasthan",
+    "pincode": "302006",
+    "address": "Kothi 19, Jacob Road, Civil Lines, Jaipur, Rajasthan - 302006",
+    "locationLink": "https://maps.google.com/?q=26.9038,75.7878",
+    "type": "sale",
+    "bedrooms": 5,
+    "bathrooms": 6,
+    "regularPrice": 72000000,
+    "discountPrice": 69000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 4900,
+    "floor": 0,
+    "propertyAge": 8,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Traditional Sandstone Courtyard with Arches"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Skyline Vista City Centre - 2 BHK High-Rise Flat",
+    "description": "Comfortable, modern 2 BHK flat with unhindered views of SG Highway. Modular kitchen, centralized gas line, designated basement parking, 24/7 security, gym, and children play area.",
+    "propertyNumber": "Flat 803, Block B",
+    "landmark": "Near ISKCON Temple & Pakwan Cross Roads",
+    "city": "Ahmedabad",
+    "state": "Gujarat",
+    "pincode": "380015",
+    "address": "Flat 803, Block B, Skyline Vista, SG Highway, Ahmedabad, Gujarat - 380015",
+    "locationLink": "https://maps.google.com/?q=23.0305,72.5076",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 26000,
+    "monthlyRent": 26000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 2000,
+    "advanceRentMonths": 1,
+    "discountPrice": 24000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1180,
+    "floor": 8,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room with Ceramic Tiles"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Gomti Nagar Lakeview - 3 BHK Premium Flat",
+    "description": "Spacious 3 BHK apartment overlooking Gomti Riverfront green belt. Features 2 large balconies, master bedroom with wooden flooring, piped gas, clubhouse with badminton court, and EV charging bays.",
+    "propertyNumber": "Flat 1102, Tower E",
+    "landmark": "Near Fun Republic Mall & Ambedkar Park",
+    "city": "Lucknow",
+    "state": "Uttar Pradesh",
+    "pincode": "226010",
+    "address": "Flat 1102, Tower E, Gomti River Heights, Gomti Nagar, Lucknow, Uttar Pradesh - 226010",
+    "locationLink": "https://maps.google.com/?q=26.8530,80.9930",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 12500000,
+    "discountPrice": 11800000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1680,
+    "floor": 11,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Panoramic Living Room Facing Gomti River"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Noida Expressway Tech Residence - 3 BHK Green Apartment",
+    "description": "Well-connected 3 BHK flat situated directly on Noida Expressway. Walking distance to Metro station, 80% green area, zero water logging zone, multi-tier security, and Olympic pool.",
+    "propertyNumber": "Flat 1403, Tower 8",
+    "landmark": "Sector 137 Metro Station & Felix Hospital",
+    "city": "Noida",
+    "state": "Uttar Pradesh",
+    "pincode": "201305",
+    "address": "Flat 1403, Tower 8, Paras Tierea, Sector 137, Noida, Uttar Pradesh - 201305",
+    "locationLink": "https://maps.google.com/?q=28.5085,77.4045",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 32000,
+    "monthlyRent": 32000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 3500,
+    "advanceRentMonths": 1,
+    "discountPrice": 30000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1420,
+    "floor": 14,
+    "propertyAge": 4,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Furnished Living Room with L-Shape Sofa"
+    }
+  },
+  {
+    "id": 14,
+    "name": "Marine Drive Waterfront - 3 BHK Luxury Flat",
+    "description": "Idyllic waterfront apartment overlooking Kochi backwaters and Bolgatty Island. Features teak finishes, glass balconies, infinity pool at podium level, and marina boat jetty docking access.",
+    "propertyNumber": "Flat 901, Bay Pride Towers",
+    "landmark": "Near Marine Drive Walkway & High Court Junction",
+    "city": "Kochi",
+    "state": "Kerala",
+    "pincode": "682031",
+    "address": "Flat 901, Bay Pride Towers, Marine Drive, Kochi, Kerala - 682031",
+    "locationLink": "https://maps.google.com/?q=9.9816,76.2753",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 21000000,
+    "discountPrice": 19800000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2050,
+    "floor": 9,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Backwater Facing Living Room & Balcony"
+    }
+  },
+  {
+    "id": 15,
+    "name": "Super Corridor Tech Park Home - 2 BHK Modern Apartment",
+    "description": "Brand new 2 BHK flat near Indore Super Corridor. Ideal for tech professionals working in TCS/Infosys campus. Gated campus with gym, 24-hr security, landscaped garden, and solar street lights.",
+    "propertyNumber": "Flat 402, Block A",
+    "landmark": "Near TCS Indore Campus & Airport Road",
+    "city": "Indore",
+    "state": "Madhya Pradesh",
+    "pincode": "452005",
+    "address": "Flat 402, Block A, Corridor Palms, Super Corridor, Indore, Madhya Pradesh - 452005",
+    "locationLink": "https://maps.google.com/?q=22.7533,75.8080",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 18000,
+    "monthlyRent": 18000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 1500,
+    "advanceRentMonths": 1,
+    "discountPrice": 0,
+    "offer": false,
+    "parking": true,
+    "furnished": false,
+    "area": 1050,
+    "floor": 4,
+    "propertyAge": 1,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year", "5_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Freshly Painted Modern 2 BHK Living Room"
+    }
+  },
+  {
+    "id": 16,
+    "name": "Chandigarh Boulevard Independent Kothi - 5 BHK Villa",
+    "description": "Stately 1-kanal independent kothi in prime Sector 9. North-facing, Italian marble, teakwood joinery, front lawn, servant quarter, and automated remote-controlled boundary gates.",
+    "propertyNumber": "Kothi No. 248, Sector 9B",
+    "landmark": "Near Carmel Convent School & Sukhna Lake",
+    "city": "Chandigarh",
+    "state": "Chandigarh",
+    "pincode": "160009",
+    "address": "House 248, Sector 9B, Chandigarh - 160009",
+    "locationLink": "https://maps.google.com/?q=30.7483,76.7915",
+    "type": "sale",
+    "bedrooms": 5,
+    "bathrooms": 5,
+    "regularPrice": 95000000,
+    "discountPrice": 91000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 4500,
+    "floor": 0,
+    "propertyAge": 4,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Front Elevation of 1-Kanal Designer Kothi"
+    }
+  },
+  {
+    "id": 17,
+    "name": "Kalyani Nagar Executive Suite - 3 BHK Gated Flat",
+    "description": "Chic 3 BHK apartment in East Pune. Close to Trump Towers, Koregaon Park jogging tracks, and international schools. Complete with Italian modular kitchen, 2 covered car parking slots, and Olympic-length pool.",
+    "propertyNumber": "Flat 702, Tower 3",
+    "landmark": "Opposite Jogger's Park & Bishop's School",
+    "city": "Pune",
+    "state": "Maharashtra",
+    "pincode": "411006",
+    "address": "Flat 702, Tower 3, Verde Residences, Kalyani Nagar, Pune, Maharashtra - 411006",
+    "locationLink": "https://maps.google.com/?q=18.5463,73.9033",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 24500000,
+    "discountPrice": 23200000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1850,
+    "floor": 7,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Designer Hall with French Balcony"
+    }
+  },
+  {
+    "id": 18,
+    "name": "Doan Valley Pine Retreat - 3 BHK Mountain Villa",
+    "description": "Scenic duplex mountain villa nestled in Rajpur Road foothills with panoramic views of Mussoorie hills. Wooden sloping roofs, cozy fireplace, landscaped terrace garden, and pure Himalayan spring water supply.",
+    "propertyNumber": "Villa 12, Pine Crest",
+    "landmark": "Near Silver City Mall & Pacific Mall",
+    "city": "Dehradun",
+    "state": "Uttarakhand",
+    "pincode": "248009",
+    "address": "Villa 12, Pine Crest Enclave, Rajpur Road, Dehradun, Uttarakhand - 248009",
+    "locationLink": "https://maps.google.com/?q=30.3804,78.0837",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 45000,
+    "monthlyRent": 45000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 3000,
+    "advanceRentMonths": 1,
+    "discountPrice": 42000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2200,
+    "floor": 0,
+    "propertyAge": 3,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Mountain View Balcony with Outdoor Lounge"
+    }
+  },
+  {
+    "id": 19,
+    "name": "Banjara Hills Royal Crest - 4 BHK Penthouse",
+    "description": "Exclusive single-floor 4 BHK penthouse situated on Road No. 12, Banjara Hills. Private rooftop terrace with jacuzzi, 360-degree city view, 3 dedicated car parking slots, and VRV cooling throughout.",
+    "propertyNumber": "Penthouse 10A, The Crest",
+    "landmark": "Near Taj Krishna & KBR National Park",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "pincode": "500034",
+    "address": "Penthouse 10A, The Crest, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034",
+    "locationLink": "https://maps.google.com/?q=17.4156,78.4410",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 5,
+    "regularPrice": 58000000,
+    "discountPrice": 55000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 4200,
+    "floor": 10,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Penthouse Living Room with 180-Degree Glass Curtain"
+    }
+  },
+  {
+    "id": 20,
+    "name": "Vashi Palm Beach Skyline - 3 BHK Sea-View Flat",
+    "description": "Direct Palm Beach Road facing 3 BHK apartment with breathtaking views of the creek and mangroves. Features large vitrified tiles, intercom, 2 elevators, grand double-height entrance lobby, and swimming pool.",
+    "propertyNumber": "Flat 1604, Tower B",
+    "landmark": "Near Inorbit Mall Vashi & Vashi Railway Station",
+    "city": "Navi Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400703",
+    "address": "Flat 1604, Tower B, Palm Beach Residency, Sector 19D, Vashi, Navi Mumbai, Maharashtra - 400703",
+    "locationLink": "https://maps.google.com/?q=19.0771,72.9986",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 68000,
+    "monthlyRent": 68000,
+    "securityDepositMonths": 3,
+    "maintenanceCharges": 4500,
+    "advanceRentMonths": 1,
+    "discountPrice": 65000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1650,
+    "floor": 16,
+    "propertyAge": 4,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Panoramic Creek View Balcony"
+    }
+  },
+  {
+    "id": 21,
+    "name": "Infocity IT Park Haven - 2 BHK Ready Flat",
+    "description": "Well-furnished 2 BHK apartment inside gated township near Infocity SEZ. Features piped natural gas, clubhouse, grocery mart on campus, and uninterrupted water and electricity supply.",
+    "propertyNumber": "Flat 502, Block E",
+    "landmark": "Near KIIT University & Infocity Gate 1",
+    "city": "Bhubaneswar",
+    "state": "Odisha",
+    "pincode": "751024",
+    "address": "Flat 502, Block E, Cosmopolis, Infocity Road, Patia, Bhubaneswar, Odisha - 751024",
+    "locationLink": "https://maps.google.com/?q=20.3533,85.8177",
+    "type": "sale",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 6500000,
+    "discountPrice": 6200000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1150,
+    "floor": 5,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room with Natural Sunlight"
+    }
+  },
+  {
+    "id": 22,
+    "name": "Kakkanad SmartCity Corporate Suite - 1 BHK Flat",
+    "description": "Modern studio/1 BHK flat situated inside high-tech residential enclave adjacent to Infopark and SmartCity. Fully furnished with AC, smart TV, modular kitchen, and fast optic fiber Wi-Fi.",
+    "propertyNumber": "Unit 704, Ivory Towers",
+    "landmark": "Near Infopark Phase 2 & Rajagiri School",
+    "city": "Kochi",
+    "state": "Kerala",
+    "pincode": "682042",
+    "address": "Unit 704, Ivory Towers, Infopark Expressway, Kakkanad, Kochi, Kerala - 682042",
+    "locationLink": "https://maps.google.com/?q=10.0125,76.3620",
+    "type": "rent",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "regularPrice": 17000,
+    "monthlyRent": 17000,
+    "securityDepositMonths": 3,
+    "maintenanceCharges": 1200,
+    "advanceRentMonths": 1,
+    "discountPrice": 0,
+    "offer": false,
+    "parking": true,
+    "furnished": true,
+    "area": 620,
+    "floor": 7,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Modern 1 BHK Hall with Workstation"
+    }
+  },
+  {
+    "id": 23,
+    "name": "Alkapuri Royal Heights - 3 BHK Premium Flat",
+    "description": "Central Vadodara prime residential address. 3 BHK spacious luxury apartment with cross ventilation, wooden flooring in master bedroom, separate servant bath, gym, and designated covered parking.",
+    "propertyNumber": "Flat 301, Heritage Elite",
+    "landmark": "Near Vadodara Central Mall & Railway Station",
+    "city": "Vadodara",
+    "state": "Gujarat",
+    "pincode": "390007",
+    "address": "Flat 301, Heritage Elite, RC Dutt Road, Alkapuri, Vadodara, Gujarat - 390007",
+    "locationLink": "https://maps.google.com/?q=22.3107,73.1706",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 9500000,
+    "discountPrice": 9000000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1750,
+    "floor": 3,
+    "propertyAge": 4,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Living Room with High-Quality Ceramic Tiles"
+    }
+  },
+  {
+    "id": 24,
+    "name": "Bessemer Green Villa - 3 BHK Gated Villa",
+    "description": "Peaceful 3 BHK row house villa inside a secure gated enclave in Coimbatore. Individual borewell and Siruvani municipal water connection, solar rooftop, private terrace, and car garage.",
+    "propertyNumber": "Villa 18, Green Meadows",
+    "landmark": "Near Brookefields Mall & Avinashi Road",
+    "city": "Coimbatore",
+    "state": "Tamil Nadu",
+    "pincode": "641018",
+    "address": "Villa 18, Green Meadows, Race Course, Coimbatore, Tamil Nadu - 641018",
+    "locationLink": "https://maps.google.com/?q=11.0016,76.9628",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 36000,
+    "monthlyRent": 36000,
+    "securityDepositMonths": 6,
+    "maintenanceCharges": 2500,
+    "advanceRentMonths": 1,
+    "discountPrice": 34000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2100,
+    "floor": 0,
+    "propertyAge": 3,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Row Villa Entrance with Garden Portico"
+    }
+  },
+  {
+    "id": 25,
+    "name": "Ranchi Morabadi Green Villa - 4 BHK Independent Kothi",
+    "description": "Luxurious standalone bungalow located near Morabadi Ground. Lush open lawn, four spacious master suites, solar backup, modular kitchen, and round-the-clock water supply.",
+    "propertyNumber": "Plot 78, Tagore Hill Road",
+    "landmark": "Near Morabadi Stadium & Ranchi University",
+    "city": "Ranchi",
+    "state": "Jharkhand",
+    "pincode": "834008",
+    "address": "Plot 78, Tagore Hill Road, Morabadi, Ranchi, Jharkhand - 834008",
+    "locationLink": "https://maps.google.com/?q=23.3980,85.3340",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "regularPrice": 18500000,
+    "discountPrice": 17500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 3200,
+    "floor": 0,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Bungalow Elevation with Front Lawn"
+    }
+  },
+  {
+    "id": 26,
+    "name": "Bandra West Carter Pearl - 2 BHK Seafront Apartment",
+    "description": "Iconic Carter Road address offering mesmerizing sunset views over the Arabian Sea. High-end wood paneling, Italian stone washrooms, German kitchen fittings, and 24/7 concierge.",
+    "propertyNumber": "Flat 801, Ocean Crest",
+    "landmark": "Near Jogger's Park & Olive Bar",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400050",
+    "address": "Flat 801, Ocean Crest, Carter Road, Bandra West, Mumbai, Maharashtra - 400050",
+    "locationLink": "https://maps.google.com/?q=19.0645,72.8258",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 135000,
+    "monthlyRent": 135000,
+    "securityDepositMonths": 3,
+    "maintenanceCharges": 6000,
+    "advanceRentMonths": 1,
+    "discountPrice": 125000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1100,
+    "floor": 8,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Sunset View from Living Room Balcony"
+    }
+  },
+  {
+    "id": 27,
+    "name": "Surat Diamond City Enclave - 3 BHK Modern Flat",
+    "description": "Vastu-compliant 3 BHK apartment in Vesu, Surat. Ceramic tiled floors, modular kitchen with chimney, 2 lifts per tower, club house, and children activity center.",
+    "propertyNumber": "Flat 602, Tower 4",
+    "landmark": "Near SVNIT & RahulRaj Mall",
+    "city": "Surat",
+    "state": "Gujarat",
+    "pincode": "395007",
+    "address": "Flat 602, Tower 4, Royal Vista, Vesu Main Road, Surat, Gujarat - 395007",
+    "locationLink": "https://maps.google.com/?q=21.1418,72.7709",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 8800000,
+    "discountPrice": 8400000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1620,
+    "floor": 6,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room Hall"
+    }
+  },
+  {
+    "id": 28,
+    "name": "Bhopal Arera Colony Manor - 4 BHK Independent House",
+    "description": "Sophisticated independent bungalow situated in the leafy avenues of E-7 Arera Colony. Features front and back gardens, servant quarters, wide balconies, and water harvesting system.",
+    "propertyNumber": "House E-7/42",
+    "landmark": "Near Shahpura Lake & Campion School",
+    "city": "Bhopal",
+    "state": "Madhya Pradesh",
+    "pincode": "462016",
+    "address": "House E-7/42, Arera Colony, Bhopal, Madhya Pradesh - 462016",
+    "locationLink": "https://maps.google.com/?q=23.2156,77.4305",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "regularPrice": 22500000,
+    "discountPrice": 21500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 3100,
+    "floor": 0,
+    "propertyAge": 5,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Front Facade with Covered Porch"
+    }
+  },
+  {
+    "id": 29,
+    "name": "Nagpur Civil Lines Manor - 3 BHK Builder Floor",
+    "description": "Upscale low-rise floor in serene Civil Lines, Nagpur. Expansive teakwood doors, imported vitrified flooring, 2 covered car parks, and round-the-clock security surveillance.",
+    "propertyNumber": "Second Floor, Plot 14",
+    "landmark": "Near High Court of Bombay & Maharajbagh Zoo",
+    "city": "Nagpur",
+    "state": "Maharashtra",
+    "pincode": "440001",
+    "address": "Plot 14, 2nd Floor, Palm Grove, Civil Lines, Nagpur, Maharashtra - 440001",
+    "locationLink": "https://maps.google.com/?q=21.1539,79.0729",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 35000,
+    "monthlyRent": 35000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 2500,
+    "advanceRentMonths": 1,
+    "discountPrice": 0,
+    "offer": false,
+    "parking": true,
+    "furnished": false,
+    "area": 1780,
+    "floor": 2,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room with Green View"
+    }
+  },
+  {
+    "id": 30,
+    "name": "Kowdiar Hilltop Palace View - 3 BHK Premium Flat",
+    "description": "Executive 3 BHK apartment in Trivandrum's most elite neighborhood. Private balcony overlooking Kowdiar Palace grounds, imported sanitary fittings, infinity pool, and clubhouse.",
+    "propertyNumber": "Flat 804, Imperial Heights",
+    "landmark": "Near Kowdiar Palace & Golf Club",
+    "city": "Thiruvananthapuram",
+    "state": "Kerala",
+    "pincode": "695003",
+    "address": "Flat 804, Imperial Heights, Kowdiar, Thiruvananthapuram, Kerala - 695003",
+    "locationLink": "https://maps.google.com/?q=8.5241,76.9634",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 16500000,
+    "discountPrice": 15800000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1820,
+    "floor": 8,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Palace-View Living Room with Hardwood Floor"
+    }
+  },
+  {
+    "id": 31,
+    "name": "Guwahati Brahmaputra View - 3 BHK Riverside Flat",
+    "description": "Breathtaking 3 BHK riverfront flat overlooking the Brahmaputra River. Cross ventilation, panoramic sunset balcony, earthquake-resistant RCC frame, and rooftop leisure deck.",
+    "propertyNumber": "Flat 601, River Pearl",
+    "landmark": "Near Guwahati High Court & Uzanbazar Ghat",
+    "city": "Guwahati",
+    "state": "Assam",
+    "pincode": "781001",
+    "address": "Flat 601, River Pearl, MG Road, Uzanbazar, Guwahati, Assam - 781001",
+    "locationLink": "https://maps.google.com/?q=26.1923,91.7539",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 28000,
+    "monthlyRent": 28000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 2000,
+    "advanceRentMonths": 1,
+    "discountPrice": 26000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1450,
+    "floor": 6,
+    "propertyAge": 3,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Living Room Overlooking Brahmaputra River"
+    }
+  },
+  {
+    "id": 32,
+    "name": "Vizag Beach Road Horizon - 3 BHK Oceanfront Flat",
+    "description": "Premium 3 BHK apartment right on Beach Road. Uninterrupted view of RK Beach and the Bay of Bengal. Features modular kitchen, high-speed lift, power backup, and sea-view bedrooms.",
+    "propertyNumber": "Flat 702, Bay View Towers",
+    "landmark": "Near Submarine Museum & Kali Temple, RK Beach",
+    "city": "Visakhapatnam",
+    "state": "Andhra Pradesh",
+    "pincode": "530003",
+    "address": "Flat 702, Bay View Towers, Beach Road, Visakhapatnam, Andhra Pradesh - 530003",
+    "locationLink": "https://maps.google.com/?q=17.7126,83.3197",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 14500000,
+    "discountPrice": 13900000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1680,
+    "floor": 7,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Sea-Facing Balcony Deck"
+    }
+  },
+  {
+    "id": 33,
+    "name": "Patna Bailey Road Horizon - 3 BHK Luxury Apartment",
+    "description": "Prime residential 3 BHK on Bailey Road, Patna. Gated campus with 24-hr security, dedicated basement parking, gym, multipurpose community hall, and uninterrupted water supply.",
+    "propertyNumber": "Flat 804, Maurya Enclave",
+    "landmark": "Near Paras HMRI Hospital & Patna Airport",
+    "city": "Patna",
+    "state": "Bihar",
+    "pincode": "800014",
+    "address": "Flat 804, Maurya Enclave, Bailey Road, Raja Bazar, Patna, Bihar - 800014",
+    "locationLink": "https://maps.google.com/?q=25.6120,85.0863",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "regularPrice": 11500000,
+    "discountPrice": 10900000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1520,
+    "floor": 8,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room"
+    }
+  },
+  {
+    "id": 34,
+    "name": "Gokulam Heritage Villa - 3 BHK Independent House",
+    "description": "Serene 3 BHK bungalow in the yoga capital hub of Gokulam, Mysuru. Beautiful garden courtyard, rooftop terrace with Chamundi Hills view, and teakwood pillars.",
+    "propertyNumber": "House 45, 3rd Stage",
+    "landmark": "Near KPJAYI Shala & Contour Road",
+    "city": "Mysuru",
+    "state": "Karnataka",
+    "pincode": "570002",
+    "address": "House 45, 3rd Stage, Gokulam, Mysuru, Karnataka - 570002",
+    "locationLink": "https://maps.google.com/?q=12.3323,76.6341",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 32000,
+    "monthlyRent": 32000,
+    "securityDepositMonths": 5,
+    "maintenanceCharges": 1500,
+    "advanceRentMonths": 1,
+    "discountPrice": 30000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2000,
+    "floor": 0,
+    "propertyAge": 4,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Front Veranda & Flower Garden"
+    }
+  },
+  {
+    "id": 35,
+    "name": "Amritsar Ranjit Avenue Villa - 4 BHK Luxury Kothi",
+    "description": "Lavish 4 BHK kothi in prime Ranjit Avenue. Double-height drawing room, imported marble, automated gate, home theater room, and modular kitchen.",
+    "propertyNumber": "Kothi 88, B-Block",
+    "landmark": "Near Gumtala Bypass & Golden Temple Connect",
+    "city": "Amritsar",
+    "state": "Punjab",
+    "pincode": "143001",
+    "address": "Kothi 88, B-Block, Ranjit Avenue, Amritsar, Punjab - 143001",
+    "locationLink": "https://maps.google.com/?q=31.6508,74.8580",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "regularPrice": 26000000,
+    "discountPrice": 24500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 3400,
+    "floor": 0,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Exterior Front View with Balconies"
+    }
+  },
+  {
+    "id": 36,
+    "name": "Raipur VIP Road Greens - 3 BHK Premium Flat",
+    "description": "Ready-to-move 3 BHK flat situated on prestigious VIP Road. Features clubhouse with swimming pool, gym, covered parking, and 24/7 security. 10 minutes from Swami Vivekananda Airport.",
+    "propertyNumber": "Flat 302, Emerald Towers",
+    "landmark": "Near Magneto Mall & Airport Road",
+    "city": "Raipur",
+    "state": "Chhattisgarh",
+    "pincode": "492006",
+    "address": "Flat 302, Emerald Towers, VIP Road, Raipur, Chhattisgarh - 492006",
+    "locationLink": "https://maps.google.com/?q=21.2333,81.6882",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 7500000,
+    "discountPrice": 7100000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1600,
+    "floor": 3,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room"
+    }
+  },
+  {
+    "id": 37,
+    "name": "Nashik Gangapur Vineyard View - 3 BHK Penthouse",
+    "description": "Stunning penthouse in wine capital Nashik overlooking Gangapur Dam backwaters and vineyards. Expansive 500 sq ft private rooftop deck, jacuzzi, and serene climate all year round.",
+    "propertyNumber": "Penthouse 1102, Sula Crest",
+    "landmark": "Near Sula Vineyards & Gangapur Dam",
+    "city": "Nashik",
+    "state": "Maharashtra",
+    "pincode": "422013",
+    "address": "Penthouse 1102, Sula Crest, Gangapur Road, Nashik, Maharashtra - 422013",
+    "locationLink": "https://maps.google.com/?q=20.0063,73.7431",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 4,
+    "regularPrice": 17500000,
+    "discountPrice": 16500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 2500,
+    "floor": 11,
+    "propertyAge": 1,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Rooftop Deck Overlooking Vineyards"
+    }
+  },
+  {
+    "id": 38,
+    "name": "HSR Layout Startup Nest - 2 BHK Furnished Apartment",
+    "description": "Convenient, well-equipped 2 BHK apartment in prime Sector 2, HSR Layout. Centrally located for Bangalore techies, high-speed fiber connection, power backup, modular kitchen, and balcony.",
+    "propertyNumber": "Flat 302, 14th Main",
+    "landmark": "Near BDA Complex HSR & 27th Main Food Street",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560102",
+    "address": "Flat 302, 14th Main, Sector 2, HSR Layout, Bengaluru, Karnataka - 560102",
+    "locationLink": "https://maps.google.com/?q=12.9116,77.6446",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 42000,
+    "monthlyRent": 42000,
+    "securityDepositMonths": 5,
+    "maintenanceCharges": 3000,
+    "advanceRentMonths": 1,
+    "discountPrice": 39000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1180,
+    "floor": 3,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Modern Furnished Living Room"
+    }
+  },
+  {
+    "id": 39,
+    "name": "Udaipur Fateh Sagar Villa - 4 BHK Lakefront Villa",
+    "description": "Breathtaking standalone villa overlooking the serene waters of Fateh Sagar Lake. Traditional Mewari architecture with jharokhas, marble courtyards, terrace garden, and mountain views.",
+    "propertyNumber": "Villa 7, Rani Road",
+    "landmark": "Opposite Rajiv Gandhi Park, Fateh Sagar",
+    "city": "Udaipur",
+    "state": "Rajasthan",
+    "pincode": "313001",
+    "address": "Villa 7, Rani Road, Fateh Sagar, Udaipur, Rajasthan - 313001",
+    "locationLink": "https://maps.google.com/?q=24.6050,73.6740",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "regularPrice": 48000000,
+    "discountPrice": 45500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 3600,
+    "floor": 0,
+    "propertyAge": 5,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Courtyard Facing Fateh Sagar Lake"
+    }
+  },
+  {
+    "id": 40,
+    "name": "Noida Sector 62 IT Executive - 2 BHK Flat",
+    "description": "Spacious 2 BHK inside well-maintained society in Sector 62. Walking distance to Fortis Hospital, Electronic City Metro station, and multiple IT campuses. 100% power backup and 24x7 security.",
+    "propertyNumber": "Flat 801, Tower C",
+    "landmark": "Near Fortis Hospital & Sector 62 Metro Station",
+    "city": "Noida",
+    "state": "Uttar Pradesh",
+    "pincode": "201309",
+    "address": "Flat 801, Tower C, Stellar Park, Sector 62, Noida, Uttar Pradesh - 201309",
+    "locationLink": "https://maps.google.com/?q=28.6258,77.3644",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 24000,
+    "monthlyRent": 24000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 2500,
+    "advanceRentMonths": 1,
+    "discountPrice": 22500,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1100,
+    "floor": 8,
+    "propertyAge": 5,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room"
+    }
+  },
+  {
+    "id": 41,
+    "name": "Panaji Altinho Heights - 3 BHK City & River View Flat",
+    "description": "Exclusive apartment located in elite Altinho hill in Panaji. Overlooks Mandovi River, equipped with modular European kitchen, high-speed elevator, and designated basement parking.",
+    "propertyNumber": "Flat 402, Altinho Palms",
+    "landmark": "Near Chief Minister's Official Residence & Goa High Court",
+    "city": "Panaji",
+    "state": "Goa",
+    "pincode": "403001",
+    "address": "Flat 402, Altinho Palms, Altinho, Panaji, Goa - 403001",
+    "locationLink": "https://maps.google.com/?q=15.4950,73.8240",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 26500000,
+    "discountPrice": 25000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1850,
+    "floor": 4,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "River View Living Hall"
+    }
+  },
+  {
+    "id": 42,
+    "name": "Mohali IT City Aerocity - 3 BHK Builder Floor",
+    "description": "Brand-new luxury independent builder floor located in Aerocity Mohali. Just 5 minutes from Chandigarh International Airport, with vitrified tile flooring, modular kitchen, and rear utility balcony.",
+    "propertyNumber": "Plot 540, Block C",
+    "landmark": "Near Chandigarh International Airport & Infosys Campus",
+    "city": "Mohali",
+    "state": "Punjab",
+    "pincode": "140306",
+    "address": "Plot 540, 1st Floor, Block C, Aerocity, Mohali, Punjab - 140306",
+    "locationLink": "https://maps.google.com/?q=30.6520,76.7821",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 27000,
+    "monthlyRent": 27000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 1500,
+    "advanceRentMonths": 1,
+    "discountPrice": 25000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1550,
+    "floor": 1,
+    "propertyAge": 1,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Furnished Living Room with Pop Ceiling"
+    }
+  },
+  {
+    "id": 43,
+    "name": "Faridabad Surajkund Greens - 4 BHK Penthouse",
+    "description": "Luxurious penthouse overlooking Surajkund Lake and Asola wildlife forest. Two large open terraces, wooden flooring in all bedrooms, private jacuzzi, and clubhouse access.",
+    "propertyNumber": "Penthouse 1401, Green Valley",
+    "landmark": "Near Surajkund Crafts Mela Grounds",
+    "city": "Faridabad",
+    "state": "Haryana",
+    "pincode": "121009",
+    "address": "Penthouse 1401, Green Valley, Charmwood Village, Surajkund, Faridabad, Haryana - 121009",
+    "locationLink": "https://maps.google.com/?q=28.4871,77.2912",
+    "type": "sale",
+    "bedrooms": 4,
+    "bathrooms": 5,
+    "regularPrice": 27500000,
+    "discountPrice": 26000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 3300,
+    "floor": 14,
+    "propertyAge": 4,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Terrace Lounge Overlooking Forest"
+    }
+  },
+  {
+    "id": 44,
+    "name": "Thane Ghodbunder Vista - 2 BHK High-Rise Apartment",
+    "description": "Panoramic Yeoor Hills view from this 19th-floor 2 BHK apartment. Gated township with hypermarket, Olympic swimming pool, tennis court, jogging track, and school inside the campus.",
+    "propertyNumber": "Flat 1904, Tower Cosmos",
+    "landmark": "Near Viviana Mall & Suraj Water Park",
+    "city": "Thane",
+    "state": "Maharashtra",
+    "pincode": "400615",
+    "address": "Flat 1904, Tower Cosmos, Rustomjee Urbania, Majiwada, Thane, Maharashtra - 400615",
+    "locationLink": "https://maps.google.com/?q=19.2183,72.9781",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 31000,
+    "monthlyRent": 31000,
+    "securityDepositMonths": 3,
+    "maintenanceCharges": 3000,
+    "advanceRentMonths": 1,
+    "discountPrice": 29000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 890,
+    "floor": 19,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Balcony with View of Yeoor Hills"
+    }
+  },
+  {
+    "id": 45,
+    "name": "Anna Nagar Prime Residency - 3 BHK Luxury Flat",
+    "description": "Premier central Chennai address. Vastu-compliant 3 BHK flat with imported teak doors, separate pooja room, 2 covered car parks, 24x7 security, and generator backup.",
+    "propertyNumber": "Flat 3A, 2nd Avenue",
+    "landmark": "Near Anna Nagar Tower Park & Roundtana",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "pincode": "600040",
+    "address": "Flat 3A, 2nd Avenue, Anna Nagar West, Chennai, Tamil Nadu - 600040",
+    "locationLink": "https://maps.google.com/?q=13.0850,80.2101",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 28500000,
+    "discountPrice": 27000000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1900,
+    "floor": 3,
+    "propertyAge": 3,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Drawing Hall with Chandelier"
+    }
+  },
+  {
+    "id": 46,
+    "name": "Greater Noida Pari Chowk Elite - 3 BHK Apartment",
+    "description": "Wide green view 3 BHK flat situated near Pari Chowk and Knowledge Park. Features double balconies, modular kitchen, golf course nearby, and 2 minutes walk to Aqua Line Metro Station.",
+    "propertyNumber": "Flat 903, Tower 5",
+    "landmark": "Near Pari Chowk & Sharda University",
+    "city": "Greater Noida",
+    "state": "Uttar Pradesh",
+    "pincode": "201310",
+    "address": "Flat 903, Tower 5, Jaypee Greens, Pari Chowk, Greater Noida, Uttar Pradesh - 201310",
+    "locationLink": "https://maps.google.com/?q=28.4682,77.5147",
+    "type": "rent",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 23000,
+    "monthlyRent": 23000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 2500,
+    "advanceRentMonths": 1,
+    "discountPrice": 0,
+    "offer": false,
+    "parking": true,
+    "furnished": false,
+    "area": 1500,
+    "floor": 9,
+    "propertyAge": 4,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Green Balcony View"
+    }
+  },
+  {
+    "id": 47,
+    "name": "Mangalore Kadri Hills Horizon - 3 BHK Sea-Breeze Flat",
+    "description": "Elevated 3 BHK flat in serene Kadri Hills overlooking city skyline and distant Arabian Sea. Gated community with swimming pool, gym, children play area, and piped gas.",
+    "propertyNumber": "Flat 1002, Kadri Heights",
+    "landmark": "Near Kadri Manjunatha Temple & City Centre Mall",
+    "city": "Mangalore",
+    "state": "Karnataka",
+    "pincode": "575002",
+    "address": "Flat 1002, Kadri Heights, Kadri Hills, Mangalore, Karnataka - 575002",
+    "locationLink": "https://maps.google.com/?q=12.8797,74.8560",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 10500000,
+    "discountPrice": 9900000,
+    "offer": true,
+    "parking": true,
+    "furnished": false,
+    "area": 1650,
+    "floor": 10,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Spacious Living Room with Ceramic Flooring"
+    }
+  },
+  {
+    "id": 48,
+    "name": "Salt Lake Sector V Corporate Hub - 2 BHK Furnished Flat",
+    "description": "Conveniently situated 2 BHK flat within 500 meters of Kolkata IT Sector V tech companies (Wipro, TCS, Cognizant). Fully air-conditioned, with high-speed internet, power backup, and dedicated parking.",
+    "propertyNumber": "Flat 402, Tech Park Enclave",
+    "landmark": "Near RDB Cinemas & College More",
+    "city": "Kolkata",
+    "state": "West Bengal",
+    "pincode": "700091",
+    "address": "Flat 402, Block EP, Sector V, Salt Lake, Kolkata, West Bengal - 700091",
+    "locationLink": "https://maps.google.com/?q=22.5697,88.4337",
+    "type": "rent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "regularPrice": 28000,
+    "monthlyRent": 28000,
+    "securityDepositMonths": 2,
+    "maintenanceCharges": 2000,
+    "advanceRentMonths": 1,
+    "discountPrice": 26000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1050,
+    "floor": 4,
+    "propertyAge": 3,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Furnished Living Room with Work Setup"
+    }
+  },
+  {
+    "id": 49, 
+    "name": "Electronic City Phase 1 Smart Suite - 1 BHK Compact Flat",
+    "description": "Ready-to-move-in fully furnished 1 BHK flat in Electronic City Phase 1. Walking distance to Infosys gate, Wipro, and HP. Includes washing machine, refrigerator, smart TV, Wi-Fi, and 24/7 power backup.",
+    "propertyNumber": "Flat 204, Silicon Nest",
+    "landmark": "Opposite Infosys Gate 6, Electronic City Phase 1",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "pincode": "560100",
+    "address": "Flat 204, Silicon Nest, Neeladri Road, Electronic City Phase 1, Bengaluru, Karnataka - 560100",
+    "locationLink": "https://maps.google.com/?q=12.8452,77.6602",
+    "type": "rent",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "regularPrice": 19000,
+    "monthlyRent": 19000,
+    "securityDepositMonths": 3,
+    "maintenanceCharges": 1200,
+    "advanceRentMonths": 1,
+    "discountPrice": 0,
+    "offer": false,
+    "parking": true,
+    "furnished": true,
+    "area": 550,
+    "floor": 2,
+    "propertyAge": 2,
+    "rentLockPlans": {
+      "availablePlans": ["1_year", "3_year"],
+      "defaultPlan": "1_year"
+    },
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Compact Studio Living Room"
+    }
+  },
+  {
+    "id": 50,
+    "name": "Andheri West Lokhandwala Serenity - 3 BHK Premium Flat",
+    "description": "High-end 3 BHK apartment in the bustling heart of Lokhandwala Complex, Andheri West. Completely soundproofed, designer false ceilings, Italian modular kitchen, and within walking distance of high-street cafes and metro station.",
+    "propertyNumber": "Flat 1202, Wing B, Royal Palms",
+    "landmark": "Near Lokhandwala Market & Infinity Mall",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400053",
+    "address": "Flat 1202, Wing B, Royal Palms, Lokhandwala Complex, Andheri West, Mumbai, Maharashtra - 400053",
+    "locationLink": "https://maps.google.com/?q=19.1415,72.8277",
+    "type": "sale",
+    "bedrooms": 3,
+    "bathrooms": 3,
+    "regularPrice": 42000000,
+    "discountPrice": 39500000,
+    "offer": true,
+    "parking": true,
+    "furnished": true,
+    "area": 1680,
+    "floor": 12,
+    "propertyAge": 2,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "imageCaptions": {
+      "0": "Living Room with Luxury Lighting",
+      "1": "Master Bedroom with Balcony"
+    }
+  }
+]

@@ -74,6 +74,7 @@ export default function Community() {
     const [expandedReplies, setExpandedReplies] = useState({}); // { commentId: boolean }
     const [activeTab, setActiveTab] = useState('All');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isPosting, setIsPosting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [stats, setStats] = useState({
         activeMembers: 0,
@@ -811,7 +812,9 @@ export default function Community() {
     const handleCreatePost = async (e) => {
         e.preventDefault();
         if (!currentUser) return setAuthModal({ isOpen: true, action: 'post' });
+        if (isPosting) return;
 
+        setIsPosting(true);
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/create`, {
                 method: 'POST',
@@ -835,6 +838,8 @@ export default function Community() {
         } catch (error) {
             console.error(error);
             toast.error('Something went wrong');
+        } finally {
+            setIsPosting(false);
         }
     };
 
@@ -853,6 +858,7 @@ export default function Community() {
     };
 
     const handleCloseModal = () => {
+        if (isPosting) return;
         setShowCreateModal(false);
         setEditingPost(null);
         setNewPost({
@@ -869,6 +875,9 @@ export default function Community() {
 
     const handleUpdatePost = async (e, postId) => {
         e.preventDefault();
+        if (isPosting) return;
+
+        setIsPosting(true);
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/${postId}`, {
                 method: 'PUT',
@@ -887,6 +896,8 @@ export default function Community() {
         } catch (error) {
             console.error(error);
             toast.error('Failed to update post');
+        } finally {
+            setIsPosting(false);
         }
     };
 
@@ -2460,15 +2471,24 @@ export default function Community() {
                                         <button
                                             type="button"
                                             onClick={handleCloseModal}
-                                            className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mr-2 transition-colors"
+                                            disabled={isPosting}
+                                            className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mr-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
-                                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition-colors"
+                                            disabled={isPosting}
+                                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[140px]"
                                         >
-                                            {editingPost ? 'Save Changes' : 'Post Discussion'}
+                                            {isPosting ? (
+                                                <>
+                                                    <UrbanSetuSpinner size="sm" isBright={true} />
+                                                    <span>{editingPost ? 'Saving...' : 'Posting...'}</span>
+                                                </>
+                                            ) : (
+                                                editingPost ? 'Save Changes' : 'Post Discussion'
+                                            )}
                                         </button>
                                     </div>
                                 </form>

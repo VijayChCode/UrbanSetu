@@ -51,6 +51,7 @@ export default function AdminCommunity() {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('All');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isPosting, setIsPosting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [hasMore, setHasMore] = useState(true);
@@ -610,7 +611,9 @@ export default function AdminCommunity() {
     const handleCreatePost = async (e) => {
         e.preventDefault();
         if (!currentUser) return navigate('/sign-in');
+        if (isPosting) return;
 
+        setIsPosting(true);
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/create`, {
                 method: 'POST',
@@ -634,6 +637,8 @@ export default function AdminCommunity() {
         } catch (error) {
             console.error(error);
             toast.error('Something went wrong');
+        } finally {
+            setIsPosting(false);
         }
     };
 
@@ -652,6 +657,7 @@ export default function AdminCommunity() {
     };
 
     const handleCloseModal = () => {
+        if (isPosting) return;
         setShowCreateModal(false);
         setEditingPost(null);
         setNewPost({
@@ -668,6 +674,9 @@ export default function AdminCommunity() {
 
     const handleUpdatePost = async (e, postId) => {
         e.preventDefault();
+        if (isPosting) return;
+
+        setIsPosting(true);
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/${postId}`, {
                 method: 'PUT',
@@ -686,6 +695,8 @@ export default function AdminCommunity() {
         } catch (error) {
             console.error(error);
             toast.error('Failed to update post');
+        } finally {
+            setIsPosting(false);
         }
     };
 
@@ -2491,15 +2502,24 @@ export default function AdminCommunity() {
                                 <button
                                     type="button"
                                     onClick={handleCloseModal}
-                                    className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg mr-2 transition-colors"
+                                    disabled={isPosting}
+                                    className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg mr-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition-colors"
+                                    disabled={isPosting}
+                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[140px]"
                                 >
-                                    {editingPost ? 'Save Changes' : 'Post Discussion'}
+                                    {isPosting ? (
+                                        <>
+                                            <UrbanSetuSpinner size="sm" isBright={true} />
+                                            <span>{editingPost ? 'Saving...' : 'Posting...'}</span>
+                                        </>
+                                    ) : (
+                                        editingPost ? 'Save Changes' : 'Post Discussion'
+                                    )}
                                 </button>
                             </div>
                         </form>
