@@ -135,7 +135,14 @@ export default function AdminExplore() {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    const urlParams = new URLSearchParams(formData);
+    // Clean up undefined/null values before building URL params
+    const cleanData = { ...formData };
+    Object.keys(cleanData).forEach(key => {
+      if (cleanData[key] === undefined || cleanData[key] === null || cleanData[key] === 'undefined') {
+        delete cleanData[key];
+      }
+    });
+    const urlParams = new URLSearchParams(cleanData);
     navigate(`?${urlParams.toString()}`);
     setIsFiltersOpen(false);
   };
@@ -158,7 +165,7 @@ export default function AdminExplore() {
 
   const handleLocationChange = (loc) => {
     setLocationFilter(loc);
-    setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: loc.city }));
+    setFormData((prev) => ({ ...prev, state: loc.state || '', city: loc.city || '' }));
   };
 
   // Admin delete flow

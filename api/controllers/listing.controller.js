@@ -914,20 +914,20 @@ export const getListings = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10
     const startIndex = parseInt(req.query.startIndex) || 0
     let offer = req.query.offer
-    if (offer === undefined || offer === 'all') {
+    if (offer === undefined || offer === 'all' || offer === 'false') {
       offer = { $in: [false, true] }
     } else {
       offer = offer === 'true'
     }
 
     let furnished = req.query.furnished
-    if (furnished === undefined || furnished === 'all') {
+    if (furnished === undefined || furnished === 'all' || furnished === 'false') {
       furnished = { $in: [false, true] }
     } else {
       furnished = furnished === 'true'
     }
     let parking = req.query.parking
-    if (parking === undefined || parking === 'all') {
+    if (parking === undefined || parking === 'all' || parking === 'false') {
       parking = { $in: [false, true] }
     } else {
       parking = parking === 'true'
@@ -944,10 +944,11 @@ export const getListings = async (req, res, next) => {
     // Advanced filters
     const minPrice = req.query.minPrice ? Number(req.query.minPrice) : 0;
     const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : Number.MAX_SAFE_INTEGER;
-    const city = req.query.city || '';
-    const state = req.query.state || '';
-    const bedrooms = req.query.bedrooms ? Number(req.query.bedrooms) : null;
-    const bathrooms = req.query.bathrooms ? Number(req.query.bathrooms) : null;
+    const city = (req.query.city && req.query.city !== 'undefined') ? req.query.city : '';
+    const state = (req.query.state && req.query.state !== 'undefined') ? req.query.state : '';
+    const district = (req.query.district && req.query.district !== 'undefined') ? req.query.district : '';
+    const bedrooms = (req.query.bedrooms && req.query.bedrooms !== 'undefined') ? Number(req.query.bedrooms) : null;
+    const bathrooms = (req.query.bathrooms && req.query.bathrooms !== 'undefined') ? Number(req.query.bathrooms) : null;
 
     // Validate sort field to prevent injection
     const allowedSortFields = ['createdAt', 'regularPrice', 'discountPrice', 'bedrooms', 'bathrooms'];

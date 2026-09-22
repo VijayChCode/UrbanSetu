@@ -246,6 +246,12 @@ export default function Search() {
         if (useAI) {
             dataToSubmit.searchTerm = aiPrompt;
         }
+        // Clean up undefined/null values before building URL params
+        Object.keys(dataToSubmit).forEach(key => {
+            if (dataToSubmit[key] === undefined || dataToSubmit[key] === null || dataToSubmit[key] === 'undefined') {
+                delete dataToSubmit[key];
+            }
+        });
         const urlParams = new URLSearchParams(dataToSubmit);
         navigate(`?${urlParams.toString()}`);
     };
@@ -866,7 +872,7 @@ export default function Search() {
 
     const handleLocationChange = (loc) => {
         setLocationFilter(loc);
-        setFormData((prev) => ({ ...prev, state: loc.state, district: loc.district, city: loc.city }));
+        setFormData((prev) => ({ ...prev, state: loc.state || '', city: loc.city || '' }));
     };
 
 
