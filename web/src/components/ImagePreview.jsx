@@ -85,6 +85,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const [showSocialShare, setShowSocialShare] = useState(false);
   const [showAboutViewer, setShowAboutViewer] = useState(false);
   const [autoScale, setAutoScale] = useState(1);
+  const [isZoomAnimating, setIsZoomAnimating] = useState(false);
 
   // Favorites Panel State
   const [showFavoritesGallery, setShowFavoritesGallery] = useState(false);
@@ -102,6 +103,7 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   const slideshowRef = useRef(null);
   const settingsRef = useRef(null);
   const feedbackTimeoutRef = useRef(null);
+  const zoomAnimTimeoutRef = useRef(null);
   const hasMovedRef = useRef(false);
   const ignoreClickRef = useRef(false);
   const isTouchRef = useRef(false);
@@ -412,17 +414,33 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         return;
       }
 
-      if (imageError) return;
+      // Allow navigation even when image has error so user can skip broken images
+      // Only block non-navigation keys on error
+      if (imageError && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
 
       // Show controls on any interaction
       if (!showControls) setShowControls(true);
 
       switch (e.key) {
         case 'ArrowLeft':
-          setCurrentIndex(prev => (prev > 0 ? prev - 1 : prev));
+          if (currentIndex > 0) {
+            setCurrentIndex(prev => prev - 1);
+            // Reset error/loading state for the new image
+            setImageError(false);
+            setImageLoading(true);
+            setScale(1);
+            setPosition({ x: 0, y: 0 });
+          }
           break;
         case 'ArrowRight':
-          setCurrentIndex(prev => (prev < imagesArray.length - 1 ? prev + 1 : prev));
+          if (currentIndex < imagesArray.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            // Reset error/loading state for the new image
+            setImageError(false);
+            setImageLoading(true);
+            setScale(1);
+            setPosition({ x: 0, y: 0 });
+          }
           break;
         case '+':
         case '=':
@@ -604,17 +622,20 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
   };
 
   const handleTouchStart = (e) => {
-    if (imageError || imageLoading) return;
     hasMovedRef.current = false;
     ignoreClickRef.current = false;
+
+    // Allow swipe navigation even when image has error
+    if (scale === 1 && e.touches.length === 1) {
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+
+    if (imageError || imageLoading) return;
+
     // Single touch pan
     if (scale > 1 && e.touches.length === 1) {
       setIsDragging(true);
       lastDragRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-    // Record start for Swipe (if scale 1)
-    else if (scale === 1 && e.touches.length === 1) {
-      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
 
     // Pinch to zoom
@@ -662,12 +683,19 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         hasMovedRef.current = true; // Pinch is also movement
       }
     }
-    // Mobile Swipe Tracking (Scale 1)
+    // Mobile Swipe Tracking (Scale 1) — also works when image has error
     else if (scale === 1 && touchStartRef.current && e.touches.length === 1) {
       const dx = e.touches[0].clientX - touchStartRef.current.x;
       if (Math.abs(dx) > 10) hasMovedRef.current = true;
       setSwipeOffset(dx);
     }
+  };
+
+  // Helper to trigger smooth zoom animation
+  const triggerZoomAnimation = () => {
+    if (zoomAnimTimeoutRef.current) clearTimeout(zoomAnimTimeoutRef.current);
+    setIsZoomAnimating(true);
+    zoomAnimTimeoutRef.current = setTimeout(() => setIsZoomAnimating(false), 400);
   };
 
   const handleTouchEnd = (e) => {
@@ -680,14 +708,13 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     setIsDragging(false);
     pinchStartDistRef.current = null;
 
-    // Swipe Navigation (only if scale 1, not pinched, not moved as drag)
+    // Swipe Navigation (only if scale 1, not pinched) — works even on image error
     if (scale === 1 && !wasPinching && touchStartRef.current) {
       if (Math.abs(swipeOffset) > 30) {
         // >0 (Right) -> Prev (-1)
         // <0 (Left) -> Next (1)
         const dir = swipeOffset > 0 ? -1 : 1;
 
-        // Prevent Loop (Stop at edges)
         // Prevent Loop (Stop at edges) with Feedback
         if (dir === 1 && currentIndex >= imagesArray.length - 1) {
           setIsAnimatingSwipe(true);
@@ -722,6 +749,9 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
     touchStartRef.current = null;
 
+    // Don't process double-tap zoom if image has error
+    if (imageError || imageLoading) return;
+
     // Double tap logic (only if not moved/dragged AND not pinching)
     if (!moved && !wasPinching) {
       const now = Date.now();
@@ -731,12 +761,15 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         // Double Tap Detected
         ignoreClickRef.current = true; // Prevent the click handler (control toggle)
 
+        // Enable smooth zoom animation
+        triggerZoomAnimation();
+
         if (scale > 1) {
-          // Double tap to Zoom Out
+          // Double tap to Zoom Out (animated)
           setScale(1);
           setPosition({ x: 0, y: 0 });
         } else {
-          // Double tap to Zoom In
+          // Double tap to Zoom In (animated)
           const targetScale = 2.5;
 
           if (containerRef.current && e.changedTouches && e.changedTouches.length > 0) {
@@ -957,6 +990,12 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     setSwipeOffset(exitTo); // Animate out
 
     setTimeout(() => {
+      // Reset error/loading state for the new image
+      setImageError(false);
+      setImageLoading(true);
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+
       setCurrentIndex(prev => {
         if (dir === 1) return prev < imagesArray.length - 1 ? prev + 1 : 0;
         return prev > 0 ? prev - 1 : imagesArray.length - 1;
@@ -1050,12 +1089,15 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
     e.stopPropagation(); // Prevent container click (which would toggle controls back and forth)
 
+    // Enable smooth zoom animation for click-to-zoom
+    triggerZoomAnimation();
+
     if (scale > 1) {
-      // Zoom out to normal
+      // Zoom out to normal (animated)
       setScale(1);
       setPosition({ x: 0, y: 0 });
     } else {
-      // Zoom in to 2.5x at the clicked position
+      // Zoom in to 2.5x at the clicked position (animated)
       const targetScale = 2.5;
 
       if (containerRef.current) {
@@ -1138,15 +1180,20 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         <FaTimes size={20} />
       </button>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows — always enabled even on error so users can skip broken images */}
       {imagesArray.length > 1 && (
         <>
           {currentIndex > 0 && (
             <button
-              onClick={() => !imageError && !imageLoading && setCurrentIndex(prev => prev > 0 ? prev - 1 : prev)}
-              disabled={imageError || imageLoading}
-              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-300 z-10 bg-black bg-opacity-70 rounded-full p-4 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 hidden md:block ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
-                } ${imageError || imageLoading ? 'opacity-40 pointer-events-none' : ''}`}
+              onClick={() => {
+                setImageError(false);
+                setImageLoading(true);
+                setScale(1);
+                setPosition({ x: 0, y: 0 });
+                setCurrentIndex(prev => prev > 0 ? prev - 1 : prev);
+              }}
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-300 z-[70] bg-black bg-opacity-70 rounded-full p-4 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 hidden md:block ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
+                }`}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1155,10 +1202,15 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
           )}
           {currentIndex < imagesArray.length - 1 && (
             <button
-              onClick={() => !imageError && !imageLoading && setCurrentIndex(prev => prev < imagesArray.length - 1 ? prev + 1 : prev)}
-              disabled={imageError || imageLoading}
-              className={`absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-300 z-10 bg-black bg-opacity-70 rounded-full p-4 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 hidden md:block ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
-                } ${imageError || imageLoading ? 'opacity-40 pointer-events-none' : ''}`}
+              onClick={() => {
+                setImageError(false);
+                setImageLoading(true);
+                setScale(1);
+                setPosition({ x: 0, y: 0 });
+                setCurrentIndex(prev => prev < imagesArray.length - 1 ? prev + 1 : prev);
+              }}
+              className={`absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-blue-300 z-[70] bg-black bg-opacity-70 rounded-full p-4 transition-all duration-300 hover:bg-opacity-90 hover:scale-110 hidden md:block ${showControls ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
+                }`}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1177,14 +1229,24 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
         )}
 
         {imageError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-[65] bg-black/95 text-white p-6 text-center animate-fadeIn select-none">
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center z-[65] bg-black/95 text-white p-6 text-center animate-fadeIn select-none"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="p-4 rounded-full bg-red-500/20 text-red-500 mb-4 border border-red-500/30 animate-pulse">
               <FaExclamationTriangle size={44} />
             </div>
             <h3 className="text-xl font-bold mb-1.5 text-white tracking-wide">Image Unavailable</h3>
-            <p className="text-xs sm:text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
+            <p className="text-xs sm:text-sm text-gray-400 max-w-sm mb-2 leading-relaxed">
               The image source is invalid, corrupted, or cannot be loaded by your browser.
             </p>
+            {imagesArray.length > 1 && (
+              <p className="text-xs text-gray-500 mb-4">
+                Swipe or use arrows to navigate to other images
+              </p>
+            )}
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => {
@@ -1214,7 +1276,11 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
             }`}
           style={{
             transform: `scale(${scale * autoScale}) rotate(${rotation}deg) translate(${position.x + swipeOffset}px, ${position.y}px)`,
-            transition: (isDragging || (Math.abs(swipeOffset) > 0 && !isAnimatingSwipe)) ? 'none' : 'transform 0.3s ease-out',
+            transition: (isDragging || (Math.abs(swipeOffset) > 0 && !isAnimatingSwipe))
+              ? 'none'
+              : isZoomAnimating
+                ? 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                : 'transform 0.3s ease-out',
             cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in'
           }}
           onMouseDown={handleMouseDown}
