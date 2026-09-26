@@ -684,10 +684,14 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       }
     }
     // Mobile Swipe Tracking (Scale 1) — also works when image has error
+    // Only start visual swipe tracking after 5px threshold to prevent
+    // micro-movements during double-tap from setting transition to 'none'
     else if (scale === 1 && touchStartRef.current && e.touches.length === 1) {
       const dx = e.touches[0].clientX - touchStartRef.current.x;
       if (Math.abs(dx) > 10) hasMovedRef.current = true;
-      setSwipeOffset(dx);
+      if (Math.abs(dx) > 5) {
+        setSwipeOffset(dx);
+      }
     }
   };
 
@@ -766,12 +770,17 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
 
         if (scale > 1) {
           // Double tap to Zoom Out (animated)
-          setScale(1);
-          setPosition({ x: 0, y: 0 });
+          // Delay transform change by one frame so browser paints the transition first
+          setTimeout(() => {
+            setScale(1);
+            setPosition({ x: 0, y: 0 });
+          }, 20);
         } else {
           // Double tap to Zoom In (animated)
           const targetScale = 2.5;
+          let targetPos = { x: 0, y: 0 };
 
+          // Calculate target position now (event data won't be available in setTimeout)
           if (containerRef.current && e.changedTouches && e.changedTouches.length > 0) {
             const touch = e.changedTouches[0];
             const rect = containerRef.current.getBoundingClientRect();
@@ -787,14 +796,14 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
             const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
             const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
 
-            // Calculate and clamp new position so the clicked point aligns with the container center (0,0)
-            const clampedPos = getClampedPosition(-localX, -localY, targetScale);
-
-            setScale(targetScale);
-            setPosition(clampedPos);
-          } else {
-            setScale(targetScale);
+            targetPos = getClampedPosition(-localX, -localY, targetScale);
           }
+
+          // Delay transform change by one frame so browser paints the transition first
+          setTimeout(() => {
+            setScale(targetScale);
+            setPosition(targetPos);
+          }, 20);
 
           setShowControls(false); // Hide controls for better view
         }
@@ -1276,10 +1285,10 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
             }`}
           style={{
             transform: `scale(${scale * autoScale}) rotate(${rotation}deg) translate(${position.x + swipeOffset}px, ${position.y}px)`,
-            transition: (isDragging || (Math.abs(swipeOffset) > 0 && !isAnimatingSwipe))
-              ? 'none'
-              : isZoomAnimating
-                ? 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            transition: isZoomAnimating
+              ? 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+              : (isDragging || (Math.abs(swipeOffset) > 0 && !isAnimatingSwipe))
+                ? 'none'
                 : 'transform 0.3s ease-out',
             cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in'
           }}
