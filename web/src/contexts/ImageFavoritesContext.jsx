@@ -80,7 +80,7 @@ export const ImageFavoritesProvider = ({ children }) => {
         return imageId ? favorites.has(imageId) : false;
     };
 
-    // Toggle favorite status
+    // Toggle favorite status (optimistic UI — updates instantly, syncs backend in background)
     const toggleFavorite = async (imageUrl, metadata = {}) => {
         if (!currentUser) {
             toast.error('Please login to save favorites');
@@ -98,33 +98,56 @@ export const ImageFavoritesProvider = ({ children }) => {
             return false;
         }
 
-        const isFav = favorites.has(imageId);
+        const wasFav = favorites.has(imageId);
 
+        // ── Optimistic Update: flip UI state immediately ──
+        if (wasFav) {
+            // Optimistically remove
+            setFavorites(prev => {
+                const next = new Set(prev);
+                next.delete(imageId);
+                return next;
+            });
+            setFavoritesData(prev => prev.filter(fav => fav.imageId !== imageId));
+        } else {
+            // Optimistically add (create a temporary local entry)
+            setFavorites(prev => new Set([...prev, imageId]));
+            const optimisticEntry = {
+                imageId,
+                imageUrl,
+                listingId: metadata.listingId || null,
+                metadata: {
+                    imageName: metadata.imageName || `image-${Date.now()}`,
+                    imageType: metadata.imageType || 'image',
+                    imageSize: metadata.imageSize || 0,
+                    addedFrom: metadata.addedFrom || 'preview'
+                },
+                addedAt: new Date().toISOString(),
+                _optimistic: true // marker so we can replace with real data later
+            };
+            setFavoritesData(prev => [...prev, optimisticEntry]);
+        }
+
+        // ── Background Sync: fire API call without blocking UI ──
         try {
-            if (isFav) {
-                // Remove from favorites
+            if (wasFav) {
+                // Remove from backend
                 const response = await authenticatedFetch(`${API_BASE_URL}/api/image-favorites/remove/${imageId}`, {
                     method: 'DELETE'
                 });
 
-                if (response.ok) {
-                    // Update local state
-                    setFavorites(prev => {
-                        const newFavorites = new Set(prev);
-                        newFavorites.delete(imageId);
-                        return newFavorites;
-                    });
-
-                    setFavoritesData(prev => prev.filter(fav => fav.imageId !== imageId));
-                    toast.success('Removed from favorites');
-                    return false;
-                } else {
+                if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
+                    // Revert optimistic removal
+                    setFavorites(prev => new Set([...prev, imageId]));
+                    // Re-fetch to get accurate data
+                    loadFavorites();
                     toast.error(errorData.message || 'Failed to remove favorite');
                     return true;
                 }
+                return false;
             } else {
-                // Add to favorites
+                // Add to backend
                 const favoriteData = {
                     imageUrl,
                     imageId,
@@ -144,32 +167,57 @@ export const ImageFavoritesProvider = ({ children }) => {
 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.success) {
-                        // Update local state
-                        setFavorites(prev => new Set([...prev, imageId]));
-                        setFavoritesData(prev => [...prev, data.favorite]);
-                        toast.success('Added to favorites');
-                        return true;
+                    if (data.success && data.favorite) {
+                        // Replace optimistic entry with real server data
+                        setFavoritesData(prev =>
+                            prev.map(fav =>
+                                fav.imageId === imageId && fav._optimistic
+                                    ? data.favorite
+                                    : fav
+                            )
+                        );
                     }
+                    return true;
                 } else {
                     const errorData = await response.json().catch(() => ({}));
                     const errorMessage = errorData.message || 'Failed to update favorites';
+
                     if (response.status === 400 && errorMessage.includes('already')) {
-                         if (!isFav) {
-                             setFavorites(prev => new Set([...prev, imageId]));
-                         }
-                         toast.success('Added to favorites');
-                         return true;
-                    } else {
-                         toast.error(errorMessage);
-                         return isFav;
+                        // Already exists on server — keep optimistic state, refresh data
+                        loadFavorites();
+                        return true;
                     }
+
+                    // Revert optimistic addition
+                    setFavorites(prev => {
+                        const next = new Set(prev);
+                        next.delete(imageId);
+                        return next;
+                    });
+                    setFavoritesData(prev => prev.filter(fav => fav.imageId !== imageId));
+                    toast.error(errorMessage);
+                    return false;
                 }
             }
         } catch (error) {
             console.error('Failed to toggle favorite:', error);
+
+            // Revert optimistic update on network error
+            if (wasFav) {
+                // Was removing → put it back
+                setFavorites(prev => new Set([...prev, imageId]));
+                loadFavorites();
+            } else {
+                // Was adding → remove it
+                setFavorites(prev => {
+                    const next = new Set(prev);
+                    next.delete(imageId);
+                    return next;
+                });
+                setFavoritesData(prev => prev.filter(fav => fav.imageId !== imageId));
+            }
             toast.error('Failed to update favorites');
-            return isFav; // Return original state on error
+            return wasFav;
         }
     };
 

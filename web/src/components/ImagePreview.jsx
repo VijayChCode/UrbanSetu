@@ -265,8 +265,8 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
     }
   }, [currentImageUrl, isOpen]);
 
-  // Handle favorite toggle
-  const handleToggleFavorite = async () => {
+  // Handle favorite toggle (optimistic — UI updates instantly)
+  const handleToggleFavorite = () => {
     if (!currentImageUrl || imageError || imageLoading) return;
 
     const baseTitle = metadata.listingName || metadata.blogTitle || metadata.title || 'Image';
@@ -290,22 +290,21 @@ const ImagePreview = ({ isOpen, onClose, images, initialIndex = 0, listingId = n
       return;
     }
 
-    try {
-      await toggleFavorite(currentImageUrl, imageMetadata);
-      showFeedback(isCurrentImageFavorited ? "Removed from Favorites" : "Added to Favorites");
-    } catch (error) {
+    // Show feedback immediately (context flips the state optimistically)
+    showFeedback(isCurrentImageFavorited ? "Removed from Favorites" : "Added to Favorites");
+
+    // Fire and forget — context handles optimistic update + rollback on error
+    toggleFavorite(currentImageUrl, imageMetadata).catch(error => {
       console.error('Failed to toggle favorite:', error);
-    }
+    });
   };
 
-  const handleRemoveFavoriteFromGrid = async (e, fav) => {
+  const handleRemoveFavoriteFromGrid = (e, fav) => {
     e.stopPropagation();
-    try {
-      await toggleFavorite(fav.imageUrl, fav.metadata);
-      showFeedback("Removed from Favorites");
-    } catch (error) {
+    showFeedback("Removed from Favorites");
+    toggleFavorite(fav.imageUrl, fav.metadata).catch(error => {
       console.error('Failed to remove favorite from grid:', error);
-    }
+    });
   };
 
   useEffect(() => {
