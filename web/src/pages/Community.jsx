@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { FaUsers, FaUser, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope, FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch, FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaLeaf, FaCamera, FaTrash, FaCheckCircle, FaExclamationTriangle, FaCalendar, FaTimesCircle, FaEdit, FaSmile, FaFire } from 'react-icons/fa';
+import { FaUsers, FaUser, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope, FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch, FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaLeaf, FaCamera, FaTrash, FaCheckCircle, FaExclamationTriangle, FaCalendar, FaTimesCircle, FaEdit, FaSmile, FaFire, FaSpinner } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { toast } from 'react-toastify';
 import CommunitySkeleton from '../components/skeletons/CommunitySkeleton';
@@ -86,6 +86,8 @@ export default function Community() {
     const [commentText, setCommentText] = useState({});
     const [commentsLoading, setCommentsLoading] = useState({});
     const [repliesLoading, setRepliesLoading] = useState({});
+    const [submittingComment, setSubmittingComment] = useState({});
+    const [submittingReply, setSubmittingReply] = useState(false);
 
     const sortedPosts = useMemo(() => {
         if (!posts) return [];
@@ -1014,8 +1016,9 @@ export default function Community() {
 
     const handleAddReply = async (e, postId, commentId, parentReplyId = null) => {
         e.preventDefault();
-        if (!replyText.trim()) return;
+        if (!replyText.trim() || submittingReply) return;
 
+        setSubmittingReply(true);
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}/${commentId}/reply`, {
                 method: 'POST',
@@ -1031,15 +1034,41 @@ export default function Community() {
             const data = await res.json();
             if (res.ok) {
                 // UI update via socket usually handles this, but for optmistic UI:
+                setPosts(prevPosts => prevPosts.map(post => {
+                    if (post._id === postId) {
+                        return {
+                            ...post,
+                            comments: post.comments.map(c => {
+                                if (c._id === commentId) {
+                                    if (c.replies && c.replies.some(r => r._id === data._id)) return c;
+                                    return {
+                                        ...c,
+                                        replies: [...(c.replies || []), data]
+                                    };
+                                }
+                                return c;
+                            })
+                        };
+                    }
+                    return post;
+                }));
                 setReplyText('');
                 setReplyingTo(null);
                 setActiveReplyInput(null);
+                setExpandedReplies(prev => ({
+                    ...prev,
+                    [commentId]: true,
+                    ...(parentReplyId ? { [parentReplyId]: true } : {})
+                }));
+                toast.success('Reply added');
             } else {
                 toast.error(data.message || 'Failed to add reply');
             }
         } catch (error) {
             console.error(error);
             toast.error('Failed to add reply');
+        } finally {
+            setSubmittingReply(false);
         }
     };
 
@@ -1256,8 +1285,9 @@ export default function Community() {
         e.preventDefault();
         if (!currentUser) return setAuthModal({ isOpen: true, action: 'comment' });
         const content = commentText[postId];
-        if (!content || !content.trim()) return;
+        if (!content || !content.trim() || submittingComment[postId]) return;
 
+        setSubmittingComment(prev => ({ ...prev, [postId]: true }));
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}`, {
                 method: 'POST',
@@ -1287,6 +1317,8 @@ export default function Community() {
         } catch (error) {
             console.error(error);
             toast.error('Failed to add comment');
+        } finally {
+            setSubmittingComment(prev => ({ ...prev, [postId]: false }));
         }
     };
 
@@ -1887,17 +1919,25 @@ export default function Community() {
                                                                                 </div>
                                                                                 <button
                                                                                     type="button"
+                                                                                    disabled={submittingReply}
                                                                                     onClick={() => { setActiveReplyInput(null); setReplyText(''); setReplyingTo(null); setShowEmojiPicker({ show: false, type: null, id: null }); }}
-                                                                                    className="text-xs text-gray-500 dark:text-gray-400 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-all"
+                                                                                    className="text-xs text-gray-500 dark:text-gray-400 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-all disabled:opacity-50"
                                                                                 >
                                                                                     Cancel
                                                                                 </button>
                                                                                 <button
                                                                                     type="submit"
-                                                                                    disabled={!replyText.trim()}
-                                                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50 hover:bg-blue-700 transition-all shadow-md"
+                                                                                    disabled={!replyText.trim() || submittingReply}
+                                                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50 hover:bg-blue-700 transition-all shadow-md flex items-center gap-1.5"
                                                                                 >
-                                                                                    Reply
+                                                                                    {submittingReply ? (
+                                                                                        <>
+                                                                                            <FaSpinner className="animate-spin text-[10px]" />
+                                                                                            <span>Replying...</span>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        'Reply'
+                                                                                    )}
                                                                                 </button>
                                                                             </div>
                                                                         </form>
@@ -2146,10 +2186,17 @@ export default function Community() {
                                                                                                                     </button>
                                                                                                                     <button
                                                                                                                         type="submit"
-                                                                                                                        disabled={!replyText.trim()}
-                                                                                                                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50"
+                                                                                                                        disabled={!replyText.trim() || submittingReply}
+                                                                                                                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50 hover:bg-blue-700 transition-all shadow-md flex items-center gap-1.5"
                                                                                                                     >
-                                                                                                                        Reply
+                                                                                                                        {submittingReply ? (
+                                                                                                                            <>
+                                                                                                                                <FaSpinner className="animate-spin text-[10px]" />
+                                                                                                                                <span>Replying...</span>
+                                                                                                                            </>
+                                                                                                                        ) : (
+                                                                                                                            'Reply'
+                                                                                                                        )}
                                                                                                                     </button>
                                                                                                                 </div>
                                                                                                             </form>
@@ -2270,11 +2317,15 @@ export default function Community() {
                                                 )}
                                                 <button
                                                     type="submit"
-                                                    disabled={currentUser && !commentText[post._id]?.trim()}
-                                                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                                    title={currentUser ? "Send Comment" : "Sign in to comment"}
+                                                    disabled={(currentUser && !commentText[post._id]?.trim()) || Boolean(submittingComment[post._id])}
+                                                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                                                    title={currentUser ? (submittingComment[post._id] ? "Sending..." : "Send Comment") : "Sign in to comment"}
                                                 >
-                                                    <FaArrowRight className="text-xs" />
+                                                    {submittingComment[post._id] ? (
+                                                        <FaSpinner className="animate-spin text-xs" />
+                                                    ) : (
+                                                        <FaArrowRight className="text-xs" />
+                                                    )}
                                                 </button>
                                             </div>
                                         </form>
