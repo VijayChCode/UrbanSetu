@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
     FaUsers, FaMapMarkerAlt, FaBullhorn, FaShieldAlt, FaEnvelope,
     FaStore, FaComment, FaThumbsUp, FaThumbsDown, FaShare, FaPlus, FaSearch,
-    FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaExclamationTriangle, FaEdit, FaSmile, FaUserTimes, FaFire, FaChevronDown, FaChevronUp
+    FaCalendarAlt, FaEllipsisH, FaTimes, FaImage, FaArrowRight, FaArrowLeft, FaLock, FaFlag, FaExclamationTriangle, FaEdit, FaSmile, FaUserTimes, FaFire, FaChevronDown, FaChevronUp, FaSpinner
 } from 'react-icons/fa';
 import EmojiPicker from 'emoji-picker-react';
 import { toast } from 'react-toastify';
@@ -88,6 +88,8 @@ export default function AdminCommunity() {
     const [commentText, setCommentText] = useState({});
     const [commentsLoading, setCommentsLoading] = useState({});
     const [repliesLoading, setRepliesLoading] = useState({});
+    const [submittingComment, setSubmittingComment] = useState({});
+    const [submittingReply, setSubmittingReply] = useState(false);
     const [editingContent, setEditingContent] = useState({ type: null, id: null, content: '' });
     const [expandedSummaries, setExpandedSummaries] = useState({});
     const [summariesLoading, setSummariesLoading] = useState({});
@@ -944,8 +946,9 @@ export default function AdminCommunity() {
     const handleAddComment = async (e, postId) => {
         e.preventDefault();
         const content = commentText[postId];
-        if (!content || !content.trim()) return;
+        if (!content || !content.trim() || submittingComment[postId]) return;
 
+        setSubmittingComment(prev => ({ ...prev, [postId]: true }));
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}`, {
                 method: 'POST',
@@ -973,6 +976,8 @@ export default function AdminCommunity() {
         } catch (error) {
             console.error(error);
             toast.error('Failed to add comment');
+        } finally {
+            setSubmittingComment(prev => ({ ...prev, [postId]: false }));
         }
     };
 
@@ -1017,8 +1022,9 @@ export default function AdminCommunity() {
 
     const handleAddReply = async (e, postId, commentId, parentReplyId = null) => {
         e.preventDefault();
-        if (!replyText.trim()) return;
+        if (!replyText.trim() || submittingReply) return;
 
+        setSubmittingReply(true);
         try {
             const res = await authenticatedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/forum/comment/${postId}/${commentId}/reply`, {
                 method: 'POST',
@@ -1061,6 +1067,8 @@ export default function AdminCommunity() {
         } catch (error) {
             console.error(error);
             toast.error('Failed to add reply');
+        } finally {
+            setSubmittingReply(false);
         }
     };
 
@@ -1992,10 +2000,17 @@ export default function AdminCommunity() {
                                                                                 </button>
                                                                                 <button
                                                                                     type="submit"
-                                                                                    disabled={!replyText.trim()}
-                                                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50"
+                                                                                    disabled={!replyText.trim() || submittingReply}
+                                                                                    className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50 hover:bg-blue-700 transition-all shadow-md flex items-center gap-1.5"
                                                                                 >
-                                                                                    Reply
+                                                                                    {submittingReply ? (
+                                                                                        <>
+                                                                                            <FaSpinner className="animate-spin text-[10px]" />
+                                                                                            <span>Replying...</span>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        'Reply'
+                                                                                    )}
                                                                                 </button>
                                                                             </div>
                                                                         </form>
@@ -2247,10 +2262,17 @@ export default function AdminCommunity() {
                                                                                                                     </button>
                                                                                                                     <button
                                                                                                                         type="submit"
-                                                                                                                        disabled={!replyText.trim()}
-                                                                                                                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50"
+                                                                                                                        disabled={!replyText.trim() || submittingReply}
+                                                                                                                        className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full disabled:opacity-50 hover:bg-blue-700 transition-all shadow-md flex items-center gap-1.5"
                                                                                                                     >
-                                                                                                                        Reply
+                                                                                                                        {submittingReply ? (
+                                                                                                                            <>
+                                                                                                                                <FaSpinner className="animate-spin text-[10px]" />
+                                                                                                                                <span>Replying...</span>
+                                                                                                                            </>
+                                                                                                                        ) : (
+                                                                                                                            'Reply'
+                                                                                                                        )}
                                                                                                                     </button>
                                                                                                                 </div>
                                                                                                             </form>
@@ -2345,10 +2367,15 @@ export default function AdminCommunity() {
                                                         </div>
                                                         <button
                                                             type="submit"
-                                                            disabled={!commentText[post._id]?.trim()}
-                                                            className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                            disabled={!commentText[post._id]?.trim() || Boolean(submittingComment[post._id])}
+                                                            className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                                                            title={submittingComment[post._id] ? "Sending..." : "Send Comment"}
                                                         >
-                                                            <FaArrowRight className="text-xs" />
+                                                            {submittingComment[post._id] ? (
+                                                                <FaSpinner className="animate-spin text-xs" />
+                                                            ) : (
+                                                                <FaArrowRight className="text-xs" />
+                                                            )}
                                                         </button>
                                                     </div>
                                                 </form>
