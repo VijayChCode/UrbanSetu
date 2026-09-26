@@ -458,22 +458,36 @@ export default function Listing() {
     }
   };
 
-  // Toggle watchlist status
+  // Toggle watchlist status (optimistic UI — updates instantly, syncs backend in background)
   const toggleWatchlist = async () => {
     if (!currentUser || currentUser.role === 'admin' || currentUser.role === 'rootadmin') return;
 
-    setWatchlistLoading(true);
+    const wasInWatchlist = isInWatchlist;
+
+    // ── Optimistic Update: flip UI state immediately ──
+    if (wasInWatchlist) {
+      setIsInWatchlist(false);
+      setPriceDropInfo(null);
+      toast.success('Property removed from watchlist');
+    } else {
+      setIsInWatchlist(true);
+      toast.success(
+        <div>
+          Property added to watchlist! Future price insights will be notified. <Link to="/user/watchlist" className="font-bold underline ml-1">View Watchlist</Link>
+        </div>
+      );
+    }
+
+    // ── Background Sync: fire API call without blocking UI ──
     try {
-      if (isInWatchlist) {
+      if (wasInWatchlist) {
         // Remove from watchlist
         const res = await authenticatedFetch(`${API_BASE_URL}/api/watchlist/remove/${listing._id}`, {
           method: 'DELETE',
         });
-        if (res.ok) {
-          setIsInWatchlist(false);
-          setPriceDropInfo(null);
-          toast.success('Property removed from watchlist');
-        } else {
+        if (!res.ok) {
+          // Revert optimistic removal
+          setIsInWatchlist(true);
           toast.error('Failed to remove from watchlist');
         }
       } else {
@@ -486,33 +500,27 @@ export default function Listing() {
           body: JSON.stringify({ listingId: listing._id })
         });
         if (res.ok) {
-          setIsInWatchlist(true);
           trackInteraction(listing, 'watchlist', currentUser._id); // STN-LIVE: Watchlist = strong interest signal
-          toast.success(
-            <div>
-              Property added to watchlist! Future price insights will be notified. <Link to="/user/watchlist" className="font-bold underline ml-1">View Watchlist</Link>
-            </div>
-          );
         } else {
           const data = await res.json();
           if (data.message?.includes('already')) {
+            // Already in watchlist on server — keep optimistic state
             setIsInWatchlist(true);
-            toast.info(
-              <div>
-                Property is already in your watchlist. <Link to="/user/watchlist" className="font-bold underline ml-1">View Watchlist</Link>
-              </div>
-            );
           } else {
+            // Revert optimistic addition
+            setIsInWatchlist(false);
             toast.error('Failed to add to watchlist.');
           }
         }
       }
-
     } catch (error) {
       console.error('Error toggling watchlist:', error);
+      // Revert to original state on network error
+      setIsInWatchlist(wasInWatchlist);
+      if (wasInWatchlist) {
+        setPriceDropInfo(null); // Will be re-fetched if needed
+      }
       toast.error('Failed to update watchlist.');
-    } finally {
-      setWatchlistLoading(false);
     }
   };
 
@@ -2617,22 +2625,18 @@ export default function Listing() {
                 {currentUser && !(currentUser.role === 'admin' || currentUser.role === 'rootadmin') && (
                   <button
                     onClick={listing.isDeleted ? undefined : toggleWatchlist}
-                    disabled={watchlistLoading || listing.isDeleted}
-                    className={`ml-2 p-2 rounded-full transition z-20 focus:outline-none ${
+                    disabled={listing.isDeleted}
+                    className={`ml-2 p-2 rounded-full transition z-20 focus:outline-none active:scale-90 ${
                       listing.isDeleted
                         ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'
                         : isInWatchlist
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-gray-200 text-blue-500 hover:text-blue-600 hover:bg-blue-100'
-                    } ${watchlistLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    }`}
                     title={listing.isDeleted ? 'Cannot watchlist deleted property' : isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
                     style={{ lineHeight: 0 }}
                   >
-                    {watchlistLoading ? (
-                      <UrbanSetuSpinner size="sm" isBright={isInWatchlist} />
-                    ) : (
-                      <FaEye className="text-base sm:text-lg" />
-                    )}
+                    <FaEye className="text-base sm:text-lg" />
                   </button>
                 )}
               </h1>
