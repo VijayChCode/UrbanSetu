@@ -18899,4 +18899,269 @@ export const sendCloudinaryToggleStatusEmail = async ({
   }
 };
 
+// Send Service Request Received Email (to user on submission)
+export const sendServiceRequestReceivedEmail = async (email, username, services, preferredDate, address, coinsRedeemed = 0) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const servicesList = Array.isArray(services) ? services.join(', ') : services;
+  const discountText = coinsRedeemed > 0 ? `<p style="margin: 5px 0; color: #d97706;"><strong>SetuCoins Redeemed:</strong> ${coinsRedeemed} (₹${Math.floor(coinsRedeemed / 10)} discount)</p>` : '';
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: '✅ Service Request Received - UrbanSetu',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Service Request Confirmation</p>
+          </div>
+          
+          <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb;">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Hi ${username},</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              Your service request has been successfully submitted! Our team will review it and get back to you shortly.
+            </p>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 5px 0; color: #374151;"><strong>Services:</strong> ${servicesList}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Preferred Date:</strong> ${preferredDate}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Address:</strong> ${address}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Submitted:</strong> ${formatIndiaTime()}</p>
+              ${discountText}
+            </div>
+            
+            <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">
+              You can track your request status anytime from your services dashboard.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${clientBaseUrl}/user/services" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Services</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'service_request_received') :
+      createErrorResponse(new Error(result.error), 'service_request_received');
+  } catch (error) {
+    return createErrorResponse(error, 'service_request_received');
+  }
+};
+
+// Send Movers Request Received Email (to user on submission)
+export const sendMoversRequestReceivedEmail = async (email, username, fromAddress, toAddress, moveDate, size, coinsRedeemed = 0) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const discountText = coinsRedeemed > 0 ? `<p style="margin: 5px 0; color: #d97706;"><strong>SetuCoins Redeemed:</strong> ${coinsRedeemed} (₹${Math.floor(coinsRedeemed / 10)} discount)</p>` : '';
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: '🚚 Movers Request Received - UrbanSetu',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Packers & Movers Request Confirmation</p>
+          </div>
+          
+          <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Hi ${username},</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              Your packers & movers request has been successfully submitted! We'll connect you with the best movers for your needs.
+            </p>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 5px 0; color: #374151;"><strong>From:</strong> ${fromAddress}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>To:</strong> ${toAddress}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Move Date:</strong> ${moveDate}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Home Size:</strong> ${size}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Submitted:</strong> ${formatIndiaTime()}</p>
+              ${discountText}
+            </div>
+            
+            <p style="color: #6b7280; margin: 15px 0 0 0; font-size: 14px;">
+              You can track your request status anytime from your services dashboard.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${clientBaseUrl}/user/services" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Services</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'movers_request_received') :
+      createErrorResponse(new Error(result.error), 'movers_request_received');
+  } catch (error) {
+    return createErrorResponse(error, 'movers_request_received');
+  }
+};
+
+// Send Service Request Status Update Email (when admin changes status)
+export const sendServiceRequestStatusUpdateEmail = async (email, username, services, status, preferredDate, address) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const servicesList = Array.isArray(services) ? services.join(', ') : services;
+  const statusColors = {
+    pending: '#f59e0b',
+    in_progress: '#3b82f6',
+    completed: '#16a34a',
+    cancelled: '#ef4444'
+  };
+  const statusLabels = {
+    pending: 'Pending',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+  };
+  const statusColor = statusColors[status] || '#6b7280';
+  const statusLabel = statusLabels[status] || status;
+  const statusEmoji = status === 'completed' ? '✅' : status === 'in_progress' ? '🔄' : status === 'cancelled' ? '❌' : '⏳';
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `${statusEmoji} Service Request ${statusLabel} - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Service Request Update</p>
+          </div>
+          
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid ${statusColor};">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Hi ${username},</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              Your service request status has been updated to:
+            </p>
+            <div style="text-align: center; margin: 15px 0;">
+              <span style="display: inline-block; background-color: ${statusColor}; color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 16px;">${statusLabel}</span>
+            </div>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 5px 0; color: #374151;"><strong>Services:</strong> ${servicesList}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Preferred Date:</strong> ${preferredDate}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Address:</strong> ${address}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Updated:</strong> ${formatIndiaTime()}</p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${clientBaseUrl}/user/services" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Services</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'service_request_status_update') :
+      createErrorResponse(new Error(result.error), 'service_request_status_update');
+  } catch (error) {
+    return createErrorResponse(error, 'service_request_status_update');
+  }
+};
+
+// Send Movers Request Status Update Email (when admin changes status)
+export const sendMoversRequestStatusUpdateEmail = async (email, username, fromAddress, toAddress, status, moveDate, size) => {
+  const clientBaseUrl = process.env.CLIENT_URL || 'https://urbansetu.vercel.app';
+  const statusColors = {
+    pending: '#f59e0b',
+    in_progress: '#3b82f6',
+    completed: '#16a34a',
+    cancelled: '#ef4444'
+  };
+  const statusLabels = {
+    pending: 'Pending',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+  };
+  const statusColor = statusColors[status] || '#6b7280';
+  const statusLabel = statusLabels[status] || status;
+  const statusEmoji = status === 'completed' ? '✅' : status === 'in_progress' ? '🚚' : status === 'cancelled' ? '❌' : '⏳';
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `${statusEmoji} Movers Request ${statusLabel} - UrbanSetu`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">UrbanSetu</h1>
+            <p style="color: #6b7280; margin: 10px 0 0 0;">Movers Request Update</p>
+          </div>
+          
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid ${statusColor};">
+            <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 20px;">Hi ${username},</h2>
+            <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
+              Your packers & movers request status has been updated to:
+            </p>
+            <div style="text-align: center; margin: 15px 0;">
+              <span style="display: inline-block; background-color: ${statusColor}; color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 16px;">${statusLabel}</span>
+            </div>
+            
+            <div style="background-color: white; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #e5e7eb;">
+              <p style="margin: 5px 0; color: #374151;"><strong>From:</strong> ${fromAddress}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>To:</strong> ${toAddress}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Move Date:</strong> ${moveDate}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Home Size:</strong> ${size}</p>
+              <p style="margin: 5px 0; color: #374151;"><strong>Updated:</strong> ${formatIndiaTime()}</p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${clientBaseUrl}/user/services" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Services</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
+              © ${new Date().getFullYear()} UrbanSetu. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const result = await sendEmailWithRetry(mailOptions);
+    return result.success ?
+      createSuccessResponse(result.messageId, 'movers_request_status_update') :
+      createErrorResponse(new Error(result.error), 'movers_request_status_update');
+  } catch (error) {
+    return createErrorResponse(error, 'movers_request_status_update');
+  }
+};
 

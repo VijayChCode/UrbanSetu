@@ -2,6 +2,12 @@ import express from 'express';
 import { verifyToken } from '../utils/verify.js';
 import MoversRequest from '../models/moversRequest.model.js';
 import ServiceRequest from '../models/serviceRequest.model.js';
+import {
+  sendServiceRequestReceivedEmail,
+  sendMoversRequestReceivedEmail,
+  sendServiceRequestStatusUpdateEmail,
+  sendMoversRequestStatusUpdateEmail
+} from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -40,6 +46,22 @@ router.post('/movers', verifyToken, async (req, res, next) => {
       redeemedCoins: redeemed,
       discountApplied: discount
     });
+
+    // Send confirmation email to user
+    try {
+      await sendMoversRequestReceivedEmail(
+        req.user.email,
+        req.user.username,
+        fromAddress,
+        toAddress,
+        moveDate,
+        size,
+        redeemed
+      );
+    } catch (emailErr) {
+      console.error('Failed to send movers request confirmation email:', emailErr);
+    }
+
     res.status(201).json(doc);
   } catch (e) { next(e); }
 });
@@ -65,6 +87,22 @@ router.patch('/movers/:id', verifyToken, async (req, res, next) => {
     if (!allowed) return res.status(403).json({ message: 'Forbidden' });
     doc.status = status;
     await doc.save();
+
+    // Send status update email to the request owner
+    try {
+      await sendMoversRequestStatusUpdateEmail(
+        doc.requesterEmail,
+        doc.requesterName,
+        doc.fromAddress,
+        doc.toAddress,
+        status,
+        doc.moveDate,
+        doc.size
+      );
+    } catch (emailErr) {
+      console.error('Failed to send movers status update email:', emailErr);
+    }
+
     res.json(doc);
   } catch (e) { next(e); }
 });
@@ -132,6 +170,21 @@ router.post('/services', verifyToken, async (req, res, next) => {
       redeemedCoins: redeemed,
       discountApplied: discount
     });
+
+    // Send confirmation email to user
+    try {
+      await sendServiceRequestReceivedEmail(
+        req.user.email,
+        req.user.username,
+        services,
+        preferredDate,
+        address,
+        redeemed
+      );
+    } catch (emailErr) {
+      console.error('Failed to send service request confirmation email:', emailErr);
+    }
+
     res.status(201).json(doc);
   } catch (e) { next(e); }
 });
@@ -157,6 +210,21 @@ router.patch('/services/:id', verifyToken, async (req, res, next) => {
     if (!allowed) return res.status(403).json({ message: 'Forbidden' });
     doc.status = status;
     await doc.save();
+
+    // Send status update email to the request owner
+    try {
+      await sendServiceRequestStatusUpdateEmail(
+        doc.requesterEmail,
+        doc.requesterName,
+        doc.services,
+        status,
+        doc.preferredDate,
+        doc.address
+      );
+    } catch (emailErr) {
+      console.error('Failed to send service status update email:', emailErr);
+    }
+
     res.json(doc);
   } catch (e) { next(e); }
 });
