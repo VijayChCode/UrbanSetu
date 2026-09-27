@@ -30,6 +30,7 @@ const coinTransactionSchema = new mongoose.Schema({
             "admin_adjustment",
             "redemption_rent_fee",
             "redemption_coupon",
+            "redemption_service_discount",
             "monthly_leaderboard_reward",
             "other"
         ],
@@ -41,7 +42,7 @@ const coinTransactionSchema = new mongoose.Schema({
     },
     referenceModel: {
         type: String, // Can be dynamic: 'Payment', 'Review', 'User', etc.
-        enum: ['Payment', 'Review', 'User', 'AdminLog', 'Listing', null]
+        enum: ['Payment', 'Review', 'User', 'AdminLog', 'Listing', 'ServiceRequest', 'MoversRequest', null]
     },
     description: {
         type: String,
