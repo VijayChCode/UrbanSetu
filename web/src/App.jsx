@@ -1403,7 +1403,7 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
       <VisitorTracker />
       <GoogleOneTap />
       <SitemapNav />
-      {!hideHeaderRoutes.includes(location.pathname) && !location.pathname.includes('/year/') && !location.pathname.includes('/call/') && !location.pathname.startsWith('/i/') && !location.pathname.startsWith('/v/') && !location.pathname.startsWith('/user/i/') && !location.pathname.startsWith('/user/v/') && !location.pathname.startsWith('/admin/i/') && !location.pathname.startsWith('/admin/v/') && isHeaderVisible && (
+      {!hideHeaderRoutes.includes(location.pathname) && !location.pathname.includes('/year/') && !location.pathname.includes('/call/') && !location.pathname.startsWith('/i/') && !location.pathname.startsWith('/v/') && !location.pathname.startsWith('/user/i/') && !location.pathname.startsWith('/user/v/') && !location.pathname.startsWith('/admin/i/') && !location.pathname.startsWith('/admin/v/') && !location.pathname.startsWith('/view/') && !location.pathname.startsWith('/user/view/') && !location.pathname.startsWith('/user/view-chat/') && !location.pathname.startsWith('/admin/view/') && !location.pathname.startsWith('/admin/view-chat/') && isHeaderVisible && (
         currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin')
           ? <AdminHeader />
           : <Header />

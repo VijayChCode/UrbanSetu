@@ -22,6 +22,13 @@ export default function ViewChatDocument() {
     const { currentUser } = useSelector((state) => state.user);
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+    // Determine home path based on user role
+    const getHomePath = () => {
+        if (!currentUser) return '/';
+        if (currentUser.role === 'admin' || currentUser.role === 'rootadmin') return '/admin';
+        return '/user';
+    };
+
     const params = new URLSearchParams(location.search);
     const source = params.get('source');
 
@@ -281,7 +288,7 @@ export default function ViewChatDocument() {
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Error Loading Document</h2>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate(getHomePath())}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         Go Back
@@ -302,7 +309,7 @@ export default function ViewChatDocument() {
             <div className="bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-900/50 px-4 sm:px-6 py-4 flex items-center justify-between z-10 gap-2 border-b dark:border-gray-700">
                 <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate(getHomePath())}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400 transition-colors shrink-0"
                     >
                         <FaArrowLeft />
