@@ -5767,6 +5767,22 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
             }));
           }
           toast.success(`Deleted ${ids.length} messages for everyone!`);
+
+          // Unpin any pinned messages that were bulk-deleted for everyone
+          const pinnedInBatch = messageToDelete.filter(m => m.pinned);
+          for (const pm of pinnedInBatch) {
+            try {
+              await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${pm._id}/pin`, {
+                method: 'PATCH',
+                body: JSON.stringify({ pinned: false })
+              });
+            } catch (unpinErr) {
+              console.error('Failed to unpin deleted message:', unpinErr);
+            }
+          }
+          if (pinnedInBatch.length > 0) {
+            setPinnedMessages(prev => prev.filter(m => !ids.includes(m._id)));
+          }
         } else {
           const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comments/removed/sync`, {
             method: 'POST',
@@ -5785,6 +5801,12 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           }
 
           toast.success(`Deleted ${ids.length} messages for you!`);
+
+          // Remove any pinned messages from the local pinned list
+          const pinnedInBatch = messageToDelete.filter(m => m.pinned);
+          if (pinnedInBatch.length > 0) {
+            setPinnedMessages(prev => prev.filter(m => !ids.includes(m._id)));
+          }
         }
       } else if (deleteForBoth) {
         // Single delete for everyone
@@ -5809,6 +5831,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           setUnreadNewMessages(prev => Math.max(0, prev - 1));
         }
         toast.success('Message deleted for everyone!');
+
+        // If the deleted message was pinned, unpin it on both sides
+        if (messageToDelete.pinned) {
+          try {
+            await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageToDelete._id}/pin`, {
+              method: 'PATCH',
+              body: JSON.stringify({ pinned: false })
+            });
+          } catch (unpinErr) {
+            console.error('Failed to unpin deleted message:', unpinErr);
+          }
+          setPinnedMessages(prev => prev.filter(m => m._id !== messageToDelete._id));
+        }
       } else {
         // Single delete for me
         try {
@@ -5824,6 +5859,11 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         startUndoTimer(messageToDelete);
 
         toast.success('Message deleted for you!');
+
+        // If the deleted message was pinned, remove from pinned messages locally
+        if (messageToDelete.pinned) {
+          setPinnedMessages(prev => prev.filter(m => m._id !== messageToDelete._id));
+        }
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'An error occurred. Please try again.');
@@ -10151,16 +10191,25 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
               )}
               {/* Chat Content Area */}
               <div className="flex-1 flex flex-col min-h-0">
-                {/* Pinned Messages Section */}
-                {pinnedMessages.length > 0 && (
+                {/* Pinned Messages Section - filter out cleared/removed messages */}
+                {(() => {
+                  const visiblePinnedMessages = pinnedMessages.filter(pm => {
+                    // Hide pinned messages that were cleared by the user
+                    if (new Date(pm.timestamp).getTime() <= clearTime) return false;
+                    // Hide pinned messages removed for this user
+                    if (locallyRemovedIds.includes(pm._id)) return false;
+                    if (pm.removedFor?.includes?.(currentUser._id)) return false;
+                    return true;
+                  });
+                  return visiblePinnedMessages.length > 0 && (
                   <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 border-b border-purple-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
                     <div className="flex items-center gap-2 mb-2">
                       <FaThumbtack className="text-purple-600 text-sm" />
                       <span className="text-purple-700 dark:text-purple-400 font-semibold text-sm">Pinned Messages</span>
-                      <span className="text-purple-600 dark:text-purple-400 text-xs">({pinnedMessages.length})</span>
+                      <span className="text-purple-600 dark:text-purple-400 text-xs">({visiblePinnedMessages.length})</span>
                     </div>
                     <div className="space-y-2 max-h-24 overflow-y-auto">
-                      {pinnedMessages.map((pinnedMsg) => (
+                      {visiblePinnedMessages.map((pinnedMsg) => (
                         <div
                           key={pinnedMsg._id}
                           className={`bg-white dark:bg-gray-700 rounded-lg p-2 border-l-4 border-purple-500 cursor-pointer transition-all duration-200 hover:shadow-md ${highlightedPinnedMessage === pinnedMsg._id ? 'ring-2 ring-purple-400 shadow-lg' : ''
@@ -10216,7 +10265,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                       ))}
                     </div>
                   </div>
-                )}
+                );
+                })()}
 
                 {/* Messages Container */}
                 <div className="flex-1 flex flex-col min-h-0 relative">
@@ -11090,24 +11140,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                                   <span className={`${isMe ? 'text-blue-200' : 'text-gray-500'} text-[10px]`}>
                                     {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                                   </span>
-                                  {/* Options icon - visible for all messages including deleted ones */}
-                                  <button
-                                    className={`${c.senderEmail === currentUser.email
-                                      ? 'text-blue-200 hover:text-white'
-                                      : 'text-gray-500 hover:text-gray-700'
-                                      } transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setHeaderOptionsMessageId(c._id);
-                                      if (!isChatSendBlocked) {
-                                        toggleReactionsBar(c._id);
-                                      }
-                                    }}
-                                    title="Message options"
-                                    aria-label="Message options"
-                                  >
-                                    <FaEllipsisV size={12} />
-                                  </button>
+                                  {/* Options icon - hidden for pending/sending messages, visible otherwise */}
+                                  {!(c.status === 'queued' || c.status === 'sending') && (
+                                    <button
+                                      className={`${c.senderEmail === currentUser.email
+                                        ? 'text-blue-200 hover:text-white'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        } transition-all duration-200 hover:scale-110 p-1 rounded-full hover:bg-white hover:bg-opacity-20 ml-1`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setHeaderOptionsMessageId(c._id);
+                                        if (!isChatSendBlocked) {
+                                          toggleReactionsBar(c._id);
+                                        }
+                                      }}
+                                      title="Message options"
+                                      aria-label="Message options"
+                                    >
+                                      <FaEllipsisV size={12} />
+                                    </button>
+                                  )}
 
                                   {/* Display reactions */}
                                   {!c.deleted && c.reactions && c.reactions.length > 0 && (
