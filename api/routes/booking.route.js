@@ -1226,6 +1226,15 @@ router.delete('/:id/comment/:commentId', verifyToken, async (req, res) => {
     comment.deletedBy = req.user.email; // Track who deleted it
     comment.deletedAt = new Date(); // Track when it was deleted
 
+    // Also clear pin data if the message was pinned (deleted messages shouldn't remain pinned)
+    if (comment.pinned) {
+      comment.pinned = false;
+      comment.pinnedBy = null;
+      comment.pinnedAt = null;
+      comment.pinExpiresAt = null;
+      comment.pinDuration = null;
+    }
+
     // Store the comment data for socket emission with proper preserved content (before clearing message)
     const commentForEmission = {
       _id: comment._id,
@@ -1330,6 +1339,15 @@ router.delete('/:id/comments/bulk-delete', verifyToken, async (req, res) => {
       comment.deleted = true;
       comment.deletedBy = req.user.email;
       comment.deletedAt = new Date();
+
+      // Also clear pin data if the message was pinned
+      if (comment.pinned) {
+        comment.pinned = false;
+        comment.pinnedBy = null;
+        comment.pinnedAt = null;
+        comment.pinExpiresAt = null;
+        comment.pinDuration = null;
+      }
 
       const commentForEmission = {
         _id: comment._id,
