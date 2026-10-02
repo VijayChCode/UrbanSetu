@@ -3351,6 +3351,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [deleteMessageLoading, setDeleteMessageLoading] = useState(false);
   const [showClearChatModal, setShowClearChatModal] = useState(false);
   const [clearChatLoading, setClearChatLoading] = useState(false);
+  const [clearChatStep, setClearChatStep] = useState(1); // 1 = main options, 2 = media type selection
+  const [clearChatMode, setClearChatMode] = useState('all'); // 'all' | 'media'
+  const [clearMediaTypes, setClearMediaTypes] = useState({ photos: true, videos: true, audio: true, docs: true });
+  const [clearStarredMessages, setClearStarredMessages] = useState(false);
 
   // Undo functionality for messages deleted for me
   const [recentlyDeletedMessage, setRecentlyDeletedMessage] = useState(null);
@@ -5834,25 +5838,100 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const handleClearChat = async () => {
     try {
       setClearChatLoading(true);
-      // Optimistically update local storage and UI
-      const now = Date.now();
-      localStorage.setItem(clearTimeKey, now);
-      setComments([]);
-      setCallHistory([]); // Also clear call history bubbles when clearing chat
 
-      // Persist to server so it applies across devices for this user
-      await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/clear-local`, {
-        method: 'PATCH',
-        body: JSON.stringify({})
-      });
+      if (clearChatMode === 'all') {
+        // Clear all messages - existing behavior
+        const now = Date.now();
+        localStorage.setItem(clearTimeKey, now);
+        setComments([]);
+        setCallHistory([]); // Also clear call history bubbles when clearing chat
 
-      toast.success("Chat Cleared.");
+        // Persist to server so it applies across devices for this user
+        await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/chat/clear-local`, {
+          method: 'PATCH',
+          body: JSON.stringify({})
+        });
+
+        // If clear starred messages is checked, unstar all starred messages
+        if (clearStarredMessages && starredMessages.length > 0) {
+          for (const message of starredMessages) {
+            try {
+              await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
+                method: 'PATCH',
+                body: JSON.stringify({ starred: false })
+              });
+            } catch (err) {
+              console.error(`Failed to unstar message ${message._id}:`, err);
+            }
+          }
+          setStarredMessages([]);
+        }
+
+        toast.success("Chat cleared.");
+      } else if (clearChatMode === 'media') {
+        // Clear only selected media types using remove-for-me
+        const mediaMsgs = filteredComments.filter(c => {
+          if (c.deleted) return false;
+          if (clearMediaTypes.photos && c.imageUrl) return true;
+          if (clearMediaTypes.videos && c.videoUrl) return true;
+          if (clearMediaTypes.audio && c.audioUrl) return true;
+          if (clearMediaTypes.docs && c.documentUrl) return true;
+          return false;
+        });
+
+        let successCount = 0;
+        for (const msg of mediaMsgs) {
+          try {
+            const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${msg._id}/remove-for-me`, {
+              method: 'PATCH'
+            });
+            if (res.ok) {
+              successCount++;
+              addLocallyRemovedId(appt._id, msg._id);
+            }
+          } catch (err) {
+            console.error(`Failed to remove media message ${msg._id}:`, err);
+          }
+        }
+
+        // Update comments state to remove cleared media messages
+        const removedIds = mediaMsgs.map(m => m._id);
+        setComments(prev => prev.filter(c => !removedIds.includes(c._id)));
+
+        // If clear starred media is checked, unstar matching starred media
+        if (clearStarredMessages) {
+          const starredMedia = starredMessages.filter(m => {
+            if (clearMediaTypes.photos && m.imageUrl) return true;
+            if (clearMediaTypes.videos && m.videoUrl) return true;
+            if (clearMediaTypes.audio && m.audioUrl) return true;
+            if (clearMediaTypes.docs && m.documentUrl) return true;
+            return false;
+          });
+          for (const message of starredMedia) {
+            try {
+              await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/star`, {
+                method: 'PATCH',
+                body: JSON.stringify({ starred: false })
+              });
+            } catch (err) {
+              console.error(`Failed to unstar media message ${message._id}:`, err);
+            }
+          }
+          setStarredMessages(prev => prev.filter(m => !starredMedia.some(sm => sm._id === m._id)));
+        }
+
+        toast.success(`Cleared ${successCount} media file${successCount !== 1 ? 's' : ''}.`);
+      }
     } catch (err) {
-      console.error('Failed to persist chat clear:', err);
-      toast.error(err.response?.data?.message || 'Cleared locally, but failed to sync with server.');
+      console.error('Failed to clear chat:', err);
+      toast.error(err.response?.data?.message || 'Failed to clear. Please try again.');
     } finally {
       setClearChatLoading(false);
       setShowClearChatModal(false);
+      setClearChatStep(1);
+      setClearChatMode('all');
+      setClearStarredMessages(false);
+      setClearMediaTypes({ photos: true, videos: true, audio: true, docs: true });
     }
   };
 
@@ -9882,6 +9961,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               <button
                                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                 onClick={() => {
+                                  setClearChatStep(1);
+                                  setClearChatMode('all');
+                                  setClearMediaTypes({ photos: true, videos: true, audio: true, docs: true });
+                                  setClearStarredMessages(false);
                                   setShowClearChatModal(true);
                                   setShowChatOptionsMenu(false);
                                 }}
@@ -13874,51 +13957,234 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         ), document.body)
       }
 
-      {/* Clear Chat Confirmation Modal */}
+      {/* Clear Chat Confirmation Modal - WhatsApp-like */}
       {
-        showClearChatModal && createPortal((
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                <FaTrash className="text-red-500" />
-                Clear Chat
-              </h3>
+        showClearChatModal && createPortal((() => {
+          // Compute media stats from visible comments
+          const visibleMsgs = (filteredComments || []).filter(c => !c.deleted);
+          const photoMsgs = visibleMsgs.filter(c => c.imageUrl);
+          const videoMsgs = visibleMsgs.filter(c => c.videoUrl);
+          const audioMsgs = visibleMsgs.filter(c => c.audioUrl);
+          const docMsgs = visibleMsgs.filter(c => c.documentUrl);
+          const totalMediaCount = photoMsgs.length + videoMsgs.length + audioMsgs.length + docMsgs.length;
+          const hasMedia = totalMediaCount > 0;
+          const hasStarred = starredMessages.length > 0;
+          const totalMessages = visibleMsgs.length;
+          const selectedMediaCount =
+            (clearMediaTypes.photos ? photoMsgs.length : 0) +
+            (clearMediaTypes.videos ? videoMsgs.length : 0) +
+            (clearMediaTypes.audio ? audioMsgs.length : 0) +
+            (clearMediaTypes.docs ? docMsgs.length : 0);
 
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Are you sure you want to clear chat? This action cannot be undone.
-              </p>
+          const closeModal = () => {
+            if (clearChatLoading) return;
+            setShowClearChatModal(false);
+            setClearChatStep(1);
+            setClearChatMode('all');
+            setClearStarredMessages(false);
+            setClearMediaTypes({ photos: true, videos: true, audio: true, docs: true });
+          };
 
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  disabled={clearChatLoading}
-                  onClick={() => setShowClearChatModal(false)}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={clearChatLoading}
-                  onClick={handleClearChat}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {clearChatLoading ? (
+          return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]" onClick={closeModal}>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                  {clearChatStep === 2 ? (
+                    <button
+                      onClick={() => { setClearChatStep(1); setClearChatMode('all'); }}
+                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      disabled={clearChatLoading}
+                      title="Back"
+                    >
+                      <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={closeModal}
+                      className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      disabled={clearChatLoading}
+                      title="Close"
+                    >
+                      <FaTimes className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                    </button>
+                  )}
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Clear Chat</h3>
+                </div>
+
+                {/* Content */}
+                <div className="px-5 py-4">
+                  {clearChatStep === 2 ? (
+                    /* Step 2: Media type selection with checkboxes */
                     <>
-                      <UrbanSetuSpinner size="sm" isBright={true} />
-                      <span>Clearing...</span>
+                      <div className="space-y-1">
+                        {photoMsgs.length > 0 && (
+                          <label className="flex items-center gap-3 py-2.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearMediaTypes.photos}
+                              onChange={(e) => setClearMediaTypes(prev => ({ ...prev, photos: e.target.checked }))}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <FaImage className="text-blue-500 text-sm" />
+                            <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">Photos</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{photoMsgs.length} item{photoMsgs.length !== 1 ? 's' : ''}</span>
+                          </label>
+                        )}
+                        {videoMsgs.length > 0 && (
+                          <label className="flex items-center gap-3 py-2.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearMediaTypes.videos}
+                              onChange={(e) => setClearMediaTypes(prev => ({ ...prev, videos: e.target.checked }))}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <FaVideo className="text-purple-500 text-sm" />
+                            <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">Videos</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{videoMsgs.length} item{videoMsgs.length !== 1 ? 's' : ''}</span>
+                          </label>
+                        )}
+                        {audioMsgs.length > 0 && (
+                          <label className="flex items-center gap-3 py-2.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearMediaTypes.audio}
+                              onChange={(e) => setClearMediaTypes(prev => ({ ...prev, audio: e.target.checked }))}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <FaVolumeUp className="text-indigo-500 text-sm" />
+                            <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">Audio</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{audioMsgs.length} item{audioMsgs.length !== 1 ? 's' : ''}</span>
+                          </label>
+                        )}
+                        {docMsgs.length > 0 && (
+                          <label className="flex items-center gap-3 py-2.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearMediaTypes.docs}
+                              onChange={(e) => setClearMediaTypes(prev => ({ ...prev, docs: e.target.checked }))}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <FaFileAlt className="text-emerald-500 text-sm" />
+                            <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">Documents</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{docMsgs.length} item{docMsgs.length !== 1 ? 's' : ''}</span>
+                          </label>
+                        )}
+                      </div>
+
+                      {hasStarred && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <label className="flex items-center gap-3 py-2 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearStarredMessages}
+                              onChange={(e) => setClearStarredMessages(e.target.checked)}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-300">Clear starred media</span>
+                          </label>
+                        </div>
+                      )}
+                    </>
+                  ) : hasMedia ? (
+                    /* Step 1 with media: Radio options (All messages / Media files only) */
+                    <>
+                      <div className="space-y-1">
+                        <label className="flex items-center gap-3 py-2.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                          <input
+                            type="radio"
+                            name="clearChatMode"
+                            value="all"
+                            checked={clearChatMode === 'all'}
+                            onChange={() => setClearChatMode('all')}
+                            className="w-[18px] h-[18px] border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                          />
+                          <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">All messages</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{totalMessages} message{totalMessages !== 1 ? 's' : ''}</span>
+                        </label>
+                        <div
+                          className="flex items-center gap-3 py-2.5 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                          onClick={() => { setClearChatMode('media'); setClearChatStep(2); }}
+                        >
+                          <input
+                            type="radio"
+                            name="clearChatMode"
+                            value="media"
+                            checked={clearChatMode === 'media'}
+                            readOnly
+                            className="w-[18px] h-[18px] border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600 pointer-events-none"
+                          />
+                          <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">Media files only</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">{totalMediaCount} item{totalMediaCount !== 1 ? 's' : ''}</span>
+                          <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                      </div>
+
+                      {hasStarred && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <label className="flex items-center gap-3 py-2 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearStarredMessages}
+                              onChange={(e) => setClearStarredMessages(e.target.checked)}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-300">Clear starred messages</span>
+                          </label>
+                        </div>
+                      )}
                     </>
                   ) : (
+                    /* No media: Simple clear chat message */
                     <>
-                      <FaTrash size={12} />
-                      <span>Clear Chat</span>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                        All messages in this chat will be deleted. This cannot be undone.
+                      </p>
+
+                      {hasStarred && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <label className="flex items-center gap-3 py-2 px-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={clearStarredMessages}
+                              onChange={(e) => setClearStarredMessages(e.target.checked)}
+                              className="w-[18px] h-[18px] rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 accent-blue-600"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-300">Clear starred messages</span>
+                          </label>
+                        </div>
+                      )}
                     </>
                   )}
-                </button>
+                </div>
+
+                {/* Footer with clear action button */}
+                <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    type="button"
+                    disabled={clearChatLoading || (clearChatStep === 2 && selectedMediaCount === 0)}
+                    onClick={handleClearChat}
+                    className="w-full py-2.5 rounded-xl border-2 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {clearChatLoading ? (
+                      <>
+                        <UrbanSetuSpinner size="sm" />
+                        <span>Clearing...</span>
+                      </>
+                    ) : (
+                      <span>
+                        {clearChatStep === 2
+                          ? `Clear media (${selectedMediaCount} item${selectedMediaCount !== 1 ? 's' : ''})`
+                          : `Clear chat (${totalMessages} message${totalMessages !== 1 ? 's' : ''})`
+                        }
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ), document.body)
+          );
+        })(), document.body)
       }
 
       {/* Delete Appointment Confirmation Modal */}
@@ -14883,7 +15149,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     {/* Count badge */}
                     {(() => {
                       let count = 0;
-                      const msgs = comments || [];
+                      const msgs = filteredComments || [];
                       if (tab.key === 'images') count = msgs.filter(c => c.imageUrl && !c.deleted).length;
                       else if (tab.key === 'videos') count = msgs.filter(c => c.videoUrl && !c.deleted).length;
                       else if (tab.key === 'audio') count = msgs.filter(c => c.audioUrl && !c.deleted).length;
@@ -14936,7 +15202,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   <>
                     {/* Images Tab */}
                     {mediaModalTab === 'images' && (() => {
-                      const imageMessages = (comments || []).filter(c => c.imageUrl && !c.deleted);
+                      const imageMessages = (filteredComments || []).filter(c => c.imageUrl && !c.deleted);
                       if (imageMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                           <FaImage className="text-5xl mb-3 opacity-40" />
@@ -14966,7 +15232,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                     {/* Videos Tab */}
                     {mediaModalTab === 'videos' && (() => {
-                      const videoMessages = (comments || []).filter(c => c.videoUrl && !c.deleted);
+                      const videoMessages = (filteredComments || []).filter(c => c.videoUrl && !c.deleted);
                       if (videoMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                           <FaVideo className="text-5xl mb-3 opacity-40" />
@@ -14996,7 +15262,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                     {/* Audio Tab */}
                     {mediaModalTab === 'audio' && (() => {
-                      const audioMessages = (comments || []).filter(c => c.audioUrl && !c.deleted);
+                      const audioMessages = (filteredComments || []).filter(c => c.audioUrl && !c.deleted);
                       if (audioMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                           <FaVolumeUp className="text-5xl mb-3 opacity-40" />
@@ -15046,7 +15312,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
                     {/* Docs Tab */}
                     {mediaModalTab === 'docs' && (() => {
-                      const docMessages = (comments || []).filter(c => c.documentUrl && !c.deleted);
+                      const docMessages = (filteredComments || []).filter(c => c.documentUrl && !c.deleted);
                       if (docMessages.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                           <FaFileAlt className="text-5xl mb-3 opacity-40" />
@@ -15118,7 +15384,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                     {/* Links Tab */}
                     {mediaModalTab === 'links' && (() => {
                       const urlRegex = /(https?:\/\/[^\s]+)/gi;
-                      const linkMessages = (comments || []).filter(c => {
+                      const linkMessages = (filteredComments || []).filter(c => {
                         if (c.deleted) return false;
                         if (c.imageUrl || c.videoUrl || c.audioUrl || c.documentUrl) return false;
                         return c.message && urlRegex.test(c.message);
