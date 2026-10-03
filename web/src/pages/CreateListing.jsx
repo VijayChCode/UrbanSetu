@@ -94,6 +94,7 @@ export default function CreateListing() {
   const [uploadingVirtualTour, setUploadingVirtualTour] = useState({}); // Uplodaing state for 360
   const [videoErrors, setVideoErrors] = useState({});
   const [uploadingVideos, setUploadingVideos] = useState({});
+  const [videoUploadProgress, setVideoUploadProgress] = useState({});
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const location = useLocation();
@@ -389,7 +390,10 @@ export default function CreateListing() {
     setVideoErrors(prev => ({ ...prev, [index]: '' }));
     try {
       // Direct browser-to-Cloudinary upload — video never touches the backend
-      const data = await uploadVideoDirectToCloudinary(file);
+      setVideoUploadProgress(prev => ({ ...prev, [index]: 0 }));
+      const data = await uploadVideoDirectToCloudinary(file, {
+        onProgress: (percent) => setVideoUploadProgress(prev => ({ ...prev, [index]: percent }))
+      });
       const newVideoUrls = [...formData.videoUrls];
       newVideoUrls[index] = data.videoUrl;
       setFormData(prev => ({ ...prev, videoUrls: newVideoUrls }));
@@ -403,6 +407,7 @@ export default function CreateListing() {
       setVideoErrors(prev => ({ ...prev, [index]: 'Upload failed. Please try again.' }));
     } finally {
       setUploadingVideos(prev => ({ ...prev, [index]: false }));
+      setVideoUploadProgress(prev => { const n = { ...prev }; delete n[index]; return n; });
     }
   };
 
@@ -1451,9 +1456,19 @@ export default function CreateListing() {
                     <p className="text-red-500 text-sm">{videoErrors[index]}</p>
                   )}
                   {uploadingVideos[index] && (
-                    <div className="flex items-center gap-2 text-blue-500 text-sm">
-                      <UrbanSetuSpinner size="sm" />
-                      <span>Uploading video...</span>
+                    <div className="mt-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${videoUploadProgress[index] || 0}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 min-w-[3rem] text-right">
+                          {videoUploadProgress[index] || 0}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Uploading video directly to cloud...</p>
                     </div>
                   )}
                   {url && (
