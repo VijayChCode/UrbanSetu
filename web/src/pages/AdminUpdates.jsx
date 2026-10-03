@@ -57,6 +57,7 @@ export default function AdminUpdates() {
     const [uploadingImages, setUploadingImages] = useState({});
     const [videoErrors, setVideoErrors] = useState({});
     const [uploadingVideos, setUploadingVideos] = useState({});
+    const [videoUploadProgress, setVideoUploadProgress] = useState({});
 
     const validateImageUrl = (url) => {
         if (!url) return true;
@@ -227,7 +228,10 @@ export default function AdminUpdates() {
             let url;
             if (type === 'video') {
                 // Direct browser-to-Cloudinary upload — video never touches the backend
-                const data = await uploadVideoDirectToCloudinary(file);
+                setVideoUploadProgress(prev => ({ ...prev, [index]: 0 }));
+                const data = await uploadVideoDirectToCloudinary(file, {
+                    onProgress: (percent) => setVideoUploadProgress(prev => ({ ...prev, [index]: percent }))
+                });
                 url = data.videoUrl;
             } else {
                 const uploadFormData = new FormData();
@@ -272,7 +276,10 @@ export default function AdminUpdates() {
             toast.error('Error uploading file');
         } finally {
             if (type === 'image') setUploadingImages(prev => ({ ...prev, [index]: false }));
-            else setUploadingVideos(prev => ({ ...prev, [index]: false }));
+            else {
+                setUploadingVideos(prev => ({ ...prev, [index]: false }));
+                setVideoUploadProgress(prev => { const n = { ...prev }; delete n[index]; return n; });
+            }
         }
     };
 
@@ -753,6 +760,22 @@ export default function AdminUpdates() {
                                                     </button>
                                                 </div>
                                                 {videoErrors[index] && <p className="text-red-500 text-xs">{videoErrors[index]}</p>}
+                                                {uploadingVideos[index] && (
+                                                    <div className="mt-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-300 ease-out"
+                                                                    style={{ width: `${videoUploadProgress[index] || 0}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 min-w-[2.5rem] text-right">
+                                                                {videoUploadProgress[index] || 0}%
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Uploading to cloud...</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                         <button
