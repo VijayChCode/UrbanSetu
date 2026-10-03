@@ -73,6 +73,7 @@ const uploadAudioMemory = multer({
 
 /**
  * Upload a buffer to Cloudinary using a pool account, with retry on failure.
+ * Uses upload_stream() to avoid base64 encoding the entire file in memory.
  * 
  * @param {Buffer} buffer - The file buffer
  * @param {Object} options - Cloudinary upload options (folder, resource_type, etc.)
@@ -92,12 +93,20 @@ async function uploadToCloudinaryPool(buffer, options, fileSize = 0, maxRetries 
     const { instance, account } = pool;
 
     try {
-      const dataUri = `data:${options.mimetype || 'application/octet-stream'};base64,${buffer.toString('base64')}`;
-
       const uploadOptions = { ...options };
       delete uploadOptions.mimetype; // Not a Cloudinary option
 
-      const result = await instance.uploader.upload(dataUri, uploadOptions);
+      // Use upload_stream to avoid base64 encoding the entire file in memory.
+      // This reduces RAM usage from ~3x file size (buffer + base64 + dataURI)
+      // to ~1x file size (just the buffer), critical for large video uploads
+      // on Render's 512MB free tier.
+      const result = await new Promise((resolve, reject) => {
+        const stream = instance.uploader.upload_stream(uploadOptions, (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        });
+        stream.end(buffer);
+      });
 
       // Record successful upload
       await recordUpload(account.accountIndex, fileSize);
