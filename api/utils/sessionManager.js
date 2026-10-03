@@ -371,7 +371,7 @@ export const createEnhancedSession = async (userId, req) => {
             timestamp: Date.now()
         },
         process.env.JWT_TOKEN,
-        { expiresIn: '7d' }
+        { expiresIn: '90d' }
     );
 
     const ip = req.ip || req.connection.remoteAddress;
@@ -387,7 +387,7 @@ export const createEnhancedSession = async (userId, req) => {
         location,
         userAgent,
         createdAt: Date.now(),
-        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+        expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000, // 90 days
         lastActivity: Date.now(),
         isActive: true
     };
@@ -404,7 +404,7 @@ export const createEnhancedSession = async (userId, req) => {
                 location,
                 loginTime: new Date(),
                 lastActive: new Date(),
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Strictly 7 days from login
+                expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days from login, extended on every refresh
             }
         },
         $set: {

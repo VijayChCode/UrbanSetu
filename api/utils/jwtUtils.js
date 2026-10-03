@@ -3,10 +3,10 @@ import jwt from 'jsonwebtoken';
 // JWT configuration
 const JWT_SECRET = process.env.JWT_TOKEN;
 const ACCESS_TOKEN_EXPIRY = process.env.JWT_ACCESS_EXPIRE || '1d'; // Default 1 day instead of 15m for better socket stability
-const REFRESH_TOKEN_EXPIRY = process.env.JWT_EXPIRE || '7d'; // Default 7 days
+const REFRESH_TOKEN_EXPIRY = process.env.JWT_REFRESH_EXPIRE || '90d'; // Default 90 days — long-lived credential for silent renewal
 
 export const ACCESS_TOKEN_MAX_AGE = 24 * 60 * 60 * 1000; // 1 day in ms
-export const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+export const REFRESH_TOKEN_MAX_AGE = 90 * 24 * 60 * 60 * 1000; // 90 days in ms — matches refresh token JWT expiry
 
 // Generate access token (short-lived)
 export const generateAccessToken = (payload) => {

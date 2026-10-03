@@ -161,6 +161,10 @@ export const authenticatedFetch = async (url, options = {}) => {
             const data = await refreshRes.json();
             if (data.token) {
               localStorage.setItem('accessToken', data.token);
+              // Save rotated refresh token so the old one doesn't get reused
+              if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
+              }
               // Retry original request with new token
               const newOptions = {
                 ...authenticatedOptions,

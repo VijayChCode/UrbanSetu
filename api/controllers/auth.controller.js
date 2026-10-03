@@ -1123,11 +1123,11 @@ export const verifyAuth = async (req, res, next) => {
                     return res.status(200).json({ authenticated: false, message: "Session revoked" });
                 }
 
-                // Check absolute session expiry (7 days policy)
+                // Check absolute session expiry (90 days policy)
                 if (session.expiresAt && new Date() > new Date(session.expiresAt)) {
                     // Remove session from DB
                     await User.findByIdAndUpdate(user._id, { $pull: { activeSessions: { sessionId: session.sessionId } } });
-                    return res.status(200).json({ authenticated: false, message: "Session expired (7-day limit reached)" });
+                    return res.status(200).json({ authenticated: false, message: "Session expired. Please sign in again." });
                 }
 
                 // Generate new token pair with SAME sessionId to keep it bound to the same device
@@ -1138,6 +1138,12 @@ export const verifyAuth = async (req, res, next) => {
 
                 // Set new cookies
                 setSecureCookies(res, newAccessToken, newRefreshToken);
+
+                // Sliding window: extend session expiry by 90 days on every successful refresh
+                User.findOneAndUpdate(
+                    { _id: user._id, 'activeSessions.sessionId': refreshDecoded.sessionId },
+                    { $set: { 'activeSessions.$.expiresAt': new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), 'activeSessions.$.lastActive': new Date() } }
+                ).catch(err => console.error('Session renewal error:', err));
 
                 // Return sanitized user data (strip sensitive fields)
                 return res.status(200).json(sanitizeUserForVerify(user));
@@ -2056,11 +2062,11 @@ export const RefreshToken = async (req, res, next) => {
             return next(errorHandler(401, "Session revoked"));
         }
 
-        // Check absolute session expiry (7 days policy)
+        // Check absolute session expiry (90 days policy)
         if (session.expiresAt && new Date() > new Date(session.expiresAt)) {
             // Remove session from DB
             await User.findByIdAndUpdate(user._id, { $pull: { activeSessions: { sessionId: session.sessionId } } });
-            return next(errorHandler(401, "Session expired (7-day limit reached). Please sign in again."));
+            return next(errorHandler(401, "Session expired. Please sign in again."));
         }
 
         // Rotate token pair (optional but recommended for security)
@@ -2070,6 +2076,12 @@ export const RefreshToken = async (req, res, next) => {
         });
 
         setSecureCookies(res, newAccessToken, newRefreshToken);
+
+        // Sliding window: extend session expiry by 90 days on every successful refresh
+        User.findOneAndUpdate(
+            { _id: user._id, 'activeSessions.sessionId': decoded.sessionId },
+            { $set: { 'activeSessions.$.expiresAt': new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), 'activeSessions.$.lastActive': new Date() } }
+        ).catch(err => console.error('Session renewal error:', err));
 
         res.status(200).json({
             token: newAccessToken,
