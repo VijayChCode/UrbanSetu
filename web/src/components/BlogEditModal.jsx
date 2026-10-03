@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import ImagePreview from './ImagePreview';
 import VideoPreview from './VideoPreview';
 import MarkdownEditor from './MarkdownEditor';
-import { authenticatedFetch } from '../utils/auth';
+import { authenticatedFetch, uploadVideoDirectToCloudinary } from '../utils/csrf';
 import UrbanSetuSpinner from './UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://urbansetu-pvt4.onrender.com';
@@ -35,6 +35,7 @@ const BlogEditModal = ({
   const [uploading, setUploading] = useState(false); // Global uploading state for thumbnail
   const [uploadingMedia, setUploadingMedia] = useState({}); // Per-index uploading state
   const [mediaErrors, setMediaErrors] = useState({});
+  const [videoUploadProgress, setVideoUploadProgress] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
   const [previewVideo, setPreviewVideo] = useState(null);
   const isGuide = formData.type === 'guide';
@@ -145,17 +146,25 @@ const BlogEditModal = ({
     });
 
     try {
-      const bodyFormData = new FormData();
-      bodyFormData.append(type === 'image' ? 'image' : 'video', file);
-
-      const response = await authenticatedFetch(`${API_BASE_URL}/api/upload/${type}`, {
-        method: 'POST',
-        body: bodyFormData
-      });
-
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      const url = type === 'image' ? data.imageUrl : data.videoUrl;
+      let url;
+      if (type === 'video') {
+        // Direct browser-to-Cloudinary upload — video never touches the backend
+        setVideoUploadProgress(prev => ({ ...prev, [key]: 0 }));
+        const data = await uploadVideoDirectToCloudinary(file, {
+          onProgress: (percent) => setVideoUploadProgress(prev => ({ ...prev, [key]: percent }))
+        });
+        url = data.videoUrl;
+      } else {
+        const bodyFormData = new FormData();
+        bodyFormData.append('image', file);
+        const response = await authenticatedFetch(`${API_BASE_URL}/api/upload/image`, {
+          method: 'POST',
+          body: bodyFormData
+        });
+        if (!response.ok) throw new Error('Upload failed');
+        const data = await response.json();
+        url = data.imageUrl;
+      }
 
       if (type === 'image') {
         const newUrls = [...(formData.imageUrls || [])];
@@ -171,6 +180,9 @@ const BlogEditModal = ({
       setMediaErrors(prev => ({ ...prev, [key]: 'Upload failed. Try again.' }));
     } finally {
       setUploadingMedia(prev => ({ ...prev, [key]: false }));
+      if (type === 'video') {
+        setVideoUploadProgress(prev => { const n = { ...prev }; delete n[key]; return n; });
+      }
     }
   };
 
@@ -511,6 +523,22 @@ const BlogEditModal = ({
                         </div>
                         {mediaErrors[`vid-${index}`] && (
                           <p className="text-red-500 text-xs font-bold ml-1">{mediaErrors[`vid-${index}`]}</p>
+                        )}
+                        {uploadingMedia[`vid-${index}`] && (
+                          <div className="mt-1 ml-1">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-300 ease-out"
+                                  style={{ width: `${videoUploadProgress[`vid-${index}`] || 0}%` }}
+                                />
+                              </div>
+                              <span className="text-sm font-semibold text-purple-600 dark:text-purple-400 min-w-[3rem] text-right">
+                                {videoUploadProgress[`vid-${index}`] || 0}%
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Uploading video to cloud...</p>
+                          </div>
                         )}
                       </div>
                     ))}
