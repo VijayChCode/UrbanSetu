@@ -337,3 +337,97 @@ export const uploadWithProgress = (url, formData, { signal, onProgress } = {}) =
     }
   });
 };
+
+/**
+ * Upload a video directly from the browser to Cloudinary, bypassing the backend.
+ * The backend only provides a lightweight signature — the actual file never touches Render.
+ * This eliminates RAM/timeout issues on Render's free tier for large videos.
+ *
+ * @param {File} file - The video file to upload
+ * @param {Object} options - { signal, onProgress }
+ * @returns {Promise<{ videoUrl: string, publicId: string }>}
+ */
+export const uploadVideoDirectToCloudinary = async (file, { signal, onProgress } = {}) => {
+  // Step 1: Get signed upload params from our backend (lightweight, no file data)
+  const authToken = localStorage.getItem('accessToken');
+  const sessionId = localStorage.getItem('sessionId');
+  const sigRes = await fetch(`${API_BASE_URL}/api/upload/video-signature`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+      ...(sessionId ? { 'X-Session-Id': sessionId } : {}),
+    },
+    credentials: 'include',
+  });
+
+  if (!sigRes.ok) {
+    throw new Error('Failed to get upload signature');
+  }
+
+  const { signature, timestamp, folder, cloudName, apiKey, accountIndex } = await sigRes.json();
+
+  // Step 2: Upload directly to Cloudinary (browser → Cloudinary, no backend involved)
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    if (signal) {
+      if (signal.aborted) {
+        const err = new Error('Upload aborted');
+        err.name = 'AbortError';
+        return reject(err);
+      }
+      const onAbort = () => xhr.abort();
+      signal.addEventListener('abort', onAbort, { once: true });
+      xhr.addEventListener('loadend', () => signal.removeEventListener('abort', onAbort), { once: true });
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Record the upload in our pool tracking (fire-and-forget)
+          fetch(`${API_BASE_URL}/api/upload/video-confirm`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+            },
+            credentials: 'include',
+            body: JSON.stringify({ accountIndex, fileSize: file.size }),
+          }).catch(() => {});
+
+          resolve({ videoUrl: data.secure_url, publicId: data.public_id });
+        } else {
+          reject(new Error(data.error?.message || `Cloudinary upload failed (${xhr.status})`));
+        }
+      } catch (e) {
+        reject(new Error('Failed to parse Cloudinary response'));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Upload network error'));
+    xhr.onabort = () => {
+      const err = new Error('Upload aborted');
+      err.name = 'AbortError';
+      reject(err);
+    };
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('api_key', apiKey);
+    form.append('timestamp', timestamp);
+    form.append('signature', signature);
+    form.append('folder', folder);
+    form.append('resource_type', 'video');
+
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`);
+    xhr.send(form);
+  });
+};

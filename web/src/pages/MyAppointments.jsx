@@ -12,7 +12,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { socket } from "../utils/socket";
 import { exportEnhancedChatToPDF } from '../utils/pdfExport';
 import ExportChatModal from '../components/ExportChatModal';
-import { authenticatedFetch, uploadWithProgress } from '../utils/csrf';
+import { authenticatedFetch, uploadWithProgress, uploadVideoDirectToCloudinary } from '../utils/csrf';
 import PaymentModal from '../components/PaymentModal';
 import { useCallContext } from '../contexts/CallContext';
 import CallHistoryModal from '../components/CallHistoryModal';
@@ -4343,9 +4343,8 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     try {
       setUploadingFile(true);
       setUploadProgress(0);
-      const form = new FormData();
-      form.append('video', selectedVideo);
-      const data = await uploadWithProgress(`${API_BASE_URL}/api/upload/video`, form, {
+      // Direct browser-to-Cloudinary upload — video never touches the backend
+      const data = await uploadVideoDirectToCloudinary(selectedVideo, {
         signal: controller.signal,
         onProgress: (percent) => setUploadProgress(percent)
       });

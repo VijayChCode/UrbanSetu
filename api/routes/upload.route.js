@@ -413,4 +413,51 @@ router.use((error, req, res, next) => {
   next();
 });
 
+// ─── Generate signed params for direct browser-to-Cloudinary video upload ────
+// The video file never touches this server — it goes directly from the browser
+// to Cloudinary. This endpoint only returns the signature + account info.
+router.post('/video-signature', verifyToken, async (req, res) => {
+  try {
+    const pool = await getCloudinaryInstance();
+    if (!pool) {
+      return res.status(500).json({ message: 'No Cloudinary accounts available' });
+    }
+
+    const { account } = pool;
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = 'urbansetu-chat/videos';
+
+    // Generate signature for Cloudinary signed upload
+    const signature = cloudinary.v2.utils.api_sign_request(
+      { timestamp, folder },
+      account.apiSecret
+    );
+
+    res.status(200).json({
+      signature,
+      timestamp,
+      folder,
+      cloudName: account.cloudName,
+      apiKey: account.apiKey,
+      accountIndex: account.accountIndex,
+    });
+  } catch (error) {
+    console.error('Signature generation error:', error);
+    res.status(500).json({ message: 'Error generating upload signature', error: error.message });
+  }
+});
+
+// ─── Record a successful direct upload (called by frontend after Cloudinary upload) ─
+router.post('/video-confirm', verifyToken, async (req, res) => {
+  try {
+    const { accountIndex, fileSize } = req.body;
+    if (accountIndex !== undefined) {
+      await recordUpload(accountIndex, fileSize || 0);
+    }
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error recording upload', error: error.message });
+  }
+});
+
 export default router;
