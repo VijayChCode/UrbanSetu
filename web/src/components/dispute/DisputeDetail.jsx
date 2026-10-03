@@ -10,6 +10,7 @@ import UserAvatar from '../UserAvatar';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import { authenticatedFetch } from '../../utils/auth';
+import { uploadVideoDirectToCloudinary } from '../../utils/csrf';
 
 export default function DisputeDetail({
   dispute,
@@ -199,14 +200,17 @@ export default function DisputeDetail({
     setUploading(prev => ({ ...prev, [type]: true }));
     try {
       const uploadPromises = files.map(async (file) => {
+        if (type === 'video') {
+          // Direct browser-to-Cloudinary upload — video never touches the backend
+          const directData = await uploadVideoDirectToCloudinary(file);
+          return { type, url: directData.videoUrl };
+        }
+
         const formData = new FormData();
         let endpoint = '/api/upload/image';
 
         if (type === 'image') {
           formData.append('image', file);
-        } else if (type === 'video') {
-          formData.append('video', file);
-          endpoint = '/api/upload/video';
         } else {
           formData.append('document', file);
           endpoint = '/api/upload/document';
@@ -222,7 +226,7 @@ export default function DisputeDetail({
         const data = await res.json();
         return {
           type,
-          url: data.imageUrl || data.videoUrl || data.documentUrl || data.url
+          url: data.imageUrl || data.documentUrl || data.url
         };
       });
 

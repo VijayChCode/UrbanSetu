@@ -8,6 +8,7 @@ import { FaCompass, FaPlay, FaBrain, FaExclamationTriangle, FaCheckCircle, FaLig
 import VideoPreview from '../components/VideoPreview';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { authenticatedFetch } from '../utils/auth';
+import { uploadVideoDirectToCloudinary } from '../utils/csrf';
 import { useImageAuditor } from '../hooks/useImageAuditor';
 import ImagePreview from '../components/ImagePreview';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -573,25 +574,16 @@ export default function EditListing() {
     setUploadingVideos(prev => ({ ...prev, [index]: true }));
     setVideoErrors(prev => ({ ...prev, [index]: '' }));
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('video', file);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/video`, {
-        method: 'POST',
-        body: uploadFormData,
+      // Direct browser-to-Cloudinary upload — video never touches the backend
+      const data = await uploadVideoDirectToCloudinary(file);
+      const newVideoUrls = [...formData.videoUrls];
+      newVideoUrls[index] = data.videoUrl;
+      setFormData(prev => ({ ...prev, videoUrls: newVideoUrls }));
+      setVideoErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[index];
+        return newErrors;
       });
-      const data = await res.json();
-      if (res.ok) {
-        const newVideoUrls = [...formData.videoUrls];
-        newVideoUrls[index] = data.videoUrl;
-        setFormData(prev => ({ ...prev, videoUrls: newVideoUrls }));
-        setVideoErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[index];
-          return newErrors;
-        });
-      } else {
-        setVideoErrors(prev => ({ ...prev, [index]: data.message || 'Upload failed' }));
-      }
     } catch (error) {
       console.error('Video upload error:', error);
       setVideoErrors(prev => ({ ...prev, [index]: 'Upload failed. Please try again.' }));

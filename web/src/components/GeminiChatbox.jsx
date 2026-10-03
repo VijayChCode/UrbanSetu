@@ -8,6 +8,7 @@ import VideoPreview from './VideoPreview';
 import ImagePreview from './ImagePreview';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from "../utils/auth";
+import { uploadVideoDirectToCloudinary } from "../utils/csrf";
 import { API_BASE_URL } from '../config/api';
 // import { FormattedTextWithLinks } from '../utils/linkFormatter.jsx';
 import ListingItem from './ListingItem';
@@ -7488,31 +7489,37 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 }
 
                 try {
-                    let uploadEndpoint = '';
-                    let formData = new FormData();
-                    if (fileType === 'image') {
-                        uploadEndpoint = '/api/upload/image';
-                        formData.append('image', file);
-                    } else if (fileType === 'audio') {
-                        uploadEndpoint = '/api/upload/audio';
-                        formData.append('audio', file);
-                    } else if (fileType === 'video') {
-                        uploadEndpoint = '/api/upload/video';
-                        formData.append('video', file);
+                    let uploadData;
+                    let fileUrl;
+
+                    if (fileType === 'video') {
+                        // Direct browser-to-Cloudinary upload — video never touches the backend
+                        const directData = await uploadVideoDirectToCloudinary(file, { signal: controller.signal });
+                        fileUrl = directData.videoUrl;
                     } else {
-                        uploadEndpoint = '/api/upload/document';
-                        formData.append('document', file);
+                        let uploadEndpoint = '';
+                        let formData = new FormData();
+                        if (fileType === 'image') {
+                            uploadEndpoint = '/api/upload/image';
+                            formData.append('image', file);
+                        } else if (fileType === 'audio') {
+                            uploadEndpoint = '/api/upload/audio';
+                            formData.append('audio', file);
+                        } else {
+                            uploadEndpoint = '/api/upload/document';
+                            formData.append('document', file);
+                        }
+
+                        const response = await authenticatedFetch(`${API_BASE_URL}${uploadEndpoint}`, {
+                            method: 'POST',
+                            body: formData,
+                            signal: controller.signal
+                        });
+
+                        if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+                        uploadData = await response.json();
+                        fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
                     }
-
-                    const response = await authenticatedFetch(`${API_BASE_URL}${uploadEndpoint}`, {
-                        method: 'POST',
-                        body: formData,
-                        signal: controller.signal
-                    });
-
-                    if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
-                    const uploadData = await response.json();
-                    const fileUrl = uploadData.imageUrl || uploadData.audioUrl || uploadData.videoUrl || uploadData.documentUrl;
 
                     // Update pending file with the real URL
                     setPendingImages(prev => prev.map(img =>

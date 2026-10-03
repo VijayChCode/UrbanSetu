@@ -3,6 +3,7 @@ import { FaUpload, FaTrash, FaImage, FaVideo, FaExpand, FaPlay } from 'react-ico
 import UrbanSetuSpinner from '../UrbanSetuSpinner';
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../../utils/auth';
+import { uploadVideoDirectToCloudinary } from '../../utils/csrf';
 import ImagePreview from '../ImagePreview';
 import VideoPreview from '../VideoPreview';
 
@@ -104,19 +105,10 @@ export default function ConditionImageUpload({
 
     setUploadingVideo(true);
     try {
-      const formData = new FormData();
-      formData.append('video', file);
-
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/video`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) throw new Error('Upload failed');
-
-      const data = await res.json();
+      // Direct browser-to-Cloudinary upload — video never touches the backend
+      const result = await uploadVideoDirectToCloudinary(file);
       const newVideo = {
-        url: data.videoUrl,
+        url: result.videoUrl,
         room: 'living_room',
         description: '',
         uploadedAt: new Date(),

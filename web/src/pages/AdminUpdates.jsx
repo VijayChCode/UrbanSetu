@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ImagePreview from "../components/ImagePreview";
 import VideoPreview from "../components/VideoPreview";
 import { authenticatedFetch } from '../utils/auth';
+import { uploadVideoDirectToCloudinary } from '../utils/csrf';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -223,43 +224,46 @@ export default function AdminUpdates() {
         }
 
         try {
-            const uploadFormData = new FormData();
-            uploadFormData.append(type === 'image' ? 'image' : 'video', file);
-            const endpoint = type === 'image' ? '/api/upload/image' : '/api/upload/video';
-
-            const res = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, {
-                method: 'POST',
-                body: uploadFormData,
-            });
-
-            const data = await res.json();
-
-            if (data.success || res.ok) {
-                const url = type === 'image' ? (data.imageUrl || data.url) : (data.videoUrl || data.url);
-                if (url) {
-                    if (type === 'image') {
-                        const newImageUrls = [...formData.imageUrls];
-                        newImageUrls[index] = url;
-                        setFormData(prev => ({ ...prev, imageUrls: newImageUrls }));
-                        setImageErrors(prev => {
-                            const newErrors = { ...prev };
-                            delete newErrors[index];
-                            return newErrors;
-                        });
-                    } else {
-                        const newVideoUrls = [...formData.videoUrls];
-                        newVideoUrls[index] = url;
-                        setFormData(prev => ({ ...prev, videoUrls: newVideoUrls }));
-                        setVideoErrors(prev => {
-                            const newErrors = { ...prev };
-                            delete newErrors[index];
-                            return newErrors;
-                        });
-                    }
-                    toast.success(`${type === 'image' ? 'Image' : 'Video'} uploaded successfully`);
-                }
+            let url;
+            if (type === 'video') {
+                // Direct browser-to-Cloudinary upload — video never touches the backend
+                const data = await uploadVideoDirectToCloudinary(file);
+                url = data.videoUrl;
             } else {
-                toast.error(data.message || 'Upload failed');
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', file);
+                const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/image`, {
+                    method: 'POST',
+                    body: uploadFormData,
+                });
+                const data = await res.json();
+                if (!data.success && !res.ok) throw new Error(data.message || 'Upload failed');
+                url = data.imageUrl || data.url;
+            }
+
+            if (url) {
+                if (type === 'image') {
+                    const newImageUrls = [...formData.imageUrls];
+                    newImageUrls[index] = url;
+                    setFormData(prev => ({ ...prev, imageUrls: newImageUrls }));
+                    setImageErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors[index];
+                        return newErrors;
+                    });
+                } else {
+                    const newVideoUrls = [...formData.videoUrls];
+                    newVideoUrls[index] = url;
+                    setFormData(prev => ({ ...prev, videoUrls: newVideoUrls }));
+                    setVideoErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors[index];
+                        return newErrors;
+                    });
+                }
+                toast.success(`${type === 'image' ? 'Image' : 'Video'} uploaded successfully`);
+            } else {
+                toast.error('Upload failed');
                 if (type === 'image') setImageErrors(prev => ({ ...prev, [index]: 'Upload failed' }));
                 else setVideoErrors(prev => ({ ...prev, [index]: 'Upload failed' }));
             }

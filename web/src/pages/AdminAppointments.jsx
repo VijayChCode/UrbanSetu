@@ -25,6 +25,7 @@ import ExportChatModal from '../components/ExportChatModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import CallHistoryModal from '../components/CallHistoryModal';
 import { authenticatedFetch } from '../utils/csrf';
+import { uploadVideoDirectToCloudinary } from '../utils/csrf';
 import ChatSettingsModal from '../components/ChatSettingsModal';
 import { useChatSettings } from '../hooks/useChatSettings';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -5437,18 +5438,10 @@ function AdminAppointmentRow({
     currentUploadControllerRef.current = controller;
     try {
       setUploadingFile(true);
-      const form = new FormData();
-      form.append('video', selectedVideo);
-      const res = await authenticatedFetch(`${API_BASE_URL}/api/upload/video`, {
-        method: 'POST',
-        body: form,
+      // Direct browser-to-Cloudinary upload — video never touches the backend
+      const data = await uploadVideoDirectToCloudinary(selectedVideo, {
         signal: controller.signal
       });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw { response: { status: res.status, data: errorData } };
-      }
-      const data = await res.json();
       await sendVideoMessage(data.videoUrl, selectedVideo.name, videoCaption);
       setSelectedVideo(null);
       setShowVideoPreviewModal(false);
