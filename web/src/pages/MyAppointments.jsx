@@ -121,6 +121,10 @@ export default function MyAppointments() {
   const [archivedAppointments, setArchivedAppointments] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
+
+  // Caches to prevent re-fetching payment/chat-lock status on pagination/tab switch
+  const paymentStatusCacheRef = useRef(new Map());
+  const chatLockCacheRef = useRef(new Map());
   const [swipedMsgId, setSwipedMsgId] = useState(null);
 
   // Archive modal states
@@ -1912,6 +1916,8 @@ export default function MyAppointments() {
                       handleCallViaLinkClick={handleCallViaLinkClick}
                       generatingLinkType={generatingLinkType}
                       handleOpenLinkDetailsFromChat={handleOpenLinkDetailsFromChat}
+                      paymentStatusCache={paymentStatusCacheRef.current}
+                      chatLockCache={chatLockCacheRef.current}
                     />
                   ))}
                 </tbody>
@@ -2006,6 +2012,8 @@ export default function MyAppointments() {
                       handleCallViaLinkClick={handleCallViaLinkClick}
                       generatingLinkType={generatingLinkType}
                       handleOpenLinkDetailsFromChat={handleOpenLinkDetailsFromChat}
+                      paymentStatusCache={paymentStatusCacheRef.current}
+                      chatLockCache={chatLockCacheRef.current}
                     />
                   ))}
                 </tbody>
@@ -2817,7 +2825,7 @@ function getDateLabel(date) {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId, isDarkMode, handleCallViaLinkClick, generatingLinkType, handleOpenLinkDetailsFromChat }) {
+function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid, handleSaleComplete, handleDispute, handleAdminDelete, actionLoading, onShowOtherParty, onOpenReinitiate, handleArchiveAppointment, handleUnarchiveAppointment, isArchived, onCancelRefresh, copyMessageToClipboard, activeChatAppointmentId, shouldOpenChatFromNotification, onChatOpened, onExportChat, preferUnreadForAppointmentId, onConsumePreferUnread, onInitiateCall, onInitiateCallViaLink, callState, incomingCall, activeCall, localVideoRef, remoteVideoRef, isCallMuted, isVideoEnabled, callDuration, onAcceptCall, onRejectCall, onEndCall, onToggleCallMute, onToggleVideo, getOtherPartyName, setShowCallHistoryModal, setCallHistoryAppointmentId, isDarkMode, handleCallViaLinkClick, generatingLinkType, handleOpenLinkDetailsFromChat, paymentStatusCache, chatLockCache }) {
   // Camera modal state - moved to main MyAppointments component
   const navigate = useNavigate();
   const params = useParams();
@@ -5127,8 +5135,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
     }
   };
 
-  // Fetch chat lock status when component mounts
+  // Fetch chat lock status when component mounts (uses cache to avoid skeleton on pagination/tab switch)
   useEffect(() => {
+    // Check parent cache first to avoid re-fetching on pagination/tab switch
+    const cached = chatLockCache?.get(appt._id);
+    if (cached) {
+      setChatLocked(cached.chatLocked);
+      setChatAccessGranted(cached.accessGranted);
+      setChatLockStatusLoading(false);
+      // Sync appt prop reference
+      const isBuyerCached = appt.buyerId?._id === currentUser._id || appt.buyerId === currentUser._id;
+      if (isBuyerCached) {
+        appt.buyerChatLocked = cached.chatLocked;
+        appt.buyerChatAccessGranted = cached.accessGranted;
+      } else {
+        appt.sellerChatLocked = cached.chatLocked;
+        appt.sellerChatAccessGranted = cached.accessGranted;
+      }
+      return;
+    }
+
     const fetchChatLockStatus = async () => {
       setChatLockStatusLoading(true);
       try {
@@ -5157,6 +5183,13 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
     fetchChatLockStatus();
   }, [appt._id]);
+
+  // Keep chat lock cache in sync with current state
+  useEffect(() => {
+    if (chatLockCache && !chatLockStatusLoading) {
+      chatLockCache.set(appt._id, { chatLocked, accessGranted: chatAccessGranted });
+    }
+  }, [chatLocked, chatAccessGranted, chatLockStatusLoading]);
 
   // Initialize starred messages when comments are loaded
   useEffect(() => {
@@ -8248,7 +8281,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           </span>
         </td>
         <td className="border p-2 text-center dark:border-gray-700">
-          <PaymentStatusCell appointment={appt} isBuyer={isBuyer} />
+          <PaymentStatusCell appointment={appt} isBuyer={isBuyer} paymentStatusCache={paymentStatusCache} />
         </td>
         <td className="border p-2 text-center dark:border-gray-700">
           <div className="flex flex-col gap-2 items-center justify-center">
@@ -15746,9 +15779,10 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 }
 
 // Payment Status Cell Component
-function PaymentStatusCell({ appointment, isBuyer }) {
-  const [paymentStatus, setPaymentStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+function PaymentStatusCell({ appointment, isBuyer, paymentStatusCache }) {
+  const cachedPayment = paymentStatusCache?.get(appointment._id);
+  const [paymentStatus, setPaymentStatus] = useState(cachedPayment?.paymentStatus || null);
+  const [loading, setLoading] = useState(!cachedPayment);
   const [paying, setPaying] = useState(false); // Track if Pay Now button is loading
   const [showPayModal, setShowPayModal] = useState(false);
   const [showRefundRequestModal, setShowRefundRequestModal] = useState(false);
@@ -15767,6 +15801,13 @@ function PaymentStatusCell({ appointment, isBuyer }) {
   const [submittingAppeal, setSubmittingAppeal] = useState(false);
 
   useEffect(() => {
+    // Skip fetch if we already have cached data (pagination/tab switch)
+    if (cachedPayment) {
+      if (cachedPayment.refundRequestStatus !== undefined) {
+        setRefundRequestStatus(cachedPayment.refundRequestStatus);
+      }
+      return;
+    }
     fetchPaymentStatus();
   }, [appointment._id]); // Removed paymentConfirmed to prevent premature refetch before backend updates
 
@@ -15845,6 +15886,13 @@ function PaymentStatusCell({ appointment, isBuyer }) {
       document.body.classList.remove('modal-open');
     };
   }, [showPayModal]);
+
+  // Keep payment status cache in sync with current state
+  useEffect(() => {
+    if (paymentStatusCache && !loading) {
+      paymentStatusCache.set(appointment._id, { paymentStatus, refundRequestStatus });
+    }
+  }, [paymentStatus, refundRequestStatus, loading]);
 
   const fetchPaymentStatus = async (skipLoading = false) => {
     try {
