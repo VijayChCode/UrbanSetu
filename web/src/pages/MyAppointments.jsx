@@ -8266,13 +8266,6 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                 {/* Outdated check ONLY for unaccepted / non-active deal appointments */}
                 {!isUpcoming && appt.status !== 'accepted' && appt.status !== 'completed' && appt.saleStatus !== 'token_paid' && appt.saleStatus !== 'sold' ? (
                   <div className="flex flex-col gap-2">
-                    <button
-                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xl"
-                      onClick={handlePermanentDelete}
-                      title="Delete outdated appointment from table"
-                    >
-                      <FaTrash size={18} />
-                    </button>
                     {!isAdmin && (
                       <button
                         className="text-gray-600 hover:text-gray-800 text-xl"
@@ -8370,16 +8363,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaExclamationTriangle />
                       </button>
                     )}
-                    {/* Seller red delete after cancellation, rejection, admin deletion, or deletedByAdmin */}
-                    {isSeller && (appt.status === 'cancelledBySeller' || appt.status === 'cancelledByBuyer' || appt.status === 'cancelledByAdmin' || appt.status === 'rejected' || appt.status === 'deletedByAdmin') && (
-                      <button
-                        className="text-red-500 hover:text-red-700 text-xl"
-                        onClick={handlePermanentDelete}
-                        title="Remove from table"
-                      >
-                        <FaTrash />
-                      </button>
-                    )}
+
                     {/* Buyer cancel button: allow for both pending and accepted (approved) */}
                     {isBuyer && (appt.status === "pending" || appt.status === "accepted") && (
                       <button
@@ -8390,27 +8374,9 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                         <FaBan />
                       </button>
                     )}
-                    {/* Buyer red delete after cancellation, seller cancellation, admin deletion, rejected, or deletedByAdmin */}
-                    {isBuyer && (appt.status === 'cancelledByBuyer' || appt.status === 'cancelledBySeller' || appt.status === 'cancelledByAdmin' || appt.status === 'deletedByAdmin' || appt.status === 'rejected') && (
-                      <button
-                        className="text-red-500 hover:text-red-700 text-xl"
-                        onClick={handlePermanentDelete}
-                        title="Remove from table"
-                      >
-                        <FaTrash />
-                      </button>
-                    )}
 
-                    {/* Delete button for outdated accepted appointments */}
-                    {!isUpcoming && (
-                      <button
-                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xl"
-                        onClick={handlePermanentDelete}
-                        title="Delete outdated appointment from table"
-                      >
-                        <FaTrash size={18} />
-                      </button>
-                    )}
+
+
                     {/* Archive button: show for non-admin users on their own appointments */}
                     {!isAdmin && (
                       <button
@@ -14354,41 +14320,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
         )
       }
 
-      {/* Permanent Delete Modal */}
-      {
-        showPermanentDeleteModal && createPortal((
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                <FaTrash className="text-red-500" />
-                Remove Appointment
-              </h3>
 
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Are you sure you want to permanently remove this appointment from your table? This action cannot be undone.
-              </p>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowPermanentDeleteModal(false)}
-                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmPermanentDelete}
-                  className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
-                >
-                  <FaTrash size={12} />
-                  Remove Permanently
-                </button>
-              </div>
-            </div>
-          </div>
-        ), document.body)
-      }
       {/* Report Message Modal */}
       {
         showReportModal && reportingMessage && createPortal((
