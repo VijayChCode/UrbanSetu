@@ -3,6 +3,18 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import { ACCESS_TOKEN_MAX_AGE } from './jwtUtils.js';
 
+// Throttle lastActive DB writes to at most once per 6 hours per session
+const lastActiveUpdateCache = new Map();
+const LAST_ACTIVE_THROTTLE = 6 * 60 * 60 * 1000; // 6 hours
+
+// Clean up the throttle cache periodically to avoid memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, ts] of lastActiveUpdateCache.entries()) {
+    if (now - ts > LAST_ACTIVE_THROTTLE) lastActiveUpdateCache.delete(key);
+  }
+}, 60 * 60 * 1000); // every hour
+
 export const verifyToken = async (req, res, next) => {
   try {
     // 1. Try Authorization header first (Prioritize header-based auth)
@@ -41,7 +53,7 @@ export const verifyToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Session invalid or revoked' });
     }
 
-    // Check absolute session expiry (7 days policy)
+    // Check absolute session expiry (90 days policy)
     if (session.expiresAt && new Date() > new Date(session.expiresAt)) {
       // Clear session from DB
       await User.findByIdAndUpdate(user._id, { $pull: { activeSessions: { sessionId: decoded.sessionId } } });
@@ -49,7 +61,7 @@ export const verifyToken = async (req, res, next) => {
       res.clearCookie('access_token', { httpOnly: true, sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production', path: '/' });
       res.clearCookie('refresh_token', { httpOnly: true, sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', secure: process.env.NODE_ENV === 'production', path: '/' });
       res.clearCookie('session_id', { httpOnly: false, sameSite: 'none', secure: true, path: '/' });
-      return res.status(401).json({ message: 'Session expired (7-day limit reached). Please sign in again.' });
+      return res.status(401).json({ message: 'Session expired. Please sign in again.' });
     }
     // SUSPENSION CHECK
     if (user.status === 'suspended') {
@@ -69,6 +81,20 @@ export const verifyToken = async (req, res, next) => {
       maxAge: ACCESS_TOKEN_MAX_AGE,
       path: '/'
     });
+
+    // Update session lastActive in DB (throttled to once per 6 hours to avoid DB spam)
+    if (decoded.sessionId) {
+      const cacheKey = `${user._id}_${decoded.sessionId}`;
+      const lastUpdate = lastActiveUpdateCache.get(cacheKey);
+      if (!lastUpdate || Date.now() - lastUpdate > LAST_ACTIVE_THROTTLE) {
+        lastActiveUpdateCache.set(cacheKey, Date.now());
+        User.findOneAndUpdate(
+          { _id: user._id, 'activeSessions.sessionId': decoded.sessionId },
+          { $set: { 'activeSessions.$.lastActive': new Date() } }
+        ).catch(() => {});
+      }
+    }
+
     req.user = user;
     next();
   } catch (error) {

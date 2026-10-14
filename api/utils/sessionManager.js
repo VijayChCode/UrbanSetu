@@ -26,7 +26,7 @@ export const createSession = (userId, req) => {
             timestamp: Date.now()
         },
         process.env.JWT_TOKEN,
-        { expiresIn: '7d' }
+        { expiresIn: '90d' }
     );
 
     const ip = req.ip || req.connection.remoteAddress;
@@ -38,7 +38,7 @@ export const createSession = (userId, req) => {
         ip,
         userAgent,
         createdAt: Date.now(),
-        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+        expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000, // 90 days
         lastActivity: Date.now(),
         isActive: true
     };
@@ -702,18 +702,18 @@ export const updateSessionActivityInDB = async (userId, sessionId) => {
     updateSessionActivity(sessionId);
 };
 
-// Automatically cleanup stale sessions for ALL users (sessions inactive for > 7 days)
+// Automatically cleanup stale sessions for ALL users (sessions inactive for > 90 days)
 export const cleanupAllStaleSessions = async () => {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     try {
-        // Find all users who have at least one session older than 7 days
+        // Find all users who have at least one session inactive for > 90 days
         const result = await User.updateMany(
-            { "activeSessions.lastActive": { $lt: sevenDaysAgo } },
+            { "activeSessions.lastActive": { $lt: ninetyDaysAgo } },
             {
                 $pull: {
                     activeSessions: {
-                        lastActive: { $lt: sevenDaysAgo }
+                        lastActive: { $lt: ninetyDaysAgo }
                     }
                 }
             }
@@ -723,7 +723,7 @@ export const cleanupAllStaleSessions = async () => {
             success: true,
             matchedCount: result.matchedCount,
             modifiedCount: result.modifiedCount,
-            threshold: sevenDaysAgo
+            threshold: ninetyDaysAgo
         };
     } catch (error) {
         console.error('Error cleaning up stale sessions:', error);
