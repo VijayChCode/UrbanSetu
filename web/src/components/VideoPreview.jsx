@@ -674,16 +674,20 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       setTimeout(() => setIsOnlineRecently(false), 4000);
 
       if (isOpen) {
+        // Clear error state so the error overlay disappears on reconnect
+        setHasError(false);
         toast.info("Connection restored. Retrying playback...");
         setRetryId(prev => prev + 1);
         setIsManualRetrying(false);
+        setIsLoading(true);
         if (videoRef.current) {
-          if (videoRef.current.networkState === 3 || videoRef.current.error || isLoading) {
+          if (videoRef.current.networkState === 3 || videoRef.current.error || isLoading || hasError) {
             // savedTimeRef already tracks the last valid playback position
             isRecoveringRef.current = true;
             videoRef.current.load();
             // Time will be restored in onCanPlay/onLoadedData after buffering
-            if (isPlaying) {
+            if (isPlaying || hasError) {
+              setIsPlaying(true);
               videoRef.current.play().catch(e => console.warn("Failed to auto-resume:", e));
             }
           }
@@ -1038,10 +1042,18 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
       return;
     }
 
+    // If offline, don't show error immediately — the online handler will auto-recover
+    if (!navigator.onLine) {
+      setIsLoading(true);
+      setIsPlaying(false);
+      toast.warning("Network error. Playback will resume when connection is restored.");
+      return;
+    }
+
     setHasError(true);
     setIsPlaying(false);
     setIsLoading(false);
-    toast.error("Unable to play video. Invalid or unsupported video source.");
+    toast.error("Unable to play video. The source may be invalid or unsupported.");
   };
 
   const togglePlay = (e) => {
@@ -1209,6 +1221,17 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
     }
   };
 
+  const safeLockOrientation = (orientation) => {
+    try {
+      if (window.screen?.orientation?.lock) {
+        const res = window.screen.orientation.lock(orientation);
+        if (res && typeof res.catch === 'function') {
+          res.catch(() => {});
+        }
+      }
+    } catch (_) {}
+  };
+
   const safeUnlockOrientation = () => {
     try {
       if (window.screen?.orientation?.unlock) {
@@ -1232,7 +1255,12 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           }
         }
         setIsFullscreen(true);
-        safeUnlockOrientation();
+        // On mobile browsers, rotate to landscape when entering fullscreen
+        if (isMobile) {
+          safeLockOrientation('landscape');
+        } else {
+          safeUnlockOrientation();
+        }
       } else {
         if (document.exitFullscreen) {
           const res = document.exitFullscreen();
@@ -1241,7 +1269,14 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           }
         }
         setIsFullscreen(false);
-        safeUnlockOrientation();
+        // On mobile browsers, restore portrait when exiting fullscreen
+        if (isMobile) {
+          safeLockOrientation('portrait');
+          // Unlock after a short delay so the device settles back to natural orientation
+          setTimeout(() => safeUnlockOrientation(), 500);
+        } else {
+          safeUnlockOrientation();
+        }
       }
     } catch (err) {
       console.warn("Fullscreen toggle error:", err);
@@ -2241,39 +2276,25 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
         </div>
 
         {/* Loading Spinner */}
-        {isLoading && (
+        {isLoading && !hasError && (
           <div className="absolute inset-0 flex items-center justify-center z-[60] pointer-events-none">
             <div className="flex flex-col items-center gap-4">
               <UrbanSetuSpinner size="xl" />
-              {showRetryButton && !isManualRetrying && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsManualRetrying(true);
-                    isRecoveringRef.current = true;
-                    setRetryId(id => id + 1);
-                    if (videoRef.current) {
-                      videoRef.current.load();
-                    }
-                  }}
-                  className="pointer-events-auto bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-white/90 text-sm font-semibold transition-all border border-white/5 shadow-xl active:scale-95 animate-fadeIn"
-                >
-                  Connection slow? Tap to Retry
-                </button>
-              )}
             </div>
           </div>
         )}
 
         {/* Error State Overlay */}
-        {hasError && (
+        {hasError && !isPlaying && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-[65] bg-black/95 text-white p-6 text-center animate-fadeIn select-none">
             <div className="p-4 rounded-full bg-red-500/20 text-red-500 mb-4 border border-red-500/30 animate-pulse">
               <FaExclamationTriangle size={44} />
             </div>
-            <h3 className="text-xl font-bold mb-1.5 text-white tracking-wide">Video Unavailable</h3>
+            <h3 className="text-xl font-bold mb-1.5 text-white tracking-wide">Unable to play video</h3>
             <p className="text-xs sm:text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
-              The video source is invalid, corrupted, or cannot be streamed by your browser.
+              {isOffline
+                ? 'You appear to be offline. Please check your internet connection and try again.'
+                : 'This video could not be loaded. It may be unavailable, unsupported by your browser, or there may be a network issue.'}
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -2281,6 +2302,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
                   e.stopPropagation();
                   setHasError(false);
                   setIsLoading(true);
+                  setIsPlaying(true);
                   setRetryId(r => r + 1);
                   if (videoRef.current) videoRef.current.load();
                 }}
@@ -2348,6 +2370,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           }}
           onCanPlay={(e) => {
             setIsLoading(false);
+            setHasError(false); // Clear error overlay when video can play
             const d = e.currentTarget.duration;
             if (isFinite(d) && d > 0) setDuration(d);
             // Restore saved position after network recovery
@@ -2366,6 +2389,7 @@ const VideoPreview = ({ isOpen, onClose, videos = [], initialIndex = 0, listingI
           }}
           onPlaying={(e) => {
             setIsLoading(false);
+            setHasError(false); // Clear error overlay when video is actively playing
             setIsEnded(false);
             setIsPlaying(true);
             const d = e.currentTarget.duration;
