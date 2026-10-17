@@ -1641,7 +1641,7 @@ export default function MyAppointments() {
     }
   };
 
-  if (loading) return <MyAppointmentsSkeleton />;
+  if (loading) return <MyAppointmentsSkeleton isDarkMode={isDarkMode} />;
 
   if (error) {
     const handleRetry = async () => {

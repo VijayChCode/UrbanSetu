@@ -113,6 +113,9 @@ export default function AdminAppointments() {
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
 
+  // Cache to prevent re-fetching payment status on pagination/tab switch
+  const paymentStatusCacheRef = useRef(new Map());
+
   // Chat settings
   const { settings, updateSetting } = useChatSettings('admin_appointments_chat_settings');
   const [showChatSettings, setShowChatSettings] = useState(false);
@@ -1766,7 +1769,7 @@ export default function AdminAppointments() {
 
 
 
-  if (loading) return <AdminAppointmentsSkeleton />;
+  if (loading) return <AdminAppointmentsSkeleton isDarkMode={isDarkMode} />;
 
   if (!Array.isArray(appointments)) {
     return (
@@ -1956,6 +1959,7 @@ export default function AdminAppointments() {
                       isArchived={true}
                       copyMessageToClipboard={copyMessageToClipboard}
                       updateAppointmentComments={updateAppointmentComments}
+                      paymentStatusCache={paymentStatusCacheRef.current}
                       // Modal states
                       showCancelModal={showCancelModal}
                       setShowCancelModal={setShowCancelModal}
@@ -2045,6 +2049,7 @@ export default function AdminAppointments() {
                       isArchived={false}
                       copyMessageToClipboard={copyMessageToClipboard}
                       updateAppointmentComments={updateAppointmentComments}
+                      paymentStatusCache={paymentStatusCacheRef.current}
                       // Modal states
                       showCancelModal={showCancelModal}
                       setShowCancelModal={setShowCancelModal}
@@ -2583,13 +2588,18 @@ function getDateLabel(date) {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function AdminPaymentStatusCell({ appointmentId, appointment }) {
-  const [payment, setPayment] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
+function AdminPaymentStatusCell({ appointmentId, appointment, paymentStatusCache }) {
+  const cachedPayment = paymentStatusCache?.get(appointmentId);
+  const [payment, setPayment] = React.useState(cachedPayment?.payment || null);
+  const [loading, setLoading] = React.useState(!cachedPayment);
   const [toggling, setToggling] = React.useState(false);
   const [showStatusOptions, setShowStatusOptions] = React.useState(false);
 
   React.useEffect(() => {
+    // Skip fetch if we already have cached data (pagination/tab switch)
+    if (cachedPayment) {
+      return;
+    }
     async function fetchPayment() {
       try {
         const res = await authenticatedFetch(`${API_BASE_URL}/api/payments/history?appointmentId=${appointmentId}`);
@@ -2607,6 +2617,13 @@ function AdminPaymentStatusCell({ appointmentId, appointment }) {
     }
     fetchPayment();
   }, [appointmentId]);
+
+  // Keep payment status cache in sync with current state
+  React.useEffect(() => {
+    if (paymentStatusCache && !loading) {
+      paymentStatusCache.set(appointmentId, { payment });
+    }
+  }, [payment, loading]);
 
   // Close status options when clicking outside
   React.useEffect(() => {
@@ -2782,6 +2799,7 @@ function AdminAppointmentRow({
   isArchived,
   copyMessageToClipboard,
   updateAppointmentComments,
+  paymentStatusCache,
   // Modal states from parent
   showCancelModal,
   setShowCancelModal,
@@ -6637,7 +6655,7 @@ function AdminAppointmentRow({
         </div>
       </td>
       <td className="border dark:border-gray-700 p-2 text-center">
-        <AdminPaymentStatusCell appointmentId={appt._id} appointment={appt} />
+        <AdminPaymentStatusCell appointmentId={appt._id} appointment={appt} paymentStatusCache={paymentStatusCache} />
       </td>
       <td className="border dark:border-gray-700 p-2 text-gray-800 dark:text-gray-200">
         <button
