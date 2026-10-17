@@ -1,123 +1,601 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  FaArrowLeft, 
+  FaHeart, 
+  FaEye, 
+  FaShareAlt, 
+  FaChartLine, 
+  FaMapMarkerAlt, 
+  FaBed, 
+  FaBath, 
+  FaRulerCombined, 
+  FaCouch, 
+  FaParking, 
+  FaShieldAlt, 
+  FaRobot, 
+  FaCalendarAlt, 
+  FaCommentDots, 
+  FaCheckCircle, 
+  FaVrCardboard, 
+  FaPlay 
+} from 'react-icons/fa';
 
-const ListingSkeleton = () => {
-    return (
-        <div className="bg-gray-50 dark:bg-gray-950 min-h-screen animate-pulse font-sans transition-colors duration-300">
-            {/* Header Skeleton */}
-            <div className="h-16 bg-white dark:bg-gray-900 shadow-sm mb-4 transition-colors duration-300"></div>
+/* ─────────────────── Loading status stages for Property Listing ─────────────────── */
+const LOADING_STAGES = [
+  { label: 'Connecting to UrbanSetu real estate gateway...', icon: '🌐' },
+  { label: 'Retrieving property specifications & registry records...', icon: '🏠' },
+  { label: 'Loading high-definition gallery & virtual 360° tour media...', icon: '📸' },
+  { label: 'Running Sentinel AI property verification & audit scan...', icon: '🛡️' },
+  { label: 'Computing real-time price trend & local valuation index...', icon: '📈' },
+  { label: 'Verifying verified landlord & agent credentials...', icon: '👤' },
+  { label: 'Auditing amenities, furnishing & parking allocations...', icon: '✨' },
+  { label: 'Synchronizing interactive neighborhood geolocation maps...', icon: '📍' },
+  { label: 'Finalizing live booking calendar & appointment slots...', icon: '📅' },
+];
 
-            <div className="container mx-auto px-4 py-6 max-w-7xl">
-                {/* Breadcrumb Skeleton */}
-                <div className="h-4 w-48 bg-gray-200 dark:bg-gray-800 rounded mb-6"></div>
+/* ─────────────────── Custom shimmer & animation keyframes ─────────────────── */
+const SkeletonStyles = () => (
+  <style>{`
+    @keyframes lsk-shimmer {
+      0%   { background-position: -700px 0; }
+      100% { background-position: 700px 0; }
+    }
+    @keyframes lsk-float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-5px); }
+    }
+    @keyframes lsk-progress-glow {
+      0%, 100% { box-shadow: 0 0 6px rgba(59, 130, 246, 0.4); }
+      50%      { box-shadow: 0 0 20px rgba(99, 102, 241, 0.7); }
+    }
+    @keyframes lsk-fade-in-up {
+      0%   { opacity: 0; transform: translateY(14px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes lsk-status-swap {
+      0%   { opacity: 0; transform: translateY(8px); }
+      15%  { opacity: 1; transform: translateY(0); }
+      85%  { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes lsk-pulse-ring {
+      0%   { transform: scale(0.85); opacity: 0.6; }
+      50%  { transform: scale(1.18); opacity: 0; }
+      100% { transform: scale(0.85); opacity: 0; }
+    }
+    @keyframes lsk-wave {
+      0%, 60%, 100% { transform: scaleY(0.4); }
+      30%           { transform: scaleY(1); }
+    }
+    .lsk-shimmer {
+      background: linear-gradient(
+        90deg,
+        rgba(148,163,184,0.08) 0%,
+        rgba(148,163,184,0.22) 40%,
+        rgba(148,163,184,0.08) 80%
+      );
+      background-size: 700px 100%;
+      animation: lsk-shimmer 1.8s infinite linear;
+    }
+    .dark .lsk-shimmer {
+      background: linear-gradient(
+        90deg,
+        rgba(100,116,139,0.12) 0%,
+        rgba(100,116,139,0.28) 40%,
+        rgba(100,116,139,0.12) 80%
+      );
+      background-size: 700px 100%;
+    }
+  `}</style>
+);
 
-                {/* Gallery Grid Skeleton */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[400px] md:h-[500px] mb-8 rounded-xl overflow-hidden">
-                    <div className="h-full bg-gray-300 dark:bg-gray-700"></div>
-                    <div className="hidden md:grid grid-cols-2 gap-2 h-full">
-                        <div className="bg-gray-200 dark:bg-gray-800 h-full"></div>
-                        <div className="bg-gray-200 dark:bg-gray-800 h-full"></div>
-                        <div className="bg-gray-200 dark:bg-gray-800 h-full"></div>
-                        <div className="bg-gray-200 dark:bg-gray-800 h-full relative">
-                            {/* View Photos Button Placeholder */}
-                            <div className="absolute bottom-4 right-4 bg-white/50 dark:bg-gray-700/50 h-10 w-32 rounded-lg transition-colors duration-300"></div>
-                        </div>
-                    </div>
-                </div>
+/* ─────────────────── Shimmer Block Helper ─────────────────── */
+const Shimmer = ({ className = '', style = {}, delay = 0 }) => (
+  <div
+    className={`lsk-shimmer rounded-lg ${className}`}
+    style={{
+      animationDelay: `${delay}ms`,
+      ...style,
+    }}
+  />
+);
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content Column */}
-                    <div className="lg:col-span-2 space-y-8">
+/* ─────────────────── Audio-wave Loading Indicator ─────────────────── */
+const WaveLoader = () => (
+  <div className="flex items-center gap-[3px] h-5">
+    {[0, 1, 2, 3, 4].map(i => (
+      <div
+        key={i}
+        className="w-[3px] h-full bg-gradient-to-t from-blue-500 via-indigo-500 to-purple-600 rounded-full"
+        style={{
+          animation: `lsk-wave 1.2s ${i * 0.12}s infinite ease-in-out`,
+        }}
+      />
+    ))}
+  </div>
+);
 
-                        {/* Title & Price Section */}
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm space-y-4 border border-transparent dark:border-gray-700 transition-colors duration-300">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-3 w-3/4">
-                                    <div className="h-8 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                    <div className="h-5 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                </div>
-                                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                            </div>
-                            <div className="flex gap-4 border-t border-b border-gray-100 dark:border-gray-700 py-4 transition-colors duration-300">
-                                <div className="h-12 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                <div className="h-12 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                <div className="h-12 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            </div>
-                            <div className="h-8 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        </div>
+/* ─────────────────── Property Spec Pill Skeleton ─────────────────── */
+const SpecPillSkeleton = ({ icon, delay = 0 }) => (
+  <div 
+    className="flex items-center gap-2.5 p-3 sm:p-3.5 bg-gray-50/80 dark:bg-gray-800/60 rounded-xl border border-gray-200/60 dark:border-gray-700/60"
+    style={{ animation: `lsk-fade-in-up 0.5s ${delay}ms both ease-out` }}
+  >
+    <div className="text-blue-600 dark:text-blue-400 text-lg sm:text-xl shrink-0">
+      {icon}
+    </div>
+    <div className="space-y-1 flex-1 min-w-0">
+      <Shimmer className="h-4 w-12 sm:w-16 rounded" delay={delay + 50} />
+      <Shimmer className="h-3 w-10 sm:w-12 rounded" delay={delay + 100} />
+    </div>
+  </div>
+);
 
-                        {/* Overview / Description */}
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm space-y-4 border border-transparent dark:border-gray-700 transition-colors duration-300">
-                            <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="space-y-2">
-                                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            </div>
-                        </div>
+export default function ListingSkeleton({ isDarkMode: propIsDarkMode }) {
+  const [progress, setProgress] = useState(0);
+  const [stageIndex, setStageIndex] = useState(0);
+  const progressRef = useRef(null);
 
-                        {/* Amenities */}
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm space-y-4 border border-transparent dark:border-gray-700 transition-colors duration-300">
-                            <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {[1, 2, 3, 4, 5, 6].map(i => (
-                                    <div key={i} className="flex items-center gap-3">
-                                        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+  // Auto-detect dark mode
+  const isDark = useMemo(() => {
+    if (typeof propIsDarkMode === 'boolean') return propIsDarkMode;
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+    }
+    return false;
+  }, [propIsDarkMode]);
 
-                        {/* Map Placeholder */}
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm space-y-4 border border-transparent dark:border-gray-700 transition-colors duration-300">
-                            <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="h-64 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                        </div>
+  // Smooth loading progression simulation
+  useEffect(() => {
+    const totalDuration = 12000;
+    const intervalMs = 60;
+    let elapsed = 0;
 
-                    </div>
+    progressRef.current = setInterval(() => {
+      elapsed += intervalMs;
+      const linear = Math.min(elapsed / totalDuration, 1);
+      const pct = Math.min(Math.round(linear * 97), 97);
+      setProgress(pct);
 
-                    {/* Sidebar Column */}
-                    <div className="lg:col-span-1 space-y-6">
-                        {/* Contact/Action Card */}
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 sticky top-24 space-y-6 transition-colors duration-300">
-                            <div className="flex items-center gap-4">
-                                <div className="h-14 w-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                                <div className="space-y-2">
-                                    <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <div className="h-12 w-full bg-blue-100 dark:bg-blue-900/30 rounded-lg"></div>
-                                <div className="h-12 w-full bg-green-100 dark:bg-green-900/30 rounded-lg"></div>
-                            </div>
-                            <hr className="dark:border-gray-700" />
-                            <div className="space-y-2">
-                                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            </div>
-                        </div>
+      const newStage = Math.min(
+        Math.floor(linear * LOADING_STAGES.length),
+        LOADING_STAGES.length - 1
+      );
+      setStageIndex(newStage);
+    }, intervalMs);
 
-                        {/* Similar Properties / Ads */}
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm space-y-4 border border-transparent dark:border-gray-700 transition-colors duration-300">
-                            <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <div className="space-y-4">
-                                {[1, 2].map(i => (
-                                    <div key={i} className="h-24 bg-gray-100 dark:bg-gray-900/50 rounded-lg flex gap-3 p-2 transition-colors duration-300">
-                                        <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded h-full"></div>
-                                        <div className="flex-1 space-y-2 py-1">
-                                            <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                            <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    return () => clearInterval(progressRef.current);
+  }, []);
+
+  const stage = LOADING_STAGES[stageIndex] || LOADING_STAGES[0];
+
+  return (
+    <div className={`bg-gradient-to-br from-blue-50/40 via-purple-50/20 to-indigo-50/40 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950 min-h-screen py-6 sm:py-8 px-4 sm:px-6 lg:px-8 font-sans transition-colors duration-500 relative overflow-hidden ${isDark ? 'dark' : ''}`}>
+      <SkeletonStyles />
+
+      {/* ─── Top Sticky Gradient Progress Bar ─── */}
+      <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+        <div className="h-1 bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-md">
+          <div
+            className="h-full rounded-r-full transition-all duration-300 ease-out"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6, #ec4899)',
+              animation: 'lsk-progress-glow 2s infinite',
+            }}
+          />
         </div>
-    );
-};
+      </div>
 
-export default ListingSkeleton;
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* ─── Modern Loading Descriptor Banner ─── */}
+        <div
+          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-xl border border-blue-100/80 dark:border-gray-700/60"
+          style={{ animation: 'lsk-fade-in-up 0.5s both ease-out' }}
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
+            <div className="flex-shrink-0">
+              <div className="p-2.5 sm:p-3 bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-purple-500/15 rounded-xl border border-blue-500/20">
+                <WaveLoader />
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <div className="flex items-center gap-2.5 justify-center sm:justify-start mb-1 flex-wrap">
+                <span className="text-base sm:text-lg font-black bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  Preparing Property Showcase
+                </span>
+                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-900/40 shadow-xs">
+                  {progress}% Sync
+                </span>
+              </div>
+
+              {/* Dynamic Rotating Stage Description */}
+              <div className="h-5 overflow-hidden relative">
+                <p
+                  key={stageIndex}
+                  className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 justify-center sm:justify-start font-medium"
+                  style={{ animation: 'lsk-status-swap 2s both ease-in-out' }}
+                >
+                  <span className="text-base">{stage.icon}</span>
+                  <span className="truncate">{stage.label}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Circular Progress Gauge */}
+            <div className="flex-shrink-0 hidden sm:block">
+              <svg width="48" height="48" viewBox="0 0 48 48">
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="20"
+                  fill="none"
+                  strokeWidth="3.5"
+                  className="text-gray-200 dark:text-gray-700"
+                  stroke="currentColor"
+                />
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="20"
+                  fill="none"
+                  strokeWidth="3.5"
+                  stroke="url(#listing-grad)"
+                  strokeDasharray={`${2 * Math.PI * 20}`}
+                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - progress / 100)}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-300 ease-out"
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                />
+                <defs>
+                  <linearGradient id="listing-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="50%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                </defs>
+                <text
+                  x="24"
+                  y="24"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  className="fill-gray-700 dark:fill-gray-200 text-[10px] font-black"
+                >
+                  {progress}%
+                </text>
+              </svg>
+            </div>
+          </div>
+
+          {/* Shimmering Progress Bar */}
+          <div className="mt-3.5 h-1.5 bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-300 ease-out relative"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6, #ec4899)',
+              }}
+            >
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'lsk-shimmer 1.2s infinite linear',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Top Action Navigation Bar (Back, Compare, Share, Wishlist) ─── */}
+        <div 
+          className="flex items-center justify-between gap-3 flex-wrap"
+          style={{ animation: 'lsk-fade-in-up 0.5s 100ms both ease-out' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="h-10 px-4 rounded-xl bg-gradient-to-r from-gray-500/20 to-gray-600/20 border border-gray-400/30 flex items-center gap-2">
+              <FaArrowLeft className="text-gray-400 text-xs" />
+              <Shimmer className="h-4 w-24 rounded" delay={120} />
+            </div>
+            <div className="h-10 px-4 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center gap-2">
+              <FaChartLine className="text-purple-500 text-xs" />
+              <Shimmer className="h-4 w-18 rounded" delay={150} />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 flex items-center justify-center text-gray-400 shadow-sm">
+              <FaShareAlt size={15} />
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 flex items-center justify-center text-rose-500 shadow-sm">
+              <FaHeart size={15} />
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 flex items-center justify-center text-blue-500 shadow-sm">
+              <FaEye size={15} />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── High-Fidelity Gallery Showcase Skeleton ─── */}
+        <div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 h-[320px] sm:h-[420px] md:h-[480px] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl"
+          style={{ animation: 'lsk-fade-in-up 0.6s 150ms both ease-out' }}
+        >
+          {/* Main Large Hero Image */}
+          <div className="md:col-span-2 h-full bg-gray-200 dark:bg-gray-800 relative lsk-shimmer overflow-hidden">
+            {/* VR 360 Overlay Pill */}
+            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold">
+              <FaVrCardboard className="text-blue-400 animate-pulse" />
+              <span>360° Virtual Tour</span>
+            </div>
+
+            {/* AI Room Label */}
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-bold">
+              <FaRobot className="text-blue-400" />
+              <Shimmer className="h-3 w-16 rounded bg-white/30" delay={200} />
+            </div>
+
+            {/* Verified Badge */}
+            <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-600/90 backdrop-blur-md text-white text-xs font-bold shadow-lg">
+              <FaShieldAlt className="text-sm" />
+              <span>Verified Listing</span>
+            </div>
+          </div>
+
+          {/* Right 2 Stacked Images */}
+          <div className="hidden md:grid grid-rows-2 gap-3 sm:gap-4 h-full">
+            <div className="h-full bg-gray-200 dark:bg-gray-800 rounded-xl lsk-shimmer relative overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                <FaPlay size={20} className="opacity-50" />
+              </div>
+            </div>
+            <div className="h-full bg-gray-200 dark:bg-gray-800 rounded-xl lsk-shimmer relative overflow-hidden">
+              <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/70 backdrop-blur-md text-white rounded-lg text-xs font-bold border border-white/10">
+                <span>View Photos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Main Content & Sticky Sidebar Grid ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+
+          {/* ─── Left 2 Columns: Property Details ─── */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Title, Address & Price Card */}
+            <div 
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl border border-blue-50 dark:border-gray-700/60 space-y-5"
+              style={{ animation: 'lsk-fade-in-up 0.6s 200ms both ease-out' }}
+            >
+              {/* Type and Verification Tags */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                  For Rent
+                </span>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+                  Verified Property
+                </span>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                  20% OFF
+                </span>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-2">
+                <Shimmer className="h-8 sm:h-10 w-4/5 rounded-xl" delay={220} />
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                  <FaMapMarkerAlt className="text-red-500 shrink-0 text-sm" />
+                  <Shimmer className="h-4 w-3/5 rounded" delay={260} />
+                </div>
+              </div>
+
+              {/* Price Banner */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50/60 to-purple-50/60 dark:from-blue-950/40 dark:to-purple-950/40 border border-blue-100/60 dark:border-blue-900/30 flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
+                <Shimmer className="h-9 w-44 rounded-lg" delay={300} />
+                <Shimmer className="h-5 w-24 rounded line-through" delay={340} />
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  Save ₹15,000 / month
+                </span>
+              </div>
+
+              {/* Key Specifications Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 pt-2">
+                <SpecPillSkeleton icon={<FaBed />} delay={320} />
+                <SpecPillSkeleton icon={<FaBath />} delay={360} />
+                <SpecPillSkeleton icon={<FaRulerCombined />} delay={400} />
+                <SpecPillSkeleton icon={<FaCouch />} delay={440} />
+                <SpecPillSkeleton icon={<FaParking />} delay={480} />
+                <SpecPillSkeleton icon={<FaShieldAlt />} delay={520} />
+              </div>
+            </div>
+
+            {/* Sentinel AI Verification & Trust Card */}
+            <div 
+              className="bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 p-[1.5px] rounded-2xl shadow-lg"
+              style={{ animation: 'lsk-fade-in-up 0.6s 250ms both ease-out' }}
+            >
+              <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-5 sm:p-6 rounded-[15px] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-md">
+                      <FaRobot />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-gray-900 dark:text-white">
+                        Sentinel AI Trust & Valuation Audit
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Automated Registry Verification & Escrow Readiness
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                    98% High Trust
+                  </span>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <Shimmer className="h-3.5 w-full rounded" delay={350} />
+                  <Shimmer className="h-3.5 w-5/6 rounded" delay={400} />
+                </div>
+              </div>
+            </div>
+
+            {/* Description Card */}
+            <div 
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700/60 space-y-4"
+              style={{ animation: 'lsk-fade-in-up 0.6s 300ms both ease-out' }}
+            >
+              <div className="flex items-center justify-between">
+                <Shimmer className="h-6 w-40 rounded-lg" delay={320} />
+                <Shimmer className="h-4 w-20 rounded" delay={360} />
+              </div>
+              <div className="space-y-2.5">
+                <Shimmer className="h-4 w-full rounded" delay={380} />
+                <Shimmer className="h-4 w-full rounded" delay={420} />
+                <Shimmer className="h-4 w-11/12 rounded" delay={460} />
+                <Shimmer className="h-4 w-4/5 rounded" delay={500} />
+              </div>
+            </div>
+
+            {/* Amenities Grid Skeleton */}
+            <div 
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700/60 space-y-5"
+              style={{ animation: 'lsk-fade-in-up 0.6s 350ms both ease-out' }}
+            >
+              <Shimmer className="h-6 w-36 rounded-lg" delay={360} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50/70 dark:bg-gray-750/70 border border-gray-100 dark:border-gray-700/60"
+                  >
+                    <FaCheckCircle className="text-emerald-500 text-sm shrink-0" />
+                    <Shimmer className="h-3.5 w-20 rounded" delay={380 + i * 40} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Geolocation Map Placeholder */}
+            <div 
+              className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700/60 space-y-4"
+              style={{ animation: 'lsk-fade-in-up 0.6s 400ms both ease-out' }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FaMapMarkerAlt className="text-red-500 text-base" />
+                  <Shimmer className="h-6 w-36 rounded-lg" delay={420} />
+                </div>
+                <Shimmer className="h-4 w-28 rounded" delay={460} />
+              </div>
+              <div className="h-64 sm:h-72 w-full rounded-xl bg-gray-200 dark:bg-gray-700/80 lsk-shimmer relative overflow-hidden flex items-center justify-center">
+                <div className="text-center space-y-2 text-gray-400">
+                  <FaMapMarkerAlt className="text-3xl mx-auto text-red-500/70 animate-bounce" />
+                  <span className="text-xs font-semibold block">Locating Neighborhood & Transit...</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ─── Right 1 Column: Sticky Landlord & Booking Actions Sidebar ─── */}
+          <div className="lg:col-span-1 space-y-6">
+
+            {/* Landlord / Agent Profile Card */}
+            <div 
+              className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md p-6 sm:p-7 rounded-2xl shadow-xl border border-blue-100/60 dark:border-gray-700/70 sticky top-24 space-y-6"
+              style={{ animation: 'lsk-fade-in-up 0.6s 250ms both ease-out' }}
+            >
+              {/* Host Profile Info */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500/80 to-purple-500/80 lsk-shimmer shadow-md" />
+                  <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-gray-800" />
+                </div>
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <Shimmer className="h-5 w-32 rounded-lg" delay={300} />
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                      Property Host
+                    </span>
+                    <Shimmer className="h-3 w-14 rounded" delay={340} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Primary Call to Action Buttons */}
+              <div className="space-y-3">
+                <div className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25">
+                  <FaCalendarAlt />
+                  <Shimmer className="h-4 w-32 rounded bg-white/40" delay={380} />
+                </div>
+                <div className="w-full h-12 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 font-bold flex items-center justify-center gap-2">
+                  <FaCommentDots />
+                  <Shimmer className="h-4 w-28 rounded bg-purple-300/40" delay={420} />
+                </div>
+              </div>
+
+              {/* Rent-Lock Escrow Guarantee Badge */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/40 flex items-start gap-3">
+                <FaShieldAlt className="text-emerald-600 text-lg shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs">
+                  <span className="font-bold text-emerald-800 dark:text-emerald-300 block">
+                    UrbanSetu Escrow Guarantee
+                  </span>
+                  <p className="text-emerald-700 dark:text-emerald-400 text-[11px] leading-relaxed">
+                    Tokens and rental advances remain safe in escrow until physical handover.
+                  </p>
+                </div>
+              </div>
+
+              {/* Similar Properties Mini-List Skeleton */}
+              <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-700/60">
+                <Shimmer className="h-4 w-36 rounded" delay={460} />
+                <div className="space-y-2.5">
+                  {[1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2 rounded-xl bg-gray-50/80 dark:bg-gray-750/60 border border-gray-100 dark:border-gray-700/50"
+                    >
+                      <div className="w-14 h-14 rounded-lg bg-gray-200 dark:bg-gray-700 lsk-shimmer shrink-0" />
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <Shimmer className="h-3.5 w-3/4 rounded" delay={480 + i * 50} />
+                        <Shimmer className="h-3 w-1/2 rounded" delay={510 + i * 50} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ─── Floating Bottom AI & Support Shadows (Matches Page Floating Buttons) ─── */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-40"
+        style={{
+          animation: 'lsk-fade-in-up 0.8s 800ms both cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+      >
+        {/* Gemini AI Shadow */}
+        <div className="absolute bottom-20 right-6 w-12 h-12 rounded-full lsk-shimmer shadow-xl border border-white/20 dark:border-gray-700/50 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm pointer-events-auto flex items-center justify-center text-indigo-500 text-lg">
+          ✨
+        </div>
+        {/* Contact Support Shadow */}
+        <div className="absolute bottom-6 right-6 w-12 h-12 rounded-full lsk-shimmer shadow-xl border border-white/20 dark:border-gray-700/50 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm pointer-events-auto flex items-center justify-center text-blue-500 text-lg">
+          💬
+        </div>
+      </div>
+
+    </div>
+  );
+}

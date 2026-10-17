@@ -8,6 +8,7 @@ import { FaMapMarkerAlt, FaCoins, FaInfoCircle } from "react-icons/fa";
 import { toast } from 'react-toastify';
 import { authenticatedFetch } from '../utils/auth';
 import { usePageTitle } from '../hooks/usePageTitle';
+import AppointmentSkeleton from './skeletons/AppointmentSkeleton';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -257,6 +258,10 @@ export default function Appointment() {
       }
     }, 2000);
   };
+
+  if (checkingActive) {
+    return <AppointmentSkeleton />;
+  }
 
   if (isDeletedProperty) {
     return (

@@ -6,6 +6,7 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { authenticatedFetch } from '../utils/auth';
 
 import { usePageTitle } from '../hooks/usePageTitle';
+import AppointmentSkeleton from '../components/skeletons/AppointmentSkeleton';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminAppointmentListing() {
@@ -201,15 +202,7 @@ export default function AdminAppointmentListing() {
   }
 
   if (ownerCheckLoading) {
-    return (
-      <div className="bg-gradient-to-br from-blue-50 to-purple-100 dark:from-gray-900 dark:to-slate-900 min-h-screen py-10 px-2 md:px-8">
-        <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
-          <div className="text-center text-blue-600 dark:text-blue-400 text-xl font-semibold py-10">
-            Loading property information...
-          </div>
-        </div>
-      </div>
-    );
+    return <AppointmentSkeleton isAdmin={true} />;
   }
 
   if (isDeletedProperty) {
