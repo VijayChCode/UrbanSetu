@@ -5668,7 +5668,55 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const handlePinMessage = async (message, pinned, duration = '24hrs', customHrs = 24) => {
     if (!appt?._id) return;
 
-    setPinningSaving(true);
+    // Save previous state for rollback on failure
+    const previousComments = comments;
+    const previousPinnedMessages = pinnedMessages;
+
+    // Calculate optimistic pin expiry
+    let optimisticExpiresAt = null;
+    if (pinned) {
+      const now = new Date();
+      if (duration === '24hrs') optimisticExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      else if (duration === '7days') optimisticExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      else if (duration === '30days') optimisticExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      else if (duration === 'custom') optimisticExpiresAt = new Date(now.getTime() + customHrs * 60 * 60 * 1000);
+    }
+
+    // Optimistic update: immediately update comments state
+    setComments(prev => prev.map(c =>
+      c._id === message._id
+        ? {
+          ...c,
+          pinned: pinned,
+          pinnedBy: pinned ? currentUser._id : null,
+          pinnedAt: pinned ? new Date() : null,
+          pinExpiresAt: pinned ? optimisticExpiresAt : null,
+          pinDuration: pinned ? duration : null
+        }
+        : c
+    ));
+
+    // Optimistic update: immediately update pinned messages list
+    if (pinned) {
+      const pinnedMsg = {
+        ...message,
+        pinned: true,
+        pinnedBy: currentUser._id,
+        pinnedAt: new Date(),
+        pinExpiresAt: optimisticExpiresAt,
+        pinDuration: duration
+      };
+      setPinnedMessages(prev => [...prev, pinnedMsg]);
+    } else {
+      setPinnedMessages(prev => prev.filter(m => m._id !== message._id));
+    }
+
+    // Close the modal immediately for snappy UX
+    setShowPinModal(false);
+    setMessageToPin(null);
+    setPinningSaving(false);
+
+    // Send to backend in background
     try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${message._id}/pin`, {
         method: 'PATCH',
@@ -5684,7 +5732,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       }
       const data = await res.json();
 
-      // Update the local state
+      // Reconcile with server response (use server's authoritative pinExpiresAt)
       setComments(prev => prev.map(c =>
         c._id === message._id
           ? {
@@ -5698,33 +5746,19 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
           : c
       ));
 
-      // Update pinned messages list
-      if (pinned) {
-        // Add to pinned messages
-        const pinnedMsg = {
-          ...message,
-          pinned: true,
-          pinnedBy: currentUser._id,
-          pinnedAt: new Date(),
-          pinExpiresAt: new Date(data.pinExpiresAt),
-          pinDuration: duration
-        };
-        setPinnedMessages(prev => {
-          const newPinned = [...prev, pinnedMsg];
-          return newPinned;
-        });
-      } else {
-        // Remove from pinned messages
-        setPinnedMessages(prev => prev.filter(m => m._id !== message._id));
+      // Reconcile pinned messages with server's expiry
+      if (data.pinned && data.pinExpiresAt) {
+        setPinnedMessages(prev => prev.map(m =>
+          m._id === message._id ? { ...m, pinExpiresAt: new Date(data.pinExpiresAt) } : m
+        ));
       }
 
       toast.success(data.message);
-      setShowPinModal(false);
-      setMessageToPin(null);
     } catch (err) {
+      // Revert both states on failure
+      setComments(previousComments);
+      setPinnedMessages(previousPinnedMessages);
       toast.error('Failed to update pin status');
-    } finally {
-      setPinningSaving(false);
     }
   };
 
@@ -6701,14 +6735,43 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       return;
     }
 
-    try {
-      const message = comments.find(c => c._id === messageId);
-      if (!message) {
-        toast.error('Message not found');
-        return;
-      }
+    const message = comments.find(c => c._id === messageId);
+    if (!message) {
+      toast.error('Message not found');
+      return;
+    }
 
-      // Add reaction to the message
+    // Save previous reactions for rollback on failure
+    const previousReactions = message.reactions || [];
+
+    // Optimistic update: toggle the reaction locally before API call
+    const existingReaction = previousReactions.find(r => r.emoji === emoji && r.userId === currentUser._id);
+    let optimisticReactions;
+    if (existingReaction) {
+      // Remove reaction (toggle off)
+      optimisticReactions = previousReactions.filter(r => !(r.emoji === emoji && r.userId === currentUser._id));
+    } else {
+      // Add reaction (toggle on)
+      optimisticReactions = [...previousReactions, {
+        emoji,
+        userId: currentUser._id,
+        userName: currentUser.username,
+        timestamp: new Date().toISOString()
+      }];
+    }
+
+    // Apply optimistic update immediately
+    setComments(prev => prev.map(c =>
+      c._id === messageId ? { ...c, reactions: optimisticReactions } : c
+    ));
+
+    // Close the reactions bar immediately for snappy UX
+    setShowReactionsEmojiPicker(false);
+    setShowReactionsBar(false);
+    setReactionsMessageId(null);
+
+    // Send to backend in background
+    try {
       const res = await authenticatedFetch(`${API_BASE_URL}/api/bookings/${appt._id}/comment/${messageId}/react`, {
         method: 'PATCH',
         body: JSON.stringify({ emoji })
@@ -6719,24 +6782,15 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
       }
       const data = await res.json();
 
-      // Update local state
+      // Reconcile with server response (authoritative)
       setComments(prev => prev.map(c =>
-        c._id === messageId
-          ? {
-            ...c,
-            reactions: data.reactions || c.reactions || []
-          }
-          : c
+        c._id === messageId ? { ...c, reactions: data.reactions || c.reactions } : c
       ));
-
-      // Close both the quick reactions model and the reactions bar
-      setShowReactionsEmojiPicker(false);
-      setShowReactionsBar(false);
-      setReactionsMessageId(null);
-
-      toast.success('Reaction added!');
-
     } catch (err) {
+      // Revert to previous reactions on failure
+      setComments(prev => prev.map(c =>
+        c._id === messageId ? { ...c, reactions: previousReactions } : c
+      ));
       toast.error(err.response?.data?.message || 'Failed to add reaction');
     }
   };
