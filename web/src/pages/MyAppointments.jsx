@@ -12453,6 +12453,26 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                               ...prev,
                               [itemKey]: e.target.value
                             }))}
+                            onPaste={(e) => {
+                              const items = Array.from(e.clipboardData.items);
+                              const imageItem = items.find(item => item.kind === 'file' && item.type.startsWith('image/'));
+                              if (imageItem) {
+                                e.preventDefault();
+                                const file = imageItem.getAsFile();
+                                if (file) {
+                                  if (selectedFiles.length >= 10) {
+                                    toast.error('Maximum 10 images allowed. Remove some images first.');
+                                    return;
+                                  }
+                                  // Add the pasted image to the queue (same as the "+" button / handleImageFiles)
+                                  setSelectedFiles(prev => [...prev, file]);
+                                  // Jump to the newly added image
+                                  setPreviewIndex(selectedFiles.length);
+                                  toast.success('Image pasted and added to queue!');
+                                }
+                              }
+                              // If no image file was found in clipboard, let text paste through normally
+                            }}
                             className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                             rows={3}
                             maxLength={500}
