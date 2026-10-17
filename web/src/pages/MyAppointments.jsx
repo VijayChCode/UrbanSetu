@@ -2107,11 +2107,17 @@ export default function MyAppointments() {
           // Determine if contact details should be shown based on appointment status
           const isUpcoming = new Date(selectedAppointment.date) > new Date() || (new Date(selectedAppointment.date).toDateString() === new Date().toDateString() && (!selectedAppointment.time || selectedAppointment.time > new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
           const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'rootadmin');
-          const canSeeContactInfo = (isAdmin || selectedAppointment.status === 'accepted') && isUpcoming &&
-            selectedAppointment.status !== 'cancelledByBuyer' && selectedAppointment.status !== 'cancelledBySeller' &&
+          const isNotCancelled = selectedAppointment.status !== 'cancelledByBuyer' && selectedAppointment.status !== 'cancelledBySeller' &&
             selectedAppointment.status !== 'cancelledByAdmin' && selectedAppointment.status !== 'rejected' &&
-            selectedAppointment.status !== 'deletedByAdmin' &&
-            ['public', 'friends'].includes(selectedOtherParty.profileVisibility);
+            selectedAppointment.status !== 'deletedByAdmin';
+          // For accepted appointments, always show contact info (backend already masks private profiles)
+          // For non-accepted statuses, also require the other party's profile to be public/friends
+          const canSeeContactInfo = isAdmin || (
+            isNotCancelled && (
+              (selectedAppointment.status === 'accepted' && isUpcoming) ||
+              (isUpcoming && ['public', 'friends'].includes(selectedOtherParty.profileVisibility))
+            )
+          );
 
           return (
             <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4" style={{ overflow: 'hidden' }}>
@@ -5789,11 +5795,17 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
 
   const otherParty = isSeller ? appt.buyerId : appt.sellerId;
 
-  const canSeeContactInfo = (isAdmin || appt.status === 'accepted') && isUpcoming &&
-    appt.status !== 'cancelledByBuyer' && appt.status !== 'cancelledBySeller' &&
+  const isNotCancelled = appt.status !== 'cancelledByBuyer' && appt.status !== 'cancelledBySeller' &&
     appt.status !== 'cancelledByAdmin' && appt.status !== 'rejected' &&
-    appt.status !== 'deletedByAdmin' &&
-    ['public', 'friends'].includes(otherParty?.profileVisibility);
+    appt.status !== 'deletedByAdmin';
+  // For accepted appointments, always show contact info (backend already masks private profiles)
+  // For non-accepted statuses, also require the other party's profile to be public/friends
+  const canSeeContactInfo = isAdmin || (
+    isNotCancelled && (
+      (appt.status === 'accepted' && isUpcoming) ||
+      (isUpcoming && ['public', 'friends'].includes(otherParty?.profileVisibility))
+    )
+  );
 
   // Handle delete confirmation modal
   const handleDeleteClick = (message) => {
