@@ -33,7 +33,29 @@ export default function About() {
     }
   }
 
-
+  const renderFaqAnswer = (text) => {
+    if (!text) return null;
+    const sanitizedText = text
+      .replace(/support@urbansetu\.com/g, 'info.urbansetu@gmail.com')
+      .replace(/urbansetu\.noreply@gmail\.com/g, 'info.urbansetu@gmail.com');
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g;
+    const parts = sanitizedText.split(emailRegex);
+    return parts.map((part, i) => {
+      if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+$/.test(part)) {
+        return (
+          <a
+            key={i}
+            href={`mailto:${part}`}
+            className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
 
   useEffect(() => {
     const fetchAboutData = async () => {
@@ -328,7 +350,7 @@ export default function About() {
                       className="overflow-hidden"
                     >
                       <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 transition-colors">
-                        <p className="text-slate-700 dark:text-gray-300 leading-relaxed">{faq.answer}</p>
+                        <p className="text-slate-700 dark:text-gray-300 leading-relaxed">{renderFaqAnswer(faq.answer)}</p>
                       </div>
                     </motion.div>
                   )}
