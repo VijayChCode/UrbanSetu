@@ -706,17 +706,21 @@ export default function MyAppointments() {
 
     // IMPORTANT: If we are trying to open a specific chat from notification/link,
     // ensure it is visible in the list even if filters/pagination would hide it.
+    // But do NOT add archived appointments to the active list.
     if (shouldOpenChatFromNotification && notificationChatData) {
-      const isPresent = currentPageAppts.some(a => a._id === notificationChatData._id);
-      if (!isPresent) {
-        // Prepend to the list so it's visible at the top
-        currentPageAppts.unshift(notificationChatData);
+      const isArchivedAppt = archivedAppointments.some(a => a._id === notificationChatData._id) || notificationChatData.archivedAt;
+      if (!isArchivedAppt) {
+        const isPresent = currentPageAppts.some(a => a._id === notificationChatData._id);
+        if (!isPresent) {
+          // Prepend to the list so it's visible at the top
+          currentPageAppts.unshift(notificationChatData);
+        }
       }
     }
 
     console.log(`Page ${currentPage} of ${totalPages}, showing ${currentPageAppts.length} appointments`);
     setAppointments(currentPageAppts);
-  }, [allAppointments, currentPage, search, statusFilter, roleFilter, startDate, endDate, currentUser, shouldOpenChatFromNotification, notificationChatData]);
+  }, [allAppointments, archivedAppointments, currentPage, search, statusFilter, roleFilter, startDate, endDate, currentUser, shouldOpenChatFromNotification, notificationChatData]);
 
   // Separate useEffect for archived appointments pagination and filtering
   useEffect(() => {
@@ -1079,15 +1083,29 @@ export default function MyAppointments() {
           }
         }
 
-        setAllAppointments((prev) => {
-          const existingIndex = prev.findIndex((appt) => appt._id === appointment._id);
-          if (existingIndex !== -1) {
-            const next = [...prev];
-            next[existingIndex] = { ...next[existingIndex], ...appointment };
-            return next;
-          }
-          return [appointment, ...prev];
-        });
+        // Check if this appointment is archived — if so, add to archivedAppointments, not allAppointments
+        const isArchivedAppt = archivedAppointments.some(a => a._id === appointment._id) || appointment.archivedAt;
+        if (isArchivedAppt) {
+          setArchivedAppointments((prev) => {
+            const existingIndex = prev.findIndex((appt) => appt._id === appointment._id);
+            if (existingIndex !== -1) {
+              const next = [...prev];
+              next[existingIndex] = { ...next[existingIndex], ...appointment };
+              return next;
+            }
+            return [appointment, ...prev];
+          });
+        } else {
+          setAllAppointments((prev) => {
+            const existingIndex = prev.findIndex((appt) => appt._id === appointment._id);
+            if (existingIndex !== -1) {
+              const next = [...prev];
+              next[existingIndex] = { ...next[existingIndex], ...appointment };
+              return next;
+            }
+            return [appointment, ...prev];
+          });
+        }
 
         openChatForAppointment(appointment);
       } catch (error) {
