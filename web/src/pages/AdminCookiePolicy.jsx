@@ -187,13 +187,13 @@ const AdminCookiePolicy = () => {
                   <td className="p-6 font-mono text-blue-600 dark:text-blue-400 font-medium">access_token</td>
                   <td className="p-6"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Necessary</span></td>
                   <td className="p-6 text-gray-600 dark:text-gray-400">Securely authenticates your user session to access private features.</td>
-                  <td className="p-6 text-gray-500 dark:text-gray-500">Session (15 mins)</td>
+                  <td className="p-6 text-gray-500 dark:text-gray-500">Persistent (1 day)</td>
                 </tr>
                 <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                   <td className="p-6 font-mono text-blue-600 dark:text-blue-400 font-medium">refresh_token</td>
                   <td className="p-6"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">Necessary</span></td>
                   <td className="p-6 text-gray-600 dark:text-gray-400">Allows you to stay logged in without re-entering credentials frequently.</td>
-                  <td className="p-6 text-gray-500 dark:text-gray-500">Persistent (7 days)</td>
+                  <td className="p-6 text-gray-500 dark:text-gray-500">Persistent (90 days)</td>
                 </tr>
                 <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                   <td className="p-6 font-mono text-blue-600 dark:text-blue-400 font-medium">session_id</td>
