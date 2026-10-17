@@ -155,6 +155,8 @@ export default function Header() {
     const searchTermFromUrl = urlParams.get("searchTerm");
     if (searchTermFromUrl) {
       setSearchTerm(searchTermFromUrl);
+    } else {
+      setSearchTerm("");
     }
   }, [location.search]);
 
@@ -327,7 +329,7 @@ export default function Header() {
   };
 
   const handleSuggestionClick = (suggestion) => {
-    setSearchTerm(suggestion.displayText);
+    setSearchTerm("");
     setShowSuggestions(false);
 
     // Navigate to the property listing
@@ -808,8 +810,9 @@ function UserNavLinks({ mobile = false, onNavigate, signout }) {
   };
 
   const handleSuggestionClick = (suggestion) => {
-    setSearchTerm(suggestion.displayText);
+    setSearchTerm("");
     setShowSuggestions(false);
+    setSearchOpen(false);
 
     // Navigate to the property listing
     navigate(`/listing/${suggestion.id}`);

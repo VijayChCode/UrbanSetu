@@ -445,8 +445,9 @@ export default function AdminHeader() {
   };
 
   const handleSuggestionClick = (suggestion) => {
-    setSearchTerm(suggestion.displayText);
+    setSearchTerm("");
     setShowSuggestions(false);
+    setSearchOpen(false);
 
     // Navigate to the property listing
     navigate(`/listing/${suggestion.id}`);
