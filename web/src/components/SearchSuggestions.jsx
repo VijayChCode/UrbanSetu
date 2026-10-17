@@ -55,17 +55,43 @@ const SearchSuggestions = ({
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex(prev =>
-            prev < suggestions.length - 1 ? prev + 1 : prev
-          );
+          e.stopPropagation();
+          setSelectedIndex(prev => {
+            const next = prev < suggestions.length - 1 ? prev + 1 : 0;
+            // Scroll the selected item into view
+            requestAnimationFrame(() => {
+              const container = suggestionsRef.current;
+              if (container) {
+                const items = container.querySelectorAll('[data-suggestion-item]');
+                if (items[next]) {
+                  items[next].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              }
+            });
+            return next;
+          });
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+          e.stopPropagation();
+          setSelectedIndex(prev => {
+            const next = prev > 0 ? prev - 1 : suggestions.length - 1;
+            requestAnimationFrame(() => {
+              const container = suggestionsRef.current;
+              if (container) {
+                const items = container.querySelectorAll('[data-suggestion-item]');
+                if (items[next]) {
+                  items[next].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+              }
+            });
+            return next;
+          });
           break;
         case 'Enter':
-          e.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+            e.preventDefault();
+            e.stopPropagation();
             handleSuggestionClick(suggestions[selectedIndex]);
           }
           break;
@@ -78,7 +104,7 @@ const SearchSuggestions = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible, suggestions, selectedIndex, onClose]);
+  }, [isVisible, suggestions, selectedIndex, onClose, onSuggestionClick]);
 
   // Reset selected index when suggestions change
   useEffect(() => {
@@ -123,9 +149,11 @@ const SearchSuggestions = ({
           {suggestions.map((suggestion, index) => (
             <div
               key={suggestion.id}
+              data-suggestion-item
               onClick={(event) => handleSuggestionClick(suggestion, event)}
               onMouseDown={(event) => event.preventDefault()}
-              className={`px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${index === selectedIndex ? 'bg-blue-50 dark:bg-gray-700 border-blue-200 dark:border-blue-900' : ''
+              onMouseEnter={() => setSelectedIndex(index)}
+              className={`px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-900' : ''
                 }`}
             >
               <div className="flex items-start space-x-3">
