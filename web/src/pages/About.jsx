@@ -35,17 +35,38 @@ export default function About() {
 
   const renderFaqAnswer = (text) => {
     if (!text) return null;
-    const sanitizedText = text
+    let sanitizedText = text
       .replace(/support@urbansetu\.com/g, 'info.urbansetu@gmail.com')
       .replace(/urbansetu\.noreply@gmail\.com/g, 'info.urbansetu@gmail.com');
-    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g;
-    const parts = sanitizedText.split(emailRegex);
+
+    if (!sanitizedText.includes('+1 (970) 446-3758')) {
+      sanitizedText = sanitizedText.replace(
+        /call our helpline(?:\s+at\s+[\+\d\s\(\)\-]+)?/i,
+        'call our helpline at +1 (970) 446-3758'
+      );
+    }
+
+    const tokenRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+|\+1\s*\(\d{3}\)\s*\d{3}-\d{4})/g;
+    const parts = sanitizedText.split(tokenRegex);
     return parts.map((part, i) => {
       if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+$/.test(part)) {
         return (
           <a
             key={i}
             href={`mailto:${part}`}
+            className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      if (/^\+1\s*\(\d{3}\)\s*\d{3}-\d{4}$/.test(part.trim())) {
+        const cleanTel = part.replace(/[^\d+]/g, '');
+        return (
+          <a
+            key={i}
+            href={`tel:${cleanTel}`}
             className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
             onClick={(e) => e.stopPropagation()}
           >

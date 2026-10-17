@@ -165,7 +165,7 @@ export const getAbout = async (req, res, next) => {
           },
           {
             question: "How can I contact support?",
-            answer: "You can reach our support team through email at info.urbansetu@gmail.com, use our in-app chat support, or call our helpline. We also have a comprehensive help center with detailed guides and FAQs."
+            answer: "You can reach our support team through email at info.urbansetu@gmail.com, use our in-app chat support, or call our helpline at +1 (970) 446-3758. We also have a comprehensive help center with detailed guides and FAQs."
           }
         ],
         trust: "Every listing goes through a verification process, and reviews help ensure transparency. Our platform is designed with user security and data privacy at its core.",
@@ -350,7 +350,7 @@ export const migrateAbout = async (req, res, next) => {
         },
         {
           question: "How can I contact support?",
-          answer: "You can reach our support team through email at info.urbansetu@gmail.com, use our in-app chat support, or call our helpline. We also have a comprehensive help center with detailed guides and FAQs."
+          answer: "You can reach our support team through email at info.urbansetu@gmail.com, use our in-app chat support, or call our helpline at +1 (970) 446-3758. We also have a comprehensive help center with detailed guides and FAQs."
         }
       ];
     }
