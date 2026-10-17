@@ -3649,6 +3649,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
   const [pinDuration, setPinDuration] = useState('24hrs');
   const [customHours, setCustomHours] = useState(24);
   const [highlightedPinnedMessage, setHighlightedPinnedMessage] = useState(null);
+  const [pinnedMessagesCollapsed, setPinnedMessagesCollapsed] = useState(false);
 
   // Chat options menu state
   const [showChatOptionsMenu, setShowChatOptionsMenu] = useState(false);
@@ -10285,12 +10286,35 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                   });
                   return visiblePinnedMessages.length > 0 && (
                   <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-800 border-b border-purple-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FaThumbtack className="text-purple-600 text-sm" />
-                      <span className="text-purple-700 dark:text-purple-400 font-semibold text-sm">Pinned Messages</span>
-                      <span className="text-purple-600 dark:text-purple-400 text-xs">({visiblePinnedMessages.length})</span>
+                    <div className="flex items-center justify-between mb-0">
+                      <div className="flex items-center gap-2">
+                        <FaThumbtack className="text-purple-600 text-sm" />
+                        <span className="text-purple-700 dark:text-purple-400 font-semibold text-sm">Pinned Messages</span>
+                        <span className="text-purple-600 dark:text-purple-400 text-xs">({visiblePinnedMessages.length})</span>
+                      </div>
+                      <button
+                        onClick={() => setPinnedMessagesCollapsed(prev => !prev)}
+                        className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 px-2 py-1 rounded-full transition-all duration-200"
+                        title={pinnedMessagesCollapsed ? 'Show pinned messages' : 'Hide pinned messages'}
+                      >
+                        <span>{pinnedMessagesCollapsed ? 'Show' : 'Hide'}</span>
+                        <svg
+                          className={`w-3 h-3 transition-transform duration-300 ${pinnedMessagesCollapsed ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
                     </div>
-                    <div className="space-y-2 max-h-24 overflow-y-auto">
+                    <div
+                      className="overflow-hidden transition-all duration-300 ease-in-out"
+                      style={{
+                        maxHeight: pinnedMessagesCollapsed ? '0px' : '96px',
+                        opacity: pinnedMessagesCollapsed ? 0 : 1,
+                        marginTop: pinnedMessagesCollapsed ? '0px' : '8px'
+                      }}
+                    >
+                      <div className="space-y-2 max-h-24 overflow-y-auto">
                       {visiblePinnedMessages.map((pinnedMsg) => (
                         <div
                           key={pinnedMsg._id}
@@ -10345,6 +10369,7 @@ function AppointmentRow({ appt, currentUser, handleStatusUpdate, handleTokenPaid
                           </div>
                         </div>
                       ))}
+                      </div>
                     </div>
                   </div>
                 );
