@@ -16,6 +16,7 @@ import { authenticatedFetch } from '../utils/auth';
 import SocialSharePanel from '../components/SocialSharePanel';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import UserAvatar from '../components/UserAvatar';
+import CommunityMarkdown from '../components/CommunityMarkdown';
 
 export default function AdminCommunity() {
     const { currentUser } = useSelector((state) => state.user);
@@ -165,6 +166,7 @@ export default function AdminCommunity() {
         { id: 'Neighborhood', icon: FaMapMarkerAlt, label: 'Neighborhood' },
         { id: 'Events', icon: FaCalendarAlt, label: 'Events' },
         { id: 'Safety', icon: FaShieldAlt, label: 'Safety' },
+        { id: 'Recommendations', icon: FaBullhorn, label: 'Recommendations' },
         { id: 'Marketplace', icon: FaStore, label: 'Marketplace' },
         { id: 'Reported', icon: FaFlag, label: 'Reported' },
     ];
@@ -1309,35 +1311,6 @@ export default function AdminCommunity() {
         );
     };
 
-    const formatContent = (content) => {
-        if (!content) return '';
-        const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-
-        while ((match = mentionRegex.exec(content)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push(content.substring(lastIndex, match.index));
-            }
-            parts.push(
-                <Link
-                    key={match.index}
-                    to={`/admin/listing/${match[2]}`}
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium bg-blue-50 dark:bg-blue-900/40 px-1 rounded mx-0.5 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    @{match[1]}
-                </Link>
-            );
-            lastIndex = match.index + match[0].length;
-        }
-        if (lastIndex < content.length) {
-            parts.push(content.substring(lastIndex));
-        }
-        return parts.length > 0 ? parts : content;
-    };
-
     if (loading) {
         return <CommunitySkeleton />;
     }
@@ -1587,10 +1560,8 @@ export default function AdminCommunity() {
                                     {/* Post Content */}
                                     <div className="mb-6 pl-2 border-l-4 border-gray-100 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900 transition-colors">
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">{post.title}</h2>
-                                        <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-                                            {formatContent(post.content)}
-                                            {post.isEdited && <span className="text-[10px] text-gray-400 dark:text-gray-500 italic font-normal ml-2">(edited)</span>}
-                                        </p>
+                                        <CommunityMarkdown content={post.content} />
+                                        {post.isEdited && <span className="text-[10px] text-gray-400 dark:text-gray-500 italic font-normal ml-2">(edited)</span>}
                                         {/* Placeholder for optional post image if any */}
                                         {/* {post.images && post.images.length > 0 && (...)} */}
 
@@ -1860,10 +1831,10 @@ export default function AdminCommunity() {
                                                                                     <span className="font-semibold">{comment.deletedBy === comment.user?._id ? "This comment was deleted by user" : "This comment is deleted by admin"}</span>
                                                                                 </div>
                                                                             )}
-                                                                            <p className={`text-sm text-gray-700 dark:text-gray-300 break-words overflow-hidden leading-relaxed ${comment.isDeleted ? 'opacity-60 italic' : ''}`}>
-                                                                                {formatContent(comment.content)}
+                                                                            <div className={`text-sm text-gray-700 dark:text-gray-300 break-words overflow-hidden leading-relaxed ${comment.isDeleted ? 'opacity-60 italic' : ''}`}>
+                                                                                <CommunityMarkdown content={comment.content} variant="comment" />
                                                                                 {comment.isEdited && <span className="text-[10px] text-gray-400 dark:text-gray-500 italic font-normal ml-2">(edited)</span>}
-                                                                            </p>
+                                                                            </div>
                                                                         </div>
                                                                     )}
 
@@ -2123,10 +2094,10 @@ export default function AdminCommunity() {
                                                                                                                         <span className="font-semibold">{reply.deletedBy === reply.user?._id ? "This reply was deleted by user" : "This reply is deleted by admin"}</span>
                                                                                                                     </div>
                                                                                                                 )}
-                                                                                                                <p className={`text-sm text-gray-700 dark:text-gray-300 break-words overflow-hidden leading-relaxed ${reply.isDeleted ? 'opacity-60 italic' : ''}`}>
-                                                                                                                    {formatContent(reply.content)}
+                                                                                                                <div className={`text-sm text-gray-700 dark:text-gray-300 break-words overflow-hidden leading-relaxed ${reply.isDeleted ? 'opacity-60 italic' : ''}`}>
+                                                                                                                    <CommunityMarkdown content={reply.content} variant="comment" />
                                                                                                                     {!reply.isDeleted && reply.isEdited && <span className="text-[10px] text-gray-400 dark:text-gray-500 italic font-normal ml-2">(edited)</span>}
-                                                                                                                </p>
+                                                                                                                </div>
                                                                                                             </div>
                                                                                                         )}
 
@@ -2543,7 +2514,7 @@ export default function AdminCommunity() {
                                         onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                                     >
-                                        {categories.filter(c => c.id !== 'All').map(cat => (
+                                        {categories.filter(c => c.id !== 'All' && c.id !== 'Reported').map(cat => (
                                             <option key={cat.id} value={cat.id}>{cat.label}</option>
                                         ))}
                                     </select>
