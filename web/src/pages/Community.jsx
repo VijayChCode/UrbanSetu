@@ -15,6 +15,7 @@ import SocialSharePanel from '../components/SocialSharePanel';
 import { authenticatedFetch } from '../utils/auth';
 import UrbanSetuSpinner from '../components/UrbanSetuSpinner';
 import GuestSignInModal from '../components/GuestSignInModal';
+import CommunityMarkdown from '../components/CommunityMarkdown';
 
 export default function Community() {
     const { currentUser } = useSelector((state) => state.user);
@@ -193,6 +194,7 @@ export default function Community() {
         { id: 'Neighborhood', icon: FaMapMarkerAlt, label: 'Neighborhood' },
         { id: 'Events', icon: FaCalendarAlt, label: 'Events' },
         { id: 'Safety', icon: FaShieldAlt, label: 'Safety' },
+        { id: 'Recommendations', icon: FaBullhorn, label: 'Recommendations' },
         { id: 'Marketplace', icon: FaStore, label: 'Marketplace' },
     ];
 
@@ -807,55 +809,6 @@ export default function Community() {
                 </div>
             </div>
         );
-    };
-
-    const formatContent = (content) => {
-        if (!content) return null;
-        // Regex to capture @[Name](ID) format
-        const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-
-        while ((match = mentionRegex.exec(content)) !== null) {
-            // Push text before the match
-            if (match.index > lastIndex) {
-                parts.push(content.substring(lastIndex, match.index));
-            }
-            // Push the link component
-            parts.push(
-                <Link
-                    key={match.index}
-                    to={`/user/listing/${match[2]}`}
-                    className="text-blue-600 font-bold hover:underline bg-blue-50 px-1 rounded transition-colors"
-                >
-                    @{match[1]}
-                </Link>
-            );
-            lastIndex = mentionRegex.lastIndex;
-        }
-        // Push remaining text
-        if (lastIndex < content.length) {
-            parts.push(content.substring(lastIndex));
-        }
-
-        // If no mentions found, try legacy format (just in case) or return content
-        if (parts.length === 0) {
-            const legacyParts = content.split(/(@\w+(?:\s\w+)*)/g);
-            return legacyParts.map((part, i) => {
-                if (part.startsWith('@')) {
-                    // Legacy handling mostly not needed if we enforce new format, but kept for old posts if any
-                    return (
-                        <span key={i} className="text-blue-600 font-bold">
-                            {part}
-                        </span>
-                    );
-                }
-                return part;
-            });
-        }
-
-        return parts;
     };
 
     const handleDeleteComment = (postId, commentId) => {
@@ -1571,10 +1524,10 @@ export default function Community() {
                                                     <FaLock size={12} />
                                                 </span>
                                             )}
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${post.category === 'Safety' ? 'bg-red-50 text-red-600 border border-red-100' :
-                                                post.category === 'Events' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
-                                                    post.category === 'Marketplace' ? 'bg-green-50 text-green-600 border border-green-100' :
-                                                        'bg-blue-50 text-blue-600 border border-blue-100'
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ${post.category === 'Safety' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800' :
+                                                post.category === 'Events' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800' :
+                                                    post.category === 'Marketplace' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-100 dark:border-green-800' :
+                                                        'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800'
                                                 }`}>
                                                 {post.category}
                                             </span>
@@ -1611,10 +1564,8 @@ export default function Community() {
                                     {/* Post Content */}
                                     <div className="mb-6 pl-2 border-l-4 border-gray-100 dark:border-gray-800 hover:border-blue-100 dark:hover:border-blue-900 transition-colors">
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">{post.title}</h2>
-                                        <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
-                                            {formatContent(post.content)}
-                                            {post.isEdited && <span className="text-[10px] text-gray-400 italic font-normal ml-2">(edited)</span>}
-                                        </p>
+                                        <CommunityMarkdown content={post.content} />
+                                        {post.isEdited && <span className="text-[10px] text-gray-400 italic font-normal ml-2">(edited)</span>}
                                     </div>
 
                                     {/* Post Actions */}
@@ -1763,12 +1714,12 @@ export default function Community() {
                                                                             </div>
                                                                         </form>
                                                                     ) : (
-                                                                        <p className={`text-sm ${comment.isDeleted ? 'text-gray-500 dark:text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'} leading-relaxed break-words overflow-hidden`}>
+                                                                        <div className={`text-sm ${comment.isDeleted ? 'text-gray-500 dark:text-gray-400 italic' : 'text-gray-700 dark:text-gray-300'} leading-relaxed break-words overflow-hidden`}>
                                                                             {comment.isDeleted
                                                                                 ? (comment.deletedBy === comment.user?._id ? "This comment was deleted." : "This comment is deleted by admin.")
-                                                                                : formatContent(comment.content)}
+                                                                                : <CommunityMarkdown content={comment.content} variant="comment" />}
                                                                             {!comment.isDeleted && comment.isEdited && <span className="text-[10px] text-gray-400 italic font-normal ml-2">(edited)</span>}
-                                                                        </p>
+                                                                        </div>
                                                                     )}
 
                                                                     {/* Actions */}
@@ -2043,12 +1994,12 @@ export default function Community() {
                                                                                                                 </div>
                                                                                                             </form>
                                                                                                         ) : (
-                                                                                                            <p className={`text-sm ${reply.isDeleted ? 'text-gray-500 italic' : 'text-gray-700 dark:text-gray-300'} leading-relaxed break-words overflow-hidden`}>
+                                                                                                            <div className={`text-sm ${reply.isDeleted ? 'text-gray-500 italic' : 'text-gray-700 dark:text-gray-300'} leading-relaxed break-words overflow-hidden`}>
                                                                                                                 {reply.isDeleted
                                                                                                                     ? (reply.deletedBy === reply.user?._id ? "This reply was deleted." : "This reply is deleted by admin.")
-                                                                                                                    : formatContent(reply.content)}
+                                                                                                                    : <CommunityMarkdown content={reply.content} variant="comment" />}
                                                                                                                 {!reply.isDeleted && reply.isEdited && <span className="text-xs text-gray-400 italic font-normal ml-2">(edited)</span>}
-                                                                                                            </p>
+                                                                                                            </div>
                                                                                                         )}
                                                                                                         {!reply.isDeleted && (
                                                                                                             <div className="flex items-center gap-3 mt-1 flex-wrap">
