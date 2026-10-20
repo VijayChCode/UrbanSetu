@@ -498,17 +498,16 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
 
   const renderMessage = (text) => {
     if (!text) return "";
-    if (text.includes("status page")) {
-      const parts = text.split("status page");
-      return (
-        <>
-          {parts[0]}
+    const parts = text.split("status page");
+    if (parts.length === 1) return text;
+    return parts.map((part, i) => (
+      <React.Fragment key={i}>
+        {part}
+        {i < parts.length - 1 && (
           <Link to="/status?tab=maintenanceupdates" className="underline font-bold text-white hover:text-amber-200 transition-colors">status page</Link>
-          {parts[1]}
-        </>
-      );
-    }
-    return text;
+        )}
+      </React.Fragment>
+    ));
   };
 
   // Apply persisted theme (light/dark/system) globally and listen for changes
@@ -1279,23 +1278,28 @@ function AppRoutes({ bootstrapped, upcomingConfig }) {
 
       {/* Upcoming Maintenance Banner */}
       {upcomingConfig && upcomingConfig.enabled && !isBannerDismissed && (
-        <div className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 dark:from-amber-900/95 dark:via-amber-950/95 dark:to-orange-950/95 text-white text-center py-2.5 px-4 text-xs font-semibold flex items-center justify-between gap-3 shadow-md relative z-[9999] border-b border-amber-600/30 transition-all duration-300 animate-slideDown">
-          <div className="flex-1 flex items-center justify-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span className="font-bold tracking-wide uppercase bg-amber-650/45 dark:bg-amber-900/50 px-2 py-0.5 rounded text-[10px] mr-1.5 border border-amber-500/30">
-              Upcoming Maintenance
-            </span>
-            <span className="text-amber-100 font-medium">
-              {renderMessage(upcomingConfig.message)}
-            </span>
+        <div className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 dark:from-amber-900/95 dark:via-amber-950/95 dark:to-orange-950/95 text-white shadow-md relative z-[9999] border-b border-amber-600/30 transition-all duration-300 animate-slideDown">
+          <div className="flex items-start sm:items-center gap-3 py-2.5 pl-3 pr-10 sm:px-4 sm:pr-12">
+            <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center justify-center gap-1.5 sm:gap-3">
+              <span className="inline-flex items-center gap-2 shrink-0 self-start sm:self-center">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span className="font-bold tracking-wide uppercase bg-amber-950/40 dark:bg-amber-900/50 px-2 py-0.5 rounded text-[10px] border border-amber-500/30 whitespace-nowrap">
+                  Upcoming Maintenance
+                </span>
+              </span>
+              <p className="min-w-0 flex-1 text-amber-100 font-medium text-[11px] sm:text-xs leading-relaxed text-left sm:text-center break-words whitespace-normal">
+                {renderMessage(upcomingConfig.message)}
+              </p>
+            </div>
           </div>
           <button 
             onClick={handleDismissBanner}
-            className="text-amber-300 hover:text-white transition-colors duration-200 p-1 hover:bg-white/10 rounded-full"
+            className="absolute right-2 top-2 sm:top-1/2 sm:-translate-y-1/2 text-amber-300 hover:text-white transition-colors duration-200 p-1 hover:bg-white/10 rounded-full shrink-0"
             title="Dismiss notice"
+            aria-label="Dismiss notice"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
