@@ -5458,15 +5458,39 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsCurrentRequestWebSearch(false);
             setIsCurrentRequestReport(false);
 
-            // Auto-sync session title if it's a new conversation
             if (currentUser && messages.length <= 4 &&
-                (!currentChatName || /^(chat|new chat)(\s+\d+)?$/i.test(currentChatName.trim()))) {
-                setIsGeneratingTitle(true);
-                // Give the backend a moment to generate and save the title
-                setTimeout(async () => {
-                    await loadChatSessions();
-                }, 1500);
+    (!currentChatName || /^(chat|new chat)(\s+\d+)?$/i.test(currentChatName.trim()))) {
+
+    setIsGeneratingTitle(true);
+
+    setTimeout(async () => {
+        const id = getOrCreateSessionId();
+        let titled = false;
+
+        for (let i = 0; i < 5; i++) {
+            const sessions = await loadChatSessions(false);
+            const session = sessions.find(s => s.sessionId === id);
+            const name = session?.name?.trim() || '';
+
+            const generic = !name ||
+                /^(chat|new chat)(\s+\d+)?$|^naming\.{0,3}$/i.test(name) ||
+                name.length <= 3;
+
+            if (!generic) {
+                titled = true;
+                break;
             }
+
+            if (i < 4) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        if (!titled) {
+            setIsGeneratingTitle(false);
+        }
+    }, 1000);
+}
         }
     };
 
@@ -6905,10 +6929,10 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
         }
     };
 
-    const loadChatSessions = async () => {
+    const loadChatSessions = async (showLoader = false) => {
         if (!currentUser) return [];
 
-        setIsLoadingSessions(true);
+        if (showLoader) setIsLoadingSessions(true);
         try {
             const response = await authenticatedFetch(`${API_BASE_URL}/api/gemini/sessions`);
 
@@ -6931,9 +6955,6 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                             setCurrentChatName(activeSession.name);
                         }
                         setIsGeneratingTitle(false);
-                    } else if (isGeneratingTitle && (!activeSession.name || messages.length > 4)) {
-                        // Stop skeleton if messages pass threshold or fetch returned nothing
-                        setIsGeneratingTitle(false);
                     }
                 }
 
@@ -6946,7 +6967,7 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             console.error('Error loading chat sessions:', error);
             return [];
         } finally {
-            setIsLoadingSessions(false);
+            if (showLoader) setIsLoadingSessions(false);
         }
     };
 
@@ -10201,7 +10222,11 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                                             {/* Chat History */}
                                             <li>
                                                 <button
-                                                    onClick={() => { setShowHistory(true); loadChatSessions(); setIsHeaderMenuOpen(false); }}
+                                                    onClick={() => {
+                                                        setShowHistory(true);
+                                                        loadChatSessions(true);
+                                                        setIsHeaderMenuOpen(false);
+                                                    }}
                                                     className={`w-full text-left px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100/80'} flex items-center gap-3 transition-all duration-200 hover:scale-[1.02] group`}
                                                 >
                                                     <div className={`p-1.5 rounded-lg ${isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100'} group-hover:scale-110 transition-transform duration-200`}>
