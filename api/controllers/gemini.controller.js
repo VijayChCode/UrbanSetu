@@ -962,7 +962,7 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
 
                     // Auto-generate title if not present or is generic/short
                     const isGenericName = !chatHistory.name ||
-                        /^Chat \d/.test(chatHistory.name) ||
+                        /^(chat|new chat)(\s+\d+)?$/i.test(chatHistory.name.trim()) ||
                         chatHistory.name.trim().length <= 3;
 
                     if (isGenericName) {
@@ -1089,8 +1089,8 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
 
                     // Auto-generate title if not present or is generic/short
                     const isGenericName = !chatHistory.name ||
-                        /^Chat \d/.test(chatHistory.name) ||
-                        chatHistory.name.trim().length <= 3;
+                            /^(chat|new chat)(\s+\d+)?$/i.test(chatHistory.name.trim()) ||
+                            chatHistory.name.trim().length <= 3;
 
                     if (isGenericName) {
                         try {
