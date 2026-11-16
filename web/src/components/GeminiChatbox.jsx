@@ -5459,7 +5459,8 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
             setIsCurrentRequestReport(false);
 
             // Auto-sync session title if it's a new conversation
-            if (currentUser && messages.length <= 4 && (!currentChatName || /^Chat \d/i.test(currentChatName))) {
+            if (currentUser && messages.length <= 4 &&
+                (!currentChatName || /^(chat|new chat)(\s+\d+)?$/i.test(currentChatName.trim()))) {
                 setIsGeneratingTitle(true);
                 // Give the backend a moment to generate and save the title
                 setTimeout(async () => {
@@ -6922,7 +6923,9 @@ const GeminiChatbox = ({ forceModalOpen = false, onModalClose = null }) => {
                 const activeSession = sessions.find(s => s.sessionId === activeSessionId);
                 if (activeSession) {
                     setActiveSessionTokens(activeSession.totalTokens || 0);
-                    const isGeneric = !activeSession.name || /^Chat \d/i.test(activeSession.name) || activeSession.name.toLowerCase() === 'new chat';
+                    const isGeneric = !activeSession.name ||
+                        /^(chat|new chat)(\s+\d+)?$|^naming\.{0,3}$/i.test(activeSession.name.trim()) ||
+                        activeSession.name.trim().length <= 3;
                     if (!isGeneric) {
                         if (activeSession.name !== currentChatName) {
                             setCurrentChatName(activeSession.name);
