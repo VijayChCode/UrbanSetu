@@ -943,18 +943,6 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                         .trim();
                 }
 
-                // Send the collected recommendations at the end of the stream
-                res.write(`data: ${JSON.stringify({
-                    type: 'done',
-                    content: fullResponse,
-                    done: true,
-                    recommendations: recommendations.length > 0 ? recommendations : undefined,
-                    tokenUsage: completion?.usage ? {
-                        promptTokens: completion.usage.prompt_tokens,
-                        completionTokens: completion.usage.completion_tokens,
-                        totalTokens: completion.usage.total_tokens
-                    } : undefined
-                })}\n\n`);
 
                 // Save History
                 if (userId) {
@@ -1064,6 +1052,18 @@ Single sensitive words do NOT make a message harmful. A question about sex, viol
                     }
                 }
 
+                // Send the collected recommendations at the end of the stream
+                res.write(`data: ${JSON.stringify({
+                    type: 'done',
+                    content: fullResponse,
+                    done: true,
+                    recommendations: recommendations.length > 0 ? recommendations : undefined,
+                    tokenUsage: completion?.usage ? {
+                        promptTokens: completion.usage.prompt_tokens,
+                        completionTokens: completion.usage.completion_tokens,
+                        totalTokens: completion.usage.total_tokens
+                    } : undefined
+                })}\n\n`);
                 return res.end();
             } else {
                 // Non-Streaming Final Answer
